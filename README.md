@@ -4,5 +4,8 @@ Sistema de gerenciamentos de processos do NPJ/CUA
 
 TODO:
 -Adicionar sistema de roles.
--Estruturar o banco de dados inicial da aplicação.
--Colocar Caminho Absoluto com Path
+
+-Validação de Login.
+-Validação de campos.
+-Estruturar o banco de dados inicial da aplicação. (OK)
+-Colocar Caminho Absoluto com Path.
