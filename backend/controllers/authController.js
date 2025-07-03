@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-exports.register = (req, res) => {
+exports.register = async (req, res) => {
   const { nome, email, password, role } = req.body;
 
   // Validate inputs
@@ -13,7 +13,7 @@ exports.register = (req, res) => {
   console.log('Tentativa de registro:', email);
 
   // Check if user already exists
-  User.findByEmail(email, (err, results) => {
+  await User.findByEmail(email, (err, results) => {
     if (err) {
       console.error('Erro ao verificar e-mail existente:', err);
       return res.status(500).json({ message: 'Erro no servidor, tente novamente.' });
