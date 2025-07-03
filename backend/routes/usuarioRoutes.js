@@ -1,37 +1,32 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
+const roleMiddleware = require('../middleware/roleMiddleware.js'); // Novo middleware para roles
 const usuarioController = require('../controllers/usersControllers');
+const { validate } = require('../middleware/validationMiddleware'); // Middleware de validação
 
 // Aplicar middleware de autenticação a todas as rotas
 router.use(authMiddleware);
 
-/**
- * @route GET /api/usuarios
- * @desc Listar todos os usuários (apenas admin)
- * @access Private (Admin)
- */
-router.get('/', usuarioController.listarUsuarios);
+router.get('/', roleMiddleware(['admin']), usuarioController.listarUsuarios);
 
-/**
- * @route GET /api/usuarios/:id
- * @desc Obter informações de um usuário específico
- * @access Private
- */
-router.get('/:id', usuarioController.buscarUsuario);
+router.get(
+  '/:id',
+  validate('getUsuario'), // Middleware de validação do ID
+  usuarioController.buscarUsuarioPorId
+);
 
-/**
- * @route PUT /api/usuarios/:id
- * @desc Atualizar informações do usuário
- * @access Private
- */
-router.put('/:id', usuarioController.atualizarUsuario);
+router.put(
+  '/:id',
+  validate('updateUsuario'), // Middleware de validação
+  usuarioController.atualizarUsuario
+);
 
-/**
- * @route GET /api/usuarios/alunos
- * @desc Listar todos os alunos
- * @access Private (Professor/Admin)
- */
-router.get('/alunos', usuarioController.listarAlunos);
+router.get(
+  '/alunos',
+  roleMiddleware(['professor', 'admin']),
+  usuarioController.listarUsuarios
+);
+
 
 module.exports = router;

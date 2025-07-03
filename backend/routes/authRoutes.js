@@ -1,26 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const Usuario = require('../controllers/authController');
+const authController = require('../controllers/authController');
+const { validate } = require('../middleware/validationMiddleware');
 
-/**
- * @route POST /auth/registrar
- * @desc Registrar um novo usuário
- * @access Public
- */
-router.post('/registrar', Usuario.registrar);
+router.post('/registrar', [
+  validate('registrarUsuario')
+], authController.registrar);
 
-/**
- * @route POST /auth/login
- * @desc Fazer login no sistema
- * @access Public
- */
-router.post('/login', Usuario.login);
+router.post('/login', [
+  validate('loginUsuario')
+], authController.login);
 
-/**
- * @route GET /auth/perfil
- * @desc Obter informações do usuário logado
- * @access Private
- */
-router.get('/perfil', Usuario.perfil);
+router.get('/perfil', authController.perfil);
 
 module.exports = router;
