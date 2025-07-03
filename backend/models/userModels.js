@@ -4,7 +4,7 @@ const { gerarHash } = require('../utils/authUtils');
 class Usuario {
     static async criar({ nome, email, senha, role_id }) {
         const senhaHash = await gerarHash(senha);
-        const [result] = await db.promise().query(
+        const [result] = await db.query(
             'INSERT INTO usuarios (nome, email, senha, role_id) VALUES (?, ?, ?, ?)',
             [nome, email, senhaHash, role_id]
         );
@@ -12,7 +12,7 @@ class Usuario {
     }
 
     static async buscarTodos() {
-        const [rows] = await db.promise().query(`
+        const [rows] = await db.query(`
             SELECT u.id, u.nome, u.email, u.criado_em, r.nome as role 
             FROM usuarios u
             JOIN roles r ON u.role_id = r.id
@@ -21,7 +21,7 @@ class Usuario {
     }
 
     static async buscarPorId(id) {
-        const [rows] = await db.promise().query(
+        const [rows] = await db.query(
             `SELECT u.id, u.nome, u.email, u.criado_em, r.nome as role 
              FROM usuarios u
              JOIN roles r ON u.role_id = r.id
@@ -32,7 +32,7 @@ class Usuario {
     }
 
     static async buscarPorEmail(email) {
-        const [rows] = await db.promise().query(
+        const [rows] = await db.query(
             `SELECT u.*, r.nome as role 
              FROM usuarios u
              JOIN roles r ON u.role_id = r.id
@@ -43,7 +43,7 @@ class Usuario {
     }
 
     static async atualizar(id, { nome, email, role_id }) {
-        await db.promise().query(
+        await db.query(
             'UPDATE usuarios SET nome = ?, email = ?, role_id = ? WHERE id = ?',
             [nome, email, role_id, id]
         );
@@ -52,7 +52,7 @@ class Usuario {
 
     static async atualizarSenha(id, senha) {
         const senhaHash = await gerarHash(senha);
-        await db.promise().query(
+        await db.query(
             'UPDATE usuarios SET senha = ? WHERE id = ?',
             [senhaHash, id]
         );
@@ -60,7 +60,7 @@ class Usuario {
     }
 
     static async listarPorRole(roleName) {
-        const [rows] = await db.promise().query(
+        const [rows] = await db.query(
             `SELECT u.id, u.nome, u.email 
              FROM usuarios u
              JOIN roles r ON u.role_id = r.id
@@ -71,7 +71,7 @@ class Usuario {
     }
 
     static async deletar(id) {
-        await db.promise().query('DELETE FROM usuarios WHERE id = ?', [id]);
+        await db.query('DELETE FROM usuarios WHERE id = ?', [id]);
         return true;
     }
 }

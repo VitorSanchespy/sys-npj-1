@@ -1,5 +1,5 @@
 const Usuario = require('../models/userModels');
-const { gerarHash, compararSenhas, gerarToken } = require('../utils/authUtils');
+const { gerarHash, verificarSenha, gerarToken } = require('../utils/authUtils');
 
 exports.registrar = async (req, res) => {
   try {
@@ -27,7 +27,7 @@ exports.login = async (req, res) => {
       return res.status(401).json({ erro: 'Credenciais inválidas' });
     }
 
-    const senhaValida = await compararSenhas(senha, usuario.senha);
+    const senhaValida = await verificarSenha(senha, usuario.senha);
     if (!senhaValida) {
       return res.status(401).json({ erro: 'Credenciais inválidas' });
     }

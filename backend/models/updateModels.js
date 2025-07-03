@@ -2,7 +2,7 @@ const db = require('../config/db');
 
 class Atualizacao {
     static async criar({ usuario_id, processo_id, descricao }) {
-        const [result] = await db.promise().query(
+        const [result] = await db.query(
             'INSERT INTO atualizacoes (usuario_id, processo_id, descricao) VALUES (?, ?, ?)',
             [usuario_id, processo_id, descricao]
         );
@@ -10,7 +10,7 @@ class Atualizacao {
     }
 
     static async listarPorProcesso(processoId) {
-        const [rows] = await db.promise().query(
+        const [rows] = await db.query(
             `SELECT a.*, u.nome as usuario_nome 
              FROM atualizacoes a
              JOIN usuarios u ON a.usuario_id = u.id

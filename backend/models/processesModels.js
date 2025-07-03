@@ -2,7 +2,7 @@ const db = require('../config/db');
 
 class Processo {
     static async criar({ numero_processo, descricao }) {
-        const [result] = await db.promise().query(
+        const [result] = await db.query(
             'INSERT INTO processos (numero_processo, descricao) VALUES (?, ?)',
             [numero_processo, descricao]
         );
@@ -18,7 +18,7 @@ class Processo {
     }
 
     static async buscarPorId(id) {
-        const [rows] = await db.promise().query(
+        const [rows] = await db.query(
             'SELECT * FROM processos WHERE id = ?',
             [id]
         );
@@ -26,7 +26,7 @@ class Processo {
     }
 
     static async listarPorAluno(alunoId) {
-        const [rows] = await db.promise().query(
+        const [rows] = await db.query(
             `SELECT p.*, ap.data_atribuicao 
              FROM processos p
              JOIN alunos_processos ap ON p.id = ap.processo_id
@@ -37,7 +37,7 @@ class Processo {
     }
 
     static async listarTodos() {
-        const [rows] = await db.promise().query('SELECT * FROM processos');
+        const [rows] = await db.query('SELECT * FROM processos');
         return rows;
     }
 }
