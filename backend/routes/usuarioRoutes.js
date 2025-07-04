@@ -8,7 +8,7 @@ const { validate } = require('../middleware/validationMiddleware'); // Middlewar
 // Aplicar middleware de autenticação a todas as rotas
 router.use(authMiddleware);
 
-router.get('/', roleMiddleware(['admin']), usuarioController.listarUsuarios);
+router.get('/', roleMiddleware(['Admin']), usuarioController.listarUsuarios);
 
 router.get(
   '/:id',

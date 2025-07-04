@@ -30,7 +30,7 @@ function gerarToken(usuario) {
         return jwt.sign(
             {
                 id: usuario.id,
-                role: usuario.role_id,
+                role: usuario.role,
                 // Adicionado timestamp de emissão
                 iat: Math.floor(Date.now() / 1000)
             },
