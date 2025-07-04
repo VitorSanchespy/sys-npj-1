@@ -3,7 +3,7 @@ const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware.js'); // Novo middleware para roles
 const usuarioController = require('../controllers/usersControllers');
-const { validate } = require('../middleware/validationMiddleware'); // Middleware de validação
+const { validate, handleValidation, } = require('../middleware/validationMiddleware'); // Middleware de validação
 
 // Aplicar middleware de autenticação a todas as rotas
 router.use(authMiddleware);
@@ -19,13 +19,27 @@ router.get('/', roleMiddleware(['Admin']), usuarioController.listarUsuarios);
 router.get(
   '/:id',
   validate('getUsuario'),
+  handleValidation,
   usuarioController.buscarUsuarioPorId
 );
 
 router.put(
   '/:id',
   validate('updateUsuario'),
+  handleValidation,
   usuarioController.atualizarUsuario
 );
+
+router.put('/:id/senha', [
+  validate('updateSenha'),
+  handleValidation,
+  usuarioController.atualizarSenha
+]);
+
+router.delete('/:id', [
+  roleMiddleware(['Professor', 'Admin']),
+  usuarioController.deletarUsuario
+]);
+
 
 module.exports = router;

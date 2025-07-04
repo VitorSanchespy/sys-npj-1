@@ -1,6 +1,7 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
-
+const knex = require('knex');
+const config = require('./knexfile');
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,

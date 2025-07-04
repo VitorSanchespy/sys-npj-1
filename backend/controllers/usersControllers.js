@@ -58,6 +58,10 @@ exports.atualizarSenha = async (req, res) => {
 
 exports.deletarUsuario = async (req, res) => {
     try {
+        const usuario = await Usuario.buscarPorId(req.params.id);
+        if (!usuario) {
+            return res.status(404).json({ erro: 'Usuário não encontrado' });
+        }
         await Usuario.deletar(req.params.id);
         res.json({ mensagem: 'Usuário deletado com sucesso' });
     } catch (error) {
