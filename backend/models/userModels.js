@@ -4,75 +4,67 @@ const { gerarHash } = require('../utils/authUtils');
 class Usuario {
     static async criar({ nome, email, senha, role_id }) {
         const senhaHash = await gerarHash(senha);
-        const [result] = await db.query(
-            'INSERT INTO usuarios (nome, email, senha, role_id) VALUES (?, ?, ?, ?)',
-            [nome, email, senhaHash, role_id]
-        );
-        return result.insertId;
+        const [id] = await db('usuarios').insert({
+            nome,
+            email,
+            senha: senhaHash,
+            role_id,
+            ativo: true
+        });
+        return id;
     }
 
     static async buscarTodos() {
-        const [rows] = await db.query(`
-            SELECT u.id, u.nome, u.email, u.criado_em, r.nome as role 
-            FROM usuarios u
-            JOIN roles r ON u.role_id = r.id
-        `);
-        return rows;
+          return db('usuarios')
+            .join('roles', 'usuarios.role_id', 'roles.id')
+            .where('usuarios.ativo', true)
+            .select('usuarios.id', 'usuarios.nome', 'usuarios.email', 'usuarios.criado_em', 'roles.nome as role');
     }
 
     static async buscarPorId(id) {
-        const [rows] = await db.query(
-            `SELECT u.id, u.nome, u.email, u.criado_em, r.nome as role 
-             FROM usuarios u
-             JOIN roles r ON u.role_id = r.id
-             WHERE u.id = ?`,
-            [id]
-        );
-        return rows[0];
+        return db('usuarios')
+            .join('roles', 'usuarios.role_id', 'roles.id')
+            .where('usuarios.id', id)
+            .where('usuarios.ativo', true)
+            .select('usuarios.id', 'usuarios.nome', 'usuarios.email', 'usuarios.criado_em', 'roles.nome as role')
+            .first();
     }
 
     static async buscarPorEmail(email) {
-        const [rows] = await db.query(
-            `SELECT u.*, r.nome as role 
-             FROM usuarios u
-             JOIN roles r ON u.role_id = r.id
-             WHERE u.email = ?`,
-            [email]
-        );
-        return rows[0];
+         return db('usuarios')
+            .join('roles', 'usuarios.role_id', 'roles.id')
+            .where('usuarios.email', email)
+            .where('usuarios.ativo', true)
+            .select('usuarios.*', 'roles.nome as role')
+            .first();
     }
 
     static async atualizar(id, { nome, email, role_id }) {
-        await db.query(
-            'UPDATE usuarios SET nome = ?, email = ?, role_id = ? WHERE id = ?',
-            [nome, email, role_id, id]
-        );
-        return true;
+       return db('usuarios')
+            .where('id', id)
+            .update({ nome, email, role_id });
     }
 
     static async atualizarSenha(id, senha) {
         const senhaHash = await gerarHash(senha);
-        await db.query(
-            'UPDATE usuarios SET senha = ? WHERE id = ?',
-            [senhaHash, id]
-        );
-        return true;
+        return db('usuarios')
+            .where('id', id)
+            .update({ senha: senhaHash });
     }
 
     static async listarPorRole(roleName) {
-        const [rows] = await db.query(
-            `SELECT u.id, u.nome, u.email 
-             FROM usuarios u
-             JOIN roles r ON u.role_id = r.id
-             WHERE r.nome = ?`,
-            [roleName]
-        );
-        return rows;
+        return db('usuarios')
+            .join('roles', 'usuarios.role_id', 'roles.id')
+            .where('roles.nome', roleName)
+            .where('usuarios.ativo', true)
+            .select('usuarios.id', 'usuarios.nome', 'usuarios.email');
     }
 
     static async deletar(id) {
-        await db.query('DELETE FROM usuarios WHERE id = ?', [id]);
-        return true;
+        // Soft delete
+        return db('usuarios')
+            .where('id', id)
+            .update({ ativo: false });
     }
 }
 

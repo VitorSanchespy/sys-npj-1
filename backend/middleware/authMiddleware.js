@@ -10,38 +10,25 @@ const verificarToken = async (req, res, next) => {
     }
 
     try {
-        // 1️⃣ Verifica token (incluindo expiração)
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log("Token decodificado:", decoded); // Debug
+        
+        const usuario = await db('usuarios')
+            .join('roles', 'usuarios.role_id', 'roles.id')
+            .where('usuarios.id', decoded.id)
+            .where('usuarios.ativo', true)
+            .select('usuarios.id', 'usuarios.nome', 'usuarios.email', 'roles.nome as role')
+            .first();
 
-        // 2️⃣ Busca usuário no banco
-        const [rows] = await db.query(
-            `SELECT u.id, u.nome, u.email, r.nome as role 
-            FROM usuarios u
-            JOIN roles r ON u.role_id = r.id
-            WHERE u.id = ?`,
-            [decoded.id]
-        );
-
-        if (!rows.length) {
-            console.error("Usuário não encontrado para ID:", decoded.id); // Debug
-            return res.status(401).json({ erro: 'Token inválido. Usuário não encontrado.' });
+        if (!usuario) {
+            return res.status(401).json({ erro: 'Token inválido. Usuário não encontrado ou inativo.' });
         }
-        // 3️⃣ Anexa usuário à requisição
-        req.usuario = {
-            id: rows[0].id,
-            nome: rows[0].nome,
-            email: rows[0].email,
-            role: rows[0].role  
-        };
+        
+        req.usuario = usuario;
         next();
     } catch (error) {
-        console.error("Erro na verificação do token:", error.message); // Debug
-        
         if (error.name === "TokenExpiredError") {
             return res.status(401).json({ erro: "Token expirado." });
         }
-        
         res.status(401).json({ erro: "Token inválido." });
     }
 };

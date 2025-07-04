@@ -2,23 +2,21 @@ const db = require('../config/db');
 
 class Atualizacao {
     static async criar({ usuario_id, processo_id, descricao }) {
-        const [result] = await db.query(
-            'INSERT INTO atualizacoes (usuario_id, processo_id, descricao) VALUES (?, ?, ?)',
-            [usuario_id, processo_id, descricao]
-        );
-        return result.insertId;
+        const [id] = await db('atualizacoes').insert({
+            usuario_id,
+            processo_id,
+            descricao
+        });
+        return id;
     }
 
     static async listarPorProcesso(processoId) {
-        const [rows] = await db.query(
-            `SELECT a.*, u.nome as usuario_nome 
-             FROM atualizacoes a
-             JOIN usuarios u ON a.usuario_id = u.id
-             WHERE a.processo_id = ?
-             ORDER BY a.data_atualizacao DESC`,
-            [processoId]
-        );
-        return rows;
+        return db('atualizacoes')
+            .join('usuarios', 'atualizacoes.usuario_id', 'usuarios.id')
+            .where('atualizacoes.processo_id', processoId)
+            .where('usuarios.ativo', true)
+            .select('atualizacoes.*', 'usuarios.nome as usuario_nome')
+            .orderBy('atualizacoes.data_atualizacao', 'desc');
     }
 }
 
