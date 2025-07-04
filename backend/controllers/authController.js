@@ -4,7 +4,6 @@ const { gerarHash, verificarSenha, gerarToken } = require('../utils/authUtils');
 exports.registrar = async (req, res) => {
   try {
     const { nome, email, senha, role_id } = req.body;
-    
     // Verificar se email já existe
     const usuarioExistente = await Usuario.buscarPorEmail(email);
     if (usuarioExistente) {
@@ -54,6 +53,9 @@ exports.login = async (req, res) => {
 exports.perfil = async (req, res) => {
   try {
     const usuario = await Usuario.buscarPorId(req.usuario.id);
+    if (!usuario) {
+      return res.status(404).json({ erro: 'Usuário não encontrado' });
+    }
     res.json(usuario);
   } catch (error) {
     res.status(500).json({ erro: error.message });

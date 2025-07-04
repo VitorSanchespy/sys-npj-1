@@ -10,16 +10,25 @@ class Processo {
     }
 
     static async atribuirAluno(processoId, usuarioId) {
-        await db.promise().query(
-            'INSERT INTO alunos_processos (usuario_id, processo_id) VALUES (?, ?)',
-            [usuarioId, processoId]
-        );
-        return true;
+        try {
+            await db.query(
+                'INSERT INTO alunos_processos (usuario_id, processo_id) VALUES (?, ?)',
+                [usuarioId, processoId]
+            );
+                return true;
+            } catch (error) {
+                if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+                throw new Error('Processo ou aluno não encontrado');
+            }
+                throw error;
+            }
     }
 
     static async buscarPorId(id) {
         const [rows] = await db.query(
-            'SELECT * FROM processos WHERE id = ?',
+            `SELECT p.*, 
+             (SELECT COUNT(*) FROM alunos_processos WHERE processo_id = p.id) as total_alunos
+             FROM processos p WHERE id = ?`,
             [id]
         );
         return rows[0];
@@ -37,7 +46,12 @@ class Processo {
     }
 
     static async listarTodos() {
-        const [rows] = await db.query('SELECT * FROM processos');
+        const [rows] = await db.query(
+            `SELECT p.*, 
+             (SELECT COUNT(*) FROM alunos_processos WHERE processo_id = p.id) as total_alunos,
+             (SELECT MAX(data_atualizacao) FROM atualizacoes WHERE processo_id = p.id) as ultima_atualizacao
+             FROM processos p`
+        );
         return rows;
     }
 }

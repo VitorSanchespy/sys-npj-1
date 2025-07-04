@@ -75,3 +75,13 @@ exports.listarPorRole = async (req, res) => {
         res.status(500).json({ erro: 'Erro interno do servidor' });
     }
 };
+
+exports.listarAlunos = async (req, res) => {
+  try {
+    const alunos = await Usuario.listarPorRole('aluno'); 
+    res.json(alunos);
+  } catch (error) {
+    console.error('Erro ao listar alunos:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};

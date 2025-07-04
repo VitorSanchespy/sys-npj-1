@@ -8,25 +8,24 @@ const { validate } = require('../middleware/validationMiddleware'); // Middlewar
 // Aplicar middleware de autenticação a todas as rotas
 router.use(authMiddleware);
 
+router.get(
+  '/alunos',
+  roleMiddleware(['Professor', 'Admin']),
+  usuarioController.listarAlunos
+);
+
 router.get('/', roleMiddleware(['Admin']), usuarioController.listarUsuarios);
 
 router.get(
   '/:id',
-  validate('getUsuario'), // Middleware de validação do ID
+  validate('getUsuario'),
   usuarioController.buscarUsuarioPorId
 );
 
 router.put(
   '/:id',
-  validate('updateUsuario'), // Middleware de validação
+  validate('updateUsuario'),
   usuarioController.atualizarUsuario
 );
-
-router.get(
-  '/alunos',
-  roleMiddleware(['professor', 'admin']),
-  usuarioController.listarUsuarios
-);
-
 
 module.exports = router;
