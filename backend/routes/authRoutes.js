@@ -3,6 +3,7 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const { validate,  handleValidation } = require('../middleware/validationMiddleware');
 const verificarToken = require('../middleware/authMiddleware');
+const verificarTokenReset = require('../middleware/resetPasswordMiddleware');
 
 /**
  * @swagger
@@ -27,6 +28,9 @@ router.post('/login', [
   validate('loginUsuario'),
   handleValidation
 ], authController.login);
+
+router.post('/solicitar-recuperacao', authController.solicitarRecuperacao);
+router.post('/redefinir-senha', verificarTokenReset, authController.redefinirSenha);
 
 /**
  * @swagger

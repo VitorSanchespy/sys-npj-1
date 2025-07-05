@@ -1,5 +1,8 @@
 const Usuario = require('../models/userModels');
 const { gerarHash, verificarSenha, gerarToken } = require('../utils/authUtils');
+const { enviarEmailRecuperacao } = require('../services/emailService');
+const verificarTokenReset = require('../middleware/resetPasswordMiddleware');
+const RESET_TOKEN_EXPIRATION = '1h';
 
 exports.registrar = async (req, res) => {
   try {
@@ -49,6 +52,49 @@ exports.login = async (req, res) => {
     res.status(500).json({ erro: error.message });
   }
 };
+
+exports.solicitarRecuperacao = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const usuario = await Usuario.buscarPorEmail(email);
+    
+    // Mensagem genérica por segurança
+    if (!usuario) {
+      return res.status(200).json({ mensagem: 'Se o email existir, um link foi enviado' });
+    }
+
+    // Gerar token JWT com propósito específico
+    const token = gerarToken(
+      { 
+        id: usuario.id,
+        purpose: 'password_reset' 
+      },
+      RESET_TOKEN_EXPIRATION
+    );
+    
+    await enviarEmailRecuperacao(email, token);
+    res.json({ mensagem: 'Email enviado com sucesso' });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+};
+
+exports.redefinirSenha = [
+  verificarTokenReset, // Middleware específico para redefinição
+  async (req, res) => {
+    try {
+      const { novaSenha } = req.body;
+      
+      // Agora o usuário já está validado pelo middleware
+      await Usuario.atualizarSenha(req.usuario.id, novaSenha);
+      
+      res.json({ mensagem: 'Senha redefinida com sucesso' });
+    } catch (error) {
+      res.status(500).json({ erro: error.message });
+    }
+  }
+];
+
 
 exports.perfil = async (req, res) => {
   try {
