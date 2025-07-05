@@ -57,6 +57,14 @@ const validate = (method) => {
           .trim()
       ];
     
+    case 'buscarProcessos':
+    return [
+        check('pagina').optional().isInt({ min: 1 }).toInt(),
+        check('porPagina').optional().isInt({ min: 1, max: 100 }).toInt(),
+        check('numero_processo').optional().trim(),
+        check('aluno_id').optional().isInt().toInt()
+    ];
+    
     case 'listarAlunosPorProcesso':
       return [
           check('processo_id').isInt({ min: 1 }).withMessage('ID do processo inválido')

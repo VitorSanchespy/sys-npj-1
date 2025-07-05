@@ -100,5 +100,10 @@ router.get('/:processo_id/atualizacoes',
     processoController.listarAtualizacoes
 );
 
+router.get('/buscar', 
+    authMiddleware,
+    processoController.buscarProcessos
+);
+
 return router;
 }

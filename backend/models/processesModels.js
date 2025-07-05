@@ -32,6 +32,50 @@ class Processo {
                 db.raw('(SELECT COUNT(*) FROM alunos_processos WHERE processo_id = processos.id) as total_alunos')
             )
             .first();
+    }   
+
+    static async buscarComFiltros(filtros = {}, paginacao = {}) {
+    const { pagina = 1, porPagina = 10 } = paginacao;
+    const offset = (pagina - 1) * porPagina;
+
+    let query = db('processos')
+        .leftJoin('alunos_processos', 'processos.id', 'alunos_processos.processo_id')
+        .leftJoin('usuarios', 'alunos_processos.usuario_id', 'usuarios.id')
+        .groupBy('processos.id');
+
+    // Filtros dinâmicos
+    if (filtros.numero_processo) {
+        query.where('processos.numero_processo', 'like', `%${filtros.numero_processo}%`);
+    }
+    
+    if (filtros.descricao) {
+        query.where('processos.descricao', 'like', `%${filtros.descricao}%`);
+    }
+    
+    if (filtros.aluno_id) {
+        query.where('alunos_processos.usuario_id', filtros.aluno_id);
+    }
+
+    // Executa a query com paginação
+    const processos = await query
+        .select('processos.*')
+        .limit(porPagina)
+        .offset(offset);
+
+    const total = (await query.clone().count('processos.id as total').first()).total;
+    const ordenacao = filtros.ordenarPor || 'criado_em';
+    const direcao = filtros.ordenarDirecao || 'desc';
+
+    query.orderBy(ordenacao, direcao);
+    return {
+        dados: processos,
+        paginacao: {
+            pagina,
+            porPagina,
+            total: parseInt(total),
+            totalPaginas: Math.ceil(total / porPagina)
+        }
+    };
     }
 
     static async listarPorAluno(alunoId) {

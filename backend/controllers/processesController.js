@@ -89,6 +89,28 @@ class ProcessoController {
     }
     }
 
+    async buscarProcessos(req, res) {
+    try {
+        // Recebe filtros da query string (?numero_processo=123&aluno_id=1)
+        const filtros = req.query;
+        
+        // Recebe parâmetros de paginação
+        const paginacao = {
+            pagina: parseInt(req.query.pagina) || 1,
+            porPagina: parseInt(req.query.porPagina) || 10
+        };
+
+        // Remove campos de paginação dos filtros
+        delete filtros.pagina;
+        delete filtros.porPagina;
+
+        const resultado = await Processo.buscarComFiltros(filtros, paginacao);
+        res.json(resultado);
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
+    }
+
     async listarAtualizacoes(req, res) {
         try {
             const { processo_id } = req.params;
@@ -100,6 +122,7 @@ class ProcessoController {
             res.status(500).json({ erro: error.message });
         }
     }
+
     async listarMeusProcessos(req, res) {
         try {
             if (req.usuario.role !== 'Aluno') {
@@ -111,6 +134,7 @@ class ProcessoController {
             res.status(500).json({ erro: error.message });
         }
     }
+
     async removerAluno(req, res) {
         try {
             const { processo_id, aluno_id } = req.body;
@@ -133,7 +157,8 @@ class ProcessoController {
                     : 'Erro interno do servidor' 
             });
         }
-    }    
+    }
+
     async listarAlunosPorProcesso(req, res) {
     try {
         const { processo_id } = req.params; // Recebe o ID do processo pela URL
@@ -164,6 +189,7 @@ class ProcessoController {
         res.status(500).json({ erro: 'Erro interno do servidor' });
     }
     }
+    
 }
 
 module.exports = ProcessoController;
