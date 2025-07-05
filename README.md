@@ -1,13 +1,24 @@
 # sistema-npj
 Sistema de gerenciamentos de processos do NPJ/CUA
+Backend API para gerenciamento de processos, alunos e professores.
 
+### Pré-requisitos
+- Node.js (v18+)
+- MySQL/PostgreSQL
+- npm ou yarn
+
+### 🔧 Instalação
+
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/seu-usuario/seu-projeto.git
 
 TODO:
--Adicionar Hash na senha (OK)
--Adicionar jwt (OK)
--Adicionar sistema de roles. (OK)
--Validação de Login. (OK)
--Estruturar o banco de dados inicial da aplicação. (OK)
--Implementar Migrantions. (OK)
--Validação de campos. (OK)
 -Colocar Caminho Absoluto com Path.
+# Segurança
+-JWT
+-CORS mais Restritivo.
+-Sanitização de Inputs.
+-Headers de Segurança com Helmet.
+-Aprimorar o Rate Limiting.
+-Proteção contra DoS.
