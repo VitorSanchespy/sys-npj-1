@@ -26,6 +26,8 @@ router.post('/:processo_id/atualizacoes',
     processoController.adicionarAtualizacao
 );
 
+router.get('/meus-processos', processoController.listarMeusProcessos);
+
 router.get('/:processo_id/atualizacoes', 
     processoController.listarAtualizacoes
 );

@@ -89,6 +89,18 @@ class ProcessoController {
             res.status(500).json({ erro: error.message });
         }
     }
+
+    async listarMeusProcessos(req, res) {
+        try {
+            if (req.usuario.role !== 'Aluno') {
+            return res.status(403).json({ erro: 'Acesso permitido apenas para alunos' });
+            }
+            const processos = await Processo.listarPorAluno(req.usuario.id);
+            res.json(processos);
+        } catch (error) {
+            res.status(500).json({ erro: error.message });
+        }
+}    
 }
 
 module.exports = new ProcessoController();
