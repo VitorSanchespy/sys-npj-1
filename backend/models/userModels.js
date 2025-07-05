@@ -45,6 +45,12 @@ class Usuario {
             .update({ nome, email, role_id });
     }
 
+    static async reativar(id) {
+        return db('usuarios')
+            .where('id', id)
+            .update({ ativo: true });
+    }
+
     static async atualizarSenha(id, senha) {
         const senhaHash = await gerarHash(senha);
         return db('usuarios')
@@ -65,6 +71,14 @@ class Usuario {
         return db('usuarios')
             .where('id', id)
             .update({ ativo: false });
+    }
+
+    static async usuarioCompleto(id) { 
+    return db('usuarios')
+      .join('roles', 'usuarios.role_id', 'roles.id')
+      .where('usuarios.id', id)
+      .select('usuarios.*', 'roles.nome as role')
+      .first();
     }
 }
 

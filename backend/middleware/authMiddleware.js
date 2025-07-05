@@ -21,8 +21,7 @@ const verificarToken = async (req, res, next) => {
 
         if (!usuario) {
             return res.status(401).json({ erro: 'Token inválido. Usuário não encontrado ou inativo.' });
-        }
-        
+        }        
         req.usuario = usuario;
         next();
     } catch (error) {

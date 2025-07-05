@@ -70,6 +70,25 @@ exports.deletarUsuario = async (req, res) => {
     }
 };
 
+exports.reativarUsuario = async (req, res) => {
+    try {
+        const usuario = await Usuario.buscarPorId(req.params.id);
+        if (!usuario) {
+            return res.status(404).json({ erro: 'Usuário não encontrado' });
+        }
+        // Se o usuário já estiver ativo, retorne um aviso
+        if (usuario.ativo) {
+            return res.status(400).json({ erro: 'Usuário já está ativo' });
+        }
+        
+        await Usuario.reativar(req.params.id);
+        res.json({ mensagem: 'Usuário reativado com sucesso', usuario });
+    } catch (error) {
+        console.error('Erro ao reativar usuário:', error);
+        res.status(500).json({ erro: 'Erro interno do servidor' });
+    }
+};
+
 exports.listarPorRole = async (req, res) => {
     try {
         const usuarios = await Usuario.listarPorRole(req.params.roleName);

@@ -41,5 +41,9 @@ router.delete('/:id', [
   usuarioController.deletarUsuario
 ]);
 
+router.put('/:id/reativar', [
+  roleMiddleware(['Admin']),
+  usuarioController.reativarUsuario
+]);
 
 module.exports = router;

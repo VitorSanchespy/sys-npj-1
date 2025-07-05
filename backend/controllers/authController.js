@@ -52,11 +52,16 @@ exports.login = async (req, res) => {
 
 exports.perfil = async (req, res) => {
   try {
-    const usuario = await Usuario.buscarPorId(req.usuario.id);
-    if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado' });
-    }
-    res.json(usuario);
+    const usuarioCompleto = await Usuario.usuarioCompleto(req.usuario.id);
+
+    res.json({
+      id: usuarioCompleto.id,
+      nome: usuarioCompleto.nome,
+      email: usuarioCompleto.email,
+      role: usuarioCompleto.role,
+      criado_em: usuarioCompleto.criado_em,
+      // Outros campos seguros para exibir
+    });
   } catch (error) {
     res.status(500).json({ erro: error.message });
   }
