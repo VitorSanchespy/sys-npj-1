@@ -56,7 +56,12 @@ const validate = (method) => {
           .isString().withMessage('Descrição deve ser texto')
           .trim()
       ];
-      
+    
+    case 'listarAlunosPorProcesso':
+      return [
+          check('processo_id').isInt({ min: 1 }).withMessage('ID do processo inválido')
+      ];
+    
     case 'atribuirAluno':
       return [
         check('processo_id').isInt({ min: 1 }).withMessage('ID de processo inválido'),

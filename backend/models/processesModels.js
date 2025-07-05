@@ -49,6 +49,41 @@ class Processo {
                 db.raw('(SELECT MAX(data_atualizacao) FROM atualizacoes WHERE processo_id = processos.id) as ultima_atualizacao')
             );
     }
+    static async removerAluno(processoId, alunoId) {
+        try {
+            const result = await db('alunos_processos')
+                .where({
+                    processo_id: processoId,
+                    usuario_id: alunoId
+                })
+                .del();
+
+            if (result === 0) {
+                throw new Error('Aluno não está atribuído a este processo');
+            }
+            return true;
+        } catch (error) {
+            throw error;
+        }
+    }
+    static async listarAlunosPorProcesso(processoId) {
+    return db('alunos_processos')
+        .join('usuarios', 'alunos_processos.usuario_id', 'usuarios.id')
+        .where('alunos_processos.processo_id', processoId)
+        .select(
+            'usuarios.id as aluno_id',
+            'usuarios.nome as aluno_nome',
+            'usuarios.email as aluno_email',
+            'alunos_processos.data_atribuicao'
+        )
+        .orderBy('usuarios.nome', 'asc');
+    }
+    static async verificarAlunoNoProcesso(processoId, alunoId) {
+    const resultado = await db('alunos_processos')
+        .where({ processo_id: processoId, usuario_id: alunoId })
+        .first();
+    return !!resultado;
+    }
 }
 
 module.exports = Processo;

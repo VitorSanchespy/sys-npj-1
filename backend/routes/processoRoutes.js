@@ -20,10 +20,19 @@ router.post('/atribuir-aluno',
     processoController.atribuirAluno
 );
 
+router.delete('/remover-aluno', 
+    validate('atribuirAluno'), // Reutiliza a mesma validação de atribuirAluno
+    processoController.removerAluno
+);
 // Rotas para atualizações
 router.post('/:processo_id/atualizacoes',
     validate('adicionarAtualizacao'),
     processoController.adicionarAtualizacao
+);
+
+router.get('/:processo_id/alunos', 
+    authMiddleware,
+    processoController.listarAlunosPorProcesso
 );
 
 router.get('/meus-processos', processoController.listarMeusProcessos);

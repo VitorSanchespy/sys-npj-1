@@ -100,7 +100,60 @@ class ProcessoController {
         } catch (error) {
             res.status(500).json({ erro: error.message });
         }
-}    
+    }
+    async removerAluno(req, res) {
+        try {
+            const { processo_id, aluno_id } = req.body;
+            if (!processo_id || !aluno_id) {
+                return res.status(400).json({ erro: 'processo_id e aluno_id são obrigatórios' });
+            }
+
+            // Verificar se o usuário é um professor/admin
+            if (req.usuario.role !== 'Professor' && req.usuario.role !== 'Admin') {
+                return res.status(403).json({ erro: 'Apenas professores ou admins podem remover alunos' });
+            }
+
+            await Processo.removerAluno(processo_id, aluno_id);
+            res.json({ mensagem: 'Aluno removido do processo com sucesso' });
+        } catch (error) {
+            console.error('Erro ao remover aluno:', error);
+            res.status(500).json({ 
+                erro: error.message === 'Aluno não está atribuído a este processo' 
+                    ? error.message 
+                    : 'Erro interno do servidor' 
+            });
+        }
+    }    
+    async listarAlunosPorProcesso(req, res) {
+    try {
+        const { processo_id } = req.params; // Recebe o ID do processo pela URL
+
+        // Validação básica
+        if (!processo_id || isNaN(Number(processo_id))) {
+            return res.status(400).json({ erro: 'ID do processo inválido' });
+        }
+
+        // Apenas Admin, Professor ou Aluno dono do processo pode acessar
+        if (
+            req.usuario.role !== 'Admin' && 
+            req.usuario.role !== 'Professor' &&
+            !(req.usuario.role === 'Aluno' && await Processo.verificarAlunoNoProcesso(processo_id, req.usuario.id))
+        ) {
+            return res.status(403).json({ erro: 'Acesso não autorizado' });
+        }
+
+        const alunos = await Processo.listarAlunosPorProcesso(processo_id);
+
+        if (alunos.length === 0) {
+            return res.status(404).json({ mensagem: 'Nenhum aluno vinculado a este processo' });
+        }
+
+        res.json(alunos);
+    } catch (error) {
+        console.error('Erro ao listar alunos do processo:', error);
+        res.status(500).json({ erro: 'Erro interno do servidor' });
+    }
+    }
 }
 
 module.exports = new ProcessoController();
