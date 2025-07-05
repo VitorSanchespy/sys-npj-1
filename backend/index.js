@@ -6,7 +6,8 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const slowDown = require('express-slow-down');
-
+const fs = require('fs');
+const path = require('path');
 const app = express();
 
 // Configuração básica de segurança
@@ -81,11 +82,19 @@ app.use(speedLimiter);
 // Conexão com o banco de dados
 require('./config/db');
 
+// Cria a pasta 'uploads' se não existir
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+
+
 // Rotas
 app.use('/auth', require('./routes/authRoutes'));
 app.use('/api/usuarios', require('./routes/usuarioRoutes'));
 app.use('/api/processos', require('./routes/processoRoutes'));
-
+app.use('/api/arquivos', require('./routes/arquivoRoutes'));
 // Tratamento de erros
 app.use((err, req, res, next) => {
   console.error(err.stack);

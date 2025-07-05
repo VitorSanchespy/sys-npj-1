@@ -1,12 +1,16 @@
-// migrations/XXXXXXXX_0001_add_active_column.js
-exports.up = function(knex) {
-  return knex.schema.alterTable('usuarios', (table) => {
-    table.boolean('ativo').defaultTo(true);
-  });
+exports.up = async function(knex) {
+  const hasColumn = await knex.schema.hasColumn('usuarios', 'ativo');
+  
+  if (!hasColumn) {
+    return knex.schema.table('usuarios', table => {
+      table.boolean('ativo').defaultTo(true);
+    });
+  }
+  console.log('Coluna "ativo" já existe - pulando');
 };
 
 exports.down = function(knex) {
-  return knex.schema.alterTable('usuarios', (table) => {
+  return knex.schema.table('usuarios', table => {
     table.dropColumn('ativo');
   });
 };
