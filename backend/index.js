@@ -8,6 +8,8 @@ const mongoSanitize = require('express-mongo-sanitize');
 const slowDown = require('express-slow-down');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
+const socketIo = require('socket.io');
 const app = express();
 
 // Configuração básica de segurança
@@ -57,6 +59,32 @@ app.use((req, res, next) => {
   next();
 });
 
+//server
+const server = http.createServer(app); // Cria servidor HTTP
+const io = socketIo(server, {
+  cors: {
+    origin: "http://localhost:3000", // Altere para seu frontend
+    methods: ["GET", "POST"]
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log(`Novo cliente conectado: ${socket.id}`);
+
+  // Inscreve o usuário em canais
+  socket.on('inscrever', (data) => {
+    if (data.processoId) {
+      socket.join(`processo_${data.processoId}`);
+    }
+    if (data.usuarioId) {
+      socket.join(`usuario_${data.usuarioId}`);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`Cliente desconectado: ${socket.id}`);
+  });
+});
 
 // Rate limiting
 const limiter = rateLimit({
@@ -91,9 +119,11 @@ if (!fs.existsSync(uploadDir)) {
 
 
 // Rotas
+const ProcessoController = require('./controllers/processesController');
+const processoController = new ProcessoController(io);
 app.use('/auth', require('./routes/authRoutes'));
 app.use('/api/usuarios', require('./routes/usuarioRoutes'));
-app.use('/api/processos', require('./routes/processoRoutes'));
+app.use('/api/processos', require('./routes/processoRoutes')(processoController));
 app.use('/api/arquivos', require('./routes/arquivoRoutes'));
 // Tratamento de erros
 app.use((err, req, res, next) => {
@@ -107,6 +137,6 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });

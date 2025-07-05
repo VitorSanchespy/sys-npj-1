@@ -1,7 +1,12 @@
 const Processo = require('../models/processesModels');
 const Atualizacao = require('../models/updateModels');
+const NotificacaoService = require('../services/notificacaoService');
+
 
 class ProcessoController {
+        constructor(io) {
+        this.notificacaoService = new NotificacaoService(io);
+        }
     async criarProcesso(req, res) {
         try {
             const { numero_processo, descricao } = req.body;
@@ -58,24 +63,30 @@ class ProcessoController {
     }
 
     async adicionarAtualizacao(req, res) {
-        try {
-            const { processo_id } = req.params;
-            const { descricao } = req.body;
-            
-            if (!descricao) {
-                return res.status(400).json({ erro: 'Descrição é obrigatória' });
-            }
+    try {
+        const { processo_id } = req.params;
+        const { descricao } = req.body;
 
-            const atualizacaoId = await Atualizacao.criar({
-                usuario_id: req.usuario.id,
-                processo_id,
-                descricao
-            });
-            
-            res.status(201).json({ id: atualizacaoId });
-        } catch (error) {
-            res.status(500).json({ erro: error.message });
+        if (!descricao) {
+            return res.status(400).json({ erro: 'Descrição é obrigatória' });
         }
+
+        const atualizacaoId = await Atualizacao.criar({
+            usuario_id: req.usuario.id,
+            processo_id,
+            descricao
+        });
+
+        // Notifica os usuários vinculados ao processo
+        this.notificacaoService.enviarParaProcesso(processo_id, {
+            tipo: 'ATUALIZACAO',
+            texto: 'Nova atualização no processo'
+        });
+
+        res.status(201).json({ id: atualizacaoId });
+    } catch (error) {
+        res.status(500).json({ erro: error.message });
+    }
     }
 
     async listarAtualizacoes(req, res) {
@@ -89,7 +100,6 @@ class ProcessoController {
             res.status(500).json({ erro: error.message });
         }
     }
-
     async listarMeusProcessos(req, res) {
         try {
             if (req.usuario.role !== 'Aluno') {
@@ -156,4 +166,4 @@ class ProcessoController {
     }
 }
 
-module.exports = new ProcessoController();
+module.exports = ProcessoController;

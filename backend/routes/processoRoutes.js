@@ -4,6 +4,9 @@ const authMiddleware = require('../middleware/authMiddleware');
 const processoController = require('../controllers/processesController');
 const { validate } = require('../middleware/validationMiddleware');
 
+
+module.exports = (processoController) => {
+    router.use(authMiddleware);
 router.use(authMiddleware);
 
 // Rotas para processos
@@ -97,4 +100,5 @@ router.get('/:processo_id/atualizacoes',
     processoController.listarAtualizacoes
 );
 
-module.exports = router;
+return router;
+}
