@@ -16,6 +16,9 @@ router.get(
 
 router.get('/', roleMiddleware(['Admin']), usuarioController.listarUsuarios);
 
+router.get('/alunos/para-atribuicao', roleMiddleware(['Professor']),  usuarioController.listarAlunosParaAtribuicao
+);
+
 router.get(
   '/:id',
   validate('getUsuario'),

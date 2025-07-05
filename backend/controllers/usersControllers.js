@@ -108,3 +108,15 @@ exports.listarAlunos = async (req, res) => {
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
+
+exports.listarAlunosParaAtribuicao = async (req, res) => {
+  try {
+    if (req.usuario.role !== 'Professor') {
+      return res.status(403).json({ erro: 'Acesso permitido apenas para professores' });
+    }
+    const alunos = await Usuario.listarPorRole('Aluno');
+    res.json(alunos);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+};
