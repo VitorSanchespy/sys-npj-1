@@ -11,19 +11,13 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,
-        secure: false
+        rewrite: (path) => path.replace(/^\/api/, ''),
       }
     }
   },
-  build: {
-    outDir: 'dist'
-  },
-  // 👇 ESSENCIAL para evitar erro 404 em rotas com React Router
   resolve: {
     alias: {
-      '@': '/src'
+      '@': '/src',
     }
-  },
-  // Serve index.html como fallback para rotas desconhecidas
-  base: '/',
+  }
 });

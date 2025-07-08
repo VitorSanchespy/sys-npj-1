@@ -26,10 +26,7 @@ app.use(
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 const corsOptions = {
-  origin: [
-    'http://localhost:0000', // Seu front-end
-    'https://seusite.com'
-  ],
+  origin:'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true // Se usar cookies

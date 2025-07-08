@@ -1,25 +1,37 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Registrar from './pages/Registrar';
-import { Navbar } from './components/Navbar';
-import { MantineProvider } from '@mantine/core';
+import { Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
+import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/Register';
+import DashboardPage from './pages/dashboard/Dashboard';
+import ProcessList from './pages/dashboard/processes/ProcessList';
+import ProcessDetail from './pages/dashboard/processes/ProcessDetail';
+import FileUpload from './pages/dashboard/files/FileUpload';
+import UserList from './pages/dashboard/users/UserList';
+import { NotificationProvider } from './contexts/NotificationContext';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
   return (
-    <MantineProvider withGlobalStyles withNormalizeCSS>
-      <Router>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/registrar" element={<Registrar />} />
-          {/* verificar se devo manter o /home */}
-          <Route path="/home" element={<Home />} />
-        </Routes>
-      </Router>
-    </MantineProvider>
+    <NotificationProvider>
+      <MantineProvider theme={theme}>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/registrar" element={<RegisterPage />} />
+              
+              <Route element={<ProtectedRoute />}>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<DashboardPage />} />
+                  <Route path="/processos" element={<ProcessList />} />
+                  <Route path="/processos/:id" element={<ProcessDetail />} />
+                  <Route path="/arquivos" element={<FileUpload />} />
+                  <Route path="/usuarios" element={<UserList />} />
+                  <Route path="/perfil" element={<ProfilePage />} />
+                </Route>
+              </Route>
+            </Routes>
+          </MantineProvider>
+    </NotificationProvider>
   );
 }
 
