@@ -1,104 +1,123 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TextInput, PasswordInput, Button, Title, Text, Paper, Image } from '@mantine/core';
+import { TextInput, PasswordInput, Button, Title, Text, Paper, Image, Loader } from '@mantine/core';
 import { IconAt, IconLock } from '@tabler/icons-react';
-import axios from 'axios';
+import api from '@/api/apiService';
+import useNotification from '@/hooks/useNotification';
+import { validateEmail } from '@/utils/validators';
 
-export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export default function LoginPage() {
+  const [credentials, setCredentials] = useState({
+    email: '',
+    password: ''
+  });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCredentials(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateEmail(credentials.email)) {
+      showNotification('Por favor, insira um email válido', 'error');
+      return;
+    }
+
     setLoading(true);
+    
     try {
-      // 1. Corrigindo o formato dos dados enviados
-      const response = await axios.post('localhost:3001/auth/login', {
-        email: email.trim(), // Remove espaços extras
-        password: password    // Mantém a senha como está
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      const { data } = await api.post('/auth/login', {
+        email: credentials.email.trim(),
+        password: credentials.password
       });
 
-      // 2. Verificando a estrutura da resposta
-      if (response.data.token && response.data.usuario) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.usuario));
-        navigate('/dashboard');
-      } else {
-        throw new Error('Resposta inesperada do servidor');
-      }
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.usuario));
       
-    } catch (err) {
-      // 3. Melhor tratamento de erros
-      if (err.response) {
-        // Erro 400-500 do servidor
-        setError(err.response.data.erro || 'Credenciais inválidas');
-      } else if (err.request) {
-        // Falha na requisição (sem resposta)
-        setError('Servidor não respondeu');
-      } else {
-        // Outros erros
-        setError('Erro ao fazer login');
-      }
+      showNotification('Login realizado com sucesso!', 'success');
+      navigate('/dashboard');
+      
+    } catch (error) {
+      const message = error.response?.data?.message || 
+                    'Erro ao realizar login. Tente novamente.';
+      showNotification(message, 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <Paper withBorder shadow="md" p={30} radius="md" w={400}>
-        <div className="text-center mb-6">
+    <div className="login-container">
+      <Paper className="login-form" withBorder shadow="md" p={30} radius="md">
+        <div className="login-header">
           <Image 
             src="/ufmt-logo.png" 
             alt="UFMT Logo" 
             width={120}
             mx="auto"
-            fallbackSrc="/placeholder-image.png"
+            withPlaceholder
           />
-          <Title order={3} mt="sm">Sistema NPJ - Login</Title>
+          <Title order={3} mt="sm" mb="md">
+            Sistema NPJ - Login
+          </Title>
         </div>
-        
-        {error && (
-          <Text color="red" size="sm" mb="md" align="center">
-            {error}
-          </Text>
-        )}
 
         <form onSubmit={handleSubmit}>
           <TextInput
+            name="email"
             label="Email"
             placeholder="seu@email.com"
             icon={<IconAt size={16} />}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={credentials.email}
+            onChange={handleChange}
             required
             mb="md"
           />
+          
           <PasswordInput
+            name="password"
             label="Senha"
             placeholder="Sua senha"
             icon={<IconLock size={16} />}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={credentials.password}
+            onChange={handleChange}
             required
             mb="md"
           />
+          
           <Button
             type="submit"
             fullWidth
-            loading={loading}
+            disabled={loading}
+            leftIcon={loading ? <Loader size="sm" /> : null}
           >
-            Entrar
+            {loading ? 'Entrando...' : 'Entrar'}
           </Button>
         </form>
       </Paper>
+
+      <style jsx>{`
+        .login-container {
+          display: flex;
+          min-height: 100vh;
+          align-items: center;
+          justify-content: center;
+          background-color: var(--mantine-color-gray-1);
+        }
+        .login-form {
+          width: 100%;
+          max-width: 400px;
+        }
+        .login-header {
+          text-align: center;
+          margin-bottom: 1.5rem;
+        }
+      `}</style>
     </div>
   );
 }

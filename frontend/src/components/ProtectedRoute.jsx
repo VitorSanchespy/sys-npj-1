@@ -1,14 +1,18 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 
-const ProtectedRoute = ({ children, roles }) => {
+const ProtectedRoute = ({ children, roles, redirectTo = '/login', fallbackRedirect = '/dashboard' }) => {
   const token = localStorage.getItem('token');
-  const user = JSON.parse(localStorage.getItem('user'));
+  const user = JSON.parse(localStorage.getItem('user')) || {};
 
-  if (!token || !user) {
-    return <Navigate to="/login" replace />;
+  // Redirecionamentos condicionais
+  if (!token) {
+    return <Navigate to={redirectTo} replace />;
   }
-  if (roles && !roles.includes(user?.role)) return <Navigate to="/dashboard" />;
+
+  if (roles && !roles.includes(user.role)) {
+    return <Navigate to={fallbackRedirect} replace />;
+  }
 
   return children;
 };

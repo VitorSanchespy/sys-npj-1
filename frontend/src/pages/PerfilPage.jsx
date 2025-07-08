@@ -1,35 +1,280 @@
-import React, { useEffect, useState } from 'react';
-import API from '../api';
+import { useState, useEffect } from 'react';
+import { 
+  Container,
+  Title,
+  Text,
+  TextInput,
+  Button,
+  Paper,
+  LoadingOverlay,
+  Avatar,
+  Group,
+  Stack,
+  Alert,
+  PasswordInput,
+  Divider,
+  FileInput,
+  Badge
+} from '@mantine/core';
+import { 
+  IconUser, 
+  IconMail, 
+  IconLock, 
+  IconDeviceMobile, 
+  IconCheck,
+  IconUpload,
+  IconShield,
+  IconCalendar
+} from '@tabler/icons-react';
+import api from '@/api/apiService';
+import useNotification from '@/hooks/useNotification';
+import { validatePassword } from '@/utils/validators';
 
-function PerfilPage() {
-  const [user, setUser] = useState({});
-  const [nome, setNome] = useState('');
+export default function PerfilPage() {
+  const [user, setUser] = useState(null);
+  const [formData, setFormData] = useState({
+    nome: '',
+    email: '',
+    telefone: '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [activeTab, setActiveTab] = useState('info');
+  const { showNotification } = useNotification();
 
-  const getPerfil = async () => {
-    const res = await API.get('/auth/profile');
-    setUser(res.data);
-    setNome(res.data.nome);
-  };
-
-  const atualizar = async () => {
-    await API.put(`/users/${user.id}`, { nome });
-    alert('Atualizado');
+  const fetchProfile = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.get('/auth/profile');
+      setUser(data);
+      setFormData({
+        nome: data.nome,
+        email: data.email,
+        telefone: data.telefone || '',
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+      setAvatarPreview(data.avatarUrl);
+    } catch (error) {
+      setError(error.response?.data?.message || 'Erro ao carregar perfil');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    getPerfil();
+    fetchProfile();
   }, []);
 
+  const handleAvatarChange = (file) => {
+    setAvatarFile(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => setAvatarPreview(e.target.result);
+      reader.readAsDataURL(file);
+    } else {
+      setAvatarPreview(user?.avatarUrl);
+    }
+  };
+
+  const handleInfoUpdate = async () => {
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('nome', formData.nome);
+      formDataToSend.append('telefone', formData.telefone);
+      if (avatarFile) formDataToSend.append('avatar', avatarFile);
+
+      await api.put('/auth/profile', formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      showNotification('Informações atualizadas com sucesso!', 'success');
+      fetchProfile();
+    } catch (error) {
+      showNotification(error.response?.data?.message || 'Erro ao atualizar perfil', 'error');
+    }
+  };
+
+  const handlePasswordUpdate = async () => {
+    if (formData.newPassword !== formData.confirmPassword) {
+      showNotification('As senhas não coincidem', 'error');
+      return;
+    }
+
+    if (!validatePassword(formData.newPassword)) {
+      showNotification('A senha deve ter pelo menos 6 caracteres', 'error');
+      return;
+    }
+
+    try {
+      await api.put('/auth/password', {
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword
+      });
+      showNotification('Senha atualizada com sucesso!', 'success');
+      setFormData({
+        ...formData,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    } catch (error) {
+      showNotification(error.response?.data?.message || 'Erro ao atualizar senha', 'error');
+    }
+  };
+
+  const getRoleColor = (role) => {
+    switch(role) {
+      case 'admin': return 'red';
+      case 'advogado': return 'blue';
+      case 'estagiario': return 'yellow';
+      case 'cliente': return 'green';
+      default: return 'gray';
+    }
+  };
+
+  if (loading) return <LoadingOverlay visible overlayBlur={2} />;
+  if (error) return <Alert color="red">{error}</Alert>;
+  if (!user) return null;
+
   return (
-    <div>
-      <h2 className="text-xl mb-4">Meu Perfil</h2>
-      <div className="flex flex-col gap-2">
-        <label>Nome:</label>
-        <input value={nome} onChange={e => setNome(e.target.value)} className="border px-2 py-1" />
-        <button onClick={atualizar} className="bg-green-600 text-white px-4 py-1 mt-2">Salvar</button>
-      </div>
-    </div>
+    <Container size="lg" py="xl">
+      <Title order={2} mb="xl">Meu Perfil</Title>
+
+      <Paper withBorder p="xl" radius="md" pos="relative">
+        <Group align="flex-start" spacing="xl">
+          {/* Left Column - Avatar and Basic Info */}
+          <Stack spacing="md" style={{ minWidth: 250 }}>
+            <Group position="center">
+              <Avatar 
+                src={avatarPreview} 
+                size={120} 
+                radius={120}
+              >
+                {user.nome.charAt(0).toUpperCase()}
+              </Avatar>
+            </Group>
+
+            <FileInput
+              label="Alterar foto"
+              placeholder="Selecionar imagem"
+              accept="image/*"
+              icon={<IconUpload size={14} />}
+              value={avatarFile}
+              onChange={handleAvatarChange}
+              clearable
+            />
+
+            <Divider />
+
+            <Stack spacing="xs">
+              <Group spacing="xs">
+                <IconShield size={18} />
+                <Badge color={getRoleColor(user.role)}>
+                  {user.role}
+                </Badge>
+              </Group>
+              <Group spacing="xs">
+                <IconCalendar size={18} />
+                <Text size="sm">
+                  Membro desde {new Date(user.createdAt).toLocaleDateString('pt-BR')}
+                </Text>
+              </Group>
+            </Stack>
+          </Stack>
+
+          {/* Right Column - Editable Info */}
+          <Stack style={{ flex: 1 }} spacing="xl">
+            <Tabs value={activeTab} onTabChange={setActiveTab}>
+              <Tabs.List>
+                <Tabs.Tab value="info">Informações Pessoais</Tabs.Tab>
+                <Tabs.Tab value="password">Alterar Senha</Tabs.Tab>
+              </Tabs.List>
+
+              <Tabs.Panel value="info" pt="xl">
+                <Stack spacing="md">
+                  <TextInput
+                    label="Nome Completo"
+                    icon={<IconUser size={16} />}
+                    value={formData.nome}
+                    onChange={(e) => setFormData({...formData, nome: e.target.value})}
+                    required
+                  />
+
+                  <TextInput
+                    label="Email"
+                    icon={<IconMail size={16} />}
+                    value={formData.email}
+                    readOnly
+                    disabled
+                  />
+
+                  <TextInput
+                    label="Telefone"
+                    icon={<IconDeviceMobile size={16} />}
+                    value={formData.telefone}
+                    onChange={(e) => setFormData({...formData, telefone: e.target.value})}
+                    placeholder="(00) 00000-0000"
+                  />
+
+                  <Group position="right" mt="md">
+                    <Button 
+                      leftIcon={<IconCheck size={16} />}
+                      onClick={handleInfoUpdate}
+                    >
+                      Salvar Alterações
+                    </Button>
+                  </Group>
+                </Stack>
+              </Tabs.Panel>
+
+              <Tabs.Panel value="password" pt="xl">
+                <Stack spacing="md">
+                  <PasswordInput
+                    label="Senha Atual"
+                    icon={<IconLock size={16} />}
+                    value={formData.currentPassword}
+                    onChange={(e) => setFormData({...formData, currentPassword: e.target.value})}
+                    required
+                  />
+
+                  <PasswordInput
+                    label="Nova Senha"
+                    icon={<IconLock size={16} />}
+                    value={formData.newPassword}
+                    onChange={(e) => setFormData({...formData, newPassword: e.target.value})}
+                    required
+                  />
+
+                  <PasswordInput
+                    label="Confirmar Nova Senha"
+                    icon={<IconLock size={16} />}
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                    required
+                  />
+
+                  <Group position="right" mt="md">
+                    <Button 
+                      leftIcon={<IconCheck size={16} />}
+                      onClick={handlePasswordUpdate}
+                    >
+                      Alterar Senha
+                    </Button>
+                  </Group>
+                </Stack>
+              </Tabs.Panel>
+            </Tabs>
+          </Stack>
+        </Group>
+      </Paper>
+    </Container>
   );
 }
-
-export default PerfilPage;

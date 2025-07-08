@@ -1,12 +1,4 @@
-import { AppShell } from '@mantine/core'; // Importação principal
-import { 
-  AppShellNavbar, 
-  AppShellHeader, 
-  Group, 
-  Button, 
-  Text, 
-  Image 
-} from '@mantine/core';
+import { AppShell, Group, Button, Text, Image } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
 import { IconLogout, IconDashboard, IconFiles, IconUsers, IconUser } from '@tabler/icons-react';
 
@@ -14,12 +6,13 @@ export default function Layout({ children }) {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user')) || {};
 
-  const logout = () => {
+  const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');
   };
 
+  // Componente NavLink interno (mantido simples)
   const NavLink = ({ to, icon, label }) => (
     <Button
       component={Link}
@@ -38,8 +31,9 @@ export default function Layout({ children }) {
     <AppShell
       padding="md"
       navbar={
-        <AppShellNavbar width={{ base: 280 }} p="xs" bg="ufmt-green.6">
-          <AppShellNavbar.Section p="sm">
+        <AppShell.Navbar width={{ base: 280 }} p="xs" bg="ufmt-green.6">
+          {/* Seção do Logo */}
+          <AppShell.Section p="sm">
             <Group justify="center">
               <Image 
                 src="/ufmt-logo.png" 
@@ -48,8 +42,10 @@ export default function Layout({ children }) {
                 withPlaceholder
               />
             </Group>
-          </AppShellNavbar.Section>
-          <AppShellNavbar.Section grow mt="md">
+          </AppShell.Section>
+
+          {/* Links de Navegação */}
+          <AppShell.Section grow mt="md">
             <NavLink to="/dashboard" icon={<IconDashboard size={18} />} label="Dashboard" />
             <NavLink to="/processos" icon={<IconFiles size={18} />} label="Processos Jurídicos" />
             <NavLink to="/arquivos" icon={<IconFiles size={18} />} label="Documentos" />
@@ -57,29 +53,31 @@ export default function Layout({ children }) {
             {user.role === 'admin' && (
               <NavLink to="/usuarios" icon={<IconUsers size={18} />} label="Gestão de Usuários" />
             )}
-          </AppShellNavbar.Section>
-          <AppShellNavbar.Section>
+          </AppShell.Section>
+
+          {/* Botão de Logout */}
+          <AppShell.Section>
             <Button
               leftIcon={<IconLogout size={18} />}
               variant="light"
               color="red"
               fullWidth
-              onClick={logout}
+              onClick={handleLogout}
             >
               Sair do Sistema
             </Button>
-          </AppShellNavbar.Section>
-        </AppShellNavbar>
+          </AppShell.Section>
+        </AppShell.Navbar>
       }
       header={
-        <AppShellHeader p="xs" bg="ufmt-green.6" c="white">
+        <AppShell.Header p="xs" bg="ufmt-green.6" c="white">
           <Group justify="space-between">
             <Text size="xl" fw={700}>
               Sistema NPJ - Núcleo de Práticas Jurídicas
             </Text>
             <Text>Bem-vindo, {user.nome || 'Usuário'}</Text>
           </Group>
-        </AppShellHeader>
+        </AppShell.Header>
       }
     >
       {children}

@@ -1,20 +1,30 @@
-import { createContext, useState } from 'react';
+import { createContext, useState, useCallback } from 'react';
+import Notification from '@/components/Notification';
 
-export const NotificationContext = createContext();
+export const NotificationContext = createContext({
+  showNotification: () => {},
+});
 
 export function NotificationProvider({ children }) {
   const [notification, setNotification] = useState(null);
 
-  const showNotification = (message, type = 'success') => {
+  const showNotification = useCallback((message, type = 'success') => {
     setNotification({ message, type });
-  };
+    
+    // Limpa notificação automática após 5 segundos
+    const timer = setTimeout(() => {
+      setNotification(null);
+    }, 5000);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
-  const clearNotification = () => {
+  const clearNotification = useCallback(() => {
     setNotification(null);
-  };
+  }, []);
 
   return (
-    <NotificationContext.Provider value={{ showNotification }}>
+    <NotificationContext.Provider value={{ showNotification, clearNotification }}>
       {children}
       {notification && (
         <Notification

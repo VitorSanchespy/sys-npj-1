@@ -1,36 +1,48 @@
 import { Routes, Route } from 'react-router-dom';
+import { MantineProvider } from '@mantine/core';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
-import LoginPage from './pages/auth/LoginPage';
-import RegisterPage from './pages/auth/Register';
-import DashboardPage from './pages/dashboard/Dashboard';
-import ProcessList from './pages/dashboard/processes/ProcessList';
-import ProcessDetail from './pages/dashboard/processes/ProcessDetail';
-import FileUpload from './pages/dashboard/files/FileUpload';
-import UserList from './pages/dashboard/users/UserList';
 import { NotificationProvider } from './contexts/NotificationContext';
-import ProfilePage from './pages/ProfilePage';
+import theme from '../theme';
+import {
+  LoginPage,
+  RegisterPage,
+  DashboardPage,
+  ProcessList,
+  ProcessDetail,
+  FileUpload,
+  UserList,
+  ProfilePage
+} from './pages';
+
+const AppRoutes = () => (
+  <Routes>
+    {/* Rotas públicas */}
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/registrar" element={<RegisterPage />} />
+    
+    {/* Rotas protegidas */}
+    <Route element={<ProtectedRoute />}>
+      <Route element={<Layout />}>
+        <Route index element={<DashboardPage />} />
+        <Route path="/processos">
+          <Route index element={<ProcessList />} />
+          <Route path=":id" element={<ProcessDetail />} />
+        </Route>
+        <Route path="/arquivos" element={<FileUpload />} />
+        <Route path="/usuarios" element={<UserList />} />
+        <Route path="/perfil" element={<ProfilePage />} />
+      </Route>
+    </Route>
+  </Routes>
+);
 
 function App() {
   return (
     <NotificationProvider>
       <MantineProvider theme={theme}>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/registrar" element={<RegisterPage />} />
-              
-              <Route element={<ProtectedRoute />}>
-                <Route element={<Layout />}>
-                  <Route path="/" element={<DashboardPage />} />
-                  <Route path="/processos" element={<ProcessList />} />
-                  <Route path="/processos/:id" element={<ProcessDetail />} />
-                  <Route path="/arquivos" element={<FileUpload />} />
-                  <Route path="/usuarios" element={<UserList />} />
-                  <Route path="/perfil" element={<ProfilePage />} />
-                </Route>
-              </Route>
-            </Routes>
-          </MantineProvider>
+        <AppRoutes />
+      </MantineProvider>
     </NotificationProvider>
   );
 }
