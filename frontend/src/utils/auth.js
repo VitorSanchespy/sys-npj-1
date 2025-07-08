@@ -15,7 +15,8 @@ export const AuthUtils = {
 
   // Controle de Sessão
   isAuthenticated: () => !!localStorage.getItem('token'),
-  clearSession: () => {
+
+    clearSession: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   },
@@ -27,9 +28,13 @@ export const AuthUtils = {
 
 // Métodos simplificados para uso comum
 export const getCurrentToken = () => AuthUtils.getToken();
+export const loginPath = '/login';
+export const clearSession = () => AuthUtils.clearSession();
 export const getCurrentUser = () => AuthUtils.getUser();
 export const isUserAuthenticated = () => AuthUtils.isAuthenticated();
 export const logout = () => {
   AuthUtils.clearSession();
   AuthUtils.redirectToLogin();
 };
+
+

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { TextInput, PasswordInput, Button, Title, Text, Paper, Image, Loader } from '@mantine/core';
 import { IconAt, IconLock } from '@tabler/icons-react';
 import api from '@/api/apiService';
-import useNotification from '@/hooks/useNotification';
+import { useNotification } from '@/contexts/NotificationContext';
 import { validateEmail } from '@/utils/validators';
 
 export default function LoginPage() {

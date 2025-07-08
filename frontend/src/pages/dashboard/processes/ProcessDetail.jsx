@@ -28,7 +28,7 @@ import {
   IconScale
 } from '@tabler/icons-react';
 import api from '@/api/apiService';
-import useNotification from '@/hooks/useNotification';
+import { useNotification } from '@/contexts/NotificationContext';
 import FileUpload from '../files/FileUpload';
 import Timeline from '@/components/Timeline';
 

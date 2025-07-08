@@ -12,7 +12,7 @@ import {
 } from '@mantine/core';
 import { IconUpload, IconCheck, IconX } from '@tabler/icons-react';
 import api from '@/api/apiService';
-import useNotification from '@/hooks/useNotification';
+import { useNotification } from '@/contexts/NotificationContext';
 
 export default function FileUpload({ processoId, onUploadSuccess }) {
   const [file, setFile] = useState(null);

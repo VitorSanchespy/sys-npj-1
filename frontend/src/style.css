@@ -1,23 +1,54 @@
-* {
+/* ===== Base Reset & Styles ===== */
+:root {
+  --color-primary: #42b883;
+  --color-text: #333;
+  --color-bg: #f5f5f5;
+  --color-white: #ffffff;
+}
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+/* ===== Body & Layout ===== */
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f5f5f5;
-  color: #333;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif; /* Improved font stack */
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
+/* ===== App Container ===== */
 .App {
   text-align: center;
+  width: min(100% - 2rem, 1200px); /* Responsive container */
+  margin-inline: auto; /* Logical property */
+  padding: 2rem;
 }
 
+/* ===== Typography ===== */
 h1 {
-  color: #42b883;
+  color: var(--color-primary);
+  font-size: clamp(2rem, 5vw, 3rem); /* Responsive font size */
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+}
+
+/* ===== Media Queries ===== */
+@media (max-width: 768px) {
+  body {
+    padding: 1rem;
+  }
+  
+  .App {
+    padding: 1rem;
+  }
 }

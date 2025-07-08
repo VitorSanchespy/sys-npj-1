@@ -1,35 +1,15 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
-  Table,
-  Text,
-  Button,
-  Group,
-  TextInput,
-  Select,
-  Badge,
-  Paper,
-  LoadingOverlay,
-  ActionIcon,
-  Menu,
-  Pagination,
-  Avatar,
-  Modal,
-  Flex
+  Table, Text, Button, Group, TextInput, Select, Badge, Paper, 
+  LoadingOverlay, ActionIcon, Menu, Pagination, Avatar, Modal, Flex 
 } from '@mantine/core';
 import { 
-  IconSearch, 
-  IconPlus, 
-  IconEdit, 
-  IconTrash, 
-  IconUser,
-  IconFilter,
-  IconRefresh,
-  IconDotsVertical,
-  IconLockOpen,
-  IconMail
+  IconSearch, IconPlus, IconEdit, IconTrash, IconUser,
+  IconFilter, IconRefresh, IconDotsVertical, IconLockOpen, IconMail
 } from '@tabler/icons-react';
 import api from '@/api/apiService';
-import useNotification from '@/hooks/useNotification';
+import { useNotification } from '@/contexts/NotificationContext';
 import EmptyState from '@/components/EmptyState';
 
 const ROLE_OPTIONS = [
@@ -48,52 +28,57 @@ const STATUS_OPTIONS = [
 const ITEMS_PER_PAGE = 10;
 
 export default function UserList() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
+  const navigate = useNavigate();
   const { showNotification } = useNotification();
+  
+  const [state, setState] = useState({
+    users: [],
+    loading: true,
+    searchTerm: '',
+    roleFilter: '',
+    statusFilter: '',
+    currentPage: 1,
+    totalPages: 1,
+    deleteModalOpen: false,
+    userToDelete: null
+  });
 
   const fetchUsers = async (page = 1) => {
-    setLoading(true);
+    setState(prev => ({ ...prev, loading: true }));
     try {
       const params = {
         page,
         limit: ITEMS_PER_PAGE,
-        search: searchTerm,
-        role: roleFilter,
-        status: statusFilter
+        search: state.searchTerm,
+        role: state.roleFilter,
+        status: state.statusFilter
       };
       
       const { data } = await api.get('/usuarios', { params });
-      setUsers(data.items);
-      setTotalPages(data.totalPages);
+      setState(prev => ({ 
+        ...prev, 
+        users: data.items,
+        totalPages: data.totalPages,
+        loading: false
+      }));
     } catch (error) {
       showNotification('Erro ao carregar usuários', 'error');
-    } finally {
-      setLoading(false);
+      setState(prev => ({ ...prev, loading: false }));
     }
   };
 
   useEffect(() => {
-    fetchUsers(currentPage);
-  }, [currentPage, searchTerm, roleFilter, statusFilter]);
+    fetchUsers(state.currentPage);
+  }, [state.currentPage, state.searchTerm, state.roleFilter, state.statusFilter]);
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/usuarios/${userToDelete.id}`);
+      await api.delete(`/usuarios/${state.userToDelete.id}`);
       showNotification('Usuário removido com sucesso', 'success');
-      fetchUsers(currentPage);
+      fetchUsers(state.currentPage);
+      setState(prev => ({ ...prev, deleteModalOpen: false, userToDelete: null }));
     } catch (error) {
       showNotification('Erro ao remover usuário', 'error');
-    } finally {
-      setDeleteModalOpen(false);
-      setUserToDelete(null);
     }
   };
 
@@ -125,9 +110,13 @@ export default function UserList() {
     }
   };
 
+  const updateState = (key, value) => {
+    setState(prev => ({ ...prev, [key]: value }));
+  };
+
   return (
     <Paper withBorder p="md" radius="md" pos="relative">
-      <LoadingOverlay visible={loading} overlayBlur={2} />
+      <LoadingOverlay visible={state.loading} overlayBlur={2} />
 
       <Group position="apart" mb="md">
         <Text size="xl" fw={500}>Gerenciamento de Usuários</Text>
@@ -143,16 +132,16 @@ export default function UserList() {
         <TextInput
           placeholder="Buscar por nome ou email..."
           icon={<IconSearch size={16} />}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={state.searchTerm}
+          onChange={(e) => updateState('searchTerm', e.target.value)}
           style={{ flex: 1 }}
         />
 
         <Select
           placeholder="Filtrar por cargo"
           data={ROLE_OPTIONS}
-          value={roleFilter}
-          onChange={setRoleFilter}
+          value={state.roleFilter}
+          onChange={(value) => updateState('roleFilter', value)}
           clearable
           icon={<IconUser size={16} />}
         />
@@ -160,8 +149,8 @@ export default function UserList() {
         <Select
           placeholder="Filtrar por status"
           data={STATUS_OPTIONS}
-          value={statusFilter}
-          onChange={setStatusFilter}
+          value={state.statusFilter}
+          onChange={(value) => updateState('statusFilter', value)}
           clearable
           icon={<IconFilter size={16} />}
         />
@@ -176,10 +165,10 @@ export default function UserList() {
         </ActionIcon>
       </Group>
 
-      {users.length === 0 ? (
+      {state.users.length === 0 ? (
         <EmptyState
           title="Nenhum usuário encontrado"
-          description={searchTerm || roleFilter || statusFilter ? 
+          description={state.searchTerm || state.roleFilter || state.statusFilter ? 
             "Tente ajustar sua busca ou filtros" : 
             "Cadastre um novo usuário para começar"}
         />
@@ -196,7 +185,7 @@ export default function UserList() {
               </tr>
             </thead>
             <tbody>
-              {users.map(user => (
+              {state.users.map(user => (
                 <tr key={user.id}>
                   <td>
                     <Group spacing="sm">
@@ -251,8 +240,8 @@ export default function UserList() {
                             icon={<IconTrash size={16} />}
                             color="red"
                             onClick={() => {
-                              setUserToDelete(user);
-                              setDeleteModalOpen(true);
+                              updateState('userToDelete', user);
+                              updateState('deleteModalOpen', true);
                             }}
                           >
                             Excluir
@@ -266,12 +255,12 @@ export default function UserList() {
             </tbody>
           </Table>
 
-          {totalPages > 1 && (
+          {state.totalPages > 1 && (
             <Group position="center" mt="xl">
               <Pagination
-                page={currentPage}
-                onChange={setCurrentPage}
-                total={totalPages}
+                page={state.currentPage}
+                onChange={(page) => updateState('currentPage', page)}
+                total={state.totalPages}
                 siblings={1}
                 boundaries={1}
               />
@@ -281,13 +270,15 @@ export default function UserList() {
       )}
 
       <Modal
-        opened={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
+        opened={state.deleteModalOpen}
+        onClose={() => updateState('deleteModalOpen', false)}
         title="Confirmar exclusão"
       >
-        <Text mb="xl">Tem certeza que deseja excluir o usuário {userToDelete?.nome}?</Text>
+        <Text mb="xl">
+          Tem certeza que deseja excluir o usuário {state.userToDelete?.nome}?
+        </Text>
         <Flex gap="sm" justify="flex-end">
-          <Button variant="default" onClick={() => setDeleteModalOpen(false)}>
+          <Button variant="default" onClick={() => updateState('deleteModalOpen', false)}>
             Cancelar
           </Button>
           <Button color="red" onClick={handleDelete}>

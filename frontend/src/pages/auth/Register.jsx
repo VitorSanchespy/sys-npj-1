@@ -11,7 +11,7 @@ import {
 } from '@mantine/core';
 import { IconAt, IconUser, IconLock, IconArrowLeft } from '@tabler/icons-react';
 import api from '@/api/apiService';
-import useNotification from '@/hooks/useNotification';
+import { useNotification } from '@/contexts/NotificationContext';
 import { validateEmail, validatePassword } from '@/utils/validators';
 
 const DEFAULT_ROLE_ID = 2; // ID para usuário comum

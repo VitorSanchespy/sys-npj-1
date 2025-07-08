@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { auth } from '@/utils/auth'; // Utilitário para gerenciar tokens
+import { getCurrentToken, clearSession, loginPath } from '../utils/auth';
 
 // Constantes (melhor em .env)
 const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT) || 10000;
@@ -16,7 +16,7 @@ const API = axios.create({
 
 // Interceptor de Request
 API.interceptors.request.use((config) => {
-  const token = auth.getToken(); // Abstraction layer
+  const token = getCurrentToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -25,14 +25,11 @@ API.interceptors.request.use((config) => {
 
 // Interceptor de Response
 API.interceptors.response.use(
-  (response) => response.data, // Retorna apenas os dados
+  (response) => response.data,
   (error) => {
-    const originalRequest = error.config;
-    
-    // Tratamento de 401 (não autorizado)
     if (error.response?.status === 401 && !originalRequest._retry) {
-      auth.clear(); // Limpa tokens e dados do usuário
-      window.location.pathname = auth.loginPath; // Redireciona dinamicamente
+      clearSession();
+      window.location.pathname = loginPath;
     }
 
     // Padroniza erros da API

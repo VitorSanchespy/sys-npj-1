@@ -25,7 +25,7 @@ import {
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import api from '@/api/apiService';
-import useNotification from '@/hooks/useNotification';
+import { useNotification } from '@/contexts/NotificationContext';
 import EmptyState from '@/components/EmptyState';
 
 const STATUS_OPTIONS = [

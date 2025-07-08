@@ -1,38 +1,31 @@
-import { createContext, useState, useCallback } from 'react';
-import Notification from '@/components/Notification';
+import { createContext, useContext } from 'react';
+import { notifications } from '@mantine/notifications';
 
-export const NotificationContext = createContext({
-  showNotification: () => {},
-});
+// 1. Primeiro declare o contexto
+const NotificationContext = createContext();
 
+// 2. Depois crie o Provider
 export function NotificationProvider({ children }) {
-  const [notification, setNotification] = useState(null);
-
-  const showNotification = useCallback((message, type = 'success') => {
-    setNotification({ message, type });
-    
-    // Limpa notificação automática após 5 segundos
-    const timer = setTimeout(() => {
-      setNotification(null);
-    }, 5000);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  const clearNotification = useCallback(() => {
-    setNotification(null);
-  }, []);
+  const showNotification = (message, type = 'info') => {
+    notifications.show({
+      title: type === 'error' ? 'Erro' : 'Sucesso',
+      message,
+      color: type === 'error' ? 'red' : 'green',
+    });
+  };
 
   return (
-    <NotificationContext.Provider value={{ showNotification, clearNotification }}>
+    <NotificationContext.Provider value={{ showNotification }}>
       {children}
-      {notification && (
-        <Notification
-          message={notification.message}
-          type={notification.type}
-          onClose={clearNotification}
-        />
-      )}
     </NotificationContext.Provider>
   );
+}
+
+// 3. Por último exporte o hook customizado
+export function useNotification() {
+  const context = useContext(NotificationContext);
+  if (!context) {
+    throw new Error('useNotification must be used within NotificationProvider');
+  }
+  return context;
 }

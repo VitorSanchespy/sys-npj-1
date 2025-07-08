@@ -23,7 +23,7 @@ import {
   IconAlertCircle
 } from '@tabler/icons-react';
 import api from '@/api/apiService';
-import useNotification from '@/hooks/useNotification';
+import { useNotification } from '@/contexts/NotificationContext';
 import { useEffect, useState } from 'react';
 
 const featureCards = [

@@ -27,7 +27,7 @@ import {
   IconX
 } from '@tabler/icons-react';
 import api from '@/api/apiService';
-import useNotification from '@/hooks/useNotification';
+import { useNotification } from '@/contexts/NotificationContext';
 import { validatePassword } from '@/utils/validators';
 
 export default function ProfilePage() {
