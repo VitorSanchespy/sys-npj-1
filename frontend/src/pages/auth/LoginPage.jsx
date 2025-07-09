@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TextInput, PasswordInput, Button, Title, Text, Paper, Image, Loader } from '@mantine/core';
+import { 
+  TextInput, PasswordInput, Button, Title, Text, Paper, Image 
+} from '@mantine/core';
 import { IconAt, IconLock } from '@tabler/icons-react';
 import api from '@/api/apiService';
 import { useNotification } from '@/contexts/NotificationContext';
@@ -60,7 +62,6 @@ export default function LoginPage() {
             alt="UFMT Logo" 
             width={120}
             mx="auto"
-            withPlaceholder
           />
           <Title order={3} mt="sm" mb="md">
             Sistema NPJ - Login
@@ -72,7 +73,7 @@ export default function LoginPage() {
             name="email"
             label="Email"
             placeholder="seu@email.com"
-            icon={<IconAt size={16} />}
+            leftSection={<IconAt size={16} />}
             value={credentials.email}
             onChange={handleChange}
             required
@@ -83,7 +84,7 @@ export default function LoginPage() {
             name="password"
             label="Senha"
             placeholder="Sua senha"
-            icon={<IconLock size={16} />}
+            leftSection={<IconLock size={16} />}
             value={credentials.password}
             onChange={handleChange}
             required
@@ -93,15 +94,15 @@ export default function LoginPage() {
           <Button
             type="submit"
             fullWidth
-            disabled={loading}
-            leftIcon={loading ? <Loader size="sm" /> : null}
+            loading={loading}
+            leftSection={loading ? null : <IconLock size={16} />}
           >
             {loading ? 'Entrando...' : 'Entrar'}
           </Button>
         </form>
       </Paper>
 
-      <style jsx>{`
+      <style jsx="true">{`
         .login-container {
           display: flex;
           min-height: 100vh;
