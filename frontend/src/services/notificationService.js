@@ -1,22 +1,26 @@
-import io from 'socket.io-client';
-import { toast } from 'react-toastify';
-
-const socket = io(process.env.REACT_APP_SOCKET_URL);
+// src/services/notificationService.js
+import { showNotification } from '@mantine/notifications';
 
 export const setupNotifications = () => {
-  socket.on('connect', () => {
-    console.log('Conectado ao servidor de notificações');
-  });
+  console.log('Sistema de notificações inicializado');
+  
+  return () => {
+    console.log('Sistema de notificações desativado');
+  };
+};
 
-  socket.on('newNotification', (data) => {
-    toast.info(`Nova notificação: ${data.message}`);
-  });
-
-  socket.on('error', (err) => {
-    toast.error(`Erro: ${err.message}`);
+export const showErrorNotification = (message) => {
+  showNotification({
+    title: 'Erro',
+    message,
+    color: 'red',
   });
 };
 
-export const disconnectNotifications = () => {
-  socket.disconnect();
+export const showSuccessNotification = (message) => {
+  showNotification({
+    title: 'Sucesso',
+    message,
+    color: 'teal',
+  });
 };

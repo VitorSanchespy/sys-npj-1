@@ -1,31 +1,86 @@
+// src/contexts/NotificationContext.jsx
 import { createContext, useContext } from 'react';
 import { notifications } from '@mantine/notifications';
+import { 
+  IconCheck, 
+  IconX, 
+  IconInfoCircle, 
+  IconAlertCircle 
+} from '@tabler/icons-react';
 
-// 1. Primeiro declare o contexto
 const NotificationContext = createContext();
 
-// 2. Depois crie o Provider
 export function NotificationProvider({ children }) {
-  const showNotification = (message, type = 'info') => {
+  const showNotification = (options) => {
+    const { 
+      type = 'info', 
+      title, 
+      message, 
+      autoClose = 5000,
+      ...rest
+    } = options;
+    
+    const typeSettings = {
+      success: {
+        color: 'teal',
+        icon: <IconCheck size={18} />,
+        title: title || 'Sucesso!'
+      },
+      error: {
+        color: 'red',
+        icon: <IconX size={18} />,
+        title: title || 'Erro!'
+      },
+      warning: {
+        color: 'orange',
+        icon: <IconAlertCircle size={18} />,
+        title: title || 'Atenção!'
+      },
+      info: {
+        color: 'blue',
+        icon: <IconInfoCircle size={18} />,
+        title: title || 'Informação'
+      }
+    };
+    
+    const settings = typeSettings[type] || typeSettings.info;
+    
     notifications.show({
-      title: type === 'error' ? 'Erro' : 'Sucesso',
       message,
-      color: type === 'error' ? 'red' : 'green',
+      autoClose,
+      ...settings,
+      ...rest
     });
   };
 
+  // Métodos específicos para tipos de notificação
+  const api = {
+    show: showNotification,
+    success: (message, options) => 
+      showNotification({ ...options, type: 'success', message }),
+    error: (message, options) => 
+      showNotification({ ...options, type: 'error', message }),
+    warning: (message, options) => 
+      showNotification({ ...options, type: 'warning', message }),
+    info: (message, options) => 
+      showNotification({ ...options, type: 'info', message }),
+    clean: () => notifications.clean(),
+    cleanQueue: () => notifications.cleanQueue(),
+    update: (id, options) => notifications.update(id, options),
+    hide: (id) => notifications.hide(id)
+  };
+
   return (
-    <NotificationContext.Provider value={{ showNotification }}>
+    <NotificationContext.Provider value={api}>
       {children}
     </NotificationContext.Provider>
   );
 }
 
-// 3. Por último exporte o hook customizado
 export function useNotification() {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error('useNotification must be used within NotificationProvider');
+    throw new Error('useNotification deve ser usado dentro de um NotificationProvider');
   }
   return context;
 }

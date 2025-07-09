@@ -1,16 +1,27 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
+import { isAuthenticated, getCurrentUser } from '@/utils/auth';
 
-const ProtectedRoute = ({ children, roles, redirectTo = '/login', fallbackRedirect = '/dashboard' }) => {
-  const token = localStorage.getItem('token');
-  const user = JSON.parse(localStorage.getItem('user')) || {};
+const ProtectedRoute = ({ 
+  children, 
+  roles = [], 
+  redirectTo = '/login',
+  fallbackRedirect = '/dashboard'
+}) => {
+  const location = useLocation();
+  const isAuth = isAuthenticated();
+  const user = getCurrentUser();
 
-  // Redirecionamentos condicionais
-  if (!token) {
-    return <Navigate to={redirectTo} replace />;
+  if (!isAuth) {
+    return (
+      <Navigate 
+        to={redirectTo} 
+        replace 
+        state={{ from: location }} 
+      />
+    );
   }
 
-  if (roles && !roles.includes(user.role)) {
+  if (roles.length > 0 && (!user?.role || !roles.includes(user.role))) {
     return <Navigate to={fallbackRedirect} replace />;
   }
 

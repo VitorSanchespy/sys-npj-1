@@ -18,7 +18,6 @@ export default function Layout({ children }) {
     navigate('/login');
   };
 
-  // Links de navegação reutilizáveis
   const navLinks = [
     { to: '/dashboard', icon: <IconDashboard size={18} />, label: 'Dashboard' },
     { to: '/processos', icon: <IconFiles size={18} />, label: 'Processos Jurídicos' },
@@ -53,19 +52,16 @@ export default function Layout({ children }) {
       </AppShell.Header>
 
       <AppShell.Navbar p="xs" bg="ufmt-green.6">
-        {/* Logo */}
         <AppShell.Section p="sm">
           <Group justify="center">
             <Image 
               src="/ufmt-logo.png" 
               alt="UFMT Logo" 
               width={150}
-              withPlaceholder
             />
           </Group>
         </AppShell.Section>
 
-        {/* Navegação */}
         <AppShell.Section grow mt="md">
           {navLinks.map((link) => (
             <NavLink
@@ -91,7 +87,6 @@ export default function Layout({ children }) {
           ))}
         </AppShell.Section>
 
-        {/* Logout */}
         <AppShell.Section>
           <Button
             leftSection={<IconLogout size={18} />}

@@ -1,30 +1,35 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   TextInput, 
   Button, 
   Title, 
   Paper,
   Loader,
-  Anchor,
-  Text
+  Text,
+  Container,
+  Group,
+  Stack,
+  Alert
 } from '@mantine/core';
-import { IconAt, IconArrowLeft } from '@tabler/icons-react';
+import { IconAt, IconArrowLeft, IconCheck } from '@tabler/icons-react';
 import api from '@/api/apiService';
-import useNotification from '@/hooks/useNotification';
+import { notifications } from '@mantine/notifications';
 import { validateEmail } from '@/utils/validators';
 
 export default function ResetPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
-  const { showNotification } = useNotification();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     
     if (!validateEmail(email)) {
-      showNotification('Por favor, insira um email válido', 'error');
+      setError('Por favor, insira um email válido');
       return;
     }
 
@@ -32,81 +37,124 @@ export default function ResetPasswordPage() {
     
     try {
       await api.post('/auth/reset-password', { email: email.trim() });
-      showNotification('Email de redefinição enviado com sucesso!', 'success');
-      navigate('/login');
-    } catch (error) {
-      const message = error.response?.data?.message || 
+      
+      notifications.show({
+        title: 'Email enviado!',
+        message: 'Verifique sua caixa de entrada para redefinir sua senha',
+        color: 'teal',
+        icon: <IconCheck size={18} />,
+      });
+      
+      setSuccess(true);
+    } catch (err) {
+      const message = err.response?.data?.message || 
                      'Erro ao enviar email de redefinição. Tente novamente.';
-      showNotification(message, 'error');
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
 
+  if (success) {
+    return (
+      <Container size="xs" py="xl">
+        <Paper withBorder shadow="md" p="xl" radius="md">
+          <Stack align="center" textAlign="center">
+            <IconCheck size={48} color="var(--mantine-color-teal-6)" />
+            <Title order={2} mb="sm">
+              Email enviado com sucesso!
+            </Title>
+            <Text c="dimmed" mb="xl">
+              Enviamos um link de redefinição para <strong>{email}</strong>.
+              Verifique sua caixa de entrada.
+            </Text>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/login')}
+            >
+              Voltar para login
+            </Button>
+          </Stack>
+        </Paper>
+      </Container>
+    );
+  }
+
   return (
-    <div className="auth-container">
-      <Paper className="auth-form" withBorder shadow="md" p={30} radius="md">
+    <Container size="xs" py="xl">
+      <Paper withBorder shadow="md" p="xl" radius="md">
         <Button
           variant="subtle"
-          leftIcon={<IconArrowLeft size={14} />}
-          onClick={() => navigate(-1)}
+          leftSection={<IconArrowLeft size={14} />}
+          onClick={() => navigate('/login')}
           mb="md"
-          compact
         >
-          Voltar
+          Voltar para login
         </Button>
 
-        <Title order={2} align="center" mb="xl">
-          Redefinir Senha
-        </Title>
-
-        <Text align="center" mb="xl" c="dimmed">
-          Digite seu email para receber o link de redefinição
-        </Text>
+        <Stack align="center" mb="md">
+          <Title order={2} ta="center">
+            Redefinir Senha
+          </Title>
+          <Text c="dimmed" ta="center">
+            Digite seu email para receber o link de redefinição
+          </Text>
+        </Stack>
 
         <form onSubmit={handleSubmit}>
-          <TextInput
-            name="email"
-            label="Email"
-            placeholder="seu@email.com"
-            icon={<IconAt size={16} />}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            mb="xl"
-          />
+          <Stack>
+            {error && (
+              <Alert 
+                variant="light" 
+                color="red" 
+                mb="sm"
+              >
+                {error}
+              </Alert>
+            )}
 
-          <Button 
-            type="submit" 
-            fullWidth 
-            loading={loading}
-            leftIcon={loading ? <Loader size="sm" /> : null}
-          >
-            {loading ? 'Enviando...' : 'Enviar Link'}
-          </Button>
+            <TextInput
+              label="Email"
+              placeholder="seu@email.com"
+              leftSection={<IconAt size={16} />}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              error={!validateEmail(email) && email.length > 0}
+              onBlur={() => {
+                if (email.length > 0 && !validateEmail(email)) {
+                  setError('Por favor, insira um email válido');
+                }
+              }}
+            />
+
+            <Button 
+              type="submit" 
+              fullWidth 
+              loading={loading}
+              leftSection={loading ? <Loader size="sm" /> : null}
+              mt="md"
+            >
+              {loading ? 'Enviando...' : 'Enviar Link'}
+            </Button>
+          </Stack>
         </form>
 
-        <Text align="center" mt="md">
-          Lembrou sua senha?{' '}
-          <Anchor component={Link} to="/login">
-            Faça login
-          </Anchor>
-        </Text>
+        <Group justify="center" mt="xl">
+          <Text c="dimmed">
+            Lembrou sua senha?{' '}
+            <Text 
+              component={Link} 
+              to="/login" 
+              c="blue.5" 
+              fw={500}
+              td="underline"
+            >
+              Faça login
+            </Text>
+          </Text>
+        </Group>
       </Paper>
-
-      <style jsx>{`
-        .auth-container {
-          display: flex;
-          min-height: 100vh;
-          align-items: center;
-          justify-content: center;
-          background-color: var(--mantine-color-gray-1);
-        }
-        .auth-form {
-          width: 100%;
-          max-width: 400px;
-        }
-      `}</style>
-    </div>
+    </Container>
   );
 }

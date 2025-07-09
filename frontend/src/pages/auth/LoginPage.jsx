@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   TextInput, PasswordInput, Button, Title, Paper, Image, Container
 } from '@mantine/core';
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation(); // Novo hook adicionado
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,7 +35,10 @@ export default function LoginPage() {
       localStorage.setItem('user', JSON.stringify(data.usuario));
       
       toast.success('Login realizado com sucesso!');
-      navigate('/dashboard');
+      
+      // Novo: Redireciona para a página original ou dashboard
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
       
     } catch (error) {
       const message = error.response?.data?.message || 

@@ -1,10 +1,6 @@
 // src/theme.js
-import { createTheme } from '@mantine/core';
-
-export default createTheme({
+const theme = {
   colors: {
-    primaryColor: 'ufmt-green',
-    primaryShade: 6,
     'ufmt-green': [
       '#e6f7f0',
       '#cceee1',
@@ -18,10 +14,8 @@ export default createTheme({
       '#002215'
     ],
   },
-  fontFamily: 'Inter, sans-serif',
-  headings: {
-    fontFamily: 'Inter, sans-serif',
-    fontWeight: 700,
-  },
-  defaultRadius: 'md',
-});
+  primaryColor: 'ufmt-green',
+  primaryShade: 6,
+};
+
+export default theme;

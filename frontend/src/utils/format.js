@@ -55,6 +55,21 @@ export const formatCurrency = (value, decimals = 2) => {
   });
 };
 
+
+// src/utils/format.js
+export const formatCPF = (value) => {
+  if (!value) return '';
+  
+  // Remove tudo que não é dígito
+  const cleaned = value.replace(/\D/g, '');
+  
+  // Aplica a formatação
+  return cleaned
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+    .substring(0, 14);
+};
 /**
  * Formata CPF/CNPJ
  * @param {string} doc - Documento sem formatação

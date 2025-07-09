@@ -7,15 +7,19 @@ import {
   Button,
   Paper,
   Title,
-  LoadingOverlay,
   Group,
   Stack,
-  Alert
+  Alert,
+  Loader,
+  Fieldset,
+  Grid,
+  Box
 } from '@mantine/core';
-import { IconArrowLeft, IconCheck } from '@tabler/icons-react';
+import { useForm } from '@mantine/form';
+import { notifications } from '@mantine/notifications';
+import { IconArrowLeft, IconCheck, IconUser, IconGavel } from '@tabler/icons-react';
 import api from '@/api/apiService';
-import useNotification from '@/hooks/useNotification';
-import { validateCPF } from '@/utils/validators';
+import { validateCPF, formatCPF } from '@/utils/format';
 
 const TIPOS_PROCESSO = [
   { value: 'civil', label: 'Civil' },
@@ -23,126 +27,186 @@ const TIPOS_PROCESSO = [
   { value: 'trabalhista', label: 'Trabalhista' },
   { value: 'familia', label: 'Família' },
   { value: 'consumidor', label: 'Consumidor' },
+  { value: 'administrativo', label: 'Administrativo' },
+  { value: 'ambiental', label: 'Ambiental' },
+];
+
+const STATUS_PROCESSO = [
+  { value: 'ativo', label: 'Ativo' },
+  { value: 'arquivado', label: 'Arquivado' },
+  { value: 'encerrado', label: 'Encerrado' },
+  { value: 'suspenso', label: 'Suspenso' },
 ];
 
 export default function CreateProcess() {
   const navigate = useNavigate();
-  const { showNotification } = useNotification();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [formData, setFormData] = useState({
-    numero: '',
-    tipo: '',
-    clienteCpf: '',
-    clienteNome: '',
-    descricao: '',
-    status: 'ativo'
+  
+  const form = useForm({
+    initialValues: {
+      numero: '',
+      tipo: '',
+      clienteCpf: '',
+      clienteNome: '',
+      descricao: '',
+      status: 'ativo',
+      valorCausa: '',
+      dataAbertura: new Date().toISOString().split('T')[0],
+    },
+    validate: {
+      numero: (value) => value.trim().length < 5 ? 'Número muito curto' : null,
+      clienteCpf: (value) => validateCPF(value) ? null : 'CPF inválido',
+      clienteNome: (value) => value.trim().length < 3 ? 'Nome muito curto' : null,
+      tipo: (value) => value ? null : 'Selecione o tipo',
+    },
   });
 
-  const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!validateCPF(formData.clienteCpf)) {
-      setError('CPF inválido');
-      return;
-    }
-
+  const handleSubmit = async (values) => {
     setLoading(true);
+    
     try {
-      await api.post('/processos', formData);
-      showNotification('Processo cadastrado com sucesso!', 'success');
+      await api.post('/processos', {
+        ...values,
+        clienteCpf: values.clienteCpf.replace(/\D/g, ''),
+      });
+      
+      notifications.show({
+        title: 'Processo cadastrado!',
+        message: 'O processo foi registrado com sucesso',
+        color: 'teal',
+        icon: <IconCheck size={18} />,
+      });
+      
       navigate('/processos');
     } catch (err) {
       const message = err.response?.data?.message || 'Erro ao cadastrar processo';
-      setError(message);
+      
+      notifications.show({
+        title: 'Erro no cadastro',
+        message,
+        color: 'red',
+        icon: <IconGavel size={18} />,
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <Paper withBorder p="xl" radius="md" pos="relative">
-      <LoadingOverlay visible={loading} overlayBlur={2} />
+  const handleCpfChange = (e) => {
+    const formattedValue = formatCPF(e.target.value);
+    form.setFieldValue('clienteCpf', formattedValue);
+  };
 
+  return (
+    <Paper withBorder p="xl" radius="md">
       <Group mb="xl">
         <Button
           variant="subtle"
-          leftIcon={<IconArrowLeft size={16} />}
-          onClick={() => navigate(-1)}
+          leftSection={<IconArrowLeft size={16} />}
+          onClick={() => navigate('/processos')}
         >
-          Voltar
+          Voltar aos Processos
         </Button>
-        <Title order={2}>Cadastrar Novo Processo</Title>
+        <Title order={2}>
+          <Group gap="xs">
+            <IconGavel size={28} />
+            Cadastrar Novo Processo
+          </Group>
+        </Title>
       </Group>
 
-      {error && (
-        <Alert color="red" mb="xl">
-          {error}
-        </Alert>
-      )}
+      <form onSubmit={form.onSubmit(handleSubmit)}>
+        <Grid gutter="xl">
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <Fieldset legend="Dados do Processo" radius="md" p="md">
+              <Stack>
+                <TextInput
+                  label="Número do Processo"
+                  placeholder="0000000-00.0000.0.00.0000"
+                  required
+                  {...form.getInputProps('numero')}
+                  description="Formato: NNNNNNN-DD.AAAA.J.TR.OOOO"
+                />
 
-      <form onSubmit={handleSubmit}>
-        <Stack spacing="md">
-          <Group grow>
-            <TextInput
-              label="Número do Processo"
-              placeholder="0000000-00.0000.0.00.0000"
-              value={formData.numero}
-              onChange={(e) => handleChange('numero', e.target.value)}
-              required
-            />
+                <Group grow>
+                  <Select
+                    label="Tipo de Processo"
+                    data={TIPOS_PROCESSO}
+                    required
+                    {...form.getInputProps('tipo')}
+                  />
+                  
+                  <Select
+                    label="Status"
+                    data={STATUS_PROCESSO}
+                    required
+                    {...form.getInputProps('status')}
+                  />
+                </Group>
 
-            <Select
-              label="Tipo de Processo"
-              data={TIPOS_PROCESSO}
-              value={formData.tipo}
-              onChange={(value) => handleChange('tipo', value)}
-              required
-            />
-          </Group>
+                <TextInput
+                  label="Valor da Causa (R$)"
+                  placeholder="0,00"
+                  {...form.getInputProps('valorCausa')}
+                  leftSection={<span>R$</span>}
+                />
 
-          <Group grow>
-            <TextInput
-              label="CPF do Cliente"
-              placeholder="000.000.000-00"
-              value={formData.clienteCpf}
-              onChange={(e) => handleChange('clienteCpf', e.target.value)}
-              required
-            />
+                <TextInput
+                  label="Data de Abertura"
+                  type="date"
+                  {...form.getInputProps('dataAbertura')}
+                />
+              </Stack>
+            </Fieldset>
+          </Grid.Col>
 
-            <TextInput
-              label="Nome do Cliente"
-              placeholder="Nome completo"
-              value={formData.clienteNome}
-              onChange={(e) => handleChange('clienteNome', e.target.value)}
-              required
-            />
-          </Group>
+          <Grid.Col span={{ base: 12, md: 6 }}>
+            <Fieldset legend="Dados do Cliente" radius="md" p="md">
+              <Stack>
+                <TextInput
+                  label="CPF do Cliente"
+                  placeholder="000.000.000-00"
+                  required
+                  value={form.values.clienteCpf}
+                  onChange={handleCpfChange}
+                  error={form.errors.clienteCpf}
+                  maxLength={14}
+                  leftSection={<IconUser size={16} />}
+                />
 
-          <Textarea
-            label="Descrição"
-            placeholder="Detalhes do caso..."
-            minRows={4}
-            value={formData.descricao}
-            onChange={(e) => handleChange('descricao', e.target.value)}
-            required
-          />
+                <TextInput
+                  label="Nome Completo do Cliente"
+                  placeholder="Nome completo"
+                  required
+                  {...form.getInputProps('clienteNome')}
+                />
+              </Stack>
+            </Fieldset>
+          </Grid.Col>
 
-          <Group position="right" mt="xl">
-            <Button
-              type="submit"
-              leftIcon={<IconCheck size={16} />}
-              size="md"
-            >
-              Cadastrar Processo
-            </Button>
-          </Group>
-        </Stack>
+          <Grid.Col span={12}>
+            <Fieldset legend="Descrição do Caso" radius="md" p="md">
+              <Textarea
+                placeholder="Detalhe os fatos, pedidos e fundamentos jurídicos..."
+                minRows={6}
+                required
+                {...form.getInputProps('descricao')}
+                autosize
+              />
+            </Fieldset>
+          </Grid.Col>
+        </Grid>
+
+        <Group justify="flex-end" mt="xl">
+          <Button
+            type="submit"
+            leftSection={loading ? <Loader size="sm" /> : <IconCheck size={16} />}
+            size="md"
+            disabled={loading}
+          >
+            {loading ? 'Cadastrando...' : 'Cadastrar Processo'}
+          </Button>
+        </Group>
       </form>
     </Paper>
   );
