@@ -1,15 +1,25 @@
-import { Text, Button, Group } from '@mantine/core';
+import { Text, Button, Stack } from '@mantine/core';
 
-export default function EmptyState({ title, description, action }) {
+export default function EmptyState({ 
+  title, 
+  description, 
+  action 
+}) {
   return (
-    <Group direction="column" position="center" py="xl" spacing="xs">
-      <Text size="lg" weight={500}>{title}</Text>
-      <Text color="dimmed" align="center">{description}</Text>
+    <Stack align="center" py="xl" spacing="xs">
+      <Text size="lg" fw={500} ta="center">
+        {title}
+      </Text>
+      
+      <Text c="dimmed" ta="center">
+        {description}
+      </Text>
+      
       {action && (
         <Button mt="md" size="sm" {...action.props}>
           {action.label}
         </Button>
       )}
-    </Group>
+    </Stack>
   );
 }

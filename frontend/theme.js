@@ -2,20 +2,21 @@
 import { createTheme } from '@mantine/core';
 
 export default createTheme({
-  primaryColor: 'ufmt-blue',
   colors: {
-    'ufmt-blue': [
-      '#e6f0ff',
-      '#c1d8f0',
-      '#9bc0e1',
-      '#75a8d2',
-      '#4f90c3',
-      '#2978b4', // Cor principal
-      '#206093',
-      '#184872',
-      '#103051',
-      '#081830' // Azul escuro institucional
-    ]
+    primaryColor: 'ufmt-green',
+    primaryShade: 6,
+    'ufmt-green': [
+      '#e6f7f0',
+      '#cceee1',
+      '#99dcc3',
+      '#66cba5',
+      '#33b987',
+      '#00a869',
+      '#008654',
+      '#00653f',
+      '#00432a',
+      '#002215'
+    ],
   },
   fontFamily: 'Inter, sans-serif',
   headings: {

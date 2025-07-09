@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { MantineProvider } from '@mantine/core';
-import Layout from './components/Layout';
-import ProtectedRoute from './components/ProtectedRoute';
-import { NotificationProvider } from './contexts/NotificationContext';
-import theme from '../theme';
+import { Notifications } from '@mantine/notifications';
+import Layout from '@/components/Layout';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { setupNotifications } from '@/services/notificationService';
+import theme from '@/theme';
 import {
   LoginPage,
   RegisterPage,
@@ -13,37 +15,38 @@ import {
   FileUpload,
   UserList,
   ProfilePage
-} from './pages';
-
-const AppRoutes = () => (
-  <Routes>
-    {/* Rotas públicas */}
-    <Route path="/login" element={<LoginPage />} />
-    <Route path="/registrar" element={<RegisterPage />} />
-    
-    {/* Rotas protegidas */}
-    <Route element={<ProtectedRoute />}>
-      <Route element={<Layout />}>
-        <Route index element={<DashboardPage />} />
-        <Route path="/processos">
-          <Route index element={<ProcessList />} />
-          <Route path=":id" element={<ProcessDetail />} />
-        </Route>
-        <Route path="/arquivos" element={<FileUpload />} />
-        <Route path="/usuarios" element={<UserList />} />
-        <Route path="/perfil" element={<ProfilePage />} />
-      </Route>
-    </Route>
-  </Routes>
-);
+} from '@/pages';
 
 function App() {
+  useEffect(() => {
+    const disconnect = setupNotifications();
+    return () => disconnect();
+  }, []);
+
   return (
-    <NotificationProvider>
-      <MantineProvider theme={theme}>
-        <AppRoutes />
-      </MantineProvider>
-    </NotificationProvider>
+    <MantineProvider theme={theme}>
+      <Notifications position="top-right" />
+      <Routes>
+        {/* Rotas públicas */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/registrar" element={<RegisterPage />} />
+        
+        {/* Rotas protegidas */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route index element={<DashboardPage />} />
+            <Route path="/processos">
+              <Route index element={<ProcessList />} />
+              <Route path=":id" element={<ProcessDetail />} />
+            </Route>
+            <Route path="/arquivos" element={<FileUpload />} />
+            <Route path="/usuarios" element={<UserList />} />
+            <Route path="/perfil" element={<ProfilePage />} />
+            <Route path="/logout" element={<LogoutPage />} />
+          </Route>
+        </Route>
+      </Routes>
+    </MantineProvider>
   );
 }
 
