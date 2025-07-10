@@ -41,9 +41,9 @@ import {
 } from '@tabler/icons-react';
 import api from '@/api/apiService';
 import { notifications } from '@mantine/notifications';
-import FileUpload from '../files/FileUpload';
-import Timeline from '@/components/Timeline';
-import { formatDate, formatCPF } from '@/utils/format';
+import FileUpload from '@/components/files/FileUpload';
+import Timeline from '@/components/ui/Timeline';
+import { formatDate, formatCPF } from '@/utils/formatters';
 
 const STATUS_COLORS = {
   ativo: 'green',
@@ -71,7 +71,7 @@ const TIPO_LABELS = {
   ambiental: 'Ambiental'
 };
 
-export default function ProcessDetail() {
+export function ProcessDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [processo, setProcesso] = useState(null);
@@ -541,3 +541,5 @@ function ProcessDocumentsTable({ documents }) {
     </table>
   );
 }
+
+export default ProcessDetail;

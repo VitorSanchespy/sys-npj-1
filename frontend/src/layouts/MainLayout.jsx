@@ -1,7 +1,7 @@
 // src/layouts/MainLayout.jsx
 import { AppShell } from '@mantine/core';
-import Header from '@/components/Header';
-import Navbar from '@/components/Navbar';
+import Header from '@/components/layout/Header';
+import Navbar from '@/components/layout/Navbar';
 
 export default function MainLayout({ children }) {
   return (

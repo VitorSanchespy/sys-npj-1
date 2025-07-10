@@ -10,7 +10,7 @@ import {
 } from '@tabler/icons-react';
 import api from '@/api/apiService';
 import { useNotification } from '@/contexts/NotificationContext';
-import EmptyState from '@/components/EmptyState';
+import EmptyState from '@/components/common/EmptyState';
 
 const ROLE_OPTIONS = [
   { value: 'admin', label: 'Administrador' },
@@ -27,7 +27,7 @@ const STATUS_OPTIONS = [
 
 const ITEMS_PER_PAGE = 10;
 
-export default function UserList() {
+export function UserList() {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   
@@ -289,3 +289,5 @@ export default function UserList() {
     </Paper>
   );
 }
+
+export default UserList;

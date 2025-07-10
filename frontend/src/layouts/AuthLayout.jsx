@@ -1,6 +1,6 @@
 // src/layouts/AuthLayout.jsx
 import { AppShell, Box } from '@mantine/core';
-import Header from '@/components/Header';
+import Header from '@/components/layout/Header';
 
 export default function AuthLayout({ children }) {
   return (

@@ -39,3 +39,4 @@ export function Navbar() {
     </Group>
   );
 }
+export default Navbar;

@@ -40,7 +40,7 @@ const TIPO_OPTIONS = [
   { value: 'familia', label: 'Família' },
 ];
 
-export default function ProcessoPage() {
+export function ProcessoPage() {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const [processos, setProcessos] = useState([]);
@@ -241,3 +241,5 @@ export default function ProcessoPage() {
     </Paper>
   );
 }
+
+export default ProcessoPage;

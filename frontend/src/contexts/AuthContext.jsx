@@ -1,6 +1,5 @@
-// src/contexts/AuthContext.jsx
-import { createContext, useState, useEffect } from 'react';
-import { verifyToken } from '@/services/authService';
+import { createContext, useState, useEffect, useContext } from 'react';
+import auth from '@/services/authService';
 
 export const AuthContext = createContext();
 
@@ -9,15 +8,14 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const logout = () => {
-    localStorage.removeItem('authToken');
+    auth.logout();
     setUser(null);
   };
-
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const userData = await verifyToken();
+        const userData = await auth.verifyToken();
         setUser(userData);
       } catch (error) {
         setUser(null);
@@ -29,17 +27,30 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
+  const login = async (credentials) => {
+    try {
+      const userData = await auth.login(credentials);
+      setUser(userData);
+      return userData;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const value = {
     user,
     loading,
     isAuthenticated: !!user,
-    setUser,
-    logout // Adicionar esta função
+    login,
+    logout,
+    setUser
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
+
+export const useAuth = () => useContext(AuthContext);

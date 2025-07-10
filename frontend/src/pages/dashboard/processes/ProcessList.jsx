@@ -35,8 +35,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import api from '@/api/apiService';
 import { notifications } from '@mantine/notifications';
-import EmptyState from '@/components/EmptyState';
-import { formatDate } from '@/utils/format';
+import EmptyState from '@/components/common/EmptyState';
+import { formatDate } from '@/utils/formatters';
 
 const STATUS_OPTIONS = [
   { value: 'ativo', label: 'Ativo', color: 'green' },
@@ -57,7 +57,7 @@ const TIPO_OPTIONS = [
 
 const ITEMS_PER_PAGE = 10;
 
-export default function ProcessList() {
+export function ProcessList() {
   const theme = useMantineTheme(); // Acesso ao tema
   const navigate = useNavigate();
   const [processes, setProcesses] = useState([]);
@@ -488,3 +488,5 @@ function LoadingSkeleton() {
     </Stack>
   );
 }
+
+export default ProcessList;

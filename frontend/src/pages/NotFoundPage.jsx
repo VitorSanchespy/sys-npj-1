@@ -10,8 +10,8 @@ import {
   Center, 
   Badge,
   useMantineTheme,
-  createStyles,
-  Anchor
+  Anchor,
+  rem
 } from '@mantine/core';
 import { 
   IconScale, 
@@ -26,10 +26,11 @@ import {
   IconExternalLink
 } from '@tabler/icons-react';
 import { useViewportSize } from '@mantine/hooks';
-import Head from 'next/head';
+import { Helmet } from 'react-helmet';
 
-const useStyles = createStyles((theme) => ({
-  hero: {
+// Estilos usando a nova API do Mantine v7+
+const useStyles = {
+  hero: (theme) => ({
     background: 'linear-gradient(135deg, #001F3F 0%, #003366 100%)',
     position: 'relative',
     overflow: 'hidden',
@@ -45,22 +46,22 @@ const useStyles = createStyles((theme) => ({
       opacity: 0.05,
       pointerEvents: 'none'
     }
-  },
-  featureCard: {
-    borderTop: `4px solid ${theme.colors.blue[6]}`,
+  }),
+  featureCard: (theme) => ({
+    borderTop: `${rem(4)} solid ${theme.colors.blue[6]}`,
     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
     '&:hover': {
       transform: 'translateY(-10px)',
       boxShadow: theme.shadows.md
     }
-  },
-  footerLink: {
+  }),
+  footerLink: (theme) => ({
     transition: 'color 0.2s ease',
     '&:hover': {
       color: theme.colors.blue[3]
     }
-  }
-}));
+  })
+};
 
 const features = [
   {
@@ -85,19 +86,22 @@ const features = [
   }
 ];
 
-export default function Home() {
+export function NotFoundPage() {
   const theme = useMantineTheme();
-  const { classes } = useStyles();
   const { width } = useViewportSize();
   const isMobile = width < theme.breakpoints.sm;
 
+  // Aplicando os estilos
+  const heroStyle = useStyles.hero(theme);
+  const featureCardStyle = useStyles.featureCard(theme);
+  const footerLinkStyle = useStyles.footerLink(theme);
+
   return (
     <>
-      <Head>
-        <title>Sistema NPJ - UFMT | Gestão de Processos Jurídicos</title>
-        <meta name="description" content="Plataforma de gestão de processos do Núcleo de Práticas Jurídicas da Universidade Federal de Mato Grosso" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+      <Helmet>
+        <title>Página não encontrada | Sistema NPJ - UFMT</title>
+        <meta name="description" content="Página não encontrada - Plataforma de gestão de processos do Núcleo de Práticas Jurídicas" />
+      </Helmet>
 
       {/* Header */}
       <header style={{ 
@@ -135,86 +139,39 @@ export default function Home() {
         </Container>
       </header>
 
-      {/* Hero Section */}
-      <section className={classes.hero} style={{ padding: isMobile ? '60px 0' : '80px 0' }}>
-        <Container size="xl">
-          <SimpleGrid cols={2} spacing="xl" breakpoints={[{ maxWidth: 'md', cols: 1 }]}>
+      {/* Página 404 Personalizada */}
+      <section style={heroStyle}>
+        <Container size="xl" py="xl">
+          <Center style={{ height: '60vh', textAlign: 'center' }}>
             <div>
-              <Badge 
-                variant="filled" 
-                size="lg" 
-                mb="md"
-                sx={{ backgroundColor: theme.colors.blue[5] }}
-              >
-                Núcleo de Práticas Jurídicas
-              </Badge>
-              <Title 
-                order={1} 
-                style={{ 
-                  lineHeight: 1.2, 
-                  marginBottom: 20,
-                  fontSize: isMobile ? '2rem' : '3rem'
-                }}
-              >
-                Gestão Inteligente de Processos Jurídicos
+              <Title order={1} size={rem(72)} mb="md" style={{ color: 'white' }}>
+                404
               </Title>
-              <Text size={isMobile ? 'md' : 'xl'} style={{ marginBottom: 30, maxWidth: 600 }}>
-                Plataforma completa para gestão de processos, clientes e documentos do NPJ da Universidade Federal de Mato Grosso.
+              <Title order={2} size={rem(32)} mb="xl" style={{ color: 'white' }}>
+                Página não encontrada
+              </Title>
+              <Text size="xl" mb="xl" style={{ color: 'white', maxWidth: rem(600), margin: '0 auto' }}>
+                A página que você está procurando não existe ou foi movida.
               </Text>
-              <Group>
+              <Group position="center">
                 <Button 
-                  size={isMobile ? 'md' : 'lg'}
-                  variant="light"
+                  size="lg" 
                   component="a"
-                  href="/login"
-                  sx={{ backgroundColor: 'rgba(255,255,255,0.9)' }}
+                  href="/"
+                  leftIcon={<IconHome size={20} />}
                 >
-                  Acessar o Sistema
-                </Button>
-                <Button 
-                  size={isMobile ? 'md' : 'lg'}
-                  variant="outline" 
-                  color="gray.2"
-                  rightIcon={<IconExternalLink size={16} />}
-                  component="a"
-                  href="https://ufmt.br/npj"
-                  target="_blank"
-                >
-                  Saiba Mais
+                  Voltar à página inicial
                 </Button>
               </Group>
             </div>
-            {!isMobile && (
-              <Center>
-                <div style={{
-                  backgroundColor: 'rgba(255,255,255,0.1)',
-                  borderRadius: '20px',
-                  padding: '20px',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.2)'
-                }}>
-                  <Image 
-                    src="/law-illustration.png" 
-                    alt="Legal Process Illustration" 
-                    width={400}
-                    withPlaceholder
-                  />
-                </div>
-              </Center>
-            )}
-          </SimpleGrid>
+          </Center>
         </Container>
       </section>
 
-      {/* Features Section */}
+      {/* Features Section (opcional - pode remover se quiser simplificar) */}
       <section style={{ padding: isMobile ? '50px 0' : '80px 0' }}>
         <Container size="xl">
-          <Title 
-            order={2} 
-            align="center" 
-            mb="xl" 
-            style={{ color: '#001F3F' }}
-          >
+          <Title order={2} align="center" mb="xl" style={{ color: '#001F3F' }}>
             Funcionalidades do Sistema
           </Title>
           
@@ -233,19 +190,14 @@ export default function Home() {
                 padding="lg" 
                 radius="md" 
                 withBorder
-                className={classes.featureCard}
+                style={featureCardStyle}
               >
                 <Center mb="md">
                   <div style={{ color: theme.colors.blue[6] }}>
                     {feature.icon}
                   </div>
                 </Center>
-                <Title 
-                  order={4} 
-                  align="center" 
-                  mb="sm" 
-                  style={{ color: '#001F3F' }}
-                >
+                <Title order={4} align="center" mb="sm" style={{ color: '#001F3F' }}>
                   {feature.title}
                 </Title>
                 <Text align="center" color="dimmed">
@@ -253,51 +205,6 @@ export default function Home() {
                 </Text>
               </Card>
             ))}
-          </SimpleGrid>
-        </Container>
-      </section>
-
-      {/* About Section */}
-      <section style={{ 
-        backgroundColor: theme.colors.gray[0], 
-        padding: isMobile ? '50px 0' : '80px 0',
-        borderTop: `1px solid ${theme.colors.gray[2]}`,
-        borderBottom: `1px solid ${theme.colors.gray[2]}`
-      }}>
-        <Container size="xl">
-          <SimpleGrid cols={2} spacing="xl" breakpoints={[{ maxWidth: 'md', cols: 1 }]}>
-            <div>
-              <Image 
-                src="/ufmt-campus.jpg" 
-                alt="UFMT Campus" 
-                radius="md"
-                withPlaceholder
-              />
-            </div>
-            <div>
-              <Title order={2} mb="md" style={{ color: '#001F3F' }}>
-                Sobre o NPJ da UFMT
-              </Title>
-              <Text size={isMobile ? 'md' : 'lg'} mb="md">
-                O Núcleo de Práticas Jurídicas da Universidade Federal de Mato Grosso é um espaço de aprendizado 
-                prático para estudantes de Direito, oferecendo assistência jurídica gratuita à comunidade.
-              </Text>
-              <Text size={isMobile ? 'md' : 'lg'} mb="xl">
-                Este sistema foi desenvolvido para otimizar a gestão de processos, permitindo que estudantes e 
-                professores acompanhem casos, prazos e documentos de forma eficiente e segura.
-              </Text>
-              <Button 
-                variant="outline" 
-                color="blue"
-                size={isMobile ? 'sm' : 'md'}
-                rightIcon={<IconExternalLink size={16} />}
-                component="a"
-                href="https://ufmt.br/npj"
-                target="_blank"
-              >
-                Conheça o NPJ
-              </Button>
-            </div>
           </SimpleGrid>
         </Container>
       </section>
@@ -318,16 +225,22 @@ export default function Home() {
                 Sistema NPJ
               </Title>
               <Text>
-                Plataforma de gestão de processos do Núcleo de Práticas Jurídicas da Universidade Federal de Mato Grosso.
+                Plataforma de gestão de processos do Núcleo de Práticas Jurídicas da UFMT.
               </Text>
             </div>
             <div>
               <Title order={4} mb="md" style={{ color: 'white' }}>
                 Links Úteis
               </Title>
-              <Anchor href="/login" className={classes.footerLink} display="block" py={5}>Acesso ao Sistema</Anchor>
-              <Anchor href="#" className={classes.footerLink} display="block" py={5}>Documentação</Anchor>
-              <Anchor href="#" className={classes.footerLink} display="block" py={5}>Suporte</Anchor>
+              <Anchor href="/login" style={footerLinkStyle} display="block" py={5}>
+                Acesso ao Sistema
+              </Anchor>
+              <Anchor href="#" style={footerLinkStyle} display="block" py={5}>
+                Documentação
+              </Anchor>
+              <Anchor href="#" style={footerLinkStyle} display="block" py={5}>
+                Suporte
+              </Anchor>
             </div>
             <div>
               <Title order={4} mb="md" style={{ color: 'white' }}>
@@ -352,9 +265,15 @@ export default function Home() {
               <Title order={4} mb="md" style={{ color: 'white' }}>
                 Legal
               </Title>
-              <Anchor href="#" className={classes.footerLink} display="block" py={5}>Termos de Uso</Anchor>
-              <Anchor href="#" className={classes.footerLink} display="block" py={5}>Política de Privacidade</Anchor>
-              <Anchor href="#" className={classes.footerLink} display="block" py={5}>Acessibilidade</Anchor>
+              <Anchor href="#" style={footerLinkStyle} display="block" py={5}>
+                Termos de Uso
+              </Anchor>
+              <Anchor href="#" style={footerLinkStyle} display="block" py={5}>
+                Política de Privacidade
+              </Anchor>
+              <Anchor href="#" style={footerLinkStyle} display="block" py={5}>
+                Acessibilidade
+              </Anchor>
             </div>
           </SimpleGrid>
           
@@ -373,3 +292,4 @@ export default function Home() {
     </>
   );
 }
+export default NotFoundPage;

@@ -30,7 +30,7 @@ import api from '@/api/apiService';
 import { useNotification } from '@/contexts/NotificationContext';
 import { validatePassword } from '@/utils/validators';
 
-export default function ProfilePage() {
+export function ProfilePage() {
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     nome: '',
@@ -285,3 +285,5 @@ export default function ProfilePage() {
     </Container>
   );
 }
+
+export default ProfilePage;

@@ -24,7 +24,7 @@ import {
 } from '@tabler/icons-react';
 import api from '@/api/apiService';
 import { notifications } from '@mantine/notifications';
-import { formatBytes } from '@/utils/format';
+import { formatBytes } from '@/utils/formatters';
 import Dropzone from './Dropzone';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB

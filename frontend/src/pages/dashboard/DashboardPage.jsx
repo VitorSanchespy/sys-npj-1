@@ -57,7 +57,7 @@ const featureCards = [
   }
 ];
 
-export default function Dashboard() {
+export function DashboardPage() { 
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const { showNotification } = useNotification();
@@ -244,9 +244,10 @@ export default function Dashboard() {
         src="/npj-banner.jpg" 
         alt="NPJ UFMT" 
         radius="md"
-        withPlaceholder
         mt="xl"
       />
     </Stack>
   );
 }
+
+export default DashboardPage;

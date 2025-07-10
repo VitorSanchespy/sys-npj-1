@@ -5,7 +5,7 @@ import {
   IconAlertCircle, 
   IconProgress 
 } from '@tabler/icons-react';
-import { formatDate } from '@/utils/format';
+import { formatDate } from '@/utils/formatters';
 
 const STATUS_ICONS = {
   completed: <IconCheck size={14} />,

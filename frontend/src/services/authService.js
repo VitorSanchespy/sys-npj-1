@@ -1,9 +1,32 @@
-// Login
-import auth from '@/services';
-auth.login({ email, senha }).then(response => {
-  localStorage.setItem('token', response.data.token);
-});
+import api from '../api/apiService';
 
-// Chamada API
-import api from '@/services/api';
-api.get('/dados').then(response => console.log(response.data));
+const auth = {
+  login: async (credentials) => {
+    try {
+      const response = await api.post('/auth/login', credentials);
+      localStorage.setItem('token', response.data.token);
+      return response.data;
+    } catch (error) {
+      throw new Error('Falha no login: ' + error.response?.data?.message || error.message);
+    }
+  },
+
+  logout: () => {
+    localStorage.removeItem('token');
+  },
+
+  verifyToken: async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return null;
+      
+      const response = await api.get('/auth/profile');
+      return response.data;
+    } catch (error) {
+      localStorage.removeItem('token');
+      return null;
+    }
+  }
+};
+
+export default auth;

@@ -34,7 +34,7 @@ const ACCEPTED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 ];
 
-export default function ArquivoPage() {
+export function FilesPage() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -229,3 +229,4 @@ export default function ArquivoPage() {
     </Paper>
   );
 }
+export default FilesPage;

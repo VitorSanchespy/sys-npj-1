@@ -1,6 +1,6 @@
-// src/routes/AppRouter.jsx
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { Loader } from '@mantine/core';
 
 // Layouts
 import MainLayout from '@/layouts/MainLayout';
@@ -8,30 +8,58 @@ import AuthLayout from '@/layouts/AuthLayout';
 
 // Pages
 import LoginPage from '@/pages/auth/LoginPage';
+import RegisterPage from '@/pages/auth/RegisterPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
-import ProcessesPage from '@/pages/dashboard/processes/ProcessesPage';
+import ProcessList from '@/pages/dashboard/processes/ProcessList';
+import ProcessDetail from '@/pages/dashboard/processes/ProcessDetail';
+import UserList from '@/pages/dashboard/users/UserList';
+import FilesPage from '@/pages/dashboard/files/FilesPage';
+import ProfilePage from '@/pages/dashboard/ProfilePage';
+import NotFoundPage from '@/pages/NotFoundPage';
 
-const PrivateRoute = ({ element }) => {
-  const { isAuthenticated, loading } = useAuth();
-  
-  if (loading) return <div>Carregando...</div>;
-  return isAuthenticated ? element : <Navigate to="/login" />;
+const AuthRoute = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) return <Loader size="xl" variant="dots" />;
+
+  return user ? <Navigate to="/" replace /> : <Outlet />;
+};
+
+const ProtectedRoute = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) return <Loader size="xl" variant="dots" />;
+
+  return user ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 const AppRouter = () => {
   return (
     <Routes>
+      {/* Rotas públicas */}
       <Route element={<AuthLayout />}>
-        <Route path="/login" element={<LoginPage />} />
+        <Route element={<AuthRoute />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/registrar" element={<RegisterPage />} />
+        </Route>
       </Route>
-      
+
+      {/* Rotas protegidas */}
       <Route element={<MainLayout />}>
-        <Route path="/" element={<PrivateRoute element={<DashboardPage />} />} />
-        <Route path="/processos" element={<PrivateRoute element={<ProcessesPage />} />} />
-        {/* Outras rotas protegidas */}
+        <Route element={<ProtectedRoute />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="/processos">
+            <Route index element={<ProcessList />} />
+            <Route path=":id" element={<ProcessDetail />} />
+          </Route>
+          <Route path="/arquivos" element={<FilesPage />} />
+          <Route path="/usuarios" element={<UserList />} />
+          <Route path="/perfil" element={<ProfilePage />} />
+        </Route>
       </Route>
-      
-      <Route path="*" element={<div>Página não encontrada</div>} />
+
+      {/* Rota 404 */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };
