@@ -1,370 +1,158 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Paper,
-  Title,
-  Text,
-  Group,
-  Button,
-  Badge,
-  Divider,
-  Tabs,
-  Stack,
-  Loader,
-  Modal,
-  Alert,
-  Grid,
-  Card,
-  Flex,
-  Avatar,
-  ActionIcon,
-  Tooltip,
-  CopyButton,
-  Box
+  Paper, Title, Text, Group, Button, Badge, Tabs, Stack, LoadingOverlay, Modal, Grid, Card, Flex, Avatar, ActionIcon, Tooltip
 } from '@mantine/core';
 import { 
-  IconArrowLeft, 
-  IconEdit, 
-  IconTrash, 
-  IconFileUpload,
-  IconFileDownload,
-  IconClock,
-  IconCalendar,
-  IconUser,
-  IconScale,
-  IconLink,
-  IconCopy,
-  IconCheck,
-  IconFolder,
-  IconInfoCircle,
-  IconFile // Adicionei o IconFile que estava faltando
+  IconArrowLeft, IconEdit, IconTrash, IconScale, IconLink, IconCopy, IconCheck, IconFolder, IconClock, IconInfoCircle, IconCalendar, IconUser
 } from '@tabler/icons-react';
 import api from '@/api/apiService';
-import { notifications } from '@mantine/notifications';
+import { formatDate, formatCPF } from '@/utils/formatters';
 import FileUpload from '@/components/files/FileUpload';
 import Timeline from '@/components/ui/Timeline';
-import { formatDate, formatCPF } from '@/utils/formatters';
 
-const STATUS_COLORS = {
-  ativo: 'green',
-  arquivado: 'gray',
-  encerrado: 'red',
-  andamento: 'blue',
-  suspenso: 'yellow'
-};
-
-const STATUS_LABELS = {
-  ativo: 'Ativo',
-  arquivado: 'Arquivado',
-  encerrado: 'Encerrado',
-  andamento: 'Em Andamento',
-  suspenso: 'Suspenso'
-};
-
+const STATUS_COLORS = { ativo: 'green', arquivado: 'gray', encerrado: 'red', andamento: 'blue', suspenso: 'yellow' };
+const STATUS_LABELS = { ativo: 'Ativo', arquivado: 'Arquivado', encerrado: 'Encerrado', andamento: 'Em Andamento', suspenso: 'Suspenso' };
 const TIPO_LABELS = {
-  civil: 'Civil',
-  penal: 'Penal',
-  trabalhista: 'Trabalhista',
-  familia: 'Família',
-  consumidor: 'Consumidor',
-  administrativo: 'Administrativo',
-  ambiental: 'Ambiental'
+  civil: 'Civil', penal: 'Penal', trabalhista: 'Trabalhista', familia: 'Família',
+  consumidor: 'Consumidor', administrativo: 'Administrativo', ambiental: 'Ambiental'
 };
 
 export function ProcessDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [processo, setProcesso] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('details');
-  const [relatedProcesses, setRelatedProcesses] = useState([]);
+  const [state, setState] = useState({
+    processo: null,
+    loading: true,
+    activeTab: 'details',
+    relatedProcesses: [],
+    deleteModalOpen: false
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        // Buscar processo principal
-        const { data: processData } = await api.get(`/processos/${id}?_embed=documentos&_embed=historico`);
-        setProcesso(processData);
-        
-        // Buscar processos relacionados
-        if (processData.clienteCpf) {
-          const { data: relatedData } = await api.get(`/processos?clienteCpf=${processData.clienteCpf}&id_ne=${id}&_limit=3`);
-          setRelatedProcesses(relatedData);
-        }
-        
-      } catch (err) {
-        setError(err.response?.data?.message || 'Erro ao carregar processo');
-        notifications.show({
-          title: 'Erro',
-          message: 'Não foi possível carregar o processo',
-          color: 'red'
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchData = async () => {
+    try {
+      const [{ data: processData }, { data: relatedData }] = await Promise.all([
+        api.get(`/processos/${id}?_embed=documentos&_embed=historico`),
+        api.get(`/processos?clienteCpf=${state.processo?.clienteCpf}&id_ne=${id}&_limit=3`)
+      ]);
+      
+      setState(prev => ({
+        ...prev,
+        processo: processData,
+        relatedProcesses: relatedData,
+        loading: false
+      }));
+    } catch (err) {
+      setState(prev => ({ ...prev, loading: false }));
+    }
+  };
 
-    fetchData();
-  }, [id]);
+  useEffect(() => { fetchData(); }, [id]);
 
   const handleDelete = async () => {
     try {
       await api.delete(`/processos/${id}`);
-      notifications.show({
-        title: 'Processo removido',
-        message: 'O processo foi excluído com sucesso',
-        color: 'green'
-      });
       navigate('/processos');
-    } catch (err) {
-      notifications.show({
-        title: 'Erro',
-        message: 'Falha ao excluir o processo',
-        color: 'red'
-      });
     } finally {
-      setDeleteModalOpen(false);
-    }
-  };
-
-  const handleFileUploadSuccess = () => {
-    // Refresh files list or process details
-    notifications.show({
-      title: 'Documento adicionado',
-      message: 'O arquivo foi vinculado ao processo',
-      color: 'teal'
-    });
-    fetchProcess();
-  };
-
-  const fetchProcess = async () => {
-    try {
-      const { data } = await api.get(`/processos/${id}?_embed=documentos&_embed=historico`);
-      setProcesso(data);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Erro ao recarregar processo');
+      setState(prev => ({ ...prev, deleteModalOpen: false }));
     }
   };
 
   const copyProcessNumber = () => {
-    navigator.clipboard.writeText(processo.numero);
-    notifications.show({
-      title: 'Número copiado!',
-      message: 'O número do processo foi copiado para a área de transferência',
-      color: 'blue',
-      icon: <IconCheck size={16} />
-    });
+    navigator.clipboard.writeText(state.processo.numero);
   };
 
-  if (loading) {
-    return (
-      <Paper withBorder p="xl" radius="md" style={{ minHeight: '70vh' }}>
-        <Group justify="center" align="center" h="100%">
-          <Loader size="xl" variant="dots" />
-        </Group>
-      </Paper>
-    );
-  }
-
-  if (error) {
-    return (
-      <Paper withBorder p="xl" radius="md">
-        <Alert color="red" title="Erro" icon={<IconInfoCircle />} mb="xl">
-          {error}
-        </Alert>
-        <Button 
-          leftSection={<IconArrowLeft size={16} />}
-          onClick={() => navigate('/processos')}
-        >
-          Voltar para lista de processos
-        </Button>
-      </Paper>
-    );
-  }
-
-  if (!processo) return null;
+  if (state.loading) return <LoadingOverlay visible overlayBlur={2} />;
+  if (!state.processo) return <Text>Processo não encontrado</Text>;
 
   return (
     <Paper withBorder p="xl" radius="md">
-      <Group justify="space-between" mb="xl" wrap="nowrap">
-        <Button
-          variant="subtle"
-          leftSection={<IconArrowLeft size={16} />}
-          onClick={() => navigate('/processos')}
-        >
+      <Group justify="space-between" mb="xl">
+        <Button variant="subtle" leftSection={<IconArrowLeft size={16} />} onClick={() => navigate('/processos')}>
           Processos
         </Button>
-        
         <Group>
-          <Button
-            variant="outline"
-            leftSection={<IconEdit size={16} />}
-            onClick={() => navigate(`/processos/editar/${id}`)}
-          >
+          <Button variant="outline" leftSection={<IconEdit size={16} />} onClick={() => navigate(`/processos/editar/${id}`)}>
             Editar
           </Button>
-          <Button
-            color="red"
-            variant="outline"
-            leftSection={<IconTrash size={16} />}
-            onClick={() => setDeleteModalOpen(true)}
-          >
+          <Button color="red" variant="outline" leftSection={<IconTrash size={16} />} 
+            onClick={() => setState(prev => ({ ...prev, deleteModalOpen: true }))}>
             Excluir
           </Button>
         </Group>
       </Group>
 
       <Flex align="center" gap="md" mb="xl">
-        <Avatar color="blue" radius="xl">
-          <IconScale size={24} />
-        </Avatar>
+        <Avatar color="blue" radius="xl"><IconScale size={24} /></Avatar>
         <div>
           <Title order={2} mb={4}>
-            {processo.numero}
-            <Tooltip label="Copiar número" position="right" withArrow>
+            {state.processo.numero}
+            <Tooltip label="Copiar número">
               <ActionIcon variant="subtle" ml="sm" onClick={copyProcessNumber}>
                 <IconCopy size={16} />
               </ActionIcon>
             </Tooltip>
           </Title>
-          
           <Group>
-            <Badge 
-              color={STATUS_COLORS[processo.status]} 
-              size="lg"
-              variant="light"
-              leftSection={<IconInfoCircle size={14} />}
-            >
-              {STATUS_LABELS[processo.status]}
+            <Badge color={STATUS_COLORS[state.processo.status]} variant="light" leftSection={<IconInfoCircle size={14} />}>
+              {STATUS_LABELS[state.processo.status]}
             </Badge>
-            
-            <Badge 
-              color="gray"
-              size="lg"
-              variant="light"
-              leftSection={<IconCalendar size={14} />}
-            >
-              {formatDate(processo.dataAbertura)}
+            <Badge color="gray" variant="light" leftSection={<IconCalendar size={14} />}>
+              {formatDate(state.processo.dataAbertura)}
             </Badge>
           </Group>
         </div>
       </Flex>
 
-      <Tabs 
-        value={activeTab} 
-        onChange={setActiveTab}
-        mb="xl"
-        keepMounted={false}
-      >
+      <Tabs value={state.activeTab} onChange={tab => setState(prev => ({ ...prev, activeTab: tab }))} mb="xl">
         <Tabs.List>
-          <Tabs.Tab value="details" leftSection={<IconScale size={16} />}>
-            Detalhes
-          </Tabs.Tab>
-          <Tabs.Tab value="documents" leftSection={<IconFolder size={16} />}>
-            Documentos
-          </Tabs.Tab>
-          <Tabs.Tab value="timeline" leftSection={<IconClock size={16} />}>
-            Histórico
-          </Tabs.Tab>
-          <Tabs.Tab value="related" leftSection={<IconLink size={16} />}>
-            Processos Relacionados
-          </Tabs.Tab>
+          <Tabs.Tab value="details" leftSection={<IconScale size={16} />}>Detalhes</Tabs.Tab>
+          <Tabs.Tab value="documents" leftSection={<IconFolder size={16} />}>Documentos</Tabs.Tab>
+          <Tabs.Tab value="timeline" leftSection={<IconClock size={16} />}>Histórico</Tabs.Tab>
+          <Tabs.Tab value="related" leftSection={<IconLink size={16} />}>Processos Relacionados</Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="details" pt="xl">
           <Grid gutter="xl">
             <Grid.Col span={{ base: 12, md: 6 }}>
-              <Card withBorder radius="md" p="lg">
-                <Text fw={600} mb="md" c="blue">
-                  Informações do Processo
-                </Text>
-                
+              <Card withBorder p="lg" mb="md">
+                <Text fw={600} mb="md" c="blue">Informações do Processo</Text>
                 <Stack gap="sm">
-                  <div>
-                    <Text fw={500} size="sm" c="dimmed">Tipo</Text>
-                    <Text>{TIPO_LABELS[processo.tipo] || processo.tipo}</Text>
-                  </div>
-                  
-                  <div>
-                    <Text fw={500} size="sm" c="dimmed">Valor da Causa</Text>
-                    <Text>{processo.valorCausa ? `R$ ${parseFloat(processo.valorCausa).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Não informado'}</Text>
-                  </div>
-                  
-                  <div>
-                    <Text fw={500} size="sm" c="dimmed">Tribunal/Comarca</Text>
-                    <Text>{processo.tribunal || 'Não informado'}</Text>
-                  </div>
-                  
-                  <div>
-                    <Text fw={500} size="sm" c="dimmed">Vara</Text>
-                    <Text>{processo.vara || 'Não informada'}</Text>
-                  </div>
+                  <Field label="Tipo" value={TIPO_LABELS[state.processo.tipo] || state.processo.tipo} />
+                  <Field label="Valor da Causa" 
+                    value={state.processo.valorCausa ? `R$ ${parseFloat(state.processo.valorCausa).toLocaleString('pt-BR')}` : 'Não informado'} />
+                  <Field label="Tribunal/Comarca" value={state.processo.tribunal || 'Não informado'} />
+                  <Field label="Vara" value={state.processo.vara || 'Não informada'} />
                 </Stack>
               </Card>
             </Grid.Col>
             
             <Grid.Col span={{ base: 12, md: 6 }}>
-              <Card withBorder radius="md" p="lg">
-                <Text fw={600} mb="md" c="blue">
-                  Cliente
-                </Text>
-                
+              <Card withBorder p="lg" mb="md">
+                <Text fw={600} mb="md" c="blue">Cliente</Text>
                 <Stack gap="sm">
-                  <div>
-                    <Text fw={500} size="sm" c="dimmed">Nome</Text>
-                    <Text>{processo.clienteNome}</Text>
-                  </div>
-                  
-                  <div>
-                    <Text fw={500} size="sm" c="dimmed">CPF</Text>
-                    <Text>{formatCPF(processo.clienteCpf)}</Text>
-                  </div>
-                  
-                  {processo.clienteContato && (
-                    <div>
-                      <Text fw={500} size="sm" c="dimmed">Contato</Text>
-                      <Text>{processo.clienteContato}</Text>
-                    </div>
-                  )}
+                  <Field label="Nome" value={state.processo.clienteNome} />
+                  <Field label="CPF" value={formatCPF(state.processo.clienteCpf)} />
+                  {state.processo.clienteContato && <Field label="Contato" value={state.processo.clienteContato} />}
                 </Stack>
               </Card>
               
-              <Card withBorder radius="md" p="lg" mt="md">
-                <Text fw={600} mb="md" c="blue">
-                  Advogado Responsável
-                </Text>
-                
-                {processo.advogadoNome ? (
+              <Card withBorder p="lg">
+                <Text fw={600} mb="md" c="blue">Advogado Responsável</Text>
+                {state.processo.advogadoNome ? (
                   <Stack gap="sm">
-                    <div>
-                      <Text fw={500} size="sm" c="dimmed">Nome</Text>
-                      <Text>{processo.advogadoNome}</Text>
-                    </div>
-                    
-                    {processo.advogadoOAB && (
-                      <div>
-                        <Text fw={500} size="sm" c="dimmed">OAB</Text>
-                        <Text>{processo.advogadoOAB}</Text>
-                      </div>
-                    )}
+                    <Field label="Nome" value={state.processo.advogadoNome} />
+                    {state.processo.advogadoOAB && <Field label="OAB" value={state.processo.advogadoOAB} />}
                   </Stack>
-                ) : (
-                  <Text c="dimmed" fs="italic">Não atribuído</Text>
-                )}
+                ) : <Text c="dimmed">Não atribuído</Text>}
               </Card>
             </Grid.Col>
             
             <Grid.Col span={12}>
-              <Card withBorder radius="md" p="lg">
-                <Text fw={600} mb="md" c="blue">
-                  Descrição do Caso
-                </Text>
+              <Card withBorder p="lg">
+                <Text fw={600} mb="md" c="blue">Descrição do Caso</Text>
                 <Text style={{ whiteSpace: 'pre-line' }}>
-                  {processo.descricao || 'Nenhuma descrição fornecida'}
+                  {state.processo.descricao || 'Nenhuma descrição fornecida'}
                 </Text>
               </Card>
             </Grid.Col>
@@ -373,64 +161,39 @@ export function ProcessDetail() {
 
         <Tabs.Panel value="documents" pt="xl">
           <Stack gap="xl">
-            <Card withBorder radius="md" p="lg">
-              <Text fw={600} mb="md" c="blue">
-                Adicionar Documentos
-              </Text>
-              <FileUpload 
-                processoId={id} 
-                folderPath={`processos/${id}`}
-                onUploadSuccess={handleFileUploadSuccess} 
-              />
+            <Card withBorder p="lg" mb="md">
+              <Text fw={600} mb="md" c="blue">Adicionar Documentos</Text>
+              <FileUpload processoId={id} folderPath={`processos/${id}`} onUploadSuccess={fetchData} />
             </Card>
             
-            <Card withBorder radius="md" p="lg">
-              <Text fw={600} mb="md" c="blue">
-                Documentos Anexados
-              </Text>
-              <ProcessDocumentsTable documents={processo.documentos || []} />
+            <Card withBorder p="lg">
+              <Text fw={600} mb="md" c="blue">Documentos Anexados</Text>
+              <DocumentList documents={state.processo.documentos || []} />
             </Card>
           </Stack>
         </Tabs.Panel>
 
         <Tabs.Panel value="timeline" pt="xl">
-          <Card withBorder radius="md" p="lg">
-            <Text fw={600} mb="md" c="blue">
-              Histórico do Processo
-            </Text>
-            <Timeline 
-              events={processo.historico?.map(event => ({
-                ...event,
-                date: event.dataEvento,
-                title: event.titulo,
-                description: event.descricao
-              })) || []} 
-            />
+          <Card withBorder p="lg">
+            <Text fw={600} mb="md" c="blue">Histórico do Processo</Text>
+            <Timeline events={state.processo.historico?.map(event => ({
+              date: event.dataEvento,
+              title: event.titulo,
+              description: event.descricao
+            })) || []} />
           </Card>
         </Tabs.Panel>
         
         <Tabs.Panel value="related" pt="xl">
-          <Card withBorder radius="md" p="lg">
-            <Text fw={600} mb="md" c="blue">
-              Processos Relacionados
-            </Text>
-            
-            {relatedProcesses.length > 0 ? (
+          <Card withBorder p="lg">
+            <Text fw={600} mb="md" c="blue">Processos Relacionados</Text>
+            {state.relatedProcesses.length > 0 ? (
               <Stack>
-                {relatedProcesses.map(process => (
-                  <Card 
-                    key={process.id} 
-                    withBorder 
-                    p="md" 
-                    radius="sm"
-                    onClick={() => navigate(`/processos/${process.id}`)}
-                    style={{ cursor: 'pointer' }}
-                  >
+                {state.relatedProcesses.map(process => (
+                  <Card key={process.id} withBorder p="md" radius="sm" onClick={() => navigate(`/processos/${process.id}`)} style={{ cursor: 'pointer' }}>
                     <Group justify="space-between">
                       <Text fw={500}>{process.numero}</Text>
-                      <Badge color={STATUS_COLORS[process.status]}>
-                        {STATUS_LABELS[process.status]}
-                      </Badge>
+                      <Badge color={STATUS_COLORS[process.status]}>{STATUS_LABELS[process.status]}</Badge>
                     </Group>
                     <Text size="sm" c="dimmed" mt={4}>
                       {TIPO_LABELS[process.tipo] || process.tipo} • {formatDate(process.dataAbertura)}
@@ -438,108 +201,61 @@ export function ProcessDetail() {
                   </Card>
                 ))}
               </Stack>
-            ) : (
-              <Text c="dimmed" fs="italic">
-                Nenhum outro processo encontrado para este cliente
-              </Text>
-            )}
+            ) : <Text c="dimmed">Nenhum outro processo encontrado para este cliente</Text>}
           </Card>
         </Tabs.Panel>
       </Tabs>
 
-      <Modal
-        opened={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        title="Confirmar exclusão"
-        centered
-      >
+      <Modal opened={state.deleteModalOpen} onClose={() => setState(prev => ({ ...prev, deleteModalOpen: false }))} title="Confirmar exclusão">
         <Text mb="xl">Tem certeza que deseja excluir permanentemente o processo abaixo?</Text>
-        
         <Card withBorder mb="xl">
-          <Text fw={600}>{processo.numero}</Text>
-          <Text size="sm" c="dimmed">
-            {processo.clienteNome} • {formatDate(processo.dataAbertura)}
-          </Text>
+          <Text fw={600}>{state.processo.numero}</Text>
+          <Text size="sm" c="dimmed">{state.processo.clienteNome} • {formatDate(state.processo.dataAbertura)}</Text>
         </Card>
-        
-        <Text size="sm" c="dimmed" mb="xl">
-          Todos os documentos e histórico associados serão removidos permanentemente.
-        </Text>
-        
         <Group justify="flex-end">
-          <Button 
-            variant="default" 
-            onClick={() => setDeleteModalOpen(false)}
-          >
-            Cancelar
-          </Button>
-          <Button 
-            color="red" 
-            leftSection={<IconTrash size={16} />}
-            onClick={handleDelete}
-          >
-            Excluir Processo
-          </Button>
+          <Button variant="default" onClick={() => setState(prev => ({ ...prev, deleteModalOpen: false }))}>Cancelar</Button>
+          <Button color="red" leftSection={<IconTrash size={16} />} onClick={handleDelete}>Excluir Processo</Button>
         </Group>
       </Modal>
     </Paper>
   );
 }
 
-function ProcessDocumentsTable({ documents }) {
-  if (!documents || documents.length === 0) {
-    return (
-      <Text c="dimmed" fs="italic" py="md">
-        Nenhum documento anexado
-      </Text>
-    );
-  }
+const Field = ({ label, value }) => (
+  <div>
+    <Text fw={500} size="sm" c="dimmed">{label}</Text>
+    <Text>{value}</Text>
+  </div>
+);
 
+const DocumentList = ({ documents }) => {
+  if (!documents.length) return <Text c="dimmed" py="md">Nenhum documento anexado</Text>;
+  
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <Table>
       <thead>
         <tr>
-          <th style={{ textAlign: 'left', padding: '8px 0' }}>Documento</th>
-          <th style={{ textAlign: 'left', padding: '8px 0' }}>Tipo</th>
-          <th style={{ textAlign: 'left', padding: '8px 0' }}>Data</th>
-          <th style={{ textAlign: 'right', padding: '8px 0' }}>Ações</th>
+          <th>Documento</th>
+          <th>Tipo</th>
+          <th>Data</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody>
-        {documents.map((doc) => (
+        {documents.map(doc => (
           <tr key={doc.id}>
-            <td style={{ padding: '12px 0' }}>
-              <Group gap="sm">
-                <IconFile size={16} />
-                <Text>{doc.nome}</Text>
-              </Group>
-            </td>
-            <td style={{ padding: '12px 0' }}>
-              <Badge variant="light">
-                {doc.tipo.split('/')[1] || doc.tipo}
-              </Badge>
-            </td>
-            <td style={{ padding: '12px 0' }}>
-              {formatDate(doc.createdAt)}
-            </td>
-            <td style={{ padding: '12px 0', textAlign: 'right' }}>
-              <Group gap={4} justify="flex-end">
-                <Tooltip label="Visualizar" withArrow>
-                  <ActionIcon 
-                    variant="subtle"
-                    color="blue"
-                    onClick={() => window.open(doc.url, '_blank')}
-                  >
-                    <IconFileDownload size={16} />
-                  </ActionIcon>
-                </Tooltip>
-              </Group>
+            <td><Group gap="sm"><IconFileDescription size={16} /><Text>{doc.nome}</Text></Group></td>
+            <td><Badge variant="light">{doc.tipo.split('/')[1] || doc.tipo}</Badge></td>
+            <td>{formatDate(doc.createdAt)}</td>
+            <td>
+              <ActionIcon variant="subtle" color="blue" onClick={() => window.open(doc.url, '_blank')} title="Download">
+                <IconDownload size={16} />
+              </ActionIcon>
             </td>
           </tr>
         ))}
       </tbody>
-    </table>
+    </Table>
   );
-}
-
+};
 export default ProcessDetail;

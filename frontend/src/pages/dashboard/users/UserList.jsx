@@ -5,11 +5,9 @@ import {
   LoadingOverlay, ActionIcon, Menu, Pagination, Avatar, Modal, Flex 
 } from '@mantine/core';
 import { 
-  IconSearch, IconPlus, IconEdit, IconTrash, IconUser,
-  IconFilter, IconRefresh, IconDotsVertical, IconLockOpen, IconMail
+  IconSearch, IconPlus, IconEdit, IconTrash, IconDotsVertical, IconLockOpen
 } from '@tabler/icons-react';
 import api from '@/api/apiService';
-import { useNotification } from '@/contexts/NotificationContext';
 import EmptyState from '@/components/common/EmptyState';
 
 const ROLE_OPTIONS = [
@@ -29,8 +27,6 @@ const ITEMS_PER_PAGE = 10;
 
 export function UserList() {
   const navigate = useNavigate();
-  const { showNotification } = useNotification();
-  
   const [state, setState] = useState({
     users: [],
     loading: true,
@@ -43,11 +39,11 @@ export function UserList() {
     userToDelete: null
   });
 
-  const fetchUsers = async (page = 1) => {
+  const fetchUsers = async () => {
     setState(prev => ({ ...prev, loading: true }));
     try {
       const params = {
-        page,
+        page: state.currentPage,
         limit: ITEMS_PER_PAGE,
         search: state.searchTerm,
         role: state.roleFilter,
@@ -61,67 +57,42 @@ export function UserList() {
         totalPages: data.totalPages,
         loading: false
       }));
-    } catch (error) {
-      showNotification('Erro ao carregar usuários', 'error');
+    } catch {
       setState(prev => ({ ...prev, loading: false }));
     }
   };
 
-  useEffect(() => {
-    fetchUsers(state.currentPage);
-  }, [state.currentPage, state.searchTerm, state.roleFilter, state.statusFilter]);
+  useEffect(() => { fetchUsers(); }, [
+    state.currentPage, 
+    state.searchTerm, 
+    state.roleFilter, 
+    state.statusFilter
+  ]);
 
   const handleDelete = async () => {
-    try {
-      await api.delete(`/usuarios/${state.userToDelete.id}`);
-      showNotification('Usuário removido com sucesso', 'success');
-      fetchUsers(state.currentPage);
-      setState(prev => ({ ...prev, deleteModalOpen: false, userToDelete: null }));
-    } catch (error) {
-      showNotification('Erro ao remover usuário', 'error');
-    }
+    await api.delete(`/usuarios/${state.userToDelete.id}`);
+    setState(prev => ({ ...prev, deleteModalOpen: false }));
+    fetchUsers();
   };
 
   const handleResetPassword = async (userId) => {
-    try {
-      await api.post(`/usuarios/${userId}/reset-password`);
-      showNotification('Link de redefinição enviado por email', 'success');
-    } catch (error) {
-      showNotification('Erro ao enviar link de redefinição', 'error');
-    }
+    await api.post(`/usuarios/${userId}/reset-password`);
   };
 
-  const getRoleColor = (role) => {
-    switch(role) {
-      case 'admin': return 'red';
-      case 'advogado': return 'blue';
-      case 'estagiario': return 'yellow';
-      case 'cliente': return 'green';
-      default: return 'gray';
-    }
-  };
+  const updateState = (key, value) => setState(prev => ({ ...prev, [key]: value }));
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'ativo': return 'green';
-      case 'inativo': return 'red';
-      case 'pendente': return 'yellow';
-      default: return 'gray';
-    }
-  };
-
-  const updateState = (key, value) => {
-    setState(prev => ({ ...prev, [key]: value }));
-  };
+  const getRoleColor = (role) => ({
+    admin: 'red', advogado: 'blue', estagiario: 'yellow', cliente: 'green' 
+  }[role] || 'gray');
 
   return (
     <Paper withBorder p="md" radius="md" pos="relative">
-      <LoadingOverlay visible={state.loading} overlayBlur={2} />
-
-      <Group position="apart" mb="md">
+      <LoadingOverlay visible={state.loading} />
+      
+      <Group justify="space-between" mb="md">
         <Text size="xl" fw={500}>Gerenciamento de Usuários</Text>
         <Button 
-          leftIcon={<IconPlus size={16} />} 
+          leftSection={<IconPlus size={16} />} 
           onClick={() => navigate('/usuarios/novo')}
         >
           Novo Usuário
@@ -131,9 +102,9 @@ export function UserList() {
       <Group mb="md" spacing="md">
         <TextInput
           placeholder="Buscar por nome ou email..."
-          icon={<IconSearch size={16} />}
+          leftSection={<IconSearch size={16} />}
           value={state.searchTerm}
-          onChange={(e) => updateState('searchTerm', e.target.value)}
+          onChange={e => updateState('searchTerm', e.target.value)}
           style={{ flex: 1 }}
         />
 
@@ -141,24 +112,22 @@ export function UserList() {
           placeholder="Filtrar por cargo"
           data={ROLE_OPTIONS}
           value={state.roleFilter}
-          onChange={(value) => updateState('roleFilter', value)}
+          onChange={value => updateState('roleFilter', value)}
           clearable
-          icon={<IconUser size={16} />}
         />
 
         <Select
           placeholder="Filtrar por status"
           data={STATUS_OPTIONS}
           value={state.statusFilter}
-          onChange={(value) => updateState('statusFilter', value)}
+          onChange={value => updateState('statusFilter', value)}
           clearable
-          icon={<IconFilter size={16} />}
         />
 
         <ActionIcon
           variant="outline"
           size="lg"
-          onClick={() => fetchUsers()}
+          onClick={fetchUsers}
           title="Recarregar"
         >
           <IconRefresh size={18} />
@@ -174,7 +143,7 @@ export function UserList() {
         />
       ) : (
         <>
-          <Table striped highlightOnHover verticalSpacing="sm">
+          <Table striped highlightOnHover>
             <thead>
               <tr>
                 <th>Usuário</th>
@@ -188,7 +157,7 @@ export function UserList() {
               {state.users.map(user => (
                 <tr key={user.id}>
                   <td>
-                    <Group spacing="sm">
+                    <Group>
                       <Avatar src={user.avatar} size={36} radius="xl">
                         {user.nome.charAt(0).toUpperCase()}
                       </Avatar>
@@ -202,21 +171,20 @@ export function UserList() {
                     </Badge>
                   </td>
                   <td>
-                    <Badge color={getStatusColor(user.status)}>
-                      {STATUS_OPTIONS.find(s => s.value === user.status)?.label || user.status}
+                    <Badge color={user.status === 'ativo' ? 'green' : 'red'}>
+                      {user.status}
                     </Badge>
                   </td>
                   <td>
-                    <Group spacing={4} noWrap>
+                    <Group noWrap>
                       <ActionIcon
                         color="blue"
                         onClick={() => navigate(`/usuarios/${user.id}`)}
-                        title="Detalhes"
                       >
                         <IconEdit size={18} />
                       </ActionIcon>
 
-                      <Menu position="bottom-end" withinPortal>
+                      <Menu position="bottom-end">
                         <Menu.Target>
                           <ActionIcon>
                             <IconDotsVertical size={18} />
@@ -224,21 +192,14 @@ export function UserList() {
                         </Menu.Target>
 
                         <Menu.Dropdown>
-                          <Menu.Item 
-                            icon={<IconMail size={16} />}
-                            onClick={() => navigate(`/usuarios/${user.id}/editar`)}
-                          >
+                          <Menu.Item onClick={() => navigate(`/usuarios/${user.id}/editar`)}>
                             Editar
                           </Menu.Item>
-                          <Menu.Item 
-                            icon={<IconLockOpen size={16} />}
-                            onClick={() => handleResetPassword(user.id)}
-                          >
+                          <Menu.Item onClick={() => handleResetPassword(user.id)}>
                             Redefinir senha
                           </Menu.Item>
                           <Menu.Item 
-                            icon={<IconTrash size={16} />}
-                            color="red"
+                            color="red" 
                             onClick={() => {
                               updateState('userToDelete', user);
                               updateState('deleteModalOpen', true);
@@ -256,15 +217,12 @@ export function UserList() {
           </Table>
 
           {state.totalPages > 1 && (
-            <Group position="center" mt="xl">
-              <Pagination
-                page={state.currentPage}
-                onChange={(page) => updateState('currentPage', page)}
-                total={state.totalPages}
-                siblings={1}
-                boundaries={1}
-              />
-            </Group>
+            <Pagination 
+              value={state.currentPage} 
+              onChange={page => updateState('currentPage', page)} 
+              total={state.totalPages} 
+              mt="md"
+            />
           )}
         </>
       )}
@@ -277,7 +235,7 @@ export function UserList() {
         <Text mb="xl">
           Tem certeza que deseja excluir o usuário {state.userToDelete?.nome}?
         </Text>
-        <Flex gap="sm" justify="flex-end">
+        <Flex justify="flex-end" gap="sm">
           <Button variant="default" onClick={() => updateState('deleteModalOpen', false)}>
             Cancelar
           </Button>

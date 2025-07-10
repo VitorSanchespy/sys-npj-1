@@ -1,37 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Table,
-  TextInput,
-  Button,
-  Paper,
-  Title,
-  LoadingOverlay,
-  Group,
-  Badge,
-  ActionIcon,
-  Modal,
-  Text,
-  Select,
-  Stack,
-  Alert,
-  Switch,
-  Avatar
-} from '@mantine/core';
-import { 
-  IconPlus, 
-  IconEdit, 
-  IconTrash, 
-  IconSearch,
-  IconUser,
-  IconRefresh,
-  IconMail,
-  IconShield,
-  IconUserOff,
-  IconUserCheck
-} from '@tabler/icons-react';
+import { Table, TextInput, Button, Paper, LoadingOverlay, Group, Badge, ActionIcon, Modal, Select } from '@mantine/core';
+import { IconPlus, IconEdit, IconTrash, IconSearch, IconRefresh } from '@tabler/icons-react';
 import api from '@/api/apiService';
-import useNotification from '@/hooks/useNotification';
 
 const ROLE_OPTIONS = [
   { value: 'admin', label: 'Administrador' },
@@ -46,141 +17,78 @@ const STATUS_OPTIONS = [
   { value: 'pendente', label: 'Pendente' },
 ];
 
-export default function UsuariosPage() {
+export function UsuariosPage() {
   const navigate = useNavigate();
-  const { showNotification } = useNotification();
-  const [usuarios, setUsuarios] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
+  const [state, setState] = useState({
+    usuarios: [],
+    loading: true,
+    searchTerm: '',
+    roleFilter: '',
+    statusFilter: '',
+    deleteModalOpen: false,
+    userToDelete: null
+  });
+
+  useEffect(() => { fetchUsuarios(); }, [state.searchTerm, state.roleFilter, state.statusFilter]);
 
   const fetchUsuarios = async () => {
-    setLoading(true);
-    try {
-      const params = {
-        search: searchTerm,
-        role: roleFilter,
-        status: statusFilter
-      };
-      const { data } = await api.get('/usuarios', { params });
-      setUsuarios(data);
-    } catch (error) {
-      showNotification('Erro ao carregar usuários', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsuarios();
-  }, [searchTerm, roleFilter, statusFilter]);
-
-  const handleToggleStatus = async (id, currentStatus) => {
-    try {
-      await api.put(`/usuarios/${id}/status`, { 
-        status: currentStatus === 'ativo' ? 'inativo' : 'ativo' 
-      });
-      showNotification('Status do usuário atualizado', 'success');
-      fetchUsuarios();
-    } catch (error) {
-      showNotification('Erro ao atualizar status', 'error');
-    }
+    const params = {
+      search: state.searchTerm,
+      role: state.roleFilter,
+      status: state.statusFilter
+    };
+    const { data } = await api.get('/usuarios', { params });
+    setState(prev => ({ ...prev, usuarios: data, loading: false }));
   };
 
   const handleDelete = async () => {
-    try {
-      await api.delete(`/usuarios/${userToDelete.id}`);
-      showNotification('Usuário removido com sucesso', 'success');
-      fetchUsuarios();
-    } catch (error) {
-      showNotification('Erro ao remover usuário', 'error');
-    } finally {
-      setDeleteModalOpen(false);
-      setUserToDelete(null);
-    }
-  };
-
-  const getRoleColor = (role) => {
-    switch(role) {
-      case 'admin': return 'red';
-      case 'advogado': return 'blue';
-      case 'estagiario': return 'yellow';
-      case 'cliente': return 'green';
-      default: return 'gray';
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'ativo': return 'green';
-      case 'inativo': return 'red';
-      case 'pendente': return 'yellow';
-      default: return 'gray';
-    }
+    await api.delete(`/usuarios/${state.userToDelete.id}`);
+    fetchUsuarios();
+    setState(prev => ({ ...prev, deleteModalOpen: false, userToDelete: null }));
   };
 
   return (
-    <Paper withBorder p="xl" radius="md" pos="relative">
-      <LoadingOverlay visible={loading} overlayBlur={2} />
-
-      <Group position="apart" mb="xl">
+    <Paper withBorder p="xl" radius="md">
+      <LoadingOverlay visible={state.loading} />
+      
+      <Group justify="space-between" mb="xl">
         <Title order={2}>Gestão de Usuários</Title>
-        <Button
-          leftIcon={<IconPlus size={16} />}
-          onClick={() => navigate('/usuarios/novo')}
-        >
+        <Button leftSection={<IconPlus size={16} />} onClick={() => navigate('/usuarios/novo')}>
           Novo Usuário
         </Button>
       </Group>
 
-      <Group mb="md" spacing="md">
+      <Group mb="md">
         <TextInput
           placeholder="Buscar por nome ou email..."
-          icon={<IconSearch size={16} />}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          leftSection={<IconSearch size={16} />}
+          value={state.searchTerm}
+          onChange={e => setState(prev => ({ ...prev, searchTerm: e.target.value }))}
           style={{ flex: 1 }}
         />
-
         <Select
           placeholder="Filtrar por cargo"
           data={ROLE_OPTIONS}
-          value={roleFilter}
-          onChange={setRoleFilter}
+          value={state.roleFilter}
+          onChange={value => setState(prev => ({ ...prev, roleFilter: value }))}
           clearable
-          icon={<IconShield size={16} />}
         />
-
         <Select
           placeholder="Filtrar por status"
           data={STATUS_OPTIONS}
-          value={statusFilter}
-          onChange={setStatusFilter}
+          value={state.statusFilter}
+          onChange={value => setState(prev => ({ ...prev, statusFilter: value }))}
           clearable
-          icon={<IconUser size={16} />}
         />
-
-        <ActionIcon
-          variant="outline"
-          size="lg"
-          onClick={fetchUsuarios}
-          title="Recarregar"
-        >
+        <ActionIcon variant="outline" size="lg" onClick={fetchUsuarios} title="Recarregar">
           <IconRefresh size={18} />
         </ActionIcon>
       </Group>
 
-      {usuarios.length === 0 ? (
-        <Alert color="blue" title="Nenhum usuário encontrado">
-          {searchTerm || roleFilter || statusFilter 
-            ? "Tente ajustar sua busca ou filtros" 
-            : "Nenhum usuário cadastrado ainda"}
-        </Alert>
+      {state.usuarios.length === 0 ? (
+        <Text>Nenhum usuário encontrado</Text>
       ) : (
-        <Table striped highlightOnHover>
+        <Table striped>
           <thead>
             <tr>
               <th>Usuário</th>
@@ -191,65 +99,26 @@ export default function UsuariosPage() {
             </tr>
           </thead>
           <tbody>
-            {usuarios.map((usuario) => (
+            {state.usuarios.map(usuario => (
               <tr key={usuario.id}>
+                <td>{usuario.nome}</td>
+                <td>{usuario.email}</td>
                 <td>
-                  <Group spacing="sm">
-                    <Avatar src={usuario.avatar} size={36} radius="xl">
-                      {usuario.nome.charAt(0).toUpperCase()}
-                    </Avatar>
-                    <Text>{usuario.nome}</Text>
-                  </Group>
-                </td>
-                <td>
-                  <Group spacing="xs">
-                    <IconMail size={16} color="gray" />
-                    <Text>{usuario.email}</Text>
-                  </Group>
-                </td>
-                <td>
-                  <Badge color={getRoleColor(usuario.role)}>
+                  <Badge color={{ admin: 'red', advogado: 'blue', estagiario: 'yellow', cliente: 'green' }[usuario.role] || 'gray'}>
                     {ROLE_OPTIONS.find(r => r.value === usuario.role)?.label || usuario.role}
                   </Badge>
                 </td>
                 <td>
-                  <Group spacing="xs">
-                    <Switch
-                      checked={usuario.status === 'ativo'}
-                      onChange={() => handleToggleStatus(usuario.id, usuario.status)}
-                      color="teal"
-                      size="md"
-                      thumbIcon={
-                        usuario.status === 'ativo' ? (
-                          <IconUserCheck size={12} color="green" />
-                        ) : (
-                          <IconUserOff size={12} color="red" />
-                        )
-                      }
-                    />
-                    <Badge color={getStatusColor(usuario.status)}>
-                      {STATUS_OPTIONS.find(s => s.value === usuario.status)?.label || usuario.status}
-                    </Badge>
-                  </Group>
+                  <Badge color={usuario.status === 'ativo' ? 'green' : 'red'}>
+                    {STATUS_OPTIONS.find(s => s.value === usuario.status)?.label || usuario.status}
+                  </Badge>
                 </td>
                 <td>
-                  <Group spacing={4} noWrap>
-                    <ActionIcon
-                      color="blue"
-                      onClick={() => navigate(`/usuarios/${usuario.id}`)}
-                      title="Editar"
-                    >
+                  <Group noWrap>
+                    <ActionIcon color="blue" onClick={() => navigate(`/usuarios/${usuario.id}`)}>
                       <IconEdit size={18} />
                     </ActionIcon>
-
-                    <ActionIcon
-                      color="red"
-                      onClick={() => {
-                        setUserToDelete(usuario);
-                        setDeleteModalOpen(true);
-                      }}
-                      title="Excluir"
-                    >
+                    <ActionIcon color="red" onClick={() => setState(prev => ({ ...prev, userToDelete: usuario, deleteModalOpen: true }))}>
                       <IconTrash size={18} />
                     </ActionIcon>
                   </Group>
@@ -260,21 +129,14 @@ export default function UsuariosPage() {
         </Table>
       )}
 
-      <Modal
-        opened={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        title="Confirmar exclusão"
-      >
-        <Text mb="xl">Tem certeza que deseja excluir o usuário {userToDelete?.nome}?</Text>
-        <Group position="right">
-          <Button variant="default" onClick={() => setDeleteModalOpen(false)}>
-            Cancelar
-          </Button>
-          <Button color="red" onClick={handleDelete}>
-            Confirmar Exclusão
-          </Button>
+      <Modal opened={state.deleteModalOpen} onClose={() => setState(prev => ({ ...prev, deleteModalOpen: false }))} title="Confirmar exclusão">
+        <Text mb="xl">Tem certeza que deseja excluir o usuário {state.userToDelete?.nome}?</Text>
+        <Group justify="flex-end">
+          <Button variant="default" onClick={() => setState(prev => ({ ...prev, deleteModalOpen: false }))}>Cancelar</Button>
+          <Button color="red" onClick={handleDelete}>Confirmar</Button>
         </Group>
       </Modal>
     </Paper>
   );
 }
+export default UsuariosPage;

@@ -1,28 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Table,
-  TextInput,
-  Button,
-  Paper,
-  Title,
-  LoadingOverlay,
-  Group,
-  Badge,
-  ActionIcon,
-  Modal,
-  Text,
-  Select,
-  Stack,
-  Alert
+import { 
+  Table, TextInput, Button, Paper, Title, 
+  LoadingOverlay, Group, Badge, ActionIcon, 
+  Modal, Text, Select, Alert 
 } from '@mantine/core';
 import { 
-  IconPlus, 
-  IconEdit, 
-  IconTrash, 
-  IconSearch,
-  IconListDetails,
-  IconRefresh
+  IconPlus, IconEdit, IconTrash, 
+  IconSearch, IconListDetails, IconRefresh 
 } from '@tabler/icons-react';
 import api from '@/api/apiService';
 import useNotification from '@/hooks/useNotification';
@@ -43,70 +28,63 @@ const TIPO_OPTIONS = [
 export function ProcessoPage() {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-  const [processos, setProcessos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [tipoFilter, setTipoFilter] = useState('');
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [processoToDelete, setProcessoToDelete] = useState(null);
+  const [state, setState] = useState({
+    processos: [],
+    loading: true,
+    searchTerm: '',
+    statusFilter: '',
+    tipoFilter: '',
+    deleteModalOpen: false,
+    processoToDelete: null
+  });
 
   const fetchProcessos = async () => {
-    setLoading(true);
+    setState(s => ({ ...s, loading: true }));
     try {
       const params = {
-        search: searchTerm,
-        status: statusFilter,
-        tipo: tipoFilter
+        search: state.searchTerm,
+        status: state.statusFilter,
+        tipo: state.tipoFilter
       };
       const { data } = await api.get('/processos', { params });
-      setProcessos(data);
-    } catch (error) {
+      setState(s => ({ ...s, processos: data, loading: false }));
+    } catch {
       showNotification('Erro ao carregar processos', 'error');
-    } finally {
-      setLoading(false);
+      setState(s => ({ ...s, loading: false }));
     }
   };
 
-  useEffect(() => {
-    fetchProcessos();
-  }, [searchTerm, statusFilter, tipoFilter]);
+  useEffect(() => { fetchProcessos(); }, [state.searchTerm, state.statusFilter, state.tipoFilter]);
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/processos/${processoToDelete.id}`);
+      await api.delete(`/processos/${state.processoToDelete.id}`);
       showNotification('Processo removido com sucesso', 'success');
       fetchProcessos();
-    } catch (error) {
+    } catch {
       showNotification('Erro ao remover processo', 'error');
     } finally {
-      setDeleteModalOpen(false);
-      setProcessoToDelete(null);
+      setState(s => ({ ...s, deleteModalOpen: false, processoToDelete: null }));
     }
   };
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case 'ativo': return 'green';
-      case 'arquivado': return 'yellow';
-      case 'encerrado': return 'red';
-      default: return 'gray';
-    }
-  };
+  const getStatusColor = status => ({
+    ativo: 'green',
+    arquivado: 'yellow',
+    encerrado: 'red'
+  }[status] || 'gray');
 
-  const filteredProcessos = processos.filter(processo =>
-    processo.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    processo.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    processo.clienteNome.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleChange = (name, value) => setState(s => ({ ...s, [name]: value }));
+  const hasFilters = state.searchTerm || state.statusFilter || state.tipoFilter;
+  const isEmpty = state.processos.length === 0;
 
   return (
     <Paper withBorder p="xl" radius="md" pos="relative">
-      <LoadingOverlay visible={loading} overlayBlur={2} />
+      <LoadingOverlay visible={state.loading} overlayBlur={2} />
 
       <Group position="apart" mb="xl">
         <Title order={2}>Processos Jurídicos</Title>
-        <Button
+        <Button 
           leftIcon={<IconPlus size={16} />}
           onClick={() => navigate('/processos/novo')}
         >
@@ -118,24 +96,24 @@ export function ProcessoPage() {
         <TextInput
           placeholder="Buscar por número, descrição ou cliente..."
           icon={<IconSearch size={16} />}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={state.searchTerm}
+          onChange={e => handleChange('searchTerm', e.target.value)}
           style={{ flex: 1 }}
         />
 
         <Select
           placeholder="Filtrar por status"
           data={STATUS_OPTIONS}
-          value={statusFilter}
-          onChange={setStatusFilter}
+          value={state.statusFilter}
+          onChange={v => handleChange('statusFilter', v)}
           clearable
         />
 
         <Select
           placeholder="Filtrar por tipo"
           data={TIPO_OPTIONS}
-          value={tipoFilter}
-          onChange={setTipoFilter}
+          value={state.tipoFilter}
+          onChange={v => handleChange('tipoFilter', v)}
           clearable
         />
 
@@ -149,9 +127,9 @@ export function ProcessoPage() {
         </ActionIcon>
       </Group>
 
-      {filteredProcessos.length === 0 ? (
+      {isEmpty ? (
         <Alert color="blue" title="Nenhum processo encontrado">
-          {searchTerm || statusFilter || tipoFilter 
+          {hasFilters 
             ? "Tente ajustar sua busca ou filtros" 
             : "Nenhum processo cadastrado ainda"}
         </Alert>
@@ -168,20 +146,12 @@ export function ProcessoPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredProcessos.map((processo) => (
+            {state.processos.map(processo => (
               <tr key={processo.id}>
                 <td>{processo.numero}</td>
                 <td>{processo.clienteNome}</td>
-                <td>
-                  <Text lineClamp={1} style={{ maxWidth: 300 }}>
-                    {processo.descricao}
-                  </Text>
-                </td>
-                <td>
-                  <Badge color={getStatusColor(processo.status)}>
-                    {processo.status}
-                  </Badge>
-                </td>
+                <td><Text lineClamp={1} maw={300}>{processo.descricao}</Text></td>
+                <td><Badge color={getStatusColor(processo.status)}>{processo.status}</Badge></td>
                 <td>
                   <Badge variant="outline">
                     {TIPO_OPTIONS.find(t => t.value === processo.tipo)?.label || processo.tipo}
@@ -207,10 +177,11 @@ export function ProcessoPage() {
 
                     <ActionIcon
                       color="red"
-                      onClick={() => {
-                        setProcessoToDelete(processo);
-                        setDeleteModalOpen(true);
-                      }}
+                      onClick={() => setState(s => ({
+                        ...s,
+                        processoToDelete: processo,
+                        deleteModalOpen: true
+                      }))}
                       title="Excluir"
                     >
                       <IconTrash size={18} />
@@ -224,13 +195,13 @@ export function ProcessoPage() {
       )}
 
       <Modal
-        opened={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
+        opened={state.deleteModalOpen}
+        onClose={() => setState(s => ({ ...s, deleteModalOpen: false }))}
         title="Confirmar exclusão"
       >
-        <Text mb="xl">Tem certeza que deseja excluir o processo {processoToDelete?.numero}?</Text>
+        <Text mb="xl">Tem certeza que deseja excluir o processo {state.processoToDelete?.numero}?</Text>
         <Group position="right">
-          <Button variant="default" onClick={() => setDeleteModalOpen(false)}>
+          <Button variant="default" onClick={() => setState(s => ({ ...s, deleteModalOpen: false }))}>
             Cancelar
           </Button>
           <Button color="red" onClick={handleDelete}>

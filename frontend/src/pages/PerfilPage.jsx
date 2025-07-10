@@ -1,163 +1,152 @@
 import { useState, useEffect } from 'react';
 import { 
-  Container,
-  Title,
-  Text,
-  TextInput,
-  Button,
-  Paper,
-  LoadingOverlay,
-  Avatar,
-  Group,
-  Stack,
-  Alert,
-  PasswordInput,
-  Divider,
-  FileInput,
-  Badge
+  Container, Title, TextInput, Button, Paper, 
+  LoadingOverlay, Avatar, Group, Stack, PasswordInput, 
+  Divider, FileInput, Badge
 } from '@mantine/core';
 import { 
-  IconUser, 
-  IconMail, 
-  IconLock, 
-  IconDeviceMobile, 
-  IconCheck,
-  IconUpload,
-  IconShield,
-  IconCalendar
+  IconUser, IconMail, IconLock, IconDeviceMobile, 
+  IconCheck, IconUpload, IconShield, IconCalendar
 } from '@tabler/icons-react';
 import api from '@/api/apiService';
 import useNotification from '@/hooks/useNotification';
 import { validatePassword } from '@/utils/validators';
 
-export default function PerfilPage() {
-  const [user, setUser] = useState(null);
-  const [formData, setFormData] = useState({
-    nome: '',
-    email: '',
-    telefone: '',
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+export function PerfilPage() {
+  const [state, setState] = useState({
+    user: null,
+    formData: { 
+      nome: '', 
+      email: '', 
+      telefone: '', 
+      currentPassword: '', 
+      newPassword: '', 
+      confirmPassword: '' 
+    },
+    loading: true,
+    error: null,
+    avatarFile: null,
+    avatarPreview: null,
+    activeTab: 'info',
+    updating: false
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [avatarFile, setAvatarFile] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState(null);
-  const [activeTab, setActiveTab] = useState('info');
+
   const { showNotification } = useNotification();
 
-  const fetchProfile = async () => {
-    setLoading(true);
-    try {
-      const { data } = await api.get('/auth/profile');
-      setUser(data);
-      setFormData({
-        nome: data.nome,
-        email: data.email,
-        telefone: data.telefone || '',
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      });
-      setAvatarPreview(data.avatarUrl);
-    } catch (error) {
-      setError(error.response?.data?.message || 'Erro ao carregar perfil');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchProfile = async () => {
+      setState(s => ({ ...s, loading: true }));
+      try {
+        const { data } = await api.get('/auth/profile');
+        setState({
+          user: data,
+          formData: {
+            nome: data.nome,
+            email: data.email,
+            telefone: data.telefone || '',
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: ''
+          },
+          avatarPreview: data.avatarUrl,
+          loading: false,
+          error: null,
+          avatarFile: null
+        });
+      } catch {
+        setState(s => ({ ...s, error: 'Erro ao carregar perfil', loading: false }));
+      }
+    };
     fetchProfile();
   }, []);
 
-  const handleAvatarChange = (file) => {
-    setAvatarFile(file);
+  const handleAvatarChange = file => {
+    setState(s => ({ ...s, avatarFile: file }));
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => setAvatarPreview(e.target.result);
+      reader.onload = e => setState(s => ({ ...s, avatarPreview: e.target.result }));
       reader.readAsDataURL(file);
-    } else {
-      setAvatarPreview(user?.avatarUrl);
     }
   };
 
   const handleInfoUpdate = async () => {
+    setState(s => ({ ...s, updating: true }));
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append('nome', formData.nome);
-      formDataToSend.append('telefone', formData.telefone);
-      if (avatarFile) formDataToSend.append('avatar', avatarFile);
+      formDataToSend.append('nome', state.formData.nome);
+      formDataToSend.append('telefone', state.formData.telefone);
+      if (state.avatarFile) formDataToSend.append('avatar', state.avatarFile);
 
-      await api.put('/auth/profile', formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+      await api.put('/auth/profile', formDataToSend, { 
+        headers: { 'Content-Type': 'multipart/form-data' } 
       });
       showNotification('Informações atualizadas com sucesso!', 'success');
-      fetchProfile();
+      // Recarregar perfil
+      const { data } = await api.get('/auth/profile');
+      setState(s => ({
+        ...s,
+        user: data,
+        formData: { ...s.formData, nome: data.nome, telefone: data.telefone || '' },
+        avatarPreview: data.avatarUrl,
+        updating: false
+      }));
     } catch (error) {
       showNotification(error.response?.data?.message || 'Erro ao atualizar perfil', 'error');
+      setState(s => ({ ...s, updating: false }));
     }
   };
 
   const handlePasswordUpdate = async () => {
-    if (formData.newPassword !== formData.confirmPassword) {
+    const { currentPassword, newPassword, confirmPassword } = state.formData;
+    
+    if (newPassword !== confirmPassword) {
       showNotification('As senhas não coincidem', 'error');
       return;
     }
 
-    if (!validatePassword(formData.newPassword)) {
+    if (!validatePassword(newPassword)) {
       showNotification('A senha deve ter pelo menos 6 caracteres', 'error');
       return;
     }
 
+    setState(s => ({ ...s, updating: true }));
     try {
-      await api.put('/auth/password', {
-        currentPassword: formData.currentPassword,
-        newPassword: formData.newPassword
-      });
+      await api.put('/auth/password', { currentPassword, newPassword });
       showNotification('Senha atualizada com sucesso!', 'success');
-      setFormData({
-        ...formData,
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      });
+      setState(s => ({
+        ...s, 
+        formData: { ...s.formData, currentPassword: '', newPassword: '', confirmPassword: '' },
+        updating: false
+      }));
     } catch (error) {
       showNotification(error.response?.data?.message || 'Erro ao atualizar senha', 'error');
+      setState(s => ({ ...s, updating: false }));
     }
   };
 
-  const getRoleColor = (role) => {
-    switch(role) {
-      case 'admin': return 'red';
-      case 'advogado': return 'blue';
-      case 'estagiario': return 'yellow';
-      case 'cliente': return 'green';
-      default: return 'gray';
-    }
-  };
+  const getRoleColor = role => ({
+    admin: 'red',
+    advogado: 'blue',
+    estagiario: 'yellow',
+    cliente: 'green'
+  }[role] || 'gray');
+
+  const { user, formData, loading, error, avatarPreview, activeTab, updating } = state;
 
   if (loading) return <LoadingOverlay visible overlayBlur={2} />;
   if (error) return <Alert color="red">{error}</Alert>;
-  if (!user) return null;
 
   return (
     <Container size="lg" py="xl">
       <Title order={2} mb="xl">Meu Perfil</Title>
 
       <Paper withBorder p="xl" radius="md" pos="relative">
+        <LoadingOverlay visible={updating} overlayBlur={2} />
+
         <Group align="flex-start" spacing="xl">
-          {/* Left Column - Avatar and Basic Info */}
           <Stack spacing="md" style={{ minWidth: 250 }}>
             <Group position="center">
-              <Avatar 
-                src={avatarPreview} 
-                size={120} 
-                radius={120}
-              >
+              <Avatar src={avatarPreview} size={120} radius={120}>
                 {user.nome.charAt(0).toUpperCase()}
               </Avatar>
             </Group>
@@ -167,7 +156,6 @@ export default function PerfilPage() {
               placeholder="Selecionar imagem"
               accept="image/*"
               icon={<IconUpload size={14} />}
-              value={avatarFile}
               onChange={handleAvatarChange}
               clearable
             />
@@ -190,9 +178,8 @@ export default function PerfilPage() {
             </Stack>
           </Stack>
 
-          {/* Right Column - Editable Info */}
           <Stack style={{ flex: 1 }} spacing="xl">
-            <Tabs value={activeTab} onTabChange={setActiveTab}>
+            <Tabs value={activeTab} onTabChange={tab => setState(s => ({ ...s, activeTab: tab }))}>
               <Tabs.List>
                 <Tabs.Tab value="info">Informações Pessoais</Tabs.Tab>
                 <Tabs.Tab value="password">Alterar Senha</Tabs.Tab>
@@ -204,10 +191,12 @@ export default function PerfilPage() {
                     label="Nome Completo"
                     icon={<IconUser size={16} />}
                     value={formData.nome}
-                    onChange={(e) => setFormData({...formData, nome: e.target.value})}
+                    onChange={e => setState(s => ({ 
+                      ...s, 
+                      formData: { ...s.formData, nome: e.target.value } 
+                    })}
                     required
                   />
-
                   <TextInput
                     label="Email"
                     icon={<IconMail size={16} />}
@@ -215,20 +204,18 @@ export default function PerfilPage() {
                     readOnly
                     disabled
                   />
-
                   <TextInput
                     label="Telefone"
                     icon={<IconDeviceMobile size={16} />}
                     value={formData.telefone}
-                    onChange={(e) => setFormData({...formData, telefone: e.target.value})}
+                    onChange={e => setState(s => ({ 
+                      ...s, 
+                      formData: { ...s.formData, telefone: e.target.value } 
+                    })}
                     placeholder="(00) 00000-0000"
                   />
-
                   <Group position="right" mt="md">
-                    <Button 
-                      leftIcon={<IconCheck size={16} />}
-                      onClick={handleInfoUpdate}
-                    >
+                    <Button leftIcon={<IconCheck size={16} />} onClick={handleInfoUpdate}>
                       Salvar Alterações
                     </Button>
                   </Group>
@@ -241,31 +228,34 @@ export default function PerfilPage() {
                     label="Senha Atual"
                     icon={<IconLock size={16} />}
                     value={formData.currentPassword}
-                    onChange={(e) => setFormData({...formData, currentPassword: e.target.value})}
+                    onChange={e => setState(s => ({ 
+                      ...s, 
+                      formData: { ...s.formData, currentPassword: e.target.value } 
+                    })}
                     required
                   />
-
                   <PasswordInput
                     label="Nova Senha"
                     icon={<IconLock size={16} />}
                     value={formData.newPassword}
-                    onChange={(e) => setFormData({...formData, newPassword: e.target.value})}
+                    onChange={e => setState(s => ({ 
+                      ...s, 
+                      formData: { ...s.formData, newPassword: e.target.value } 
+                    })}
                     required
                   />
-
                   <PasswordInput
                     label="Confirmar Nova Senha"
                     icon={<IconLock size={16} />}
                     value={formData.confirmPassword}
-                    onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                    onChange={e => setState(s => ({ 
+                      ...s, 
+                      formData: { ...s.formData, confirmPassword: e.target.value } 
+                    })}
                     required
                   />
-
                   <Group position="right" mt="md">
-                    <Button 
-                      leftIcon={<IconCheck size={16} />}
-                      onClick={handlePasswordUpdate}
-                    >
+                    <Button leftIcon={<IconCheck size={16} />} onClick={handlePasswordUpdate}>
                       Alterar Senha
                     </Button>
                   </Group>
@@ -278,3 +268,5 @@ export default function PerfilPage() {
     </Container>
   );
 }
+
+export default PerfilPage;
