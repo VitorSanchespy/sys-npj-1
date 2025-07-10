@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Notification as MantineNotification } from '@mantine/core';
 import { IconCheck, IconX, IconInfoCircle, IconAlertCircle } from '@tabler/icons-react';
+import { useNotification } from '@/hooks/useNotification';
 
 const NOTIFICATION_TYPES = {
   success: { icon: <IconCheck size={18} />, color: 'teal', title: 'Sucesso' },

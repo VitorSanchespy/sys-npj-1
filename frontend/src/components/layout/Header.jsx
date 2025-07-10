@@ -2,10 +2,11 @@
 import { AppShell, Group, Text, Button, Avatar } from '@mantine/core';
 import { IconLogout } from '@tabler/icons-react';
 import api from '@/api/apiService';
-import { getCurrentUser, logout } from '@/utils/auth';
+import { useAuth } from '@/hooks/useAuth';
+//import { getCurrentUser, logout } from '@/utils/auth';
 
 export default function Header() {
-  const user = getCurrentUser();
+  const { user, logout } = useAuth();
 
   const handleLogout = async () => {
     try {

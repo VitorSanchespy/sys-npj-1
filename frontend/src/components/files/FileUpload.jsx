@@ -12,7 +12,7 @@ import {
   ThemeIcon,
   Badge,
   ActionIcon,
-  createStyles
+  useMantineTheme // Substituímos createStyles por useMantineTheme
 } from '@mantine/core';
 import { 
   IconUpload, 
@@ -36,21 +36,8 @@ const ACCEPTED_TYPES = [
   'image/png'
 ];
 
-const useStyles = createStyles((theme) => ({
-  dropzoneActive: {
-    borderColor: theme.colors.blue[6],
-    backgroundColor: theme.fn.rgba(theme.colors.blue[0], 0.2)
-  },
-  fileItem: {
-    border: `1px solid ${theme.colors.gray[3]}`,
-    borderRadius: theme.radius.sm,
-    padding: theme.spacing.sm,
-    marginBottom: theme.spacing.xs
-  }
-}));
-
 export default function FileUpload({ processoId, folderPath = '', onUploadSuccess }) {
-  const { classes, cx } = useStyles();
+  const theme = useMantineTheme(); // Usamos o hook para acessar o tema
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState({});
@@ -193,7 +180,12 @@ export default function FileUpload({ processoId, folderPath = '', onUploadSucces
                 <Group 
                   key={file.name} 
                   position="apart" 
-                  className={classes.fileItem}
+                  sx={(theme) => ({
+                    border: `1px solid ${theme.colors.gray[3]}`,
+                    borderRadius: theme.radius.sm,
+                    padding: theme.spacing.sm,
+                    marginBottom: theme.spacing.xs
+                  })}
                 >
                   <Group>
                     <ThemeIcon variant="light" size="md" radius="xl">

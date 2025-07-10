@@ -1,5 +1,5 @@
 // Login
-import auth from '@/services/auth';
+import auth from '@/services';
 auth.login({ email, senha }).then(response => {
   localStorage.setItem('token', response.data.token);
 });

@@ -2,10 +2,10 @@ import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
-import Layout from '@/components/Layout';
-import ProtectedRoute from '@/components/ProtectedRoute';
+import Layout from '@/components/layout/layout';
+import ProtectedRoute from '@/components/common/ProtectedRoute';
 import { setupNotifications } from '@/services/notificationService';
-import theme from '@/theme';
+import theme from './theme';
 import {
   LoginPage,
   RegisterPage,

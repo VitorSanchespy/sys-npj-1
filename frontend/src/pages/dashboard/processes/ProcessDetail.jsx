@@ -36,13 +36,13 @@ import {
   IconCopy,
   IconCheck,
   IconFolder,
-  IconInfoCircle
+  IconInfoCircle,
+  IconFile // Adicionei o IconFile que estava faltando
 } from '@tabler/icons-react';
 import api from '@/api/apiService';
 import { notifications } from '@mantine/notifications';
 import FileUpload from '../files/FileUpload';
 import Timeline from '@/components/Timeline';
-import DocumentTable from './DocumentTable';
 import { formatDate, formatCPF } from '@/utils/format';
 
 const STATUS_COLORS = {
@@ -388,7 +388,7 @@ export default function ProcessDetail() {
               <Text fw={600} mb="md" c="blue">
                 Documentos Anexados
               </Text>
-              <DocumentTable documents={processo.documentos || []} />
+              <ProcessDocumentsTable documents={processo.documentos || []} />
             </Card>
           </Stack>
         </Tabs.Panel>
@@ -486,7 +486,7 @@ export default function ProcessDetail() {
   );
 }
 
-function DocumentTable({ documents }) {
+function ProcessDocumentsTable({ documents }) {
   if (!documents || documents.length === 0) {
     return (
       <Text c="dimmed" fs="italic" py="md">

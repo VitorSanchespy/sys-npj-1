@@ -7,11 +7,11 @@ import {
   IconUsers, 
   IconUser 
 } from '@tabler/icons-react';
-import { getCurrentUser, logout } from '@/utils/auth';
+import { useAuth } from '@/hooks/useAuth'; // Adicionar import
 
 export default function Layout({ children }) {
   const navigate = useNavigate();
-  const user = getCurrentUser() || {};
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
     logout();

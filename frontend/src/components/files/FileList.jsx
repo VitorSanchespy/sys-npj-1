@@ -14,7 +14,7 @@ import {
   Anchor,
   ScrollArea,
   Menu,
-  createStyles
+  useMantineTheme
 } from '@mantine/core';
 import { 
   IconDownload, 
@@ -38,29 +38,8 @@ import UploadModal from './UploadModal';
 import { formatBytes, formatDate } from '@/utils/format';
 import FilePreviewModal from './FilePreviewModal';
 
-const useStyles = createStyles((theme) => ({
-  fileRow: {
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: theme.colorScheme === 'dark' 
-        ? theme.colors.dark[6] 
-        : theme.colors.gray[0],
-    },
-  },
-  directoryRow: {
-    backgroundColor: theme.colorScheme === 'dark' 
-      ? theme.colors.dark[5] 
-      : theme.colors.blue[0],
-    '&:hover': {
-      backgroundColor: theme.colorScheme === 'dark' 
-        ? theme.colors.dark[4] 
-        : theme.colors.blue[1],
-    },
-  },
-}));
-
 export default function FileList() {
-  const { classes } = useStyles();
+  const theme = useMantineTheme();
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentFolder, setCurrentFolder] = useState('');
@@ -188,6 +167,34 @@ export default function FileList() {
     setContextMenuFile(file);
   };
 
+  // Função para obter estilos da linha
+  const getRowStyles = (fileType) => {
+    const baseStyles = {
+      cursor: 'pointer',
+      '&:hover': {
+        backgroundColor: theme.colorScheme === 'dark' 
+          ? theme.colors.dark[6] 
+          : theme.colors.gray[0],
+      }
+    };
+    
+    if (fileType === 'directory') {
+      return {
+        ...baseStyles,
+        backgroundColor: theme.colorScheme === 'dark' 
+          ? theme.colors.dark[5] 
+          : theme.colors.blue[0],
+        '&:hover': {
+          backgroundColor: theme.colorScheme === 'dark' 
+            ? theme.colors.dark[4] 
+            : theme.colors.blue[1],
+        }
+      };
+    }
+    
+    return baseStyles;
+  };
+
   return (
     <Paper withBorder p="md" radius="md">
       <Flex justify="space-between" align="center" mb="md">
@@ -200,7 +207,7 @@ export default function FileList() {
         </Breadcrumbs>
         
         <Button 
-          leftIcon={<IconUpload size={18} />}
+          leftSection={<IconUpload size={18} />}
           onClick={() => setUploadModalOpen(true)}
         >
           Upload
@@ -208,7 +215,7 @@ export default function FileList() {
       </Flex>
 
       {loading ? (
-        <Group position="center" py="xl">
+        <Group justify="center" py="xl">
           <Loader size="xl" variant="dots" />
         </Group>
       ) : (
@@ -225,11 +232,11 @@ export default function FileList() {
             </thead>
             <tbody>
               {currentFolder && (
-                <tr className={classes.directoryRow}>
+                <tr style={getRowStyles('directory')}>
                   <td colSpan={5}>
                     <Button 
                       variant="subtle" 
-                      leftIcon={<IconArrowLeft size={16} />}
+                      leftSection={<IconArrowLeft size={16} />}
                       onClick={handleBack}
                       fullWidth
                       justify="left"
@@ -243,7 +250,7 @@ export default function FileList() {
               {files.map((file) => (
                 <tr 
                   key={file.id} 
-                  className={file.type === 'directory' ? classes.directoryRow : classes.fileRow}
+                  style={getRowStyles(file.type)}
                   onDoubleClick={() => handlePreview(file)}
                   onContextMenu={(e) => handleContextMenu(e, file)}
                 >
@@ -278,7 +285,7 @@ export default function FileList() {
                         </Menu.Target>
                         <Menu.Dropdown>
                           <Menu.Item 
-                            icon={<IconEye size={14} />}
+                            leftSection={<IconEye size={14} />}
                             onClick={() => handlePreview(file)}
                           >
                             Visualizar
@@ -286,7 +293,7 @@ export default function FileList() {
                           {file.type !== 'directory' && (
                             <>
                               <Menu.Item 
-                                icon={<IconDownload size={14} />}
+                                leftSection={<IconDownload size={14} />}
                                 onClick={() => handleDownload(file.id, file.name)}
                               >
                                 Baixar
@@ -294,7 +301,7 @@ export default function FileList() {
                               <Menu.Divider />
                               <Menu.Item 
                                 color="red"
-                                icon={<IconTrash size={14} />}
+                                leftSection={<IconTrash size={14} />}
                                 onClick={() => {
                                   setFileToDelete(file);
                                 }}
@@ -320,7 +327,7 @@ export default function FileList() {
         title="Confirmar exclusão"
       >
         <Text mb="xl">Tem certeza que deseja excluir "{fileToDelete?.name}"?</Text>
-        <Group position="right">
+        <Group justify="right">
           <Button variant="default" onClick={() => setFileToDelete(null)}>
             Cancelar
           </Button>
@@ -359,4 +366,4 @@ export default function FileList() {
       />
     </Paper>
   );
-} 
+}
