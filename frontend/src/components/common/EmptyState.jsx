@@ -1,12 +1,8 @@
 import { Text, Button, Stack } from '@mantine/core';
 
-export default function EmptyState({ 
-  title, 
-  description, 
-  action 
-}) {
+export function EmptyState({ title, description, action }) {
   return (
-    <Stack align="center" py="xl" spacing="xs">
+    <Stack align="center" py="xl" gap="xs">
       <Text size="lg" fw={500} ta="center">
         {title}
       </Text>
@@ -23,3 +19,5 @@ export default function EmptyState({
     </Stack>
   );
 }
+
+export default EmptyState;

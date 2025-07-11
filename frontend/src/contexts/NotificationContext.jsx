@@ -1,73 +1,45 @@
-// src/contexts/NotificationContext.jsx
 import { createContext, useContext } from 'react';
 import { notifications } from '@mantine/notifications';
-import { 
-  IconCheck, 
-  IconX, 
-  IconInfoCircle, 
-  IconAlertCircle 
-} from '@tabler/icons-react';
+import { IconCheck, IconX, IconInfoCircle, IconAlertCircle } from '@tabler/icons-react';
 
 const NotificationContext = createContext();
 
 export function NotificationProvider({ children }) {
-  const showNotification = (options) => {
-    const { 
-      type = 'info', 
-      title, 
-      message, 
-      autoClose = 5000,
-      ...rest
-    } = options;
-    
-    const typeSettings = {
-      success: {
-        color: 'teal',
-        icon: <IconCheck size={18} />,
-        title: title || 'Sucesso!'
-      },
-      error: {
-        color: 'red',
-        icon: <IconX size={18} />,
-        title: title || 'Erro!'
-      },
-      warning: {
-        color: 'orange',
-        icon: <IconAlertCircle size={18} />,
-        title: title || 'Atenção!'
-      },
-      info: {
-        color: 'blue',
-        icon: <IconInfoCircle size={18} />,
-        title: title || 'Informação'
-      }
+  const show = (type, message, options = {}) => {
+    const icons = {
+      success: <IconCheck size={18} />,
+      error: <IconX size={18} />,
+      warning: <IconAlertCircle size={18} />,
+      info: <IconInfoCircle size={18} />
     };
     
-    const settings = typeSettings[type] || typeSettings.info;
+    const colors = {
+      success: 'teal',
+      error: 'red',
+      warning: 'orange',
+      info: 'blue'
+    };
     
     notifications.show({
       message,
-      autoClose,
-      ...settings,
-      ...rest
+      icon: icons[type] || icons.info,
+      color: colors[type] || colors.info,
+      title: options.title || type.charAt(0).toUpperCase() + type.slice(1),
+      autoClose: options.autoClose || 5000,
+      ...options
     });
   };
 
-  // Métodos específicos para tipos de notificação
   const api = {
-    show: showNotification,
-    success: (message, options) => 
-      showNotification({ ...options, type: 'success', message }),
-    error: (message, options) => 
-      showNotification({ ...options, type: 'error', message }),
-    warning: (message, options) => 
-      showNotification({ ...options, type: 'warning', message }),
-    info: (message, options) => 
-      showNotification({ ...options, type: 'info', message }),
-    clean: () => notifications.clean(),
-    cleanQueue: () => notifications.cleanQueue(),
-    update: (id, options) => notifications.update(id, options),
-    hide: (id) => notifications.hide(id)
+    show: (options) => show(options.type || 'info', options.message, options),
+    success: (message, options) => show('success', message, options),
+    error: (message, options) => show('error', message, options),
+    warning: (message, options) => show('warning', message, options),
+    info: (message, options) => show('info', message, options),
+    clean: notifications.clean,
+    cleanQueue: notifications.cleanQueue,
+    update: notifications.update,
+    hide: notifications.hide
   };
 
   return (
@@ -79,8 +51,6 @@ export function NotificationProvider({ children }) {
 
 export function useNotification() {
   const context = useContext(NotificationContext);
-  if (!context) {
-    throw new Error('useNotification deve ser usado dentro de um NotificationProvider');
-  }
+  if (!context) throw new Error('useNotification deve ser usado dentro de um NotificationProvider');
   return context;
 }

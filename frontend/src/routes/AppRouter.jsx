@@ -17,20 +17,18 @@ import FilesPage from '@/pages/dashboard/files/FilesPage';
 import ProfilePage from '@/pages/dashboard/ProfilePage';
 import NotFoundPage from '@/pages/NotFoundPage';
 
-const AuthRoute = () => {
+const AuthRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) return <Loader size="xl" variant="dots" />;
-
-  return user ? <Navigate to="/" replace /> : <Outlet />;
+  return user ? <Navigate to="/" replace /> : children;
 };
 
-const ProtectedRoute = () => {
+const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) return <Loader size="xl" variant="dots" />;
-
-  return user ? <Outlet /> : <Navigate to="/login" replace />;
+  return user ? children : <Navigate to="/login" replace />;
 };
 
 const AppRouter = () => {
@@ -38,24 +36,74 @@ const AppRouter = () => {
     <Routes>
       {/* Rotas públicas */}
       <Route element={<AuthLayout />}>
-        <Route element={<AuthRoute />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/registrar" element={<RegisterPage />} />
-        </Route>
+        <Route 
+          path="/login" 
+          element={
+            <AuthRoute>
+              <LoginPage />
+            </AuthRoute>
+          } 
+        />
+        <Route 
+          path="/registrar" 
+          element={
+            <AuthRoute>
+              <RegisterPage />
+            </AuthRoute>
+          } 
+        />
       </Route>
 
       {/* Rotas protegidas */}
       <Route element={<MainLayout />}>
-        <Route element={<ProtectedRoute />}>
-          <Route index element={<DashboardPage />} />
-          <Route path="/processos">
-            <Route index element={<ProcessList />} />
-            <Route path=":id" element={<ProcessDetail />} />
-          </Route>
-          <Route path="/arquivos" element={<FilesPage />} />
-          <Route path="/usuarios" element={<UserList />} />
-          <Route path="/perfil" element={<ProfilePage />} />
-        </Route>
+        <Route 
+          index 
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/processos" 
+          element={
+            <ProtectedRoute>
+              <ProcessList />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/processos/:id" 
+          element={
+            <ProtectedRoute>
+              <ProcessDetail />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/arquivos" 
+          element={
+            <ProtectedRoute>
+              <FilesPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/usuarios" 
+          element={
+            <ProtectedRoute>
+              <UserList />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/perfil" 
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          } 
+        />
       </Route>
 
       {/* Rota 404 */}

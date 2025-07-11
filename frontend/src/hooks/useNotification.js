@@ -1,34 +1,16 @@
 // src/hooks/useNotification.js
 import { notifications } from '@mantine/notifications';
 
-export default function useNotification() {
-  const showNotification = (options) => {
-    notifications.show(options);
-  };
-
-  const showSuccess = (message) => {
-    notifications.show({
-      title: 'Sucesso',
-      message,
-      color: 'green',
-    });
-  };
-
-  const showError = (message) => {
-    notifications.show({
-      title: 'Erro',
-      message,
-      color: 'red',
-    });
-  };
-
+export function useNotification() {
   return {
-    show: showNotification,
-    showSuccess,
-    showError,
+    show: notifications.show,
+    showSuccess: message => notifications.show({ title: 'Sucesso', message, color: 'green' }),
+    showError: message => notifications.show({ title: 'Erro', message, color: 'red' }),
     clean: notifications.clean,
     cleanQueue: notifications.cleanQueue,
     update: notifications.update,
-    hide: notifications.hide,
+    hide: notifications.hide
   };
 }
+
+export default useNotification;

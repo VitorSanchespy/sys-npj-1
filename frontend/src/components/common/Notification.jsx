@@ -1,69 +1,57 @@
 import { useEffect, useState } from 'react';
 import { Notification as MantineNotification } from '@mantine/core';
-import { IconCheck, IconX, IconInfoCircle, IconAlertCircle } from '@tabler/icons-react';
-import { useNotification } from '@/hooks/useNotification';
+import { IconCheck, IconX } from '@tabler/icons-react';
 
-const NOTIFICATION_TYPES = {
-  success: { icon: <IconCheck size={18} />, color: 'teal', title: 'Sucesso' },
-  error: { icon: <IconX size={18} />, color: 'red', title: 'Erro' },
-  info: { icon: <IconInfoCircle size={18} />, color: 'blue', title: 'Informação' },
-  warning: { icon: <IconAlertCircle size={18} />, color: 'orange', title: 'Aviso' }
-};
-
-export default function Notification({ 
+export function Notification({ 
   message, 
   type = 'info', 
-  duration = 5000,
-  onClose,
-  position = 'bottom-right'
+  duration = 3000,
+  onClose
 }) {
   const [visible, setVisible] = useState(true);
-  const notificationType = NOTIFICATION_TYPES[type] || NOTIFICATION_TYPES.info;
 
   useEffect(() => {
-    if (!duration) return;
-    
     const timer = setTimeout(() => {
-      handleClose();
+      setVisible(false);
+      onClose?.();
     }, duration);
 
     return () => clearTimeout(timer);
   }, [duration]);
 
-  const handleClose = () => {
-    setVisible(false);
-    onClose?.();
-  };
-
   if (!visible) return null;
 
-  // Calcular posição baseada na prop
-  const positionStyles = {
-    'top-left': { top: 20, left: 20 },
-    'top-right': { top: 20, right: 20 },
-    'bottom-left': { bottom: 20, left: 20 },
-    'bottom-right': { bottom: 20, right: 20 },
-    'top-center': { top: 20, left: '50%', transform: 'translateX(-50%)' },
-    'bottom-center': { bottom: 20, left: '50%', transform: 'translateX(-50%)' }
+  const icons = {
+    success: <IconCheck size={16} />,
+    error: <IconX size={16} />,
+    info: null
   };
 
-  const style = {
-    position: 'fixed',
-    zIndex: 1000,
-    width: '350px',
-    maxWidth: '90vw',
-    ...positionStyles[position]
+  const colors = {
+    success: 'teal',
+    error: 'red',
+    info: 'blue'
   };
 
   return (
     <MantineNotification
-      {...notificationType}
-      onClose={handleClose}
-      style={style}
-      withBorder
-      radius="md"
+      icon={icons[type]}
+      color={colors[type]}
+      onClose={() => {
+        setVisible(false);
+        onClose?.();
+      }}
+      style={{
+        position: 'fixed',
+        bottom: 20,
+        right: 20,
+        zIndex: 1000,
+        width: 300
+      }}
     >
       {message}
     </MantineNotification>
   );
 }
+
+export default Notification;

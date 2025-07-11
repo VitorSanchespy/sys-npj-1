@@ -2,12 +2,9 @@
 import { AppShell, Box } from '@mantine/core';
 import Header from '@/components/layout/Header';
 
-export default function AuthLayout({ children }) {
+export function AuthLayout({ children }) {
   return (
-    <AppShell
-      header={{ height: 60 }}
-      padding="md"
-    >
+    <AppShell header={{ height: 60 }} padding="md">
       <AppShell.Header>
         <Header />
       </AppShell.Header>
@@ -19,3 +16,5 @@ export default function AuthLayout({ children }) {
     </AppShell>
   );
 }
+
+export default AuthLayout

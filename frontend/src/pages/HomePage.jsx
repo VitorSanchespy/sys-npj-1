@@ -6,7 +6,7 @@ import {
   IconScale, IconFileDescription, IconUsers, 
   IconBuilding, IconCalendar, IconLock, IconExternalLink
 } from '@tabler/icons-react';
-import Head from 'next/head';
+import { Helmet } from 'react-helmet'
 import { useViewportSize } from '@mantine/hooks';
 
 const features = [
@@ -27,10 +27,10 @@ export function Home() {
 
   return (
     <>
-      <Head>
-        <title>Sistema NPJ - UFMT | Gestão de Processos Jurídicos</title>
-        <meta name="description" content="Plataforma de gestão de processos do Núcleo de Práticas Jurídicas da UFMT" />
-      </Head>
+    <Helmet>
+      <title>Sistema NPJ - UFMT | Gestão de Processos Jurídicos</title>
+      <meta name="description" content="Plataforma de gestão de processos do Núcleo de Práticas Jurídicas da Universidade Federal de Mato Grosso" />
+    </Helmet>
 
       {/* Header */}
       <header style={{ backgroundColor: '#001F3F', padding: '20px 0', position: 'sticky', top: 0, zIndex: 100 }}>

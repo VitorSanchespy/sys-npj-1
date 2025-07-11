@@ -1,32 +1,23 @@
 import api from '../api/apiService';
 
-const auth = {
+export default {
   login: async (credentials) => {
-    try {
-      const response = await api.post('/auth/login', credentials);
-      localStorage.setItem('token', response.data.token);
-      return response.data;
-    } catch (error) {
-      throw new Error('Falha no login: ' + error.response?.data?.message || error.message);
-    }
+    const { data } = await api.post('/auth/login', credentials);
+    localStorage.setItem('token', data.token);
+    return data;
   },
 
-  logout: () => {
-    localStorage.removeItem('token');
-  },
+  logout: () => localStorage.removeItem('token'),
 
   verifyToken: async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return null;
-      
-      const response = await api.get('/auth/profile');
-      return response.data;
-    } catch (error) {
+      const { data } = await api.get('/auth/profile');
+      return data;
+    } catch {
       localStorage.removeItem('token');
       return null;
     }
   }
 };
-
-export default auth;

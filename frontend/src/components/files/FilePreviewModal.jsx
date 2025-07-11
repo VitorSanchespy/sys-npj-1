@@ -1,44 +1,28 @@
-import { Modal, Image, Text, Group, Button } from '@mantine/core';
+import { Modal, Text, Group, Button } from '@mantine/core';
 import { IconDownload, IconX } from '@tabler/icons-react';
 
-export default function FilePreviewModal({ file, opened, onClose, onDownload }) {
-  if (!file) return null;
-
-  const isImage = file.type.startsWith('image/');
-  
+export function FilePreviewModal({ file, opened, onClose, onDownload }) {
   return (
     <Modal
       opened={opened}
       onClose={onClose}
-      title={file.name}
-      size="lg"
-      overflow="inside"
+      title={file?.name || 'Pré-visualização'}
+      size="md"
     >
-      {isImage ? (
-        <Image 
-          src={`${api.defaults.baseURL}/files/preview/${file.id}`} 
-          alt={file.name}
-          fit="contain"
-          style={{ maxHeight: '60vh' }}
-        />
-      ) : (
-        <Group position="center" my="xl">
-          <Text color="dimmed">
-            Pré-visualização não disponível para este tipo de arquivo
-          </Text>
-        </Group>
-      )}
+      <Text mb="xl">
+        Pré-visualização não disponível para este arquivo
+      </Text>
       
-      <Group position="right" mt="md">
+      <Group justify="flex-end">
         <Button 
           variant="default" 
-          leftIcon={<IconX size={18} />}
+          leftSection={<IconX size={16} />}
           onClick={onClose}
         >
           Fechar
         </Button>
         <Button 
-          leftIcon={<IconDownload size={18} />}
+          leftSection={<IconDownload size={16} />}
           onClick={onDownload}
         >
           Baixar
@@ -47,3 +31,5 @@ export default function FilePreviewModal({ file, opened, onClose, onDownload }) 
     </Modal>
   );
 }
+
+export default FilePreviewModal;

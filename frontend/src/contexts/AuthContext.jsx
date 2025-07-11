@@ -7,47 +7,41 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const verificar = async () => {
+      try {
+          const user = await auth.verifyToken();
+          setUser(user);
+        } catch (error) {
+         console.error('Error verifying token:', error);
+         setUser(null);
+          }finally {
+            setLoading(false);
+        }
+      };
+      verificar();
+    },[]);
+
+  const login = async (credentials) => {
+    const userData = await auth.login(credentials);
+    setUser(userData);
+    return userData;
+  };
+
   const logout = () => {
     auth.logout();
     setUser(null);
   };
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const userData = await auth.verifyToken();
-        setUser(userData);
-      } catch (error) {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    initializeAuth();
-  }, []);
-
-  const login = async (credentials) => {
-    try {
-      const userData = await auth.login(credentials);
-      setUser(userData);
-      return userData;
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const value = {
-    user,
-    loading,
-    isAuthenticated: !!user,
-    login,
-    logout,
-    setUser
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      isAuthenticated: !!user, 
+      login, 
+      logout, 
+      setUser 
+    }}>
       {children}
     </AuthContext.Provider>
   );

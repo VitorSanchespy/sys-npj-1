@@ -1,245 +1,92 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Table, 
   Group, 
   Text, 
-  ActionIcon, 
-  Loader, 
-  Paper, 
-  Badge,
-  Modal,
   Button,
-  Flex,
-  Breadcrumbs,
-  Anchor,
+  Paper,
+  Modal,
   ScrollArea,
   Menu,
-  useMantineTheme
+  ActionIcon,
+  Breadcrumbs,
+  Anchor,
+  Loader
 } from '@mantine/core';
-import { 
-  IconDownload, 
-  IconTrash, 
-  IconEye, 
-  IconUpload,
-  IconFolder,
-  IconFile,
-  IconArrowLeft,
-  IconDots,
-  IconFileZip,
-  IconFileText,
-  IconFileSpreadsheet,
-  IconFileCode,
-  IconFileMusic,
-  IconFileUnknown
-} from '@tabler/icons-react';
+import { IconDownload, IconTrash, IconEye, IconUpload, IconFolder, IconFile, IconArrowLeft, IconDots } from '@tabler/icons-react';
 import api from '@/api/apiService';
-import { notifications } from '@mantine/notifications';
-import UploadModal from './UploadModal';
-import { formatBytes, formatDate } from '@/utils/format';
-import FilePreviewModal from './FilePreviewModal';
+import Dropzone from './Dropzone';
 
-export default function FileList() {
-  const theme = useMantineTheme();
+export function FileList() {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentFolder, setCurrentFolder] = useState('');
   const [fileToDelete, setFileToDelete] = useState(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [previewModalOpen, setPreviewModalOpen] = useState(false);
-  const [previewFile, setPreviewFile] = useState(null);
-  const [contextMenuFile, setContextMenuFile] = useState(null);
 
-  const fetchFiles = useCallback(async (folder = '') => {
+  useEffect(() => {
+    fetchFiles();
+  }, []);
+
+  const fetchFiles = async (folder = '') => {
     setLoading(true);
     try {
       const { data } = await api.get(`/files?folder=${folder}`);
       setFiles(data);
       setCurrentFolder(folder);
-    } catch (error) {
-      notifications.show({
-        title: 'Erro ao carregar arquivos',
-        message: error.response?.data?.message || 'Tente novamente mais tarde',
-        color: 'red',
-      });
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    fetchFiles();
-  }, [fetchFiles]);
-
-  const handleDownload = (fileId, fileName) => {
-    window.open(`${api.defaults.baseURL}/files/download/${fileId}`, '_blank');
-    notifications.show({
-      title: 'Download iniciado',
-      message: `Arquivo: ${fileName}`,
-      color: 'teal',
-    });
   };
 
   const handleDelete = async () => {
     if (!fileToDelete) return;
-    
-    try {
-      await api.delete(`/files/${fileToDelete.id}`);
-      notifications.show({
-        title: 'Arquivo removido',
-        message: `"${fileToDelete.name}" foi excluído`,
-        color: 'green',
-      });
-      fetchFiles(currentFolder);
-    } catch (error) {
-      notifications.show({
-        title: 'Erro ao remover arquivo',
-        message: error.response?.data?.message || 'Tente novamente',
-        color: 'red',
-      });
-    } finally {
-      setFileToDelete(null);
-    }
+    await api.delete(`/files/${fileToDelete.id}`);
+    fetchFiles(currentFolder);
+    setFileToDelete(null);
   };
 
-  const handleFolderClick = (folderPath) => {
-    fetchFiles(folderPath);
-  };
-
-  const handleBack = () => {
-    const parentFolder = currentFolder.split('/').slice(0, -1).join('/');
-    fetchFiles(parentFolder);
-  };
-
-  const getFileIcon = (fileType) => {
-    if (fileType === 'directory') return <IconFolder size={18} color="#4DABF7" />;
-    
-    const type = fileType.split('/')[0];
-    const extension = fileType.split('/').pop();
-    
-    const iconProps = { size: 18 };
-    
-    switch (type) {
-      case 'image':
-        return <IconFile {...iconProps} color="#E64980" />;
-      case 'video':
-        return <IconFile {...iconProps} color="#7950F2" />;
-      case 'audio':
-        return <IconFileMusic {...iconProps} color="#40C057" />;
-      case 'text':
-        return <IconFileText {...iconProps} color="#228BE6" />;
-      case 'application':
-        switch(extension) {
-          case 'pdf': return <IconFileText {...iconProps} color="#E03131" />;
-          case 'zip': return <IconFileZip {...iconProps} color="#FAB005" />;
-          case 'vnd.ms-excel':
-          case 'vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-            return <IconFileSpreadsheet {...iconProps} color="#37B24D" />;
-          case 'msword':
-          case 'vnd.openxmlformats-officedocument.wordprocessingml.document':
-            return <IconFileText {...iconProps} color="#228BE6" />;
-          default: return <IconFile {...iconProps} color="#495057" />;
-        }
-      default:
-        return <IconFileUnknown {...iconProps} color="#868E96" />;
-    }
-  };
-
-  const breadcrumbs = [
-    { title: 'Home', onClick: () => fetchFiles('') },
-    ...currentFolder.split('/').map((part, index, parts) => ({
-      title: part || 'Home',
-      onClick: () => fetchFiles(parts.slice(0, index + 1).join('/'))
-    }))
-  ].filter(item => item.title);
-
-  const handlePreview = (file) => {
-    if (file.type === 'directory') {
-      handleFolderClick(file.path);
-      return;
-    }
-    
-    setPreviewFile(file);
-    setPreviewModalOpen(true);
-  };
-
-  const handleContextMenu = (e, file) => {
-    e.preventDefault();
-    setContextMenuFile(file);
-  };
-
-  // Função para obter estilos da linha
-  const getRowStyles = (fileType) => {
-    const baseStyles = {
-      cursor: 'pointer',
-      '&:hover': {
-        backgroundColor: theme.colorScheme === 'dark' 
-          ? theme.colors.dark[6] 
-          : theme.colors.gray[0],
-      }
-    };
-    
-    if (fileType === 'directory') {
-      return {
-        ...baseStyles,
-        backgroundColor: theme.colorScheme === 'dark' 
-          ? theme.colors.dark[5] 
-          : theme.colors.blue[0],
-        '&:hover': {
-          backgroundColor: theme.colorScheme === 'dark' 
-            ? theme.colors.dark[4] 
-            : theme.colors.blue[1],
-        }
-      };
-    }
-    
-    return baseStyles;
-  };
+  const handleFolderClick = (folderPath) => fetchFiles(folderPath);
+  const handleBack = () => fetchFiles(currentFolder.split('/').slice(0, -1).join('/'));
 
   return (
     <Paper withBorder p="md" radius="md">
-      <Flex justify="space-between" align="center" mb="md">
-        <Breadcrumbs separator="→">
-          {breadcrumbs.map((item, index) => (
-            <Anchor key={index} onClick={item.onClick}>
-              {item.title}
+      <Group justify="space-between" mb="md">
+        <Breadcrumbs>
+          <Anchor onClick={() => fetchFiles()}>Home</Anchor>
+          {currentFolder.split('/').map((part, i) => 
+            <Anchor key={i} onClick={() => fetchFiles(currentFolder.split('/').slice(0, i+1).join('/'))}>
+              {part}
             </Anchor>
-          ))}
+          )}
         </Breadcrumbs>
         
-        <Button 
-          leftSection={<IconUpload size={18} />}
-          onClick={() => setUploadModalOpen(true)}
-        >
+        <Button leftSection={<IconUpload size={18}/>} onClick={() => setUploadModalOpen(true)}>
           Upload
         </Button>
-      </Flex>
+      </Group>
 
       {loading ? (
-        <Group justify="center" py="xl">
-          <Loader size="xl" variant="dots" />
-        </Group>
+        <Group justify="center" py="xl"><Loader /></Group>
       ) : (
         <ScrollArea>
-          <Table striped highlightOnHover>
+          <Table>
             <thead>
               <tr>
                 <th>Nome</th>
-                <th>Tipo</th>
                 <th>Tamanho</th>
-                <th>Modificado</th>
                 <th>Ações</th>
               </tr>
             </thead>
             <tbody>
               {currentFolder && (
-                <tr style={getRowStyles('directory')}>
-                  <td colSpan={5}>
+                <tr>
+                  <td colSpan={3}>
                     <Button 
                       variant="subtle" 
-                      leftSection={<IconArrowLeft size={16} />}
+                      leftSection={<IconArrowLeft size={16}/>}
                       onClick={handleBack}
                       fullWidth
-                      justify="left"
                     >
                       Voltar
                     </Button>
@@ -247,72 +94,38 @@ export default function FileList() {
                 </tr>
               )}
               
-              {files.map((file) => (
-                <tr 
-                  key={file.id} 
-                  style={getRowStyles(file.type)}
-                  onDoubleClick={() => handlePreview(file)}
-                  onContextMenu={(e) => handleContextMenu(e, file)}
-                >
+              {files.map(file => (
+                <tr key={file.id}>
                   <td>
-                    <Group spacing="sm">
-                      {getFileIcon(file.type)}
-                      {file.type === 'directory' ? (
-                        <Anchor onClick={() => handleFolderClick(file.path)}>
-                          {file.name}
-                        </Anchor>
-                      ) : (
-                        <Text>{file.name}</Text>
-                      )}
+                    <Group gap="sm">
+                      {file.type === 'directory' 
+                        ? <IconFolder color="#4DABF7"/> 
+                        : <IconFile color="#495057"/>}
+                      {file.name}
                     </Group>
-                  </td>
-                  <td>
-                    {file.type === 'directory' ? (
-                      <Badge color="blue">Pasta</Badge>
-                    ) : (
-                      <Badge color="gray">{file.type}</Badge>
-                    )}
                   </td>
                   <td>{file.type !== 'directory' ? formatBytes(file.size) : '-'}</td>
-                  <td>{formatDate(file.modifiedAt)}</td>
                   <td>
-                    <Group spacing="xs">
-                      <Menu position="bottom-end">
-                        <Menu.Target>
-                          <ActionIcon>
-                            <IconDots size={16} />
-                          </ActionIcon>
-                        </Menu.Target>
-                        <Menu.Dropdown>
-                          <Menu.Item 
-                            leftSection={<IconEye size={14} />}
-                            onClick={() => handlePreview(file)}
-                          >
-                            Visualizar
-                          </Menu.Item>
-                          {file.type !== 'directory' && (
-                            <>
-                              <Menu.Item 
-                                leftSection={<IconDownload size={14} />}
-                                onClick={() => handleDownload(file.id, file.name)}
-                              >
-                                Baixar
-                              </Menu.Item>
-                              <Menu.Divider />
-                              <Menu.Item 
-                                color="red"
-                                leftSection={<IconTrash size={14} />}
-                                onClick={() => {
-                                  setFileToDelete(file);
-                                }}
-                              >
-                                Excluir
-                              </Menu.Item>
-                            </>
-                          )}
-                        </Menu.Dropdown>
-                      </Menu>
-                    </Group>
+                    <Menu>
+                      <Menu.Target>
+                        <ActionIcon><IconDots size={16}/></ActionIcon>
+                      </Menu.Target>
+                      <Menu.Dropdown>
+                        <Menu.Item leftSection={<IconEye size={14}/>}>
+                          Visualizar
+                        </Menu.Item>
+                        <Menu.Item leftSection={<IconDownload size={14}/>}>
+                          Baixar
+                        </Menu.Item>
+                        <Menu.Item 
+                          color="red" 
+                          leftSection={<IconTrash size={14}/>}
+                          onClick={() => setFileToDelete(file)}
+                        >
+                          Excluir
+                        </Menu.Item>
+                      </Menu.Dropdown>
+                    </Menu>
                   </td>
                 </tr>
               ))}
@@ -326,44 +139,38 @@ export default function FileList() {
         onClose={() => setFileToDelete(null)}
         title="Confirmar exclusão"
       >
-        <Text mb="xl">Tem certeza que deseja excluir "{fileToDelete?.name}"?</Text>
+        <Text mb="xl">Excluir "{fileToDelete?.name}"?</Text>
         <Group justify="right">
-          <Button variant="default" onClick={() => setFileToDelete(null)}>
-            Cancelar
-          </Button>
-          <Button color="red" onClick={handleDelete}>
-            Excluir
-          </Button>
+          <Button variant="default" onClick={() => setFileToDelete(null)}>Cancelar</Button>
+          <Button color="red" onClick={handleDelete}>Excluir</Button>
         </Group>
       </Modal>
 
-      <UploadModal
+      <Modal
         opened={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
-        currentFolder={currentFolder}
-        onUploadSuccess={() => {
-          fetchFiles(currentFolder);
-          notifications.show({
-            title: 'Upload concluído',
-            message: 'Arquivo(s) enviado(s) com sucesso',
-            color: 'teal',
-          });
-        }}
-      />
-
-      <FilePreviewModal
-        file={previewFile}
-        opened={previewModalOpen}
-        onClose={() => {
-          setPreviewModalOpen(false);
-          setPreviewFile(null);
-        }}
-        onDownload={() => {
-          if (previewFile) {
-            handleDownload(previewFile.id, previewFile.name);
-          }
-        }}
-      />
+        title="Upload de arquivos"
+      >
+        <Dropzone 
+          onDrop={(files) => {
+            console.log('Files uploaded:', files);
+            setUploadModalOpen(false);
+            fetchFiles(currentFolder);
+          }}
+          accept={['image/*', 'application/pdf']}
+        />
+      </Modal>
     </Paper>
   );
 }
+
+// Helper function
+function formatBytes(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+}
+
+export default FileList;
