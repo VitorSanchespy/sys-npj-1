@@ -1,36 +1,20 @@
-import { Outlet } from 'react-router-dom'; // Importação única
+import { Box } from '@mantine/core';
 import Header from '@/components/layout/Header';
 import Navbar from '@/components/layout/Navbar';
-import { Box } from '@mantine/core';
-import SafeText from '@/components/ui/SafeText';
+import Footer from '@/components/layout/Footer';
+import { Outlet } from 'react-router-dom';
 
-export function MainLayout() {
+export default function MainLayout() {
   return (
-    <Box style={{ 
-      display: 'flex', 
-      minHeight: '100vh',
-      backgroundColor: '#f8f9fa'
-    }}>
+    <Box style={{ display: 'flex', minHeight: '100vh', background: '#e7f1f8' }}>
       <Navbar />
       <Box style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Header />
-        <Box p="xl" style={{ flex: 1 }}>
-          <Outlet /> {/* Componente para renderizar rotas aninhadas */}
+        <Box p="xl" style={{ flex: 1, minHeight: 0 }}>
+          <Outlet />
         </Box>
-        
-        <Box 
-          p="md" 
-          style={{ 
-            backgroundColor: '#003366', 
-            color: 'white',
-            textAlign: 'center'
-          }}
-        >
-          <SafeText size="sm">Sistema NPJ • Universidade Federal de Mato Grosso</SafeText>
-          <SafeText size="xs">© {new Date().getFullYear()} - Todos os direitos reservados</SafeText>
-        </Box>
+        <Footer />
       </Box>
     </Box>
   );
 }
-export default MainLayout;

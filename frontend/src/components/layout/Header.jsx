@@ -1,81 +1,49 @@
-import { Box, Menu, Avatar, Group } from '@mantine/core'; // Importação única
-import { IconLogout, IconUser, IconSettings } from '@tabler/icons-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import SafeText from '@/components/ui/SafeText';
+import { Box, Group, Text } from '@mantine/core';
+import { IconScale, IconGavel } from '@tabler/icons-react';
 
-export function Header() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
+export default function Header() {
   return (
     <Box
-      px="md"
       style={{
-        backgroundColor: 'white',
-        borderBottom: '1px solid #e9ecef',
-        height: 60,
+        background: '#003366',
+        height: 90,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'center',
+        borderBottom: '4px solid #ffd700', // dourado judiciário
+        boxShadow: '0 2px 8px #00336611',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
       }}
     >
-      <Group>
-        <SafeText fw={700} size="lg" style={{ color: '#003366' }}>
-          Sistema NPJ - UFMT
-        </SafeText>
-      </Group>
-
-      <Group>
-        <Menu position="bottom-end" withArrow>
-          <Menu.Target>
-            <Group style={{ cursor: 'pointer' }}>
-              <Avatar 
-                color="#003366" 
-                radius="xl"
-                src={user?.avatar}
-              >
-                {user?.nome?.charAt(0) || 'U'}
-              </Avatar>
-              <SafeText fw={500} style={{ color: '#003366' }}>
-                {user?.nome || 'Usuário'}
-              </SafeText>
-            </Group>
-          </Menu.Target>
-
-          <Menu.Dropdown>
-            <Menu.Label>Conta</Menu.Label>
-            <Menu.Item 
-              leftSection={<IconUser size={16} />}
-              onClick={() => navigate('/perfil')}
-            >
-              Meu Perfil
-            </Menu.Item>
-            <Menu.Item 
-              leftSection={<IconSettings size={16} />}
-              onClick={() => navigate('/configuracoes')}
-            >
-              Configurações
-            </Menu.Item>
-            
-            <Menu.Divider />
-            
-            <Menu.Item 
-              leftSection={<IconLogout size={16} />}
-              onClick={handleLogout}
-              style={{ color: '#cc0000' }}
-            >
-              Sair do Sistema
-            </Menu.Item>
-          </Menu.Dropdown>
-        </Menu>
+      <Group gap={12}>
+        <img
+          src="/ufmt-logo-branca.png" // Use a logo branca institucional da UFMT
+          alt="Logo UFMT"
+          style={{
+            height: 54,
+            width: 'auto',
+            display: 'block',
+            marginRight: 18,
+          }}
+          draggable={false}
+        />
+        <IconScale size={38} color="#ffd700" stroke={1.5} /> {/* balança do Judiciário */}
+        <Text
+          fw={800}
+          style={{
+            color: '#fff',
+            fontFamily: 'Georgia, serif',
+            fontSize: 30,
+            letterSpacing: 1,
+            textShadow: '0 1px 8px #00336677'
+          }}
+        >
+          Sistema NPJ <span style={{ color: '#ffd700', fontWeight: 700 }}>• UFMT</span>
+        </Text>
+        <IconGavel size={36} color="#ffd700" stroke={1.5} /> {/* martelo do Judiciário */}
       </Group>
     </Box>
   );
 }
-export default Header;
