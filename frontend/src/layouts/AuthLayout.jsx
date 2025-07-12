@@ -1,19 +1,18 @@
-// src/layouts/AuthLayout.jsx
-import { AppShell, Box } from '@mantine/core';
-import Header from '@/components/layout/Header';
+import { Outlet } from 'react-router-dom';
+import { Box } from '@mantine/core';
 
-export function AuthLayout({ children }) {
+export function AuthLayout() {
   return (
-    <AppShell header={{ height: 60 }} padding="md">
-      <AppShell.Header>
-        <Header />
-      </AppShell.Header>
-      <AppShell.Main>
-        <Box maw={400} mx="auto" mt="xl">
-          {children}
-        </Box>
-      </AppShell.Main>
-    </AppShell>
+    <Box style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'linear-gradient(135deg, #f8f9fa, #e6f0ff)',
+      padding: '1rem'
+    }}>
+      <Outlet />
+    </Box>
   );
 }
 

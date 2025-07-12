@@ -12,14 +12,14 @@ export function NotificationProvider({ children }) {
       warning: <IconAlertCircle size={18} />,
       info: <IconInfoCircle size={18} />
     };
-    
+
     const colors = {
       success: 'teal',
       error: 'red',
       warning: 'orange',
       info: 'blue'
     };
-    
+
     notifications.show({
       message,
       icon: icons[type] || icons.info,
@@ -51,6 +51,8 @@ export function NotificationProvider({ children }) {
 
 export function useNotification() {
   const context = useContext(NotificationContext);
-  if (!context) throw new Error('useNotification deve ser usado dentro de um NotificationProvider');
+  if (!context) {
+    throw new Error('useNotification deve ser usado dentro de um NotificationProvider');
+  }
   return context;
 }

@@ -1,2 +1,3 @@
-export { AuthProvider, AuthContext } from './AuthContext';
-export { NotificationProvider, useNotification } from './NotificationContext';
+// src/contexts/index.js
+export * from './AuthContext';
+export * from './NotificationContext';

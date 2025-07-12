@@ -1,182 +1,119 @@
-import { 
-  Card, SimpleGrid, Title, Text, Image, 
-  Paper, Group, Progress, Badge, Center, Alert 
-} from '@mantine/core';
-import { Link } from 'react-router-dom';
-import { 
-  IconFileDescription, IconUsers, IconUser, 
-  IconBuilding, IconCalendarEvent, IconAlertCircle, IconCheck
-} from '@tabler/icons-react';
-import api from '@/api/apiService';
-import { useNotification } from '@/contexts/NotificationContext';
-import { useEffect, useState } from 'react';
+import { SimpleGrid, Card, Title, Group, Box, Progress, Divider, Stack } from '@mantine/core';
+import { IconFile, IconUser, IconChecklist, IconScale } from '@tabler/icons-react';
+import SafeText from '@/components/ui/SafeText';
+import Timeline from '@/components/ui/Timeline';
+import { useAuth } from '@/contexts/AuthContext';
 
-const featureCards = [
-  { icon: <IconFileDescription size={32} />, title: "Processos Jurídicos", description: "Gerencie os processos do núcleo", link: "/processos", color: "blue" },
-  { icon: <IconUsers size={32} />, title: "Gestão de Usuários", description: "Administre os usuários do sistema", link: "/usuarios", color: "violet" },
-  { icon: <IconUser size={32} />, title: "Meu Perfil", description: "Atualize suas informações", link: "/perfil", color: "teal" },
-  { icon: <IconBuilding size={32} />, title: "Documentos", description: "Acesse os documentos institucionais", link: "/arquivos", color: "grape" }
-];
+export function DashboardPage() {
+  const { user } = useAuth();
+  
+  const stats = [
+    { 
+      title: 'Processos Ativos', 
+      value: '56', 
+      icon: <IconFile size={24} />, 
+      color: 'blue',
+      progress: 75
+    },
+    { 
+      title: 'Clientes Cadastrados', 
+      value: '28', 
+      icon: <IconUser size={24} />, 
+      color: 'orange',
+      progress: 60
+    },
+    { 
+      title: 'Documentos', 
+      value: '142', 
+      icon: <IconChecklist size={24} />, 
+      color: 'blue',
+      progress: 45
+    },
+    { 
+      title: 'Jurisprudências', 
+      value: '89', 
+      icon: <IconScale size={24} />, 
+      color: 'blue',
+      progress: 85
+    },
+  ];
 
-export function DashboardPage() { 
-  const [state, setState] = useState({ stats: null, loading: true });
-  const { showNotification } = useNotification();
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { data } = await api.get('/dashboard/stats');
-        setState({ stats: data, loading: false });
-      } catch {
-        showNotification('Erro ao carregar dados do dashboard', 'error');
-        setState(s => ({ ...s, loading: false }));
-      }
-    };
-    fetchData();
-  }, []);
-
-  const today = new Date().toLocaleDateString('pt-BR', { 
-    weekday: 'long', 
-    day: 'numeric', 
-    month: 'long' 
-  });
+  const recentActivities = [
+    { id: 1, title: 'Novo processo cadastrado', time: 'Há 2 horas' },
+    { id: 2, title: 'Documento anexado ao processo #1234', time: 'Há 4 horas' },
+    { id: 3, title: 'Reunião agendada com cliente', time: 'Há 1 dia' },
+    { id: 4, title: 'Atualização no sistema realizada', time: 'Há 2 dias' },
+  ];
 
   return (
-    <Stack spacing="xl">
-      <Group position="apart" align="flex-end">
-        <div>
-          <Title order={1} color="ufmt-green.6">Painel de Controle</Title>
-          <Text color="dimmed">Visão geral do sistema</Text>
-        </div>
-        <Badge leftSection={<IconCalendarEvent size={12} />} variant="outline">
-          {today}
-        </Badge>
-      </Group>
-
-      {state.stats && (
-        <SimpleGrid cols={3} breakpoints={[{ maxWidth: 'md', cols: 1 }]}>
-          <Paper withBorder p="md" radius="md">
-            <Group position="apart">
-              <Text size="sm" color="dimmed">Processos Ativos</Text>
-              <Badge color="green" variant="filled">{state.stats.activeProcesses}</Badge>
-            </Group>
-            <Title order={3} mt="xs">{state.stats.totalProcesses}</Title>
-            <Progress 
-              value={(state.stats.activeProcesses / state.stats.totalProcesses) * 100} 
-              mt="md" 
-              size="sm" 
-              color="green"
-            />
-          </Paper>
-
-          <Paper withBorder p="md" radius="md">
-            <Group position="apart">
-              <Text size="sm" color="dimmed">Usuários Ativos</Text>
-              <Badge color="blue" variant="filled">{state.stats.activeUsers}</Badge>
-            </Group>
-            <Title order={3} mt="xs">{state.stats.totalUsers}</Title>
-            <Progress 
-              value={(state.stats.activeUsers / state.stats.totalUsers) * 100} 
-              mt="md" 
-              size="sm" 
-              color="blue"
-            />
-          </Paper>
-
-          <Paper withBorder p="md" radius="md">
-            <Group position="apart">
-              <Text size="sm" color="dimmed">Documentos</Text>
-              <Badge color="orange" variant="filled">Últimos 30 dias</Badge>
-            </Group>
-            <Title order={3} mt="xs">{state.stats.recentDocuments}</Title>
-            <Text size="sm" color="dimmed" mt={2}>
-              Total: {state.stats.totalDocuments}
-            </Text>
-          </Paper>
-        </SimpleGrid>
-      )}
-
-      <Title order={3} mt="xl">Módulos do Sistema</Title>
+    <Box>
+      <Title order={2} mb="md" style={{ color: '#003366' }}>Visão Geral</Title>
       
-      <SimpleGrid cols={4} breakpoints={[{ maxWidth: 'lg', cols: 2 }, { maxWidth: 'sm', cols: 1 }]}>
-        {featureCards.map((feature, index) => (
-          <Card
-            key={index}
-            component={Link}
-            to={feature.link}
-            shadow="sm"
-            p="lg"
-            radius="md"
-            withBorder
-            sx={theme => ({
-              transition: 'transform 150ms ease, box-shadow 150ms ease',
-              '&:hover': {
-                transform: 'scale(1.01)',
-                boxShadow: theme.shadows.md,
-                borderColor: theme.colors[feature.color][5]
-              }
-            })}
-          >
-            <Stack align="center" spacing="sm">
-              <Center sx={theme => ({
-                width: 60,
-                height: 60,
-                borderRadius: '50%',
-                backgroundColor: theme.colors[feature.color][0],
-                color: theme.colors[feature.color][6]
-              })}>
-                {feature.icon}
-              </Center>
-              <Text weight={600} size="lg" mt="sm">{feature.title}</Text>
-              <Text size="sm" color="dimmed" align="center">{feature.description}</Text>
-            </Stack>
+      <SimpleGrid cols={4} mb="xl" breakpoints={[{ maxWidth: 'lg', cols: 2 }, { maxWidth: 'sm', cols: 1 }]}>
+        {stats.map((stat) => (
+          <Card key={stat.title} p="lg" radius="md" withBorder>
+            <Group justify="space-between" mb="xs">
+              <SafeText fw={600} size="sm" style={{ color: '#003366' }}>{stat.title}</SafeText>
+              <Box p={6} style={{ backgroundColor: '#e6f0ff', borderRadius: '50%' }}>
+                {stat.icon}
+              </Box>
+            </Group>
+            
+            <Group align="flex-end" spacing={5} mb="xs">
+              <Title order={2}>{stat.value}</Title>
+            </Group>
+            
+            <Progress 
+              value={stat.progress} 
+              color={stat.color} 
+              size="sm" 
+              radius="xl"
+              mt="sm"
+            />
           </Card>
         ))}
       </SimpleGrid>
-
-      <Paper withBorder p="md" radius="md" mt="xl">
-        <Group position="apart" mb="md">
-          <Title order={4}>Próximos Prazos</Title>
-          <Badge variant="outline" color="red">
-            <Group spacing={4}><IconAlertCircle size={14} /><span>Urgente</span></Group>
-          </Badge>
-        </Group>
-        
-        {state.stats?.upcomingDeadlines?.length > 0 ? (
-          <Table>
-            <thead>
-              <tr>
-                <th>Processo</th>
-                <th>Descrição</th>
-                <th>Prazo</th>
-                <th>Dias Restantes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {state.stats.upcomingDeadlines.map(deadline => (
-                <tr key={deadline.id}>
-                  <td>{deadline.processNumber}</td>
-                  <td>{deadline.description}</td>
-                  <td>{new Date(deadline.dueDate).toLocaleDateString('pt-BR')}</td>
-                  <td>
-                    <Badge color={deadline.daysRemaining <= 3 ? 'red' : 'yellow'}>
-                      {deadline.daysRemaining} dias
-                    </Badge>
-                  </td>
-                </tr>
+      
+      <Divider my="xl" />
+      
+      <Group grow align="start">
+        <Box style={{ flex: 2 }}>
+          <Title order={3} mb="md" style={{ color: '#003366' }}>Atividades Recentes</Title>
+          
+          <Card withBorder radius="md">
+            <Stack spacing="xs">
+              {recentActivities.map((activity) => (
+                <Box 
+                  key={activity.id} 
+                  p="sm"
+                  style={{ 
+                    borderLeft: '3px solid #0066CC',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: 4
+                  }}
+                >
+                  <SafeText fw={500}>{activity.title}</SafeText>
+                  <SafeText size="sm" style={{ color: '#666' }}>{activity.time}</SafeText>
+                </Box>
               ))}
-            </tbody>
-          </Table>
-        ) : (
-          <Alert color="green" icon={<IconCheck size={18} />}>
-            Nenhum prazo urgente nos próximos dias
-          </Alert>
-        )}
-      </Paper>
-
-      <Image src="/npj-banner.jpg" alt="NPJ UFMT" radius="md" mt="xl" />
-    </Stack>
+            </Stack>
+          </Card>
+        </Box>
+        
+        <Box style={{ flex: 1 }}>
+          <Title order={3} mb="md" style={{ color: '#003366' }}>Linha do Tempo</Title>
+          <Timeline />
+        </Box>
+      </Group>
+      
+      <Box mt="xl" p="md" style={{ backgroundColor: '#e6f0ff', borderRadius: 8 }}>
+        <Title order={4} mb="sm" style={{ color: '#003366' }}>Informações do NPJ</Title>
+        <SafeText>
+          O Núcleo de Práticas Jurídicas da UFMT tem como objetivo proporcionar aos alunos 
+          experiência prática na área jurídica, atendendo à comunidade e promovendo justiça social.
+        </SafeText>
+      </Box>
+    </Box>
   );
 }
-
 export default DashboardPage;

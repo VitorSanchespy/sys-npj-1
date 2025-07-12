@@ -17,20 +17,20 @@ export function Notification({
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [duration]);
+  }, [duration, onClose]);
 
   if (!visible) return null;
 
   const icons = {
     success: <IconCheck size={16} />,
     error: <IconX size={16} />,
-    info: null
+    info: null,
   };
 
   const colors = {
     success: 'teal',
     error: 'red',
-    info: 'blue'
+    info: 'blue',
   };
 
   return (

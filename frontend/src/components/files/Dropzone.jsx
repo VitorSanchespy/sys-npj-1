@@ -1,10 +1,10 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Group, Text, Box, FileButton } from '@mantine/core';
 import { IconUpload } from '@tabler/icons-react';
 
 export function Dropzone({ onDrop, accept, loading }) {
   const [isActive, setIsActive] = useState(false);
-  
+
   return (
     <FileButton 
       onChange={onDrop} 
@@ -31,7 +31,9 @@ export function Dropzone({ onDrop, accept, loading }) {
           onDrop={(e) => {
             e.preventDefault();
             setIsActive(false);
-            !loading && e.dataTransfer.files.length > 0 && onDrop(e.dataTransfer.files);
+            if (!loading && e.dataTransfer.files.length > 0) {
+              onDrop(e.dataTransfer.files);
+            }
           }}
         >
           <Group justify="center" gap="xs">

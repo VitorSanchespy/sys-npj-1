@@ -1,11 +1,12 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Table, Text, Button, Group, TextInput, Select, Badge, Paper, 
-  LoadingOverlay, ActionIcon, Menu, Pagination, Avatar, Modal, Flex 
+import {
+  Table, Text, Button, Group, TextInput, Select, Badge, Paper,
+  LoadingOverlay, ActionIcon, Menu, Pagination, Avatar, Modal, Flex
 } from '@mantine/core';
-import { 
-  IconSearch, IconPlus, IconEdit, IconTrash, IconDotsVertical, IconLockOpen
+import {
+  IconSearch, IconPlus, IconEdit, IconTrash, IconDotsVertical, IconLockOpen, IconRefresh
 } from '@tabler/icons-react';
 import api from '@/api/apiService';
 import EmptyState from '@/components/common/EmptyState';
@@ -49,10 +50,10 @@ export function UserList() {
         role: state.roleFilter,
         status: state.statusFilter
       };
-      
+
       const { data } = await api.get('/usuarios', { params });
-      setState(prev => ({ 
-        ...prev, 
+      setState(prev => ({
+        ...prev,
         users: data.items,
         totalPages: data.totalPages,
         loading: false
@@ -62,12 +63,9 @@ export function UserList() {
     }
   };
 
-  useEffect(() => { fetchUsers(); }, [
-    state.currentPage, 
-    state.searchTerm, 
-    state.roleFilter, 
-    state.statusFilter
-  ]);
+  useEffect(() => {
+    fetchUsers();
+  }, [state.currentPage, state.searchTerm, state.roleFilter, state.statusFilter]);
 
   const handleDelete = async () => {
     await api.delete(`/usuarios/${state.userToDelete.id}`);
@@ -82,17 +80,17 @@ export function UserList() {
   const updateState = (key, value) => setState(prev => ({ ...prev, [key]: value }));
 
   const getRoleColor = (role) => ({
-    admin: 'red', advogado: 'blue', estagiario: 'yellow', cliente: 'green' 
+    admin: 'red', advogado: 'blue', estagiario: 'yellow', cliente: 'green'
   }[role] || 'gray');
 
   return (
     <Paper withBorder p="md" radius="md" pos="relative">
       <LoadingOverlay visible={state.loading} />
-      
+
       <Group justify="space-between" mb="md">
         <Text size="xl" fw={500}>Gerenciamento de Usuários</Text>
-        <Button 
-          leftSection={<IconPlus size={16} />} 
+        <Button
+          leftSection={<IconPlus size={16} />}
           onClick={() => navigate('/usuarios/novo')}
         >
           Novo Usuário
@@ -137,8 +135,8 @@ export function UserList() {
       {state.users.length === 0 ? (
         <EmptyState
           title="Nenhum usuário encontrado"
-          description={state.searchTerm || state.roleFilter || state.statusFilter ? 
-            "Tente ajustar sua busca ou filtros" : 
+          description={state.searchTerm || state.roleFilter || state.statusFilter ?
+            "Tente ajustar sua busca ou filtros" :
             "Cadastre um novo usuário para começar"}
         />
       ) : (
@@ -198,8 +196,8 @@ export function UserList() {
                           <Menu.Item onClick={() => handleResetPassword(user.id)}>
                             Redefinir senha
                           </Menu.Item>
-                          <Menu.Item 
-                            color="red" 
+                          <Menu.Item
+                            color="red"
                             onClick={() => {
                               updateState('userToDelete', user);
                               updateState('deleteModalOpen', true);
@@ -217,10 +215,10 @@ export function UserList() {
           </Table>
 
           {state.totalPages > 1 && (
-            <Pagination 
-              value={state.currentPage} 
-              onChange={page => updateState('currentPage', page)} 
-              total={state.totalPages} 
+            <Pagination
+              value={state.currentPage}
+              onChange={page => updateState('currentPage', page)}
+              total={state.totalPages}
               mt="md"
             />
           )}

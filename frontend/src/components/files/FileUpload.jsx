@@ -29,7 +29,7 @@ export function FileUpload() {
       <Stack gap="md">
         <Text size="xl" fw={600}>Upload de Documentos</Text>
         
-        <Dropzone onDrop={handleFileChange} accept={['image/*', 'application/pdf']}/>
+        <Dropzone onDrop={handleFileChange} accept={['image/*', 'application/pdf']} />
         
         {files.length > 0 && (
           <div>

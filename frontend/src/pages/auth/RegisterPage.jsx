@@ -1,56 +1,100 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { TextInput, PasswordInput, Button, Title, Text, Paper, Loader, Container, Group, Stack, Alert } from '@mantine/core';
-import { IconAt, IconUser, IconLock, IconArrowLeft, IconAlertCircle, IconCheck, IconX } from '@tabler/icons-react';
-import api from '@/api/apiService';
+import { useAuth } from '@/contexts/AuthContext';
+import { 
+  TextInput,
+  PasswordInput,
+  Button,
+  Title,
+  Text,
+  Paper,
+  Container,
+  Group,
+  Stack,
+  Notification
+} from '@mantine/core';
+import { IconAt, IconUser, IconLock, IconArrowLeft, IconX } from '@tabler/icons-react';
 import { validateEmail } from '@/utils/validators';
 
-const DEFAULT_ROLE_ID = 2;
-
 export function RegisterPage() {
-  const [form, setForm] = useState({ nome: '', email: '', senha: '', confirmarSenha: '' });
+  const [form, setForm] = useState({
+    nome: '',
+    email: '',
+    senha: '',
+    confirmarSenha: ''
+  });
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [error, setError] = useState(null);
+  const { register } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
+  const handleChange = (field, value) =>
+    setForm(prev => ({ ...prev, [field]: value }));
 
   const validateForm = () => {
-    const newErrors = {};
-    if (!form.nome.trim()) newErrors.nome = 'Nome é obrigatório';
-    if (!validateEmail(form.email)) newErrors.email = 'Email inválido';
-    if (form.senha.length < 6) newErrors.senha = 'Senha deve ter pelo menos 6 caracteres';
-    if (form.senha !== form.confirmarSenha) newErrors.confirmarSenha = 'As senhas não coincidem';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (!form.nome.trim()) {
+      setError('Nome é obrigatório');
+      return false;
+    }
+    if (!validateEmail(form.email)) {
+      setError('Email inválido');
+      return false;
+    }
+    if (form.senha.length < 6) {
+      setError('Senha deve ter pelo menos 6 caracteres');
+      return false;
+    }
+    if (form.senha !== form.confirmarSenha) {
+      setError('As senhas não coincidem');
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     setLoading(true);
-    try {
-      await api.post('/auth/register', { 
-        ...form, 
-        role_id: DEFAULT_ROLE_ID 
-      });
+    setError(null);
+    
+    const result = await register(form);
+    
+    if (result.success) {
       navigate('/login');
-    } catch (error) {
-      console.error('Erro no cadastro:', error);
-    } finally {
-      setLoading(false);
+    } else {
+      setError(result.message);
     }
+    
+    setLoading(false);
   };
 
   return (
     <Container size="xs" py="xl">
       <Paper withBorder shadow="md" p="xl" radius="md">
-        <Button variant="subtle" leftSection={<IconArrowLeft size={14} />} onClick={() => navigate('/')} mb="md">
+        <Button
+          variant="subtle"
+          leftSection={<IconArrowLeft size={14} />}
+          onClick={() => navigate('/')}
+          mb="md"
+        >
           Página inicial
         </Button>
 
-        <Title order={2} ta="center" mb="xl">Criar nova conta</Title>
+        <Title order={2} ta="center" mb="xl">
+          Criar nova conta
+        </Title>
+
+        {error && (
+          <Notification 
+            icon={<IconX size={18} />} 
+            color="red"
+            mb="md"
+            onClose={() => setError(null)}
+          >
+            {error}
+          </Notification>
+        )}
 
         <form onSubmit={handleSubmit}>
           <Stack>
@@ -60,7 +104,6 @@ export function RegisterPage() {
               leftSection={<IconUser size={16} />}
               value={form.nome}
               onChange={(e) => handleChange('nome', e.target.value)}
-              error={errors.nome}
               required
             />
 
@@ -70,7 +113,6 @@ export function RegisterPage() {
               leftSection={<IconAt size={16} />}
               value={form.email}
               onChange={(e) => handleChange('email', e.target.value)}
-              error={errors.email}
               required
             />
 
@@ -80,7 +122,6 @@ export function RegisterPage() {
               leftSection={<IconLock size={16} />}
               value={form.senha}
               onChange={(e) => handleChange('senha', e.target.value)}
-              error={errors.senha}
               required
             />
 
@@ -90,17 +131,16 @@ export function RegisterPage() {
               leftSection={<IconLock size={16} />}
               value={form.confirmarSenha}
               onChange={(e) => handleChange('confirmarSenha', e.target.value)}
-              error={errors.confirmarSenha}
               required
             />
 
-            {form.senha && form.confirmarSenha && form.senha !== form.confirmarSenha && (
-              <Alert variant="light" color="red" icon={<IconAlertCircle />} mb="sm">
-                As senhas não coincidem
-              </Alert>
-            )}
-
-            <Button type="submit" fullWidth loading={loading} mt="md">
+            <Button 
+              type="submit" 
+              fullWidth 
+              loading={loading} 
+              mt="md"
+              style={{ backgroundColor: '#003366' }}
+            >
               {loading ? 'Cadastrando...' : 'Criar conta'}
             </Button>
           </Stack>
@@ -109,7 +149,7 @@ export function RegisterPage() {
         <Group justify="center" mt="xl">
           <Text c="dimmed">
             Já tem uma conta?{' '}
-            <Text component={Link} to="/login" c="blue.5" fw={500} td="underline">
+            <Text component={Link} to="/login" c="#0066CC" fw={500} td="underline">
               Faça login
             </Text>
           </Text>

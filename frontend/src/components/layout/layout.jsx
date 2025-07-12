@@ -1,12 +1,13 @@
 import { AppShell, Group, Text, Button, NavLink } from '@mantine/core';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { IconLogout, IconDashboard, IconFiles, IconUsers, IconUser } from '@tabler/icons-react';
 import { useAuth } from '@/hooks/useAuth';
 
 export function Layout({ children }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
-  
+
   const navLinks = [
     { to: '/dashboard', icon: <IconDashboard size={18} />, label: 'Dashboard' },
     { to: '/processos', icon: <IconFiles size={18} />, label: 'Processos Jurídicos' },
@@ -35,8 +36,9 @@ export function Layout({ children }) {
               to={link.to}
               label={link.label}
               leftSection={link.icon}
-              color="white"
               active={location.pathname === link.to}
+              variant="light"
+              color="white"
               style={{ borderRadius: 'var(--mantine-radius-md)', marginBottom: 4 }}
             />
           ))}

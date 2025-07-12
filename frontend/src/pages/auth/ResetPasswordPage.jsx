@@ -1,27 +1,43 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { TextInput, Button, Title, Paper, Loader, Text, Container, Group, Stack, Alert } from '@mantine/core';
-import { IconAt, IconArrowLeft, IconCheck } from '@tabler/icons-react';
+import {
+  TextInput,
+  Button,
+  Title,
+  Paper,
+  Text,
+  Container,
+  Group,
+  Stack
+} from '@mantine/core';
+import {
+  IconAt,
+  IconArrowLeft,
+  IconCheck
+} from '@tabler/icons-react';
 import api from '@/api/apiService';
 import { validateEmail } from '@/utils/validators';
+import { toast } from 'react-toastify';
 
 export function ResetPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateEmail(email)) return setError('Por favor, insira um email válido');
-    
+    if (!validateEmail(email)) {
+      toast.error('Por favor, insira um email válido');
+      return;
+    }
+
     setLoading(true);
     try {
       await api.post('/auth/reset-password', { email: email.trim() });
       setSuccess(true);
     } catch (err) {
-      setError(err.response?.data?.message || 'Erro ao enviar email de redefinição. Tente novamente.');
+      toast.error(err.response?.data?.message || 'Erro ao enviar email de redefinição.');
     } finally {
       setLoading(false);
     }
@@ -49,19 +65,24 @@ export function ResetPasswordPage() {
   return (
     <Container size="xs" py="xl">
       <Paper withBorder shadow="md" p="xl" radius="md">
-        <Button variant="subtle" leftSection={<IconArrowLeft size={14} />} onClick={() => navigate('/login')} mb="md">
+        <Button
+          variant="subtle"
+          leftSection={<IconArrowLeft size={14} />}
+          onClick={() => navigate('/login')}
+          mb="md"
+        >
           Voltar para login
         </Button>
 
         <Stack align="center" mb="md">
           <Title order={2} ta="center">Redefinir Senha</Title>
-          <Text c="dimmed" ta="center">Digite seu email para receber o link de redefinição</Text>
+          <Text c="dimmed" ta="center">
+            Digite seu email para receber o link de redefinição
+          </Text>
         </Stack>
 
         <form onSubmit={handleSubmit}>
           <Stack>
-            {error && <Alert variant="light" color="red" mb="sm">{error}</Alert>}
-
             <TextInput
               label="Email"
               placeholder="seu@email.com"
@@ -89,4 +110,5 @@ export function ResetPasswordPage() {
     </Container>
   );
 }
+
 export default ResetPasswordPage;

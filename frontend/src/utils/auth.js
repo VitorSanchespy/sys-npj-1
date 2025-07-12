@@ -15,5 +15,4 @@ export const clearSession = () => {
 
 export const loginPath = '/login';
 export const logout = clearSession;
-export const getCurrentToken = getToken;
 export const getCurrentUser = getUser;

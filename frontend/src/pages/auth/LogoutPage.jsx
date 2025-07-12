@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
 import { Center, Loader } from '@mantine/core';
-import { logout } from '@/utils/auth';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import api from '@/api/apiService';
 
 export function LogoutPage() {
   const navigate = useNavigate();
-  
+  const { logout } = useAuth();
+
   useEffect(() => {
     const performLogout = async () => {
       try {
@@ -20,10 +21,11 @@ export function LogoutPage() {
     };
     performLogout();
   }, []);
-  
+
   return (
-    <Center h="100vh">
-      <Loader size="xl" variant="dots" />
+    <Center h="100vh" style={{ background: 'linear-gradient(135deg, #f8f9fa, #e6f0ff)' }}>
+      <Loader size="xl" variant="dots" color="#003366" />
+      <Text ml="md" style={{ color: '#003366' }}>Saindo do sistema...</Text>
     </Center>
   );
 }

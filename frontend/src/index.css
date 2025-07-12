@@ -1,80 +1,51 @@
-@import 'inter-ui/inter.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Variáveis de cor - versão extendida */
-:root {
-  --ufmt-green-500: #25ad6a;
-  --ufmt-green-600: #1e8d56;
-  --ufmt-gold-500: #ffbf16;
-  --ufmt-gold-600: #e6ac14;
-}
-
-/* Tipografia base */
 body {
-  font-family: 'Inter', sans-serif;
-  @apply antialiased text-gray-800 bg-gray-50;
+  margin: 0;
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f8f9fa;
+  color: #333;
 }
 
-/* Componentes personalizados */
-@layer components {
-  /* Botões */
-  .btn-ufmt {
-    @apply bg-ufmt-green-500 hover:bg-ufmt-green-600 
-           text-white font-medium py-2 px-4 rounded-lg 
-           transition-all duration-200 ease-in-out
-           focus:outline-none focus:ring-2 focus:ring-ufmt-green-500 focus:ring-opacity-50;
-  }
-
-  /* Versão secundária */
-  .btn-ufmt-outline {
-    @apply border border-ufmt-green-500 text-ufmt-green-500 
-           hover:bg-ufmt-green-50 bg-transparent;
-  }
-
-  /* Cabeçalhos */
-  h1 {
-    @apply text-3xl font-bold text-ufmt-green-500 mb-4;
-  }
-  
-  h2 {
-    @apply text-2xl font-semibold text-ufmt-green-500 mb-3;
-  }
-  
-  h3 {
-    @apply text-xl font-medium text-ufmt-green-500 mb-2;
-  }
-
-  /* Links */
-  a {
-    @apply text-ufmt-green-500 hover:text-ufmt-green-600 
-           transition-colors duration-200 underline-offset-4;
-  }
-
-  /* Cards */
-  .card-ufmt {
-    @apply bg-white border border-gray-200 rounded-lg 
-           shadow-sm hover:shadow-md transition-shadow 
-           duration-200 overflow-hidden;
-  }
-
-  /* Inputs */
-  .input-ufmt {
-    @apply border border-gray-300 rounded-lg px-3 py-2 
-           focus:border-ufmt-green-500 focus:ring-1 
-           focus:ring-ufmt-green-500 transition-all;
-  }
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Utilidades personalizadas */
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-  
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: var(--ufmt-green-500) transparent;
-  }
+/* Estilização para links */
+a {
+  color: #0066CC;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: #003366;
+  text-decoration: underline;
+}
+
+/* Estilização para títulos institucionais */
+.institutional-title {
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  color: #003366;
+  font-weight: 600;
+}
+
+/* Card estilizado */
+.institutional-card {
+  border: 1px solid #e0e6ed;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  background: white;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.institutional-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }

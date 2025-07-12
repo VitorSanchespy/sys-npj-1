@@ -14,7 +14,7 @@ export function Timeline({ events, activeIndex = -1, showDate = true, showStatus
     <MantineTimeline active={activeIndex} bulletSize={28} lineWidth={2} color="gray.6">
       {events.map((event, index) => {
         const { icon, color } = STATUS_CONFIG[event.status] || { icon: <IconCheck size={14} />, color: 'gray' };
-        
+
         return (
           <MantineTimeline.Item 
             key={event.id || index}
