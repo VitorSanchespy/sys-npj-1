@@ -1,112 +1,56 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useEffect, useContext } from 'react';
+import authService from '@/services/authService';
 import api from '@/api/apiService';
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem('user');
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Configura interceptors para incluir token automaticamente
+  // Garante token em toda request
   useEffect(() => {
     const requestInterceptor = api.interceptors.request.use(config => {
-      const token = localStorage.getItem('authToken');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+      const token = localStorage.getItem('token');
+      if (token) config.headers.Authorization = `Bearer ${token}`;
       return config;
     });
-
-    return () => {
-      api.interceptors.request.eject(requestInterceptor);
-    };
+    return () => api.interceptors.request.eject(requestInterceptor);
   }, []);
 
   useEffect(() => {
     const verifyToken = async () => {
-      const token = localStorage.getItem('authToken');
-      
+      const token = localStorage.getItem('token');
       if (!token) {
         setLoading(false);
         return;
       }
-
       try {
-        const response = await api.get('/auth/perfil');
-        setUser(response.data);
-      } catch (error) {
-        logout();
-      } finally {
-        setLoading(false);
+        const data = await authService.verifyToken();
+        setUser(data);
+      } catch {
+        setUser(null);
       }
+      setLoading(false);
     };
-    
     verifyToken();
   }, []);
 
   const login = async (credentials) => {
-    try {
-      // CORREÇÃO: Use diretamente api.post sem configurar manualmente
-      const response = await api.post('/auth/login', credentials);
-      
-      const { token, usuario } = response.data;
-      
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('user', JSON.stringify(usuario));
-      
-      // Adiciona token ao header para futuras requisições
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
-      setUser(usuario);
-      return { success: true };
-    } catch (error) {
-      // CORREÇÃO: Tratamento adequado de erros do Axios
-      return { 
-        success: false, 
-        message: error.response?.data?.erro || 'Erro no login' 
-      };
+    const result = await authService.login(credentials);
+    if (result.success) {
+      setUser(result.usuario);
     }
-  };
-
-  const register = async (userData) => {
-    try {
-      const response = await api.post('/auth/registrar', {
-        nome: userData.nome,
-        email: userData.email,
-        senha: userData.senha,
-        role_id: userData.role_id || 2
-      });
-      
-      return { success: true, data: response.data };
-    } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.erro || 'Erro no cadastro' 
-      };
-    }
+    return result;
   };
 
   const logout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    delete api.defaults.headers.common['Authorization'];
+    authService.logout();
     setUser(null);
   };
 
-  const value = {
-    user,
-    loading,
-    login,
-    logout,
-    register,
-    isAuthenticated: !!user
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

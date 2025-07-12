@@ -8,7 +8,7 @@ export function AuthLayout() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #f8f9fa, #e6f0ff)',
+      background: 'linear-gradient(135deg, #e6f0ff, #f8f9fa)',
       padding: '1rem'
     }}>
       <Outlet />
@@ -16,4 +16,4 @@ export function AuthLayout() {
   );
 }
 
-export default AuthLayout
+export default AuthLayout;

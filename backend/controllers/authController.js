@@ -7,12 +7,10 @@ const RESET_TOKEN_EXPIRATION = '1h';
 exports.registrar = async (req, res) => {
   try {
     const { nome, email, senha, role_id } = req.body;
-    // Verificar se email já existe
     const usuarioExistente = await Usuario.buscarPorEmail(email);
     if (usuarioExistente) {
       return res.status(400).json({ erro: 'Email já está em uso' });
     }
-
     const usuarioId = await Usuario.criar({ nome, email, senha, role_id });
     res.status(201).json({ id: usuarioId });
   } catch (error) {
@@ -24,22 +22,19 @@ exports.login = async (req, res) => {
   try {
     const { email, senha } = req.body;
     const usuario = await Usuario.buscarPorEmail(email);
-    
     if (!usuario) {
-      return res.status(401).json({ erro: 'Credenciais inválidas' });
+      return res.json({ success: false, message: 'E-mail não encontrado' });
     }
-
     const senhaValida = await verificarSenha(senha, usuario.senha);
     if (!senhaValida) {
-      return res.status(401).json({ erro: 'Credenciais inválidas' });
+      return res.json({ success: false, message: 'Senha incorreta' });
     }
-
     const token = gerarToken({
       id: usuario.id,
       role: usuario.role
     });
-
-    res.json({ 
+    res.json({
+      success: true,
       token,
       usuario: {
         id: usuario.id,
@@ -49,9 +44,10 @@ exports.login = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ erro: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 exports.solicitarRecuperacao = async (req, res) => {
   try {
@@ -104,9 +100,7 @@ exports.perfil = async (req, res) => {
       id: usuarioCompleto.id,
       nome: usuarioCompleto.nome,
       email: usuarioCompleto.email,
-      role: usuarioCompleto.role,
-      criado_em: usuarioCompleto.criado_em,
-      // Outros campos seguros para exibir
+      // ... outros campos
     });
   } catch (error) {
     res.status(500).json({ erro: error.message });

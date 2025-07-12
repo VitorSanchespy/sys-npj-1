@@ -1,28 +1,27 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  Box, 
-  Center, 
-  Card, 
-  TextInput, 
-  PasswordInput, 
-  Button, 
-  Title, 
-  Text, 
+import {
+  Box,
+  Center,
+  Card,
+  TextInput,
+  PasswordInput,
+  Button,
+  Title,
+  Text,
   Group,
   Stack,
-  Anchor
+  Anchor,
+  Notification,
+  Loader
 } from '@mantine/core';
-import { IconLock, IconAt, IconSchool } from '@tabler/icons-react';
+import { IconLock, IconAt, IconSchool, IconX } from '@tabler/icons-react';
 import { validateEmail } from '@/utils/validators';
-import SafeText from '@/components/ui/SafeText'; // Adicione esta importação
+import SafeText from '@/components/ui/SafeText';
 
-export  function LoginPage() {
-  const [credentials, setCredentials] = useState({ 
-    email: '', 
-    senha: '' 
-  });
+export default function LoginPage() {
+  const [credentials, setCredentials] = useState({ email: '', senha: '' });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -30,18 +29,14 @@ export  function LoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
     if (!validateEmail(credentials.email)) {
       setError('Por favor, insira um email válido');
       return;
     }
-
     setLoading(true);
     setError(null);
-    
     try {
-      const result = await login({credentials});
-      
+      const result = await login(credentials);
       if (result.success) {
         navigate('/');
       } else {
@@ -56,17 +51,13 @@ export  function LoginPage() {
   };
 
   return (
-    <Center style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #f8f9fa, #e6f0ff)' }}>
-      <Card 
-        shadow="md" 
-        padding="xl" 
-        radius="md"
-        style={{ 
-          width: '100%', 
-          maxWidth: 480,
-          borderTop: '4px solid #003366'
-        }}
-      >
+    <Center style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #e6f0ff, #f8f9fa)' }}>
+      <Card shadow="md" padding="xl" radius="md" style={{
+        width: '100%',
+        maxWidth: 400,
+        borderTop: '4px solid #003366',
+        background: 'white'
+      }}>
         <Stack align="center" mb="xl">
           <IconSchool size={48} color="#003366" />
           <Title order={2} style={{ color: '#003366', fontFamily: 'Georgia, serif' }}>
@@ -76,13 +67,15 @@ export  function LoginPage() {
         </Stack>
 
         {error && (
-          <Box mb="md" p="md" style={{ 
-            backgroundColor: '#ffecec', 
-            border: '1px solid #ff6b6b',
-            borderRadius: 4
-          }}>
-            <Text c="red">{error}</Text>
-          </Box>
+          <Notification
+            icon={<IconX size={18} />}
+            color="red"
+            mb="md"
+            onClose={() => setError(null)}
+            withCloseButton
+          >
+            {error}
+          </Notification>
         )}
 
         <form onSubmit={handleLogin}>
@@ -92,8 +85,10 @@ export  function LoginPage() {
               placeholder="seu.email@ufmt.br"
               leftSection={<IconAt size={16} />}
               value={credentials.email}
-              onChange={(e) => setCredentials({...credentials, email: e.target.value})}
+              onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
               required
+              size="md"
+              autoFocus
             />
 
             <PasswordInput
@@ -101,8 +96,9 @@ export  function LoginPage() {
               placeholder="Sua senha"
               leftSection={<IconLock size={16} />}
               value={credentials.senha}
-              onChange={(e) => setCredentials({...credentials, senha: e.target.value})}
+              onChange={(e) => setCredentials({ ...credentials, senha: e.target.value })}
               required
+              size="md"
             />
 
             <Group justify="flex-end" mt="sm">
@@ -111,15 +107,15 @@ export  function LoginPage() {
               </Anchor>
             </Group>
 
-            <Button 
-              type="submit" 
-              fullWidth 
-              mt="xl" 
+            <Button
+              type="submit"
+              fullWidth
+              mt="xl"
               size="md"
               loading={loading}
               style={{ backgroundColor: '#003366' }}
             >
-              {loading ? 'Entrando...' : 'Entrar no Sistema'}
+              {loading ? <Loader size="xs" color="white" /> : 'Entrar no Sistema'}
             </Button>
           </Stack>
         </form>
@@ -142,4 +138,3 @@ export  function LoginPage() {
     </Center>
   );
 }
-export default LoginPage;

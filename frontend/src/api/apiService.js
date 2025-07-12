@@ -1,12 +1,12 @@
 import axios from 'axios';
-import { getToken } from '@/utils/auth';
+import { getToken, clearToken } from '@/utils/auth';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-      timeout: Number(import.meta.env.VITE_API_TIMEOUT) || 15000
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  timeout: Number(import.meta.env.VITE_API_TIMEOUT) || 15000
 });
 
 api.interceptors.request.use((config) => {
@@ -15,29 +15,24 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
-},(error) => {
-  return Promise.reject(error);
-});
+}, (error) => Promise.reject(error));
 
 api.interceptors.response.use(
-  response => response.data,
+  response => response,
   error => {
     let message = 'Erro na requisição';
-
     if (error.response) {
-      message = error.response.data?.message || 
+      message = error.response.data?.message ||
+                error.response.data?.erro ||
                 `Erro ${error.response.status}: ${error.response.statusText}`;
-
       if (error.response.status === 401) {
-        localStorage.removeItem('authToken');
-        window.location.reload();
+        clearToken();
+        window.location.href = '/login';
       }
     } else if (error.request) {
       message = 'Sem resposta do servidor';
     }
-
-    console.error('API Error:', message);
-    return Promise.reject({ message });
+    return Promise.reject({ ...error, message });
   }
 );
 
