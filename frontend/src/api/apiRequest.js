@@ -1,9 +1,16 @@
-export async function apiRequest(url, { method = "GET", token, body } = {}) {
-  const headers = { "Content-Type": "application/json" };
+const API_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
+
+export async function apiRequest(endpoint, { method = "GET", token, body } = {}) {
+  const url = endpoint.startsWith("http")
+    ? endpoint
+    : `${API_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
+
+  const headers = {};
+  if (!(body instanceof FormData)) headers["Content-Type"] = "application/json";
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  let options = { method, headers };
+
+  const options = { method, headers };
   if (body instanceof FormData) {
-    delete headers["Content-Type"];
     options.body = body;
   } else if (body) {
     options.body = JSON.stringify(body);

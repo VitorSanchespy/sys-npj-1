@@ -9,36 +9,22 @@ export default function DashboardSummary() {
     alunos: 0,
     professores: 0,
     admins: 0,
-    atualizacoes: 0,
-    ultimosProcessos: [],
-    ultimasAtualizacoes: [],
+    // Remover ultimosProcessos e ultimasAtualizacoes se não existirem endpoints
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchDashboard() {
       try {
-        const dashboard = await apiRequest("/api/dashboard", { token });
-        setData(dashboard);
-      } catch {
-        // fallback caso a API não tenha endpoint /dashboard:
-        try {
-          const [procs, users, atualizacoes] = await Promise.all([
-            apiRequest("/api/processos", { token }),
-            apiRequest("/api/usuarios", { token }),
-            apiRequest("/api/atualizacoes", { token }),
-          ]);
-          setData({
-            processos: procs.length,
-            alunos: users.filter(u => u.role === "aluno").length,
-            professores: users.filter(u => u.role === "professor").length,
-            admins: users.filter(u => u.role === "admin").length,
-            atualizacoes: atualizacoes.length,
-            ultimosProcessos: procs.slice(-5).reverse(),
-            ultimasAtualizacoes: atualizacoes.slice(-5).reverse(),
-          });
-        } catch {}
-      }
+        const processos = await apiRequest("/api/processos", { token });
+        const usuarios = await apiRequest("/api/usuarios", { token });
+        setData({
+          processos: processos.length,
+          alunos: usuarios.filter(u => u.role === "Aluno").length,
+          professores: usuarios.filter(u => u.role === "Professor").length,
+          admins: usuarios.filter(u => u.role === "Admin").length,
+        });
+      } catch {}
       setLoading(false);
     }
     fetchDashboard();
@@ -54,31 +40,6 @@ export default function DashboardSummary() {
         <Card title="Alunos" value={data.alunos} />
         <Card title="Professores" value={data.professores} />
         <Card title="Admins" value={data.admins} />
-        <Card title="Atualizações" value={data.atualizacoes} />
-      </div>
-      <div style={{ display: "flex", gap: 32 }}>
-        <div style={{ flex: 1 }}>
-          <h3>Últimos Processos</h3>
-          <ul>
-            {data.ultimosProcessos.length === 0 && <li>Nenhum processo recente.</li>}
-            {data.ultimosProcessos.map(proc => (
-              <li key={proc.id}>
-                {proc.numero} — {proc.nome} ({proc.status})
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div style={{ flex: 1 }}>
-          <h3>Últimas Atualizações</h3>
-          <ul>
-            {data.ultimasAtualizacoes.length === 0 && <li>Nenhuma atualização recente.</li>}
-            {data.ultimasAtualizacoes.map(upd => (
-              <li key={upd.id}>
-                <b>{upd.titulo}</b> em {new Date(upd.criado_em).toLocaleString()}
-              </li>
-            ))}
-          </ul>
-        </div>
       </div>
     </div>
   );

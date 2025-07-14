@@ -3,8 +3,7 @@ import { apiRequest } from "../../api/apiRequest";
 import { useAuthContext } from "../../contexts/AuthContext";
 
 export default function UpdateForm({ processoId, onSuccess }) {
-  const { token } = useAuthContext();
-  const [titulo, setTitulo] = useState("");
+  const { token, user } = useAuthContext();
   const [descricao, setDescricao] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,10 +16,9 @@ export default function UpdateForm({ processoId, onSuccess }) {
       await apiRequest(`/api/processos/${processoId}/atualizacoes`, {
         method: "POST",
         token,
-        body: { titulo, descricao }
+        body: { usuario_id: user.id, descricao }
       });
       setMsg("Atualização cadastrada!");
-      setTitulo("");
       setDescricao("");
       if (onSuccess) onSuccess();
     } catch (err) {
@@ -33,14 +31,6 @@ export default function UpdateForm({ processoId, onSuccess }) {
     <form onSubmit={handleSubmit}>
       <h4>Nova Atualização</h4>
       {msg && <div>{msg}</div>}
-      <div>
-        <label>Título:</label>
-        <input
-          value={titulo}
-          onChange={e => setTitulo(e.target.value)}
-          required
-        />
-      </div>
       <div>
         <label>Descrição:</label>
         <textarea

@@ -7,14 +7,14 @@ export default function ProcessForm() {
   const { token } = useAuthContext();
   const { id } = useParams();
   const isEdit = !!id;
-  const [form, setForm] = useState({ numero: "", nome: "", descricao: "" });
+  const [form, setForm] = useState({ numero_processo: "", descricao: "" });
   const [msg, setMsg] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
     if (isEdit) {
       apiRequest(`/api/processos/${id}`, { token })
-        .then(data => setForm({ numero: data.numero, nome: data.nome, descricao: data.descricao }))
+        .then(data => setForm({ numero_processo: data.numero_processo, descricao: data.descricao }))
         .catch(() => {});
     }
   }, [id, isEdit, token]);
@@ -40,12 +40,8 @@ export default function ProcessForm() {
       <h2>{isEdit ? "Editar Processo" : "Novo Processo"}</h2>
       {msg && <div>{msg}</div>}
       <div>
-        <label>Nº:</label>
-        <input name="numero" value={form.numero} onChange={handleChange} required />
-      </div>
-      <div>
-        <label>Nome:</label>
-        <input name="nome" value={form.nome} onChange={handleChange} required />
+        <label>Nº do Processo:</label>
+        <input name="numero_processo" value={form.numero_processo} onChange={handleChange} required />
       </div>
       <div>
         <label>Descrição:</label>

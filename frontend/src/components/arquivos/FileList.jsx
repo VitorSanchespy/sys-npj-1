@@ -10,7 +10,7 @@ export default function FileList({ processoId }) {
   useEffect(() => {
     async function fetchArquivos() {
       try {
-        const data = await apiRequest(`/api/processos/${processoId}/arquivos`, { token });
+        const data = await apiRequest(`/api/arquivos/processo/${processoId}`, { token });
         setArquivos(data);
       } catch {
         setArquivos([]);
@@ -39,7 +39,7 @@ export default function FileList({ processoId }) {
       <ul>
         {arquivos.map(arquivo => (
           <li key={arquivo.id}>
-            <a href={arquivo.url} target="_blank" rel="noopener noreferrer">{arquivo.nome}</a>
+            <a href={arquivo.caminho} target="_blank" rel="noopener noreferrer">{arquivo.nome}</a>
             {" "}
             <small>({Math.round(arquivo.tamanho / 1024)} KB)</small>
             {(user.role === "admin" || user.role === "professor") && (

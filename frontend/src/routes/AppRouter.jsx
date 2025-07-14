@@ -1,29 +1,29 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { useAuthContext } from "../contexts/AuthContext";
-import LoginPage from "../pages/auth/LoginPage";
-import RegisterPage from "../pages/auth/RegisterPage";
-import DashboardPage from "../pages/dashboard/DashboardPage";
-import ProfilePage from "../pages/dashboard/ProfilePage";
-import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
-import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
-import ProcessListPage from "../pages/dashboard/ProcessListPage";
-import ProcessDetailPage from "../pages/dashboard/ProcessDetailPage";
-import ProcessFormPage from "../pages/dashboard/ProcessFormPage";
-import ProcessAssignStudentPage from "../pages/dashboard/ProcessAssignStudentPage";
-import ProcessUpdatesPage from "../pages/dashboard/ProcessUpdatesPage";
-import UserListPage from "../pages/dashboard/UserListPage";
-import UserDetailPage from "../pages/dashboard/UserDetailPage";
-import UserEditPage from "../pages/dashboard/UserEditPage";
-import { hasRole } from "../utils/permissions";
-
+import { useAuthContext } from "@/contexts/AuthContext";
+import MainLayout from "@/components/layout/MainLayout";
+import LoginPage from "@/pages/auth/LoginPage";
+import RegisterPage from "@/pages/auth/RegisterPage";
+import DashboardPage from "@/pages/dashboard/DashboardPage";
+import ProfilePage from "@/pages/dashboard/ProfilePage";
+import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
+import ProcessListPage from "@/pages/dashboard/ProcessListPage";
+import ProcessDetailPage from "@/pages/dashboard/ProcessDetailPage";
+import ProcessFormPage from "@/pages/dashboard/ProcessFormPage";
+import ProcessAssignStudentPage from "@/pages/dashboard/ProcessAssignStudentPage";
+import ProcessUpdatesPage from "@/pages/dashboard/ProcessUpdatePage";
+import UserListPage from "@/pages/dashboard/UserListPage";
+import UserDetailPage from "@/pages/dashboard/UserDetailPage";
+import UserEditPage from "@/pages/dashboard/UserEditPage";
+import { hasRole } from "@/utils/permissions";
 
 function PrivateRoute({ children, roles }) {
   const { isAuthenticated, user, loading } = useAuthContext();
   if (loading) return <div>Carregando...</div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (roles && !hasRole(user, roles)) return <Navigate to="/" replace />;
-  return children;
+  return <MainLayout>{children}</MainLayout>;
 }
 
 export default function AppRouter() {
