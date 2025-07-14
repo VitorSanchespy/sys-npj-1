@@ -1,5 +1,5 @@
 import React from "react";
-import DashboardSummary from "../../components/dashboard/DashboardSummary";
+import DashboardSummary from "@/components/dashboard/DashboardSummary";
 
 export default function DashboardPage() {
   return (

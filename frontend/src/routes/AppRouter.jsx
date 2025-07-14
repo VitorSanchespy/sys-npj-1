@@ -16,6 +16,7 @@ import ProcessUpdatesPage from "@/pages/dashboard/ProcessUpdatePage";
 import UserListPage from "@/pages/dashboard/UserListPage";
 import UserDetailPage from "@/pages/dashboard/UserDetailPage";
 import UserEditPage from "@/pages/dashboard/UserEditPage";
+import ArquivosPage from "@/pages/dashboard/ArquivosPage";
 import { hasRole } from "@/utils/permissions";
 
 function PrivateRoute({ children, roles }) {
@@ -46,6 +47,14 @@ export default function AppRouter() {
           }
         />
         <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <DashboardPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/perfil"
           element={
             <PrivateRoute>
@@ -53,6 +62,9 @@ export default function AppRouter() {
             </PrivateRoute>
           }
         />
+        <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} /> 
+        <Route path="/arquivos" element={<PrivateRoute><ArquivosPage /></PrivateRoute>} /> 
+        {/* Protegido: Admin */}
         {/* Usuários (admin/professor) */}
         <Route path="/usuarios" element={<PrivateRoute roles={["admin", "professor"]}><UserListPage /></PrivateRoute>} />
         <Route path="/usuarios/:id" element={<PrivateRoute roles={["admin", "professor"]}><UserDetailPage /></PrivateRoute>} />
