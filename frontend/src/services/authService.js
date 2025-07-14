@@ -4,14 +4,14 @@ export default {
   login: async (credentials) => {
     try {
       const { data } = await api.post('/auth/login', credentials);
-      if (data.success) {
+      if (data.token) {
         localStorage.setItem('token', data.token);
       }
-      return data;
+      return { success: true, usuario: data.usuario, token: data.token };
     } catch (error) {
       return {
         success: false,
-        message: error.message || 'Erro ao conectar ao servidor'
+        message: error.response?.data?.erro || 'Erro ao conectar ao servidor'
       };
     }
   },

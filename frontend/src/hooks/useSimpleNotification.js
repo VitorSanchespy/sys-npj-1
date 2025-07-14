@@ -1,4 +1,3 @@
-// src/hooks/useNotification.js
 import { notifications } from '@mantine/notifications';
 
 export function useNotification() {

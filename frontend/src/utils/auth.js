@@ -1,18 +1,27 @@
-// src/utils/auth.js
-export const getToken = () => localStorage.getItem('token');
-export const setToken = token => localStorage.setItem('token', token);
-export const clearToken = () => localStorage.removeItem('token');
+import { useEffect, useState, useCallback } from 'react';
+import { getUser, setUser, clearUser, getToken, setToken, clearToken, isAuthenticated } from '@/utils/auth';
 
-export const getUser = () => JSON.parse(localStorage.getItem('user') || 'null');
-export const setUser = user => localStorage.setItem('user', JSON.stringify(user));
-export const clearUser = () => localStorage.removeItem('user');
+export function useAuth() {
+  const [usuario, setUsuario] = useState(getUser());
+  const [loading, setLoading] = useState(false);
 
-export const isAuthenticated = () => !!getToken();
-export const clearSession = () => {
-  clearToken();
-  clearUser();
-};
+  const login = useCallback((user, token) => {
+    setUser(user);
+    setToken(token);
+    setUsuario(user);
+  }, []);
 
-export const loginPath = '/login';
-export const logout = clearSession;
-export const getCurrentUser = getUser;
+  const logout = useCallback(() => {
+    clearUser();
+    clearToken();
+    setUsuario(null);
+  }, []);
+
+  useEffect(() => {
+    setUsuario(getUser());
+  }, []);
+
+  return { usuario, setUsuario, login, logout, loading, isAuthenticated: !!usuario };
+}
+
+export default useAuth;

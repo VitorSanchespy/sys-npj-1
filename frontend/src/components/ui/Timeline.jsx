@@ -10,7 +10,6 @@ const STATUS_CONFIG = {
 };
 
 export function Timeline({ events = [], activeIndex = -1, showDate = true, showStatus = true }) {
-  // Garantia: events sempre será array
   return (
     <MantineTimeline
       active={activeIndex}

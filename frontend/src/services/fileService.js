@@ -1,4 +1,3 @@
-// src/services/fileService.js
 import api from '@/api/apiService';
 
 export const uploadFile = async (fileData) => {
@@ -7,7 +6,7 @@ export const uploadFile = async (fileData) => {
   formData.append('processoId', fileData.processoId);
   formData.append('descricao', fileData.descricao);
 
-  const { data } = await api.post('/arquivos/upload', formData, {
+  const { data } = await api.post('/api/arquivos/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
@@ -16,22 +15,10 @@ export const uploadFile = async (fileData) => {
 };
 
 export const fetchFilesByProcess = async (processoId) => {
-  const { data } = await api.get(`/arquivos/processo/${processoId}`);
+  const { data } = await api.get(`/api/arquivos/processo/${processoId}`);
   return data;
-};
-
-export const downloadFile = async (fileId) => {
-  const response = await api.get(`/arquivos/download/${fileId}`, {
-    responseType: 'blob'
-  });
-  return response.data;
 };
 
 export const deleteFile = async (fileId) => {
-  await api.delete(`/arquivos/${fileId}`);
-};
-
-export const fetchFileMetadata = async (fileId) => {
-  const { data } = await api.get(`/arquivos/${fileId}/metadata`);
-  return data;
+  await api.delete(`/api/arquivos/${fileId}`);
 };

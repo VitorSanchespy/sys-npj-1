@@ -5,8 +5,8 @@ import { useLocation, NavLink } from 'react-router-dom';
 const NAV_ITEMS = [
   { label: 'Início', icon: IconHome, path: '/' },
   { label: 'Processos', icon: IconScale, path: '/processos' },
-  { label: 'Documentos', icon: IconFileText, path: '/documentos' },
-  { label: 'Pessoas', icon: IconUsers, path: '/pessoas' },
+  { label: 'Documentos', icon: IconFileText, path: '/arquivos' },
+  { label: 'Pessoas', icon: IconUsers, path: '/usuarios' },
   { label: 'Julgamentos', icon: IconGavel, path: '/julgamentos' },
   { label: 'Configurações', icon: IconSettings, path: '/configuracoes' },
 ];

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -8,20 +7,18 @@ import {
 import {
   IconSearch, IconPlus, IconEdit, IconTrash, IconDotsVertical, IconLockOpen, IconRefresh
 } from '@tabler/icons-react';
-import api from '@/api/apiService';
+import { fetchUsers, deleteUser } from '@/services/userService';
 import EmptyState from '@/components/common/EmptyState';
 
 const ROLE_OPTIONS = [
-  { value: 'admin', label: 'Administrador' },
-  { value: 'advogado', label: 'Advogado' },
-  { value: 'estagiario', label: 'Estagiário' },
-  { value: 'cliente', label: 'Cliente' },
+  { value: 'Admin', label: 'Administrador' },
+  { value: 'Professor', label: 'Professor' },
+  { value: 'Aluno', label: 'Aluno' }
 ];
 
 const STATUS_OPTIONS = [
   { value: 'ativo', label: 'Ativo' },
-  { value: 'inativo', label: 'Inativo' },
-  { value: 'pendente', label: 'Pendente' },
+  { value: 'inativo', label: 'Inativo' }
 ];
 
 const ITEMS_PER_PAGE = 10;
@@ -33,14 +30,13 @@ export function UserList() {
     loading: true,
     searchTerm: '',
     roleFilter: '',
-    statusFilter: '',
     currentPage: 1,
     totalPages: 1,
     deleteModalOpen: false,
     userToDelete: null
   });
 
-  const fetchUsers = async () => {
+  const fetchAllUsers = async () => {
     setState(prev => ({ ...prev, loading: true }));
     try {
       const params = {
@@ -48,14 +44,12 @@ export function UserList() {
         limit: ITEMS_PER_PAGE,
         search: state.searchTerm,
         role: state.roleFilter,
-        status: state.statusFilter
       };
-
-      const { data } = await api.get('/usuarios', { params });
+      const data = await fetchUsers(params);
       setState(prev => ({
         ...prev,
-        users: data.items,
-        totalPages: data.totalPages,
+        users: data.items || data,
+        totalPages: data.totalPages || 1,
         loading: false
       }));
     } catch {
@@ -64,23 +58,20 @@ export function UserList() {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, [state.currentPage, state.searchTerm, state.roleFilter, state.statusFilter]);
+    fetchAllUsers();
+    // eslint-disable-next-line
+  }, [state.currentPage, state.searchTerm, state.roleFilter]);
 
   const handleDelete = async () => {
-    await api.delete(`/usuarios/${state.userToDelete.id}`);
+    await deleteUser(state.userToDelete.id);
     setState(prev => ({ ...prev, deleteModalOpen: false }));
-    fetchUsers();
-  };
-
-  const handleResetPassword = async (userId) => {
-    await api.post(`/usuarios/${userId}/reset-password`);
+    fetchAllUsers();
   };
 
   const updateState = (key, value) => setState(prev => ({ ...prev, [key]: value }));
 
   const getRoleColor = (role) => ({
-    admin: 'red', advogado: 'blue', estagiario: 'yellow', cliente: 'green'
+    Admin: 'red', Professor: 'blue', Aluno: 'yellow'
   }[role] || 'gray');
 
   return (
@@ -114,18 +105,10 @@ export function UserList() {
           clearable
         />
 
-        <Select
-          placeholder="Filtrar por status"
-          data={STATUS_OPTIONS}
-          value={state.statusFilter}
-          onChange={value => updateState('statusFilter', value)}
-          clearable
-        />
-
         <ActionIcon
           variant="outline"
           size="lg"
-          onClick={fetchUsers}
+          onClick={fetchAllUsers}
           title="Recarregar"
         >
           <IconRefresh size={18} />
@@ -135,9 +118,7 @@ export function UserList() {
       {state.users.length === 0 ? (
         <EmptyState
           title="Nenhum usuário encontrado"
-          description={state.searchTerm || state.roleFilter || state.statusFilter ?
-            "Tente ajustar sua busca ou filtros" :
-            "Cadastre um novo usuário para começar"}
+          description="Tente ajustar sua busca ou filtros"
         />
       ) : (
         <>
@@ -157,7 +138,7 @@ export function UserList() {
                   <td>
                     <Group>
                       <Avatar src={user.avatar} size={36} radius="xl">
-                        {user.nome.charAt(0).toUpperCase()}
+                        {user.nome?.charAt(0).toUpperCase()}
                       </Avatar>
                       <Text fw={500}>{user.nome}</Text>
                     </Group>
@@ -169,8 +150,8 @@ export function UserList() {
                     </Badge>
                   </td>
                   <td>
-                    <Badge color={user.status === 'ativo' ? 'green' : 'red'}>
-                      {user.status}
+                    <Badge color={user.ativo ? 'green' : 'red'}>
+                      {user.ativo ? 'ativo' : 'inativo'}
                     </Badge>
                   </td>
                   <td>
@@ -181,20 +162,15 @@ export function UserList() {
                       >
                         <IconEdit size={18} />
                       </ActionIcon>
-
                       <Menu position="bottom-end">
                         <Menu.Target>
                           <ActionIcon>
                             <IconDotsVertical size={18} />
                           </ActionIcon>
                         </Menu.Target>
-
                         <Menu.Dropdown>
                           <Menu.Item onClick={() => navigate(`/usuarios/${user.id}/editar`)}>
                             Editar
-                          </Menu.Item>
-                          <Menu.Item onClick={() => handleResetPassword(user.id)}>
-                            Redefinir senha
                           </Menu.Item>
                           <Menu.Item
                             color="red"
@@ -213,7 +189,6 @@ export function UserList() {
               ))}
             </tbody>
           </Table>
-
           {state.totalPages > 1 && (
             <Pagination
               value={state.currentPage}
@@ -224,7 +199,6 @@ export function UserList() {
           )}
         </>
       )}
-
       <Modal
         opened={state.deleteModalOpen}
         onClose={() => updateState('deleteModalOpen', false)}
@@ -245,5 +219,4 @@ export function UserList() {
     </Paper>
   );
 }
-
 export default UserList;

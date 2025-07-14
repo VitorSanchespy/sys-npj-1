@@ -1,140 +1,78 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import {
-  Box,
-  Center,
-  Card,
-  TextInput,
-  PasswordInput,
-  Button,
-  Title,
-  Text,
-  Group,
-  Stack,
-  Anchor,
-  Notification,
-  Loader
-} from '@mantine/core';
-import { IconLock, IconAt, IconSchool, IconX } from '@tabler/icons-react';
-import { validateEmail } from '@/utils/validators';
-import SafeText from '@/components/ui/SafeText';
+import { useState } from "react";
+import api from "@/api/apiService";
+import { useNavigate } from "react-router-dom";
+import { Paper, TextInput, PasswordInput, Button, Title, Notification, Stack, Center } from '@mantine/core';
+import { IconAt, IconLock, IconX } from "@tabler/icons-react";
 
 export default function LoginPage() {
-  const [credentials, setCredentials] = useState({ email: '', senha: '' });
-  const [error, setError] = useState(null);
+  const [form, setForm] = useState({ email: "", senha: "" });
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (!validateEmail(credentials.email)) {
-      setError('Por favor, insira um email válido');
-      return;
-    }
+    setError("");
     setLoading(true);
-    setError(null);
     try {
-      const result = await login(credentials);
-      if (result.success) {
-        navigate('/');
-      } else {
-        setError(result.message || 'Credenciais inválidas');
-      }
+      const res = await api.post("/auth/login", form);
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("usuario", JSON.stringify(res.data.usuario));
+      navigate("/");
     } catch (err) {
-      setError('Erro ao conectar com o servidor');
-      console.error(err);
-    } finally {
-      setLoading(false);
+      setError(
+        err?.response?.data?.erro || "Erro ao fazer login. Verifique seus dados."
+      );
     }
-  };
+    setLoading(false);
+  }
+
+  function handleInput(e) {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  }
 
   return (
-    <Center style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #e6f0ff, #f8f9fa)' }}>
-      <Card shadow="md" padding="xl" radius="md" style={{
-        width: '100%',
-        maxWidth: 400,
-        borderTop: '4px solid #003366',
-        background: 'white'
-      }}>
-        <Stack align="center" mb="xl">
-          <IconSchool size={48} color="#003366" />
-          <Title order={2} style={{ color: '#003366', fontFamily: 'Georgia, serif' }}>
-            <SafeText>Sistema NPJ - UFMT</SafeText>
-          </Title>
-          <Text c="dimmed">Acesso ao sistema de gestão jurídica</Text>
-        </Stack>
-
+    <Center style={{ minHeight: "100vh" }}>
+      <Paper withBorder p="xl" radius="md" style={{ minWidth: 340 }}>
+        <Title order={2} ta="center" mb="xl">
+          Acesso ao Sistema NPJ
+        </Title>
         {error && (
           <Notification
             icon={<IconX size={18} />}
             color="red"
             mb="md"
-            onClose={() => setError(null)}
-            withCloseButton
+            onClose={() => setError("")}
           >
             {error}
           </Notification>
         )}
-
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleSubmit}>
           <Stack>
             <TextInput
-              label="Email institucional"
-              placeholder="seu.email@ufmt.br"
+              label="E-mail"
+              name="email"
+              placeholder="Digite seu e-mail"
+              value={form.email}
+              onChange={handleInput}
               leftSection={<IconAt size={16} />}
-              value={credentials.email}
-              onChange={(e) => setCredentials({ ...credentials, email: e.target.value })}
               required
-              size="md"
-              autoFocus
             />
-
             <PasswordInput
               label="Senha"
-              placeholder="Sua senha"
+              name="senha"
+              placeholder="Digite sua senha"
+              value={form.senha}
+              onChange={handleInput}
               leftSection={<IconLock size={16} />}
-              value={credentials.senha}
-              onChange={(e) => setCredentials({ ...credentials, senha: e.target.value })}
               required
-              size="md"
             />
-
-            <Group justify="flex-end" mt="sm">
-              <Anchor component={Link} to="/reset-password" size="sm" c="#0066CC">
-                Esqueceu a senha?
-              </Anchor>
-            </Group>
-
-            <Button
-              type="submit"
-              fullWidth
-              mt="xl"
-              size="md"
-              loading={loading}
-              style={{ backgroundColor: '#003366' }}
-            >
-              {loading ? <Loader size="xs" color="white" /> : 'Entrar no Sistema'}
+            <Button type="submit" loading={loading} fullWidth>
+              Entrar
             </Button>
           </Stack>
         </form>
-
-        <Group justify="center" mt="xl" pt="md" style={{ borderTop: '1px solid #e9ecef' }}>
-          <Text c="dimmed">
-            Não tem uma conta?{' '}
-            <Anchor component={Link} to="/register" c="#0066CC" fw={500}>
-              Cadastre-se
-            </Anchor>
-          </Text>
-        </Group>
-
-        <Box mt="xl" p="md" style={{ backgroundColor: '#f8f9fa', borderRadius: 8 }}>
-          <SafeText size="sm" ta="center" c="dimmed">
-            Universidade Federal de Mato Grosso • Núcleo de Práticas Jurídicas
-          </SafeText>
-        </Box>
-      </Card>
+      </Paper>
     </Center>
   );
 }

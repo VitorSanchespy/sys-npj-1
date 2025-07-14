@@ -10,7 +10,7 @@ export default function Header() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        borderBottom: '4px solid #ffd700', // dourado judiciário
+        borderBottom: '4px solid #ffd700',
         boxShadow: '0 2px 8px #00336611',
         position: 'sticky',
         top: 0,
@@ -19,7 +19,7 @@ export default function Header() {
     >
       <Group gap={12}>
         <img
-          src="/ufmt-logo-branca.png" // Use a logo branca institucional da UFMT
+          src="/ufmt-logo-branca.png"
           alt="Logo UFMT"
           style={{
             height: 54,
@@ -29,7 +29,7 @@ export default function Header() {
           }}
           draggable={false}
         />
-        <IconScale size={38} color="#ffd700" stroke={1.5} /> {/* balança do Judiciário */}
+        <IconScale size={38} color="#ffd700" stroke={1.5} />
         <Text
           fw={800}
           style={{
@@ -42,7 +42,7 @@ export default function Header() {
         >
           Sistema NPJ <span style={{ color: '#ffd700', fontWeight: 700 }}>• UFMT</span>
         </Text>
-        <IconGavel size={36} color="#ffd700" stroke={1.5} /> {/* martelo do Judiciário */}
+        <IconGavel size={36} color="#ffd700" stroke={1.5} />
       </Group>
     </Box>
   );

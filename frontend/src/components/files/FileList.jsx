@@ -17,23 +17,22 @@ import { IconDownload, IconTrash, IconEye, IconUpload, IconFolder, IconFile, Ico
 import api from '@/api/apiService';
 import Dropzone from './Dropzone';
 
-export function FileList() {
+export function FileList({ processoId }) {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentFolder, setCurrentFolder] = useState('');
   const [fileToDelete, setFileToDelete] = useState(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   useEffect(() => {
     fetchFiles();
-  }, []);
+    // eslint-disable-next-line
+  }, [processoId]);
 
-  const fetchFiles = async (folder = '') => {
+  const fetchFiles = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get(`/files?folder=${folder}`);
+      const { data } = await api.get(`/api/arquivos/processo/${processoId}`);
       setFiles(data);
-      setCurrentFolder(folder);
     } finally {
       setLoading(false);
     }
@@ -41,26 +40,15 @@ export function FileList() {
 
   const handleDelete = async () => {
     if (!fileToDelete) return;
-    await api.delete(`/files/${fileToDelete.id}`);
-    fetchFiles(currentFolder);
+    await api.delete(`/api/arquivos/${fileToDelete.id}`);
+    fetchFiles();
     setFileToDelete(null);
   };
-
-  const handleFolderClick = (folderPath) => fetchFiles(folderPath);
-  const handleBack = () => fetchFiles(currentFolder.split('/').slice(0, -1).join('/'));
 
   return (
     <Paper withBorder p="md" radius="md">
       <Group justify="space-between" mb="md">
-        <Breadcrumbs>
-          <Anchor onClick={() => fetchFiles()}>Home</Anchor>
-          {currentFolder.split('/').map((part, i) => 
-            <Anchor key={i} onClick={() => fetchFiles(currentFolder.split('/').slice(0, i+1).join('/'))}>
-              {part}
-            </Anchor>
-          )}
-        </Breadcrumbs>
-        
+        <Text size="lg" fw={500}>Arquivos do Processo</Text>
         <Button leftSection={<IconUpload size={18}/>} onClick={() => setUploadModalOpen(true)}>
           Upload
         </Button>
@@ -75,36 +63,21 @@ export function FileList() {
               <tr>
                 <th>Nome</th>
                 <th>Tamanho</th>
+                <th>Tipo</th>
                 <th>Ações</th>
               </tr>
             </thead>
             <tbody>
-              {currentFolder && (
-                <tr>
-                  <td colSpan={3}>
-                    <Button 
-                      variant="subtle" 
-                      leftSection={<IconArrowLeft size={16}/>}
-                      onClick={handleBack}
-                      fullWidth
-                    >
-                      Voltar
-                    </Button>
-                  </td>
-                </tr>
-              )}
-              
               {files.map(file => (
                 <tr key={file.id}>
                   <td>
                     <Group gap="sm">
-                      {file.type === 'directory' 
-                        ? <IconFolder color="#4DABF7"/> 
-                        : <IconFile color="#495057"/>}
-                      {file.name}
+                      <IconFile color="#495057"/>
+                      {file.nome}
                     </Group>
                   </td>
-                  <td>{file.type !== 'directory' ? formatBytes(file.size) : '-'}</td>
+                  <td>{formatBytes(file.tamanho)}</td>
+                  <td>{file.tipo}</td>
                   <td>
                     <Menu>
                       <Menu.Target>
@@ -115,7 +88,7 @@ export function FileList() {
                           Visualizar
                         </Menu.Item>
                         <Menu.Item leftSection={<IconDownload size={14}/>}>
-                          Baixar
+                          <a href={file.url} target="_blank" rel="noopener noreferrer" style={{textDecoration: 'none', color: 'inherit'}}>Baixar</a>
                         </Menu.Item>
                         <Menu.Item 
                           color="red" 
@@ -139,7 +112,7 @@ export function FileList() {
         onClose={() => setFileToDelete(null)}
         title="Confirmar exclusão"
       >
-        <Text mb="xl">Excluir "{fileToDelete?.name}"?</Text>
+        <Text mb="xl">Excluir "{fileToDelete?.nome}"?</Text>
         <Group justify="right">
           <Button variant="default" onClick={() => setFileToDelete(null)}>Cancelar</Button>
           <Button color="red" onClick={handleDelete}>Excluir</Button>
@@ -153,9 +126,9 @@ export function FileList() {
       >
         <Dropzone 
           onDrop={(files) => {
-            console.log('Files uploaded:', files);
+            // Implemente a lógica de upload aqui
             setUploadModalOpen(false);
-            fetchFiles(currentFolder);
+            fetchFiles();
           }}
           accept={['image/*', 'application/pdf']}
         />
@@ -166,7 +139,7 @@ export function FileList() {
 
 // Helper function
 function formatBytes(bytes) {
-  if (bytes === 0) return '0 Bytes';
+  if (!bytes) return '0 Bytes';
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));

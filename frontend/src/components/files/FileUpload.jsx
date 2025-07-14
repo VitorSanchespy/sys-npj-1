@@ -2,35 +2,38 @@ import { useState } from 'react';
 import { Paper, Button, Text, Group, Stack, ActionIcon } from '@mantine/core';
 import { IconTrash, IconFile, IconCloudUpload } from '@tabler/icons-react';
 import Dropzone from './Dropzone';
+import { uploadFile } from '@/services/fileService';
 
-export function FileUpload() {
+export function FileUpload({ processoId, onUploadSuccess }) {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
 
   const handleFileChange = (newFiles) => {
-    setFiles([...files, ...newFiles.slice(0, 5)]);
+    setFiles([...files, ...Array.from(newFiles).slice(0, 5)]);
   };
 
   const removeFile = (fileName) => {
     setFiles(files.filter(f => f.name !== fileName));
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     setUploading(true);
-    setTimeout(() => {
-      setUploading(false);
+    try {
+      for (const file of files) {
+        await uploadFile({ file, processoId, descricao: file.name });
+      }
       setFiles([]);
-      alert('Upload concluído!');
-    }, 2000);
+      if (onUploadSuccess) onUploadSuccess();
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
     <Paper withBorder p="lg" radius="md">
       <Stack gap="md">
         <Text size="xl" fw={600}>Upload de Documentos</Text>
-        
         <Dropzone onDrop={handleFileChange} accept={['image/*', 'application/pdf']} />
-        
         {files.length > 0 && (
           <div>
             <Text fw={500} mb="sm">Arquivos:</Text>
@@ -49,7 +52,6 @@ export function FileUpload() {
             </Stack>
           </div>
         )}
-        
         {files.length > 0 && (
           <Button
             leftSection={<IconCloudUpload size={18} />}
