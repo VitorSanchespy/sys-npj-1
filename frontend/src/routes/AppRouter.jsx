@@ -1,116 +1,73 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import MainLayout from '@/layouts/MainLayout';
-import AuthLayout from '@/layouts/AuthLayout';
-import LoginPage from '@/pages/auth/LoginPage';
-import LogoutPage from '@/pages/auth/LogoutPage';
-import RegisterPage from '@/pages/auth/RegisterPage';
-import ResetPasswordPage from '@/pages/auth/ResetPasswordPage';
-import DashboardPage from '@/pages/dashboard/DashboardPage';
-import ProcessList from '@/pages/dashboard/processes/ProcessList';
-import FilesPage from '@/pages/dashboard/files/FilesPage';
-import ProfilePage from '@/pages/dashboard/ProfilePage';
-import UserList from '@/pages/dashboard/users/UserList';
-import NotFoundPage from '@/pages/NotFoundPage';
-import { Loader, Center } from '@mantine/core';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { useAuthContext } from "../contexts/AuthContext";
+import LoginPage from "../pages/auth/LoginPage";
+import RegisterPage from "../pages/auth/RegisterPage";
+import DashboardPage from "../pages/dashboard/DashboardPage";
+import ProfilePage from "../pages/dashboard/ProfilePage";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
+import ProcessListPage from "../pages/dashboard/ProcessListPage";
+import ProcessDetailPage from "../pages/dashboard/ProcessDetailPage";
+import ProcessFormPage from "../pages/dashboard/ProcessFormPage";
+import ProcessAssignStudentPage from "../pages/dashboard/ProcessAssignStudentPage";
+import ProcessUpdatesPage from "../pages/dashboard/ProcessUpdatesPage";
+import UserListPage from "../pages/dashboard/UserListPage";
+import UserDetailPage from "../pages/dashboard/UserDetailPage";
+import UserEditPage from "../pages/dashboard/UserEditPage";
+import { hasRole } from "../utils/permissions";
 
-const ProtectedRoute = ({ children }) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <Center h="100vh">
-        <Loader size="xl" variant="dots" color="#0066CC" />
-      </Center>
-    );
-  }
-  
-  return user ? children : <Navigate to="/login" replace />;
-};
 
-const AuthRoute = ({ children }) => {
-  const { user, loading } = useAuth();
-  
-  if (loading) {
-    return (
-      <Center h="100vh">
-        <Loader size="xl" variant="dots" color="#0066CC" />
-      </Center>
-    );
-  }
-  
-  return !user ? children : <Navigate to="/" replace />;
-};
+function PrivateRoute({ children, roles }) {
+  const { isAuthenticated, user, loading } = useAuthContext();
+  if (loading) return <div>Carregando...</div>;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (roles && !hasRole(user, roles)) return <Navigate to="/" replace />;
+  return children;
+}
 
-function AppRouter() {
+export default function AppRouter() {
   return (
-    <Routes>
-      {/* Rotas de autenticação (layout diferente) */}
-      <Route element={<AuthLayout />}>
-        <Route path="/login" element={
-          <AuthRoute>
-            <LoginPage />
-          </AuthRoute>
-        } />
+    <Router>
+      <Routes>
+        {/* Público */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
+        <Route path="/resetar-senha" element={<ResetPasswordPage />} />
         
-        <Route path="/register" element={
-          <AuthRoute>
-            <RegisterPage />
-          </AuthRoute>
-        } />
-        
-        <Route path="/reset-password" element={
-          <AuthRoute>
-            <ResetPasswordPage />
-          </AuthRoute>
-        } />
-        
-        <Route path="/logout" element={<LogoutPage />} />
-      </Route>
-
-      {/* Rotas protegidas (layout principal) */}
-      <Route element={<MainLayout />}>
-        <Route index element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/processos" element={
-          <ProtectedRoute>
-            <ProcessList />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/arquivos" element={
-          <ProtectedRoute>
-            <FilesPage />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/usuarios" element={
-          <ProtectedRoute>
-            <UserList />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/perfil" element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        } />
-        
-        {/* Rotas de detalhes devem vir depois */}
-        <Route path="/processos/:id" element={
-          <ProtectedRoute>
-            {/* <ProcessDetail /> */}
-          </ProtectedRoute>
-        } />
-      </Route>
-
-      {/* Rota para página não encontrada */}
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        {/* Protegido: Todos autenticados */}
+        <Route
+          path="/"
+          element={
+            <PrivateRoute>
+              <DashboardPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/perfil"
+          element={
+            <PrivateRoute>
+              <ProfilePage />
+            </PrivateRoute>
+          }
+        />
+        {/* Usuários (admin/professor) */}
+        <Route path="/usuarios" element={<PrivateRoute roles={["admin", "professor"]}><UserListPage /></PrivateRoute>} />
+        <Route path="/usuarios/:id" element={<PrivateRoute roles={["admin", "professor"]}><UserDetailPage /></PrivateRoute>} />
+        <Route path="/usuarios/:id/editar" element={<PrivateRoute roles={["admin", "professor"]}><UserEditPage /></PrivateRoute>} /> 
+        <Route path="/processos" element={<PrivateRoute><ProcessListPage /></PrivateRoute>} />
+        {/* Protegido: Professor/Admin */}
+        <Route path="/processos/novo" element={<PrivateRoute roles={["Admin", "Professor"]}><ProcessFormPage /></PrivateRoute>} />
+        <Route path="/processos/:id" element={<PrivateRoute><ProcessDetailPage /></PrivateRoute>} />
+        <Route path="/processos/:id/editar" element={<PrivateRoute roles={["admin", "professor"]}><ProcessFormPage /></PrivateRoute>} />
+        <Route path="/processos/:id/atribuir" element={<PrivateRoute roles={["admin", "professor"]}><ProcessAssignStudentPage /></PrivateRoute>} />
+        <Route path="/processos/:id/atualizacoes" element={<PrivateRoute><ProcessUpdatesPage /></PrivateRoute>} />
+      
+        {/* 404 */}
+        <Route path="*" element={<div>Página não encontrada</div>} />
+      </Routes>
+    </Router>
   );
 }
-export default AppRouter;

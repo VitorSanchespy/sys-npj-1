@@ -1,0 +1,57 @@
+import React, { useState } from "react";
+import { apiRequest } from "../../api/apiRequest";
+import { useAuthContext } from "../../contexts/AuthContext";
+
+export default function UpdateForm({ processoId, onSuccess }) {
+  const { token } = useAuthContext();
+  const [titulo, setTitulo] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+    setMsg("");
+    setLoading(true);
+    try {
+      await apiRequest(`/api/processos/${processoId}/atualizacoes`, {
+        method: "POST",
+        token,
+        body: { titulo, descricao }
+      });
+      setMsg("Atualização cadastrada!");
+      setTitulo("");
+      setDescricao("");
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      setMsg(err.message || "Erro ao cadastrar atualização.");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <h4>Nova Atualização</h4>
+      {msg && <div>{msg}</div>}
+      <div>
+        <label>Título:</label>
+        <input
+          value={titulo}
+          onChange={e => setTitulo(e.target.value)}
+          required
+        />
+      </div>
+      <div>
+        <label>Descrição:</label>
+        <textarea
+          value={descricao}
+          onChange={e => setDescricao(e.target.value)}
+          required
+        />
+      </div>
+      <button type="submit" disabled={loading}>
+        {loading ? "Salvando..." : "Salvar"}
+      </button>
+    </form>
+  );
+}

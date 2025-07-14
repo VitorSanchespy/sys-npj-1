@@ -1,53 +1,60 @@
 import React, { useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useAuthContext } from "../../contexts/AuthContext";
 import { apiRequest } from "../../api/apiRequest";
 
-export default function ResetPasswordPage() {
-  const [params] = useSearchParams();
-  const navigate = useNavigate();
-  const token = params.get("token") || "";
-  const [senha, setSenha] = useState("");
+export default function ChangePasswordForm() {
+  const { user, token, logout } = useAuthContext();
+  const [current, setCurrent] = useState("");
+  const [newPass, setNewPass] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
-
-  if (!token) {
-    return <div>Token inválido. Verifique o link enviado por e-mail.</div>;
-  }
+  const [msg, setMsg] = useState("");
 
   const handleSubmit = async e => {
     e.preventDefault();
     setMsg("");
-    if (senha !== confirm) {
+    if (newPass !== confirm) {
       setMsg("A nova senha e a confirmação não coincidem.");
       return;
     }
     setLoading(true);
     try {
-      await apiRequest("/auth/resetar-senha", {
-        method: "POST",
-        body: { token, nova_senha: senha }
+      await apiRequest(`/api/usuarios/${user.id}/senha`, {
+        method: "PUT",
+        token,
+        body: { senha_atual: current, nova_senha: newPass }
       });
-      setMsg("Senha redefinida com sucesso! Redirecionando para login...");
-      setTimeout(() => navigate("/login"), 2000);
+      setMsg("Senha alterada com sucesso! Faça login novamente.");
+      setTimeout(() => {
+        logout();
+      }, 1500);
     } catch (err) {
-      setMsg(err.message || "Erro ao redefinir senha.");
+      setMsg(err.message || "Erro ao alterar senha.");
     }
     setLoading(false);
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>Redefinir senha</h2>
+      <h3>Alterar senha</h3>
       {msg && <div style={{ color: msg.includes("sucesso") ? "green" : "red" }}>{msg}</div>}
+      <div>
+        <label>Senha atual:</label>
+        <input
+          type="password"
+          value={current}
+          onChange={e => setCurrent(e.target.value)}
+          required
+        />
+      </div>
       <div>
         <label>Nova senha:</label>
         <input
           type="password"
-          value={senha}
-          onChange={e => setSenha(e.target.value)}
-          required
+          value={newPass}
+          onChange={e => setNewPass(e.target.value)}
           minLength={6}
+          required
         />
       </div>
       <div>
@@ -56,8 +63,8 @@ export default function ResetPasswordPage() {
           type="password"
           value={confirm}
           onChange={e => setConfirm(e.target.value)}
-          required
           minLength={6}
+          required
         />
       </div>
       <button type="submit" disabled={loading}>

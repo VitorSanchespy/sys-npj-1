@@ -1,59 +1,60 @@
-import { createContext, useState, useEffect, useContext } from 'react';
-import authService from '@/services/authService';
-import api from '@/api/apiService';
+import React, { createContext, useState, useEffect, useContext } from "react";
+import { apiRequest } from "../api/apiRequest";
+import Loader from "../components/common/Loader"; 
 
-export const AuthContext = createContext();
+const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    const local = localStorage.getItem("user");
+    return local ? JSON.parse(local) : null;
+  });
+  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
+  const [loading, setLoading] = useState(false);
 
-  // Garante token em toda request
+  // Persistência simples
   useEffect(() => {
-    const requestInterceptor = api.interceptors.request.use(config => {
-      const token = localStorage.getItem('token');
-      if (token) config.headers.Authorization = `Bearer ${token}`;
-      return config;
-    });
-    return () => api.interceptors.request.eject(requestInterceptor);
-  }, []);
-
-  useEffect(() => {
-    const verifyToken = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const data = await authService.verifyToken();
-        setUser(data);
-      } catch {
-        setUser(null);
-      }
-      setLoading(false);
-    };
-    verifyToken();
-  }, []);
-
-  const login = async (credentials) => {
-    const result = await authService.login(credentials);
-    if (result.success) {
-      setUser(result.usuario);
+    if (user && token) {
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("token", token);
+    } else {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
     }
-    return result;
+  }, [user, token]);
+
+  const login = async (email, senha) => {
+    setLoading(true);
+    try {
+      const data = await apiRequest("/auth/login", {
+        method: "POST",
+        body: { email, senha },
+      });
+      setUser(data.usuario);
+      setToken(data.token);
+      setLoading(false);
+      return { success: true };
+    } catch (err) {
+      setLoading(false);
+      return { success: false, message: err.message || "Erro ao fazer login" };
+    }
   };
 
   const logout = () => {
-    authService.logout();
     setUser(null);
+    setToken("");
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
   };
-
+if (loading) return <Loader text="Verificando autenticação..." />;
+  // ...restante do código igual
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, setUser, token, login, logout, loading, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuthContext() {
+  return useContext(AuthContext);
+}
