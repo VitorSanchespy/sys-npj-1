@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -11,6 +12,7 @@ const path = require('path');
 const http = require('http');
 const socketIo = require('socket.io');
 const app = express();
+
 
 // Configuração básica de segurança
 app.use(helmet());
@@ -32,6 +34,9 @@ const corsOptions = {
   credentials: true // Se usar cookies
 };
 app.use(cors(corsOptions));
+
+const auxTablesRoutes = require('./routes/auxTablesRoutes');
+app.use('/api/aux', auxTablesRoutes);
 app.use(
   helmet({
     contentSecurityPolicy: {

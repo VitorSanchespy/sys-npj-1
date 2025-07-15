@@ -10,29 +10,35 @@ class ProcessoController {
     async criarProcesso(req, res) {
         try {
             const {
-                    numero_processo,
-                    descricao,
-                    status,
-                    tipo_processo,
-                    idusuario_responsavel,
-                    data_encerramento,
-                    observacoes
-                    } = req.body;
-            if (!numero_processo || !descricao || !status || !tipo_processo || !idusuario_responsavel) {
+                numero_processo,
+                descricao,
+                status,
+                materia_assunto_id,
+                local_tramitacao,
+                sistema,
+                fase_id,
+                diligencia_id,
+                idusuario_responsavel,
+                data_encerramento,
+                observacoes
+            } = req.body;
+            if (!numero_processo || !descricao || !status || !materia_assunto_id || !local_tramitacao || !sistema || !fase_id || !diligencia_id || !idusuario_responsavel) {
                 return res.status(400).json({ erro: 'Preencha todos os campos obrigatórios' });
-            
             }
             const id = await Processo.criar({
                 numero_processo,
                 descricao,
                 status,
-                tipo_processo,
+                materia_assunto_id,
+                local_tramitacao,
+                sistema,
+                fase_id,
+                diligencia_id,
                 idusuario_responsavel,
                 data_encerramento,
                 observacoes
-                });
+            });
             const processo = await Processo.buscarPorId(id);
-            
             res.status(201).json(processo);
         } catch (error) {
             res.status(500).json({ erro: error.message });
@@ -188,10 +194,7 @@ class ProcessoController {
                 return res.status(403).json({ erro: 'Acesso não autorizado' });
             }
             const alunos = await Processo.listarAlunosPorProcesso(processo_id);
-            if (!alunos || alunos.length === 0) {
-                return res.status(404).json({ mensagem: 'Nenhum aluno vinculado a este processo' });
-            }
-            return res.json(alunos);
+            return res.json(alunos || []);
         } catch (error) {
             console.error('Erro ao listar alunos do processo:', error);
             return res.status(500).json({ erro: 'Erro interno do servidor' });

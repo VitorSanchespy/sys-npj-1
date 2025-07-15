@@ -1,24 +1,45 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 function NovoProcessoModal({ open, onClose, onCreated, token }) {
+  const { user } = useAuthContext();
   const [numero_processo, setNumero] = useState("");
   const [descricao, setDescricao] = useState("");
   const [status, setStatus] = useState("");
-  const [tipo_processo, setTipo] = useState("");
+  const [materia_assunto_id, setMateriaAssunto] = useState("");
+  const [local_tramitacao, setLocal] = useState("");
+  const [sistema, setSistema] = useState("");
+  const [fase_id, setFase] = useState("");
+  const [diligencia_id, setDiligencia] = useState("");
+  const [materias, setMaterias] = useState([]);
+  const [fases, setFases] = useState([]);
+  const [diligencias, setDiligencias] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showAddMateria, setShowAddMateria] = useState(false);
+  const [showAddFase, setShowAddFase] = useState(false);
+  const [showAddDiligencia, setShowAddDiligencia] = useState(false);
+  const [newMateria, setNewMateria] = useState("");
+  const [newFase, setNewFase] = useState("");
+  const [newDiligencia, setNewDiligencia] = useState("");
 
   const statusOptions = [
     { value: "Em andamento", label: "Em andamento" },
     { value: "Concluído", label: "Concluído" },
     { value: "Suspenso", label: "Suspenso" }
   ];
-  const tipoOptions = [
-    { value: "Cível", label: "Cível" },
-    { value: "Penal", label: "Penal" },
-    { value: "Trabalhista", label: "Trabalhista" },
-    { value: "Administrativo", label: "Administrativo" }
+  const sistemaOptions = [
+    { value: "Físico", label: "Físico" },
+    { value: "PEA", label: "PEA" },
+    { value: "PJE", label: "PJE" }
   ];
+
+  useEffect(() => {
+    if (open) {
+      apiRequest("/api/aux/materia-assunto", { token }).then(setMaterias);
+      apiRequest("/api/aux/fase", { token }).then(setFases);
+      apiRequest("/api/aux/diligencia", { token }).then(setDiligencias);
+    }
+  }, [open, token]);
 
   if (!open) return null;
 
@@ -30,7 +51,17 @@ function NovoProcessoModal({ open, onClose, onCreated, token }) {
       await apiRequest("/api/processos", {
         method: "POST",
         token,
-        body: { numero_processo, descricao, status, tipo_processo }
+        body: {
+          numero_processo,
+          descricao,
+          status,
+          materia_assunto_id,
+          local_tramitacao,
+          sistema,
+          fase_id,
+          diligencia_id,
+          idusuario_responsavel: user?.id
+        }
       });
       onCreated();
       onClose();
@@ -38,6 +69,31 @@ function NovoProcessoModal({ open, onClose, onCreated, token }) {
       setError("Erro ao criar processo.");
     }
     setLoading(false);
+  };
+
+  const handleAddMateria = async () => {
+    if (!newMateria) return;
+    const res = await apiRequest("/api/aux/materia-assunto", { method: "POST", token, body: { nome: newMateria } });
+    setMaterias([...materias, res]);
+    setMateriaAssunto(res.id);
+    setShowAddMateria(false);
+    setNewMateria("");
+  };
+  const handleAddFase = async () => {
+    if (!newFase) return;
+    const res = await apiRequest("/api/aux/fase", { method: "POST", token, body: { nome: newFase } });
+    setFases([...fases, res]);
+    setFase(res.id);
+    setShowAddFase(false);
+    setNewFase("");
+  };
+  const handleAddDiligencia = async () => {
+    if (!newDiligencia) return;
+    const res = await apiRequest("/api/aux/diligencia", { method: "POST", token, body: { nome: newDiligencia } });
+    setDiligencias([...diligencias, res]);
+    setDiligencia(res.id);
+    setShowAddDiligencia(false);
+    setNewDiligencia("");
   };
 
   return (
@@ -65,14 +121,73 @@ function NovoProcessoModal({ open, onClose, onCreated, token }) {
           </label>
         </div>
         <div style={{ marginBottom: 12 }}>
-          <label>Tipo de Processo<br />
-            <select value={tipo_processo} onChange={e => setTipo(e.target.value)} required style={{ width: '100%' }}>
-              <option value="">Selecione o tipo</option>
-              {tipoOptions.map(opt => (
+          <label>Matéria/Assunto<br />
+            <select value={materia_assunto_id} onChange={e => setMateriaAssunto(e.target.value)} required style={{ width: '100%' }}>
+              <option value="">Selecione a matéria/assunto</option>
+              {materias.map(opt => (
+                <option key={opt.id} value={opt.id}>{opt.nome}</option>
+              ))}
+            </select>
+            <button type="button" onClick={() => setShowAddMateria(true)} style={{ marginLeft: 8 }}>Adicionar novo</button>
+          </label>
+          {showAddMateria && (
+            <div style={{ marginTop: 8 }}>
+              <input value={newMateria} onChange={e => setNewMateria(e.target.value)} placeholder="Nova matéria/assunto" />
+              <button type="button" onClick={handleAddMateria}>Salvar</button>
+              <button type="button" onClick={() => setShowAddMateria(false)}>Cancelar</button>
+            </div>
+          )}
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label>Local de Tramitação<br />
+            <input value={local_tramitacao} onChange={e => setLocal(e.target.value)} required style={{ width: '100%' }} />
+          </label>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label>Sistema<br />
+            <select value={sistema} onChange={e => setSistema(e.target.value)} required style={{ width: '100%' }}>
+              <option value="">Selecione o sistema</option>
+              {sistemaOptions.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
           </label>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label>Fase<br />
+            <select value={fase_id} onChange={e => setFase(e.target.value)} required style={{ width: '100%' }}>
+              <option value="">Selecione a fase</option>
+              {fases.map(opt => (
+                <option key={opt.id} value={opt.id}>{opt.nome}</option>
+              ))}
+            </select>
+            <button type="button" onClick={() => setShowAddFase(true)} style={{ marginLeft: 8 }}>Adicionar novo</button>
+          </label>
+          {showAddFase && (
+            <div style={{ marginTop: 8 }}>
+              <input value={newFase} onChange={e => setNewFase(e.target.value)} placeholder="Nova fase" />
+              <button type="button" onClick={handleAddFase}>Salvar</button>
+              <button type="button" onClick={() => setShowAddFase(false)}>Cancelar</button>
+            </div>
+          )}
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label>Diligência<br />
+            <select value={diligencia_id} onChange={e => setDiligencia(e.target.value)} required style={{ width: '100%' }}>
+              <option value="">Selecione a diligência</option>
+              {diligencias.map(opt => (
+                <option key={opt.id} value={opt.id}>{opt.nome}</option>
+              ))}
+            </select>
+            <button type="button" onClick={() => setShowAddDiligencia(true)} style={{ marginLeft: 8 }}>Adicionar novo</button>
+          </label>
+          {showAddDiligencia && (
+            <div style={{ marginTop: 8 }}>
+              <input value={newDiligencia} onChange={e => setNewDiligencia(e.target.value)} placeholder="Nova diligência" />
+              <button type="button" onClick={handleAddDiligencia}>Salvar</button>
+              <button type="button" onClick={() => setShowAddDiligencia(false)}>Cancelar</button>
+            </div>
+          )}
         </div>
         {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
         <button type="submit" disabled={loading} style={{ marginRight: 8 }}>Criar</button>

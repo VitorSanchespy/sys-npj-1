@@ -2,18 +2,22 @@
 const db = require('../config/db');
 
 class Processo {
-            static async criar({ numero_processo, descricao, status, tipo_processo, idusuario_responsavel, data_encerramento, observacoes }) {
+    static async criar({ numero_processo, descricao, status, materia_assunto_id, local_tramitacao, sistema, fase_id, diligencia_id, idusuario_responsavel, data_encerramento, observacoes }) {
         const [id] = await db('processos').insert({
             numero_processo,
             descricao,
             status,
-            tipo_processo,
+            materia_assunto_id,
+            local_tramitacao,
+            sistema,
+            fase_id,
+            diligencia_id,
             idusuario_responsavel,
             data_encerramento,
             observacoes
         });
         return id;
-        }
+    }
     static async atribuirAluno(processoId, usuarioId) {
         try {
             await db('alunos_processos').insert({
@@ -31,13 +35,15 @@ class Processo {
 
     static async buscarPorId(id) {
         return db('processos')
-            .where('id', id)
+            .leftJoin('usuarios as responsavel', 'processos.idusuario_responsavel', 'responsavel.id')
+            .where('processos.id', id)
             .select(
-                '*',
-                db.raw('(SELECT COUNT(*) FROM alunos_processos WHERE processo_id = processos.id) as total_alunos')
+                'processos.*',
+                db.raw('(SELECT COUNT(*) FROM alunos_processos WHERE processo_id = processos.id) as total_alunos'),
+                'responsavel.nome as responsavel_nome'
             )
             .first();
-    }   
+    }
 
     static async buscarComFiltros(filtros = {}, paginacao = {}) {
     const { pagina = 1, porPagina = 10 } = paginacao;

@@ -39,7 +39,7 @@ export default function ProcessDetailPage() {
       <h2>Detalhes do Processo #{processo.numero_processo}</h2>
       <p><b>Descrição:</b> {processo.descricao}</p>
       <p><b>Status:</b> {processo.status}</p>
-      <p><b>Responsável:</b> {processo.idusuario_responsavel}</p>
+      <p><b>Responsável:</b> {processo.responsavel_nome || 'Não informado'}</p>
       <p><b>Data de Encerramento:</b> {processo.data_encerramento || "Em aberto"}</p>
       <hr />
       <h3>Alunos Vinculados</h3>
