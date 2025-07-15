@@ -39,7 +39,7 @@ export default function FileList({ processoId }) {
       <ul>
         {arquivos.map(arquivo => (
           <li key={arquivo.id}>
-            <a href={arquivo.caminho} target="_blank" rel="noopener noreferrer">{arquivo.nome}</a>
+            <a href={`http://localhost:3001/${arquivo.caminho.replace(/^\/+/, '')}`} target="_blank" rel="noopener noreferrer">{arquivo.nome}</a>
             {" "}
             <small>({Math.round(arquivo.tamanho / 1024)} KB)</small>
             {(user.role === "admin" || user.role === "professor") && (

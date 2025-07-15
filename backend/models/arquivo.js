@@ -16,6 +16,14 @@ class Arquivo {
   static async listarPorProcesso(processoId) {
     return db('arquivos').where('processo_id', processoId);
   }
+
+  static async listarPorUsuario(usuarioId) {
+    return db('arquivos').where('usuario_id', usuarioId);
+  }
+
+  static async anexarAProcesso(arquivoId, processoId) {
+    return db('arquivos').where('id', arquivoId).update({ processo_id: processoId });
+  }
 }
 
 module.exports = Arquivo;

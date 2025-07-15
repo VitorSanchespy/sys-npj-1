@@ -1,14 +1,18 @@
 const db = require('../config/db');
 
 class Processo {
-    static async criar({ numero_processo, descricao }) {
+            static async criar({ numero_processo, descricao, status, tipo_processo, idusuario_responsavel, data_encerramento, observacoes }) {
         const [id] = await db('processos').insert({
             numero_processo,
-            descricao
+            descricao,
+            status,
+            tipo_processo,
+            idusuario_responsavel,
+            data_encerramento,
+            observacoes
         });
         return id;
-    }
-
+        }
     static async atribuirAluno(processoId, usuarioId) {
         try {
             await db('alunos_processos').insert({

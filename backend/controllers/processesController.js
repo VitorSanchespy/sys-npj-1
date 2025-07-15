@@ -9,13 +9,28 @@ class ProcessoController {
         }
     async criarProcesso(req, res) {
         try {
-            const { numero_processo, descricao } = req.body;
-            
-            if (!numero_processo || !descricao) {
-                return res.status(400).json({ erro: 'Número do processo e descrição são obrigatórios' });
+            const {
+                    numero_processo,
+                    descricao,
+                    status,
+                    tipo_processo,
+                    idusuario_responsavel,
+                    data_encerramento,
+                    observacoes
+                    } = req.body;
+            if (!numero_processo || !descricao || !status || !tipo_processo || !idusuario_responsavel) {
+                return res.status(400).json({ erro: 'Preencha todos os campos obrigatórios' });
             
             }
-            const id = await Processo.criar({ numero_processo, descricao });
+            const id = await Processo.criar({
+                numero_processo,
+                descricao,
+                status,
+                tipo_processo,
+                idusuario_responsavel,
+                data_encerramento,
+                observacoes
+                });
             const processo = await Processo.buscarPorId(id);
             
             res.status(201).json(processo);
@@ -123,15 +138,17 @@ class ProcessoController {
         }
     }
 
+
     async listarMeusProcessos(req, res) {
         try {
             if (req.usuario.role !== 'Aluno') {
-            return res.status(403).json({ erro: 'Acesso permitido apenas para alunos' });
+                return res.status(403).json({ erro: 'Acesso permitido apenas para alunos' });
             }
             const processos = await Processo.listarPorAluno(req.usuario.id);
-            res.json(processos);
+            return res.json(processos);
         } catch (error) {
-            res.status(500).json({ erro: error.message });
+            console.error('Erro ao listar meus processos:', error);
+            return res.status(500).json({ erro: 'Erro ao buscar processos do aluno.' });
         }
     }
 
@@ -141,55 +158,55 @@ class ProcessoController {
             if (!processo_id || !aluno_id) {
                 return res.status(400).json({ erro: 'processo_id e aluno_id são obrigatórios' });
             }
-
             // Verificar se o usuário é um professor/admin
-            if (req.usuario.role !== 'Professor' && req.usuario.role !== 'Admin') {
+            if (!["Professor", "Admin"].includes(req.usuario.role)) {
                 return res.status(403).json({ erro: 'Apenas professores ou admins podem remover alunos' });
             }
-
             await Processo.removerAluno(processo_id, aluno_id);
-            res.json({ mensagem: 'Aluno removido do processo com sucesso' });
+            return res.json({ mensagem: 'Aluno removido do processo com sucesso' });
         } catch (error) {
             console.error('Erro ao remover aluno:', error);
-            res.status(500).json({ 
-                erro: error.message === 'Aluno não está atribuído a este processo' 
-                    ? error.message 
-                    : 'Erro interno do servidor' 
-            });
+            if (error.message === 'Aluno não está atribuído a este processo') {
+                return res.status(400).json({ erro: error.message });
+            }
+            return res.status(500).json({ erro: 'Erro interno do servidor' });
         }
     }
 
     async listarAlunosPorProcesso(req, res) {
-    try {
-        const { processo_id } = req.params; // Recebe o ID do processo pela URL
-
-        // Validação básica
-        if (!processo_id || isNaN(Number(processo_id))) {
-            return res.status(400).json({ erro: 'ID do processo inválido' });
+        try {
+            const { processo_id } = req.params;
+            // Validação básica
+            if (!processo_id || isNaN(Number(processo_id))) {
+                return res.status(400).json({ erro: 'ID do processo inválido' });
+            }
+            // Apenas Admin, Professor ou Aluno dono do processo pode acessar
+            const isAlunoDono = req.usuario.role === 'Aluno' && await Processo.verificarAlunoNoProcesso(processo_id, req.usuario.id);
+            if (!["Admin", "Professor"].includes(req.usuario.role) && !isAlunoDono) {
+                return res.status(403).json({ erro: 'Acesso não autorizado' });
+            }
+            const alunos = await Processo.listarAlunosPorProcesso(processo_id);
+            if (!alunos || alunos.length === 0) {
+                return res.status(404).json({ mensagem: 'Nenhum aluno vinculado a este processo' });
+            }
+            return res.json(alunos);
+        } catch (error) {
+            console.error('Erro ao listar alunos do processo:', error);
+            return res.status(500).json({ erro: 'Erro interno do servidor' });
         }
-
-        // Apenas Admin, Professor ou Aluno dono do processo pode acessar
-        if (
-            req.usuario.role !== 'Admin' && 
-            req.usuario.role !== 'Professor' &&
-            !(req.usuario.role === 'Aluno' && await Processo.verificarAlunoNoProcesso(processo_id, req.usuario.id))
-        ) {
-            return res.status(403).json({ erro: 'Acesso não autorizado' });
-        }
-
-        const alunos = await Processo.listarAlunosPorProcesso(processo_id);
-
-        if (alunos.length === 0) {
-            return res.status(404).json({ mensagem: 'Nenhum aluno vinculado a este processo' });
-        }
-
-        res.json(alunos);
-    } catch (error) {
-        console.error('Erro ao listar alunos do processo:', error);
-        res.status(500).json({ erro: 'Erro interno do servidor' });
-    }
     }
     
+    async buscarProcessoPorId(req, res) {
+        const { processo_id } = req.params;
+        try {
+            const processo = await Processo.buscarPorId(processo_id);
+            if (!processo) return res.status(404).json({ erro: 'Processo não encontrado' });
+            return res.json(processo);
+        } catch (error) {
+            console.error('Erro ao buscar processo por ID:', error);
+            return res.status(500).json({ erro: 'Erro ao buscar processo.' });
+        }
+    }
 }
 
 module.exports = ProcessoController;

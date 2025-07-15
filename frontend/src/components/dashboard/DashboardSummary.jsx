@@ -3,32 +3,43 @@ import { apiRequest } from "@/api/apiRequest";
 import { useAuthContext } from "@/contexts/AuthContext";
 
 export default function DashboardSummary() {
-  const { token } = useAuthContext();
+  const { token, user } = useAuthContext();
   const [data, setData] = useState({
     processos: 0,
     alunos: 0,
     professores: 0,
     admins: 0,
-    // Remover ultimosProcessos e ultimasAtualizacoes se não existirem endpoints
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchDashboard() {
       try {
-        const processos = await apiRequest("/api/processos", { token });
-        const usuarios = await apiRequest("/api/usuarios", { token });
+        let processos = [];
+        if (user?.role === "Aluno") {
+          processos = await apiRequest("/api/processos/meus-processos", { token });
+        } else if (user?.role === "Professor") {
+          processos = await apiRequest("/api/processos", { token });
+        } else if (user?.role === "Admin") {
+          processos = await apiRequest("/api/processos", { token });
+        }
+        let usuarios = [];
+        if (user?.role === "Admin" || user?.role === "Professor") {
+          usuarios = await apiRequest("/api/usuarios", { token });
+        }
         setData({
           processos: processos.length,
-          alunos: usuarios.filter(u => u.role === "Aluno").length,
-          professores: usuarios.filter(u => u.role === "Professor").length,
-          admins: usuarios.filter(u => u.role === "Admin").length,
+          alunos: usuarios.filter ? usuarios.filter(u => u.role === "Aluno").length : 0,
+          professores: usuarios.filter ? usuarios.filter(u => u.role === "Professor").length : 0,
+          admins: usuarios.filter ? usuarios.filter(u => u.role === "Admin").length : 0,
         });
-      } catch {}
+      } catch {
+        setData({ processos: 0, alunos: 0, professores: 0, admins: 0 });
+      }
       setLoading(false);
     }
-    fetchDashboard();
-  }, [token]);
+    if (user?.role) fetchDashboard();
+  }, [token, user]);
 
   if (loading) return <div>Carregando painel...</div>;
 
@@ -37,9 +48,9 @@ export default function DashboardSummary() {
       <h2>Painel</h2>
       <div style={{ display: "flex", gap: 16, marginBottom: 32 }}>
         <Card title="Processos" value={data.processos} />
-        <Card title="Alunos" value={data.alunos} />
-        <Card title="Professores" value={data.professores} />
-        <Card title="Admins" value={data.admins} />
+        {(user?.role === "Admin" || user?.role === "Professor") && <Card title="Alunos" value={data.alunos} />}
+        {(user?.role === "Admin" || user?.role === "Professor") && <Card title="Professores" value={data.professores} />}
+        {user?.role === "Admin" && <Card title="Admins" value={data.admins} />}
       </div>
     </div>
   );

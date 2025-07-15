@@ -69,14 +69,17 @@ export default function AppRouter() {
         <Route path="/usuarios" element={<PrivateRoute roles={["admin", "professor"]}><UserListPage /></PrivateRoute>} />
         <Route path="/usuarios/:id" element={<PrivateRoute roles={["admin", "professor"]}><UserDetailPage /></PrivateRoute>} />
         <Route path="/usuarios/:id/editar" element={<PrivateRoute roles={["admin", "professor"]}><UserEditPage /></PrivateRoute>} /> 
+       
+
+        {/* Processos */}
         <Route path="/processos" element={<PrivateRoute><ProcessListPage /></PrivateRoute>} />
-        {/* Protegido: Professor/Admin */}
-        <Route path="/processos/novo" element={<PrivateRoute roles={["Admin", "Professor"]}><ProcessFormPage /></PrivateRoute>} />
         <Route path="/processos/:id" element={<PrivateRoute><ProcessDetailPage /></PrivateRoute>} />
-        <Route path="/processos/:id/editar" element={<PrivateRoute roles={["admin", "professor"]}><ProcessFormPage /></PrivateRoute>} />
-        <Route path="/processos/:id/atribuir" element={<PrivateRoute roles={["admin", "professor"]}><ProcessAssignStudentPage /></PrivateRoute>} />
         <Route path="/processos/:id/atualizacoes" element={<PrivateRoute><ProcessUpdatesPage /></PrivateRoute>} />
-      
+        {/* Rotas restritas para Professor/Admin */}
+        <Route path="/processos/novo" element={<PrivateRoute roles={["Professor", "admin"]}><ProcessFormPage /></PrivateRoute>} />
+        <Route path="/processos/:id/editar" element={<PrivateRoute roles={["Professor", "admin"]}><ProcessFormPage /></PrivateRoute>} />
+        <Route path="/processos/:id/atribuir" element={<PrivateRoute roles={["Professor", "admin"]}><ProcessAssignStudentPage /></PrivateRoute>} />
+       <Route path="/processos/:id/atualizacoes" element={<PrivateRoute><ProcessUpdatesPage /></PrivateRoute>} />
         {/* 404 */}
         <Route path="*" element={<div>Página não encontrada</div>} />
       </Routes>

@@ -8,9 +8,23 @@ router.post('/upload',
   arquivoController.uploadArquivo
 );
 
+
+// Listar arquivos anexados a um processo
 router.get('/processo/:processo_id', 
   authMiddleware,
   arquivoController.listarArquivos
+);
+
+// Listar arquivos enviados por um usuário
+router.get('/usuario/:usuario_id', 
+  authMiddleware,
+  arquivoController.listarArquivosUsuario
+);
+
+// Anexar arquivo já enviado a um processo
+router.post('/anexar', 
+  authMiddleware,
+  arquivoController.anexarArquivoExistente
 );
 
 module.exports = router;

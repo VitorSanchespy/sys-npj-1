@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { apiRequest } from "@/api/apiRequest";
 import { useAuthContext } from "@/contexts/AuthContext";
+import FileUploadForm from "@/components/arquivos/FileUploadForm";
 
 export default function ArquivosPage() {
-  const { token } = useAuthContext();
+  const { token, user } = useAuthContext();
   const [arquivos, setArquivos] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -11,20 +12,21 @@ export default function ArquivosPage() {
     async function fetchArquivos() {
       setLoading(true);
       try {
-        // Busca todos os arquivos do sistema. Altere para endpoint correto se necessário.
-        const data = await apiRequest("/api/arquivos", { token });
+        // Busca apenas arquivos do usuário logado
+        const data = await apiRequest(`/api/arquivos/usuario/${user.id}`, { token });
         setArquivos(data);
       } catch {
         setArquivos([]);
       }
       setLoading(false);
     }
-    fetchArquivos();
-  }, [token]);
+    if (user?.id) fetchArquivos();
+  }, [token, user]);
 
   return (
     <div>
-      <h2>Arquivos do Sistema</h2>
+      <h2>Meus Arquivos</h2>
+      <FileUploadForm onUpload={() => window.location.reload()} />
       {loading ? (
         <div>Carregando arquivos...</div>
       ) : arquivos.length === 0 ? (
@@ -34,25 +36,19 @@ export default function ArquivosPage() {
           <thead>
             <tr>
               <th>Nome</th>
-              <th>Processo</th>
-              <th>Enviado por</th>
               <th>Data</th>
               <th>Tamanho</th>
-              <th>Baixar</th>
+              <th>Abrir</th>
             </tr>
           </thead>
           <tbody>
             {arquivos.map(arquivo => (
               <tr key={arquivo.id}>
                 <td>{arquivo.nome}</td>
-                <td>{arquivo.processo_id}</td>
-                <td>{arquivo.usuario_nome || arquivo.usuario_id}</td>
                 <td>{arquivo.criado_em ? new Date(arquivo.criado_em).toLocaleString() : "-"}</td>
                 <td>{arquivo.tamanho ? `${Math.round(arquivo.tamanho / 1024)} KB` : "-"}</td>
                 <td>
-                  <a href={arquivo.caminho} target="_blank" rel="noopener noreferrer">
-                    Baixar
-                  </a>
+                  <button onClick={() => window.open(arquivo.caminho, "_blank")}>Abrir</button>
                 </td>
               </tr>
             ))}
