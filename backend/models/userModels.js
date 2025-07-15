@@ -2,6 +2,49 @@ const db = require('../config/db');
 const { gerarHash } = require('../utils/authUtils');
 
 class Usuario {
+    // Busca paginada apenas por nome
+    static async buscarTodosPaginado({ search = "", page = 1, pageSize = 20 }) {
+        const query = db('usuarios')
+            .join('roles', 'usuarios.role_id', 'roles.id')
+            .where('usuarios.ativo', true);
+
+        if (search) {
+            query.andWhere('usuarios.nome', 'like', `%${search}%`);
+        }
+
+        return query
+            .select(
+                'usuarios.id',
+                'usuarios.nome',
+                'usuarios.email',
+                'usuarios.criado_em',
+                'roles.nome as role'
+            )
+            .limit(pageSize)
+            .offset((page - 1) * pageSize);
+    }
+
+    static async buscarAlunosPaginado({ search = "", page = 1, pageSize = 20 }) {
+        const query = db('usuarios')
+            .join('roles', 'usuarios.role_id', 'roles.id')
+            .where('roles.nome', 'aluno')
+            .where('usuarios.ativo', true);
+
+        if (search) {
+            query.andWhere('usuarios.nome', 'like', `%${search}%`);
+        }
+
+        return query
+            .select(
+                'usuarios.id',
+                'usuarios.nome',
+                'usuarios.email',
+                'usuarios.criado_em',
+                'roles.nome as role'
+            )
+            .limit(pageSize)
+            .offset((page - 1) * pageSize);
+    }
     static async buscarAlunosPorNome(nome) {
         return db('usuarios')
             .join('roles', 'usuarios.role_id', 'roles.id')

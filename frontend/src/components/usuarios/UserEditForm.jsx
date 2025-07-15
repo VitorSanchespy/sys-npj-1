@@ -5,7 +5,7 @@ import { useAuthContext } from "../../contexts/AuthContext";
 
 export default function UserEditForm() {
   const { id } = useParams();
-  const { token } = useAuthContext();
+  const { token, user } = useAuthContext();
   const navigate = useNavigate();
   const [form, setForm] = useState({ nome: "", email: "", role_id: 2, ativo: true });
   const [msg, setMsg] = useState("");
@@ -53,6 +53,18 @@ export default function UserEditForm() {
 
   if (loading) return <div>Carregando...</div>;
 
+  // Professores não podem editar/cadastrar Admin
+  const roleOptions = user?.role === "Admin"
+    ? [
+        { id: 2, label: "Aluno" },
+        { id: 3, label: "Professor" },
+        { id: 1, label: "Administrador" },
+      ]
+    : [
+        { id: 2, label: "Aluno" },
+        { id: 3, label: "Professor" },
+      ];
+
   return (
     <form onSubmit={handleSubmit}>
       <h2>Editar Usuário</h2>
@@ -67,10 +79,15 @@ export default function UserEditForm() {
       </div>
       <div>
         <label>Papel:</label>
-        <select name="role_id" value={form.role_id} onChange={handleChange}>
-          <option value={2}>Aluno</option>
-          <option value={3}>Professor</option>
-          <option value={1}>Administrador</option>
+        <select
+          name="role_id"
+          value={form.role_id}
+          onChange={handleChange}
+          disabled={user?.role !== "Admin"}
+        >
+          {roleOptions.map((r) => (
+            <option key={r.id} value={r.id}>{r.label}</option>
+          ))}
         </select>
       </div>
       <div>

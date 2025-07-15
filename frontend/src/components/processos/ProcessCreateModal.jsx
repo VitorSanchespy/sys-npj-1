@@ -20,8 +20,10 @@ export default function CreateProcessModal({ onCreated }) {
 
   useEffect(() => {
     if (show) {
-      // Busca todos usuários para o select do responsável
-      apiRequest("/api/usuarios", { token })
+      // Busca usuários conforme o papel
+      let url = "/api/usuarios";
+      if (user?.role === "Professor") url = "/api/usuarios/alunos";
+      apiRequest(url, { token })
         .then(data => setUsuarios(data))
         .catch(() => setUsuarios([]));
     }

@@ -4,6 +4,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import MainLayout from "@/components/layout/MainLayout";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
+import FullRegisterPage from "@/pages/auth/FullRegisterPage";
 import DashboardPage from "@/pages/dashboard/DashboardPage";
 import ProfilePage from "@/pages/dashboard/ProfilePage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
@@ -35,6 +36,7 @@ export default function AppRouter() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/registrar" element={<RegisterPage />} />
+        <Route path="/registrar-completo" element={<FullRegisterPage />} />
         <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
         <Route path="/resetar-senha" element={<ResetPasswordPage />} />
         

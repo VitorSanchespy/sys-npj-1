@@ -24,10 +24,10 @@ export default function ProcessAssignStudentModal() {
     e.preventDefault();
     setMsg("");
     try {
-      await apiRequest(`/api/processos/${id}/atribuir-aluno`, {
+      await apiRequest(`/api/processos/atribuir-aluno`, {
         method: "POST",
         token,
-        body: { aluno_id: selected }
+        body: { processo_id: id, aluno_id: selected }
       });
       setMsg("Aluno atribuído!");
       setTimeout(() => navigate(`/processos/${id}`), 1000);

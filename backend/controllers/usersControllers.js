@@ -34,7 +34,8 @@ exports.criarUsuario = async (req, res) => {
 
 exports.listarUsuarios = async (req, res) => {
     try {
-        const usuarios = await Usuario.buscarTodos();
+        const { search = "", page = 1 } = req.query;
+        const usuarios = await Usuario.buscarTodosPaginado({ search, page: Number(page) });
         res.json(usuarios);
     } catch (error) {
         console.error('Erro ao listar usuários:', error);
@@ -122,13 +123,8 @@ exports.listarPorRole = async (req, res) => {
 
 exports.listarAlunos = async (req, res) => {
   try {
-    const search = req.query.search;
-    let alunos;
-    if (search) {
-      alunos = await Usuario.buscarAlunosPorNome(search);
-    } else {
-      alunos = await Usuario.listarPorRole('aluno');
-    }
+    const { search = "", page = 1 } = req.query;
+    const alunos = await Usuario.buscarAlunosPaginado({ search, page: Number(page) });
     res.json(alunos);
   } catch (error) {
     console.error('Erro ao listar alunos:', error);

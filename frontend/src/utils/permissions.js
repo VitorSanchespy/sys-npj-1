@@ -1,5 +1,8 @@
 export function hasRole(user, roles) {
   if (!user || !user.role) return false;
-  if (Array.isArray(roles)) return roles.includes(user.role);
-  return user.role === roles;
+  const userRole = String(user.role).toLowerCase();
+  if (Array.isArray(roles)) {
+    return roles.map(r => String(r).toLowerCase()).includes(userRole);
+  }
+  return userRole === String(roles).toLowerCase();
 }

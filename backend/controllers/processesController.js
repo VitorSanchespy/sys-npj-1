@@ -67,8 +67,7 @@ class ProcessoController {
     async atribuirAluno(req, res) {
         try {
             const { processo_id, aluno_id } = req.body;
-            
-                // Validação dos campos
+            // Validação dos campos
             if (!processo_id || !aluno_id) {
                 return res.status(400).json({ erro: 'processo_id e aluno_id são obrigatórios' });
             }
@@ -76,12 +75,13 @@ class ProcessoController {
             if (req.usuario.role !== 'Professor') {
                 return res.status(403).json({ erro: 'Apenas professores podem atribuir alunos' });
             }
-            
-           await Processo.atribuirAluno(processo_id, aluno_id);
-            
+            await Processo.atribuirAluno(processo_id, aluno_id);
             res.json({ mensagem: 'Aluno atribuído com sucesso' });
         } catch (error) {
             console.error('Erro ao atribuir aluno:', error);
+            if (error.status === 409) {
+                return res.status(409).json({ erro: error.message });
+            }
             res.status(500).json({ erro: error.message });
         }
     }

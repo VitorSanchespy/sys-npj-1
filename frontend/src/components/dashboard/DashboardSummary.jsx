@@ -24,8 +24,10 @@ export default function DashboardSummary() {
           processos = await apiRequest("/api/processos", { token });
         }
         let usuarios = [];
-        if (user?.role === "Admin" || user?.role === "Professor") {
+        if (user?.role === "Admin") {
           usuarios = await apiRequest("/api/usuarios", { token });
+        } else if (user?.role === "Professor") {
+          usuarios = await apiRequest("/api/usuarios/alunos", { token });
         }
         setData({
           processos: processos.length,
@@ -43,7 +45,14 @@ export default function DashboardSummary() {
 
   if (loading) return <div>Carregando painel...</div>;
 
-  return null;
+  return (
+    <div style={{ display: 'flex', gap: 24, justifyContent: 'center', marginTop: 32 }}>
+      <Card title="Processos" value={data.processos} />
+      <Card title="Alunos" value={data.alunos} />
+      <Card title="Professores" value={data.professores} />
+      <Card title="Admins" value={data.admins} />
+    </div>
+  );
 }
 
 function Card({ title, value }) {

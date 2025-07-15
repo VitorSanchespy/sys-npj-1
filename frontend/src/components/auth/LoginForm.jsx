@@ -49,7 +49,7 @@ export default function LoginForm({ onSuccess }) {
       <button
         type="button"
         style={{ marginTop: 12, background: '#1976d2', color: '#fff', border: 'none', borderRadius: 4, padding: '8px 18px', fontWeight: 500, fontSize: 15, cursor: 'pointer' }}
-        onClick={() => navigate('/registrar')}
+        onClick={() => navigate('/registrar-completo')}
       >
         Cadastrar
       </button>

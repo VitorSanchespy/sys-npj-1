@@ -22,6 +22,15 @@ class Processo {
     }
     static async atribuirAluno(processoId, usuarioId) {
         try {
+            // Verifica se já existe
+            const existe = await db('alunos_processos')
+                .where({ usuario_id: usuarioId, processo_id: processoId })
+                .first();
+            if (existe) {
+                const err = new Error('Aluno já está atribuído a este processo');
+                err.status = 409;
+                throw err;
+            }
             await db('alunos_processos').insert({
                 usuario_id: usuarioId,
                 processo_id: processoId

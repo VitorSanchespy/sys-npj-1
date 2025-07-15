@@ -29,6 +29,8 @@ router.post('/login', [
   handleValidation
 ], authController.login);
 
+// Compatível com frontend: POST /auth/esqueci-senha
+router.post('/esqueci-senha', authController.solicitarRecuperacao);
 router.post('/solicitar-recuperacao', authController.solicitarRecuperacao);
 router.post('/redefinir-senha', verificarTokenReset, authController.redefinirSenha);
 
