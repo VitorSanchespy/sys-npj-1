@@ -1,6 +1,8 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 function NovoProcessoModal({ open, onClose, onCreated, token }) {
+  const [num_processo_sei, setNumSei] = useState("");
+  const [assistido, setAssistido] = useState("");
   const { user } = useAuthContext();
   const [numero_processo, setNumero] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -60,7 +62,9 @@ function NovoProcessoModal({ open, onClose, onCreated, token }) {
           sistema,
           fase_id,
           diligencia_id,
-          idusuario_responsavel: user?.id
+          idusuario_responsavel: user?.id,
+          num_processo_sei,
+          assistido
         }
       });
       onCreated();
@@ -103,6 +107,16 @@ function NovoProcessoModal({ open, onClose, onCreated, token }) {
         <div style={{ marginBottom: 12 }}>
           <label>Número do Processo<br />
             <input value={numero_processo} onChange={e => setNumero(e.target.value)} required style={{ width: '100%' }} />
+          </label>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label>Num/Processo/Sei<br />
+            <input value={num_processo_sei} onChange={e => setNumSei(e.target.value)} style={{ width: '100%' }} placeholder="Número do processo SEI" />
+          </label>
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <label>Assistido/a<br />
+            <input value={assistido} onChange={e => setAssistido(e.target.value)} style={{ width: '100%' }} placeholder="Nome da pessoa assistida" />
           </label>
         </div>
         <div style={{ marginBottom: 12 }}>

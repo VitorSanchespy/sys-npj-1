@@ -2,7 +2,7 @@
 const db = require('../config/db');
 
 class Processo {
-    static async criar({ numero_processo, descricao, status, materia_assunto_id, local_tramitacao, sistema, fase_id, diligencia_id, idusuario_responsavel, data_encerramento, observacoes }) {
+    static async criar({ numero_processo, descricao, status, materia_assunto_id, local_tramitacao, sistema, fase_id, diligencia_id, idusuario_responsavel, data_encerramento, observacoes, num_processo_sei, assistido }) {
         const [id] = await db('processos').insert({
             numero_processo,
             descricao,
@@ -14,7 +14,9 @@ class Processo {
             diligencia_id,
             idusuario_responsavel,
             data_encerramento,
-            observacoes
+            observacoes,
+            num_processo_sei,
+            assistido
         });
         return id;
     }
@@ -40,7 +42,9 @@ class Processo {
             .select(
                 'processos.*',
                 db.raw('(SELECT COUNT(*) FROM alunos_processos WHERE processo_id = processos.id) as total_alunos'),
-                'responsavel.nome as responsavel_nome'
+                'responsavel.nome as responsavel_nome',
+                'processos.num_processo_sei',
+                'processos.assistido'
             )
             .first();
     }
@@ -139,6 +143,7 @@ class Processo {
             'usuarios.id as aluno_id',
             'usuarios.nome as aluno_nome',
             'usuarios.email as aluno_email',
+            'usuarios.telefone as aluno_telefone',
             'alunos_processos.data_atribuicao'
         )
         .orderBy('usuarios.nome', 'asc');

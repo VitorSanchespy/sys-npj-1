@@ -131,6 +131,7 @@ app.use('/auth', require('./routes/authRoutes'));
 app.use('/api/usuarios', require('./routes/usuarioRoutes'));
 app.use('/api/processos', require('./routes/processoRoutes')(processoController));
 app.use('/api/arquivos', require('./routes/arquivoRoutes'));
+app.use('/api/atualizacoes', require('./routes/processUpdatesRoutes'));
 // Tratamento de erros
 app.use((err, req, res, next) => {
   console.error(err.stack);

@@ -3,6 +3,27 @@ const Usuario = require('../models/userModels');
 exports.criarUsuario = async (req, res) => {
     try {
         const { nome, email, senha, role_id } = req.body;
+        // Busca o papel pelo id
+        let roleNome = 'Aluno';
+        if (role_id === 1) roleNome = 'Admin';
+        if (role_id === 2) roleNome = 'Aluno';
+        if (role_id === 3) roleNome = 'Professor';
+
+        // Permissões:
+        // - Não autenticado: só pode criar Aluno
+        // - Professor: só pode criar Aluno ou Professor
+        // - Admin: pode criar qualquer um
+        const usuarioLogado = req.usuario;
+        if (!usuarioLogado) {
+            if (roleNome !== 'Aluno') {
+                return res.status(403).json({ erro: 'Só é permitido criar conta de Aluno.' });
+            }
+        } else if (usuarioLogado.role === 'Professor') {
+            if (roleNome === 'Admin') {
+                return res.status(403).json({ erro: 'Professores não podem criar Admins.' });
+            }
+        } // Admin pode tudo
+
         const id = await Usuario.criar({ nome, email, senha, role_id });
         res.status(201).json({ id, mensagem: 'Usuário criado com sucesso' });
     } catch (error) {

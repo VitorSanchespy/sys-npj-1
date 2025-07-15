@@ -25,7 +25,7 @@ export default function UpdateList({ processoId }) {
   if (loading) return <div>Carregando atualizações...</div>;
   return (
     <div>
-      {["admin", "professor"].includes(user.role) && (
+      {["admin", "professor", "aluno"].includes((user.role || "").toLowerCase()) && (
         <button onClick={() => setShowForm(v => !v)}>
           {showForm ? "Fechar" : "Nova Atualização"}
         </button>
@@ -40,9 +40,30 @@ export default function UpdateList({ processoId }) {
         {updates.length === 0 && <li>Nenhuma atualização encontrada.</li>}
         {updates.map(upd => (
           <li key={upd.id}>
-            <b>{upd.titulo}</b> — {upd.descricao}
+            {upd.tipo && <b>[{upd.tipo}] </b>}
+            {upd.descricao}
+            {upd.anexo && (
+              <>
+                <br />
+                <a href={upd.anexo} target="_blank" rel="noopener noreferrer">Ver anexo</a>
+              </>
+            )}
             <br />
-            <small>Por: {upd.autor_nome} em {new Date(upd.criado_em).toLocaleString()}</small>
+            <small>Por: {upd.usuario_nome} em {new Date(upd.data_atualizacao).toLocaleString()}</small>
+            {user.role && user.role.toLowerCase() === 'professor' && (
+              <button
+                style={{ marginLeft: 12, color: '#fff', background: '#d32f2f', border: 'none', borderRadius: 4, padding: '2px 10px', fontWeight: 500, cursor: 'pointer' }}
+                onClick={async () => {
+                  if(window.confirm('Tem certeza que deseja excluir esta atualização?')) {
+                    await apiRequest(`/api/processos/${upd.processo_id}/atualizacoes/${upd.id}`, {
+                      method: 'DELETE',
+                      token
+                    });
+                    setUpdates(updates.filter(u => u.id !== upd.id));
+                  }
+                }}
+              >Excluir</button>
+            )}
           </li>
         ))}
       </ul>

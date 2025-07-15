@@ -34,6 +34,7 @@ export default function AppRouter() {
         {/* Público */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/registrar" element={<RegisterPage />} />
         <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
         <Route path="/resetar-senha" element={<ResetPasswordPage />} />
         

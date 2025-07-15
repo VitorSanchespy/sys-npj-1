@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { apiRequest } from "../../api/apiRequest";
 import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 export default function RegisterForm() {
+  const { user } = useAuthContext();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -16,9 +18,18 @@ export default function RegisterForm() {
     setError("");
     setSuccess(false);
     try {
+      let finalRoleId = 2; // Aluno
+      if (user && user.role === "Admin") finalRoleId = roleId;
+      else if (user && user.role === "Professor" && (roleId === 2 || roleId === 3)) finalRoleId = roleId;
+      // Professor não pode criar Admin
+      else if (user && user.role === "Professor" && roleId === 1) {
+        setError("Professores não podem criar Admins.");
+        return;
+      }
+      // Aluno ou não logado só pode criar Aluno
       await apiRequest("/auth/registrar", {
         method: "POST",
-        body: { nome, email, senha, role_id: roleId }
+        body: { nome, email, senha, role_id: finalRoleId }
       });
       setSuccess(true);
       setTimeout(() => navigate("/login"), 1500);
@@ -44,13 +55,16 @@ export default function RegisterForm() {
         <label>Senha:</label>
         <input type="password" value={senha} onChange={e => setSenha(e.target.value)} required />
       </div>
-      <div>
-        <label>Tipo de usuário:</label>
-        <select value={roleId} onChange={e => setRoleId(Number(e.target.value))}>
-          <option value={2}>Aluno</option>
-          <option value={3}>Professor</option>
-        </select>
-      </div>
+      {(user && (user.role === "Admin" || user.role === "Professor")) && (
+        <div>
+          <label>Tipo de usuário:</label>
+          <select value={roleId} onChange={e => setRoleId(Number(e.target.value))}>
+            <option value={2}>Aluno</option>
+            <option value={3}>Professor</option>
+            {user.role === "Admin" && <option value={1}>Admin</option>}
+          </select>
+        </div>
+      )}
       <button type="submit">Cadastrar</button>
     </form>
   );

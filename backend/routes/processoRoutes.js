@@ -1,69 +1,59 @@
+
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const processoController = require('../controllers/processesController');
 const { validate } = require('../middleware/validationMiddleware');
 
-
 module.exports = (processoController) => {
     router.use(authMiddleware);
-router.use(authMiddleware);
 
-router.post('/', 
-    validate('criarProcesso'), 
-    processoController.criarProcesso
-);
+    router.post('/', 
+        validate('criarProcesso'), 
+        processoController.criarProcesso
+    );
 
-router.get('/', processoController.listarProcessos);
+    router.get('/', processoController.listarProcessos);
 
+    router.post('/atribuir-aluno', 
+        validate('atribuirAluno'),
+        processoController.atribuirAluno
+    );
 
+    router.delete('/remover-aluno', 
+        validate('atribuirAluno'),
+        processoController.removerAluno
+    );
 
-// Rotas para atribuição de alunos
+    router.post('/:processo_id/atualizacoes',
+        validate('adicionarAtualizacao'),
+        processoController.adicionarAtualizacao
+    );
 
-router.post('/atribuir-aluno', 
-    validate('atribuirAluno'),
-    processoController.atribuirAluno
-);
+    router.delete('/:processo_id/atualizacoes/:atualizacao_id',
+        processoController.removerAtualizacao
+    );
 
-/**
- * @swagger
- * /api/processos/remover-aluno:
- *   delete:
- *     summary: Remove aluno de processo
- *     tags: [Processos]
- */
-router.delete('/remover-aluno', 
-    validate('atribuirAluno'), // Reutiliza a mesma validação de atribuirAluno
-    processoController.removerAluno
-);
+    router.get('/:processo_id/alunos', 
+        authMiddleware,
+        processoController.listarAlunosPorProcesso
+    );
 
-router.post('/:processo_id/atualizacoes',
-    validate('adicionarAtualizacao'),
-    processoController.adicionarAtualizacao
-);
+    router.get('/meus-processos', processoController.listarMeusProcessos);
 
+    router.get('/:processo_id/atualizacoes', 
+        processoController.listarAtualizacoes
+    );
 
-router.get('/:processo_id/alunos', 
-    authMiddleware,
-    processoController.listarAlunosPorProcesso
-);
+    router.get('/buscar', 
+        authMiddleware,
+        processoController.buscarProcessos
+    );
 
+    router.get('/:processo_id',
+        authMiddleware,
+        processoController.buscarProcessoPorId
+    );
 
-router.get('/meus-processos', processoController.listarMeusProcessos);
-
-
-router.get('/:processo_id/atualizacoes', 
-    processoController.listarAtualizacoes
-);
-
-router.get('/buscar', 
-    authMiddleware,
-    processoController.buscarProcessos
-);
-
-router.get('/:processo_id',
-    authMiddleware,
-    processoController.buscarProcessoPorId
-);    
-return router;
+    return router;
 }

@@ -2,8 +2,23 @@ const Processo = require('../models/processesModels');
 const Atualizacao = require('../models/updateModels');
 const NotificacaoService = require('../services/notificacaoService');
 
-
 class ProcessoController {
+    async removerAtualizacao(req, res) {
+        try {
+            const { processo_id, atualizacao_id } = req.params;
+            // Permitir apenas professor
+            if (req.usuario.role !== 'Professor') {
+                return res.status(403).json({ erro: 'Apenas professores podem remover atualizações' });
+            }
+            const count = await Atualizacao.remover({ processo_id, atualizacao_id });
+            if (count === 0) {
+                return res.status(404).json({ erro: 'Atualização não encontrada' });
+            }
+            res.json({ mensagem: 'Atualização removida com sucesso' });
+        } catch (error) {
+            res.status(500).json({ erro: error.message });
+        }
+    }
         constructor(io) {
         this.notificacaoService = new NotificacaoService(io);
         }
@@ -20,7 +35,9 @@ class ProcessoController {
                 diligencia_id,
                 idusuario_responsavel,
                 data_encerramento,
-                observacoes
+                observacoes,
+                num_processo_sei,
+                assistido
             } = req.body;
             if (!numero_processo || !descricao || !status || !materia_assunto_id || !local_tramitacao || !sistema || !fase_id || !diligencia_id || !idusuario_responsavel) {
                 return res.status(400).json({ erro: 'Preencha todos os campos obrigatórios' });
@@ -36,7 +53,9 @@ class ProcessoController {
                 diligencia_id,
                 idusuario_responsavel,
                 data_encerramento,
-                observacoes
+                observacoes,
+                num_processo_sei,
+                assistido
             });
             const processo = await Processo.buscarPorId(id);
             res.status(201).json(processo);
@@ -88,7 +107,7 @@ class ProcessoController {
     async adicionarAtualizacao(req, res) {
     try {
         const { processo_id } = req.params;
-        const { descricao } = req.body;
+        const { descricao, tipo, anexo } = req.body;
 
         if (!descricao) {
             return res.status(400).json({ erro: 'Descrição é obrigatória' });
@@ -97,7 +116,9 @@ class ProcessoController {
         const atualizacaoId = await Atualizacao.criar({
             usuario_id: req.usuario.id,
             processo_id,
-            descricao
+            descricao,
+            tipo,
+            anexo
         });
 
         // Notifica os usuários vinculados ao processo
