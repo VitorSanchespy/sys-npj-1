@@ -107,11 +107,15 @@ app.use(speedLimiter);
 // Conexão com o banco de dados
 require('./config/db');
 
+
 // Cria a pasta 'uploads' se não existir
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
+
+// Servir arquivos estáticos da pasta uploads
+app.use('/uploads', express.static(uploadDir));
 
 
 

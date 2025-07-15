@@ -67,6 +67,8 @@ class ProcessoController {
             
             if (req.usuario.role === 'Aluno') {
                 processos = await Processo.listarPorAluno(req.usuario.id);
+            } else if (req.usuario.role === 'Professor') {
+                processos = await Processo.listarPorResponsavel(req.usuario.id);
             } else {
                 processos = await Processo.listarTodos();
             }

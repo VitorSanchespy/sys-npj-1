@@ -1,3 +1,4 @@
+// removido método fora da classe
 const db = require('../config/db');
 
 class Processo {
@@ -82,11 +83,21 @@ class Processo {
     };
     }
 
+
     static async listarPorAluno(alunoId) {
         return db('processos')
             .join('alunos_processos', 'processos.id', 'alunos_processos.processo_id')
             .where('alunos_processos.usuario_id', alunoId)
             .select('processos.*', 'alunos_processos.data_atribuicao');
+    }
+
+    static async listarPorResponsavel() {
+        return db('processos')
+            .select(
+                '*',
+                db.raw('(SELECT COUNT(*) FROM alunos_processos WHERE processo_id = processos.id) as total_alunos'),
+                db.raw('(SELECT MAX(data_atualizacao) FROM atualizacoes WHERE processo_id = processos.id) as ultima_atualizacao')
+            );
     }
 
     static async listarTodos() {

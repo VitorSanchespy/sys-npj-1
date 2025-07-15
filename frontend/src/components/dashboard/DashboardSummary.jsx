@@ -43,17 +43,7 @@ export default function DashboardSummary() {
 
   if (loading) return <div>Carregando painel...</div>;
 
-  return (
-    <div>
-      <h2>Painel</h2>
-      <div style={{ display: "flex", gap: 16, marginBottom: 32 }}>
-        <Card title="Processos" value={data.processos} />
-        {(user?.role === "Admin" || user?.role === "Professor") && <Card title="Alunos" value={data.alunos} />}
-        {(user?.role === "Admin" || user?.role === "Professor") && <Card title="Professores" value={data.professores} />}
-        {user?.role === "Admin" && <Card title="Admins" value={data.admins} />}
-      </div>
-    </div>
-  );
+  return null;
 }
 
 function Card({ title, value }) {

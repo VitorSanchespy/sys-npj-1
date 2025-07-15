@@ -101,7 +101,13 @@ exports.listarPorRole = async (req, res) => {
 
 exports.listarAlunos = async (req, res) => {
   try {
-    const alunos = await Usuario.listarPorRole('aluno'); 
+    const search = req.query.search;
+    let alunos;
+    if (search) {
+      alunos = await Usuario.buscarAlunosPorNome(search);
+    } else {
+      alunos = await Usuario.listarPorRole('aluno');
+    }
     res.json(alunos);
   } catch (error) {
     console.error('Erro ao listar alunos:', error);

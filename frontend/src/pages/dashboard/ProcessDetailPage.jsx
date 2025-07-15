@@ -43,29 +43,38 @@ export default function ProcessDetailPage() {
       <p><b>Data de Encerramento:</b> {processo.data_encerramento || "Em aberto"}</p>
       <hr />
       <h3>Alunos Vinculados</h3>
-      <ul>
-        {alunos.map((aluno, idx) => (
-          <li key={aluno.id || idx}>
-            {aluno.nome} ({aluno.email})
-            {/* Botão de remover aluno só para professor */}
-            {user?.role === "Professor" && (
-              <button
-                onClick={async () => {
-                  await apiRequest(`/api/processos/remover-aluno`, {
-                    method: "DELETE",
-                    token,
-                    body: { processo_id: processo.id, aluno_id: aluno.id }
-                  });
-                  window.location.reload();
-                }}
-                style={{ color: "red", marginLeft: 8 }}
-              >
-                Remover
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
+      {alunos.length === 0 ? (
+        <div style={{ color: '#888', marginBottom: 8 }}>
+          Nenhum aluno vinculado a este processo.<br />
+          {user?.role === "Professor" && (
+            <span>Utilize a busca para vincular um aluno.</span>
+          )}
+        </div>
+      ) : (
+        <ul>
+          {alunos.map((aluno, idx) => (
+            <li key={aluno.aluno_id || aluno.id || idx}>
+              {aluno.aluno_nome || aluno.nome} ({aluno.aluno_email || aluno.email})
+              {/* Botão de remover aluno só para professor */}
+              {user?.role === "Professor" && (
+                <button
+                  onClick={async () => {
+                    await apiRequest(`/api/processos/remover-aluno`, {
+                      method: "DELETE",
+                      token,
+                      body: { processo_id: processo.id, aluno_id: aluno.aluno_id || aluno.id }
+                    });
+                    window.location.reload();
+                  }}
+                  style={{ color: "red", marginLeft: 8 }}
+                >
+                  Remover
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
       {/* Professor pode atribuir aluno */}
       {user?.role === "Professor" && (
         <Link to={`/processos/${processo.id}/atribuir`}>

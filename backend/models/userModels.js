@@ -2,6 +2,14 @@ const db = require('../config/db');
 const { gerarHash } = require('../utils/authUtils');
 
 class Usuario {
+    static async buscarAlunosPorNome(nome) {
+        return db('usuarios')
+            .join('roles', 'usuarios.role_id', 'roles.id')
+            .where('roles.nome', 'aluno')
+            .where('usuarios.ativo', true)
+            .where('usuarios.nome', 'like', `%${nome}%`)
+            .select('usuarios.id', 'usuarios.nome', 'usuarios.email');
+    }
     static async criar({ nome, email, senha, role_id }) {
         const senhaHash = await gerarHash(senha);
         const [id] = await db('usuarios').insert({
