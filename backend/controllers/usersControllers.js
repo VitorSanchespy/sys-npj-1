@@ -1,3 +1,24 @@
+// Endpoint temporário para depuração: lista todos os usuários e todos os campos
+exports.listarUsuariosDebug = async (req, res) => {
+    try {
+        const usuarios = await require('../config/db')('usuarios').select('*');
+        res.json(usuarios);
+    } catch (error) {
+        console.error('Erro ao listar usuários (debug):', error);
+        res.status(500).json({ erro: 'Erro interno do servidor' });
+    }
+};
+// Reativar usuário: marca ativo = 1
+exports.reactivateUsuario = async (req, res) => {
+    try {
+        const id = req.params.id;
+        await Usuario.reativar(id); // seta ativo = 1
+        res.json({ mensagem: 'Usuário reativado com sucesso.' });
+    } catch (error) {
+        console.error('Erro ao reativar usuário:', error);
+        res.status(500).json({ erro: 'Erro interno do servidor' });
+    }
+};
 const Usuario = require('../models/userModels');
 
 exports.criarUsuario = async (req, res) => {
@@ -88,6 +109,17 @@ exports.deletarUsuario = async (req, res) => {
         res.json({ mensagem: 'Usuário deletado com sucesso' });
     } catch (error) {
         console.error('Erro ao deletar usuário:', error);
+        res.status(500).json({ erro: 'Erro interno do servidor' });
+    }
+};
+// Soft delete: inativa o usuário
+exports.softDeleteUsuario = async (req, res) => {
+    try {
+        const id = req.params.id;
+        await Usuario.deletar(id); // seta ativo = 0
+        res.json({ mensagem: 'Usuário inativado com sucesso.' });
+    } catch (error) {
+        console.error('Erro ao inativar usuário:', error);
         res.status(500).json({ erro: 'Erro interno do servidor' });
     }
 };

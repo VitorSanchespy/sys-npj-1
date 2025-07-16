@@ -1,9 +1,19 @@
+
 const express = require('express');
 const router = express.Router();
+const { listarUsuarios, criarUsuario, buscarUsuarioPorId, atualizarUsuario, deletarUsuario, reativarUsuario, softDeleteUsuario, reactivateUsuario, listarUsuariosDebug } = require('../controllers/usersControllers');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware.js'); // Novo middleware para roles
 const usuarioController = require('../controllers/usersControllers');
 const { validate, handleValidation, } = require('../middleware/validationMiddleware'); // Middleware de validação
+
+// Soft delete usuário
+router.patch('/usuarios/:id/soft-delete', softDeleteUsuario);
+// Reativar usuário
+router.patch('/usuarios/:id/reactivate', reactivateUsuario);
+
+// Endpoint temporário para depuração
+router.get('/debug/all', listarUsuariosDebug);
 
 // Aplicar middleware de autenticação a todas as rotas
 router.use(authMiddleware);

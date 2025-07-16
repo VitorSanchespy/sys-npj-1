@@ -6,10 +6,14 @@ class Usuario {
     static async buscarTodosPaginado({ search = "", page = 1, pageSize = 20 }) {
         const query = db('usuarios')
             .join('roles', 'usuarios.role_id', 'roles.id')
-            .where('usuarios.ativo', true);
+            .where(function() {
+                this.where('usuarios.ativo', true).orWhere('usuarios.ativo', 1);
+            });
 
         if (search) {
-            query.andWhere('usuarios.nome', 'like', `%${search}%`);
+            // Busca flexível: ignora maiúsculas/minúsculas e acentuação
+            // Usando COLLATE utf8_general_ci para MySQL
+            query.andWhereRaw(`usuarios.nome COLLATE utf8_general_ci LIKE ?`, [`%${search}%`]);
         }
 
         return query
@@ -27,11 +31,13 @@ class Usuario {
     static async buscarAlunosPaginado({ search = "", page = 1, pageSize = 20 }) {
         const query = db('usuarios')
             .join('roles', 'usuarios.role_id', 'roles.id')
-            .where('roles.nome', 'aluno')
-            .where('usuarios.ativo', true);
+            .where('roles.nome', 'Aluno')
+            .where(function() {
+                this.where('usuarios.ativo', true).orWhere('usuarios.ativo', 1);
+            });
 
         if (search) {
-            query.andWhere('usuarios.nome', 'like', `%${search}%`);
+            query.andWhereRaw(`usuarios.nome COLLATE utf8_general_ci LIKE ?`, [`%${search}%`]);
         }
 
         return query
@@ -48,9 +54,11 @@ class Usuario {
     static async buscarAlunosPorNome(nome) {
         return db('usuarios')
             .join('roles', 'usuarios.role_id', 'roles.id')
-            .where('roles.nome', 'aluno')
-            .where('usuarios.ativo', true)
-            .where('usuarios.nome', 'like', `%${nome}%`)
+            .where('roles.nome', 'Aluno')
+            .where(function() {
+                this.where('usuarios.ativo', true).orWhere('usuarios.ativo', 1);
+            })
+            .whereRaw(`usuarios.nome COLLATE utf8_general_ci LIKE ?`, [`%${nome}%`])
             .select('usuarios.id', 'usuarios.nome', 'usuarios.email');
     }
     static async criar({ nome, email, senha, role_id }) {
@@ -68,7 +76,9 @@ class Usuario {
     static async buscarTodos() {
           return db('usuarios')
             .join('roles', 'usuarios.role_id', 'roles.id')
-            .where('usuarios.ativo', true)
+            .where(function() {
+                this.where('usuarios.ativo', true).orWhere('usuarios.ativo', 1);
+            })
             .select('usuarios.id', 'usuarios.nome', 'usuarios.email', 'usuarios.criado_em', 'roles.nome as role');
     }
 
@@ -76,7 +86,9 @@ class Usuario {
         return db('usuarios')
             .join('roles', 'usuarios.role_id', 'roles.id')
             .where('usuarios.id', id)
-            .where('usuarios.ativo', true)
+            .where(function() {
+                this.where('usuarios.ativo', true).orWhere('usuarios.ativo', 1);
+            })
             .select('usuarios.id', 'usuarios.nome', 'usuarios.email', 'usuarios.criado_em', 'roles.nome as role')
             .first();
     }
@@ -85,7 +97,9 @@ class Usuario {
          return db('usuarios')
             .join('roles', 'usuarios.role_id', 'roles.id')
             .where('usuarios.email', email)
-            .where('usuarios.ativo', true)
+            .where(function() {
+                this.where('usuarios.ativo', true).orWhere('usuarios.ativo', 1);
+            })
             .select('usuarios.*', 'roles.nome as role')
             .first();
     }
@@ -99,7 +113,7 @@ class Usuario {
     static async reativar(id) {
         return db('usuarios')
             .where('id', id)
-            .update({ ativo: true });
+            .update({ ativo: 1 }); // 1 para ativo
     }
 
     static async atualizarSenha(id, senha) {
@@ -121,7 +135,7 @@ class Usuario {
         // Soft delete
         return db('usuarios')
             .where('id', id)
-            .update({ ativo: false });
+            .update({ ativo: 0 }); // 0 para inativo
     }
 
     static async usuarioCompleto(id) { 

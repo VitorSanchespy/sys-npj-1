@@ -17,9 +17,9 @@ exports.seed = async function(knex) {
 
   // Inserir usuários
   const usuarios = [
-    { nome: 'Joao Silva', email: 'joao@exemplo.com', senha: 'senha123', role_id: roleAluno.id },
-    { nome: 'Maria Souza', email: 'maria@exemplo.com', senha: 'senha123', role_id: roleProfessor.id },
-    { nome: 'Carlos Admin', email: 'carlos@admin.com', senha: 'admin', role_id: roleAdmin.id }
+    { nome: 'Joao Silva', email: 'joao@exemplo.com', senha: 'senha123', role_id: roleAluno.id, ativo: true },
+    { nome: 'Maria Souza', email: 'maria@exemplo.com', senha: 'senha123', role_id: roleProfessor.id, ativo: true },
+    { nome: 'Carlos Admin', email: 'carlos@admin.com', senha: 'admin', role_id: roleAdmin.id, ativo: true }
   ];
 
   for (const usuario of usuarios) {
