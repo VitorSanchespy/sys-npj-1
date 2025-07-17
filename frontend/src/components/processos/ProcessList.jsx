@@ -17,7 +17,7 @@ export default function ProcessList() {
       let data = [];
       if (user?.role === "Aluno") {
         data = await apiRequest("/api/processos/meus-processos", { token });
-      } else if (user?.role === "Professor") {
+      } else if (user?.role === "Professor" || user?.role === "admin" || user?.role === "Admin" || user?.role === "professor") {
         data = await apiRequest("/api/processos", { token });
       }
       setProcessos(data);

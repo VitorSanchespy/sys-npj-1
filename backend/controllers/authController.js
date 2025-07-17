@@ -95,11 +95,11 @@ exports.redefinirSenha = [
 exports.perfil = async (req, res) => {
   try {
     const usuarioCompleto = await Usuario.usuarioCompleto(req.usuario.id);
-
     res.json({
       id: usuarioCompleto.id,
       nome: usuarioCompleto.nome,
       email: usuarioCompleto.email,
+      role: usuarioCompleto.role ? usuarioCompleto.role.nome : undefined,
       // ... outros campos
     });
   } catch (error) {

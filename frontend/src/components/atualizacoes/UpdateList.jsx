@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { apiRequest } from "../../api/apiRequest";
 import { useAuthContext } from "../../contexts/AuthContext";
 import UpdateForm from "./UpdateForm";
+import { getFileUrl } from '../../utils/fileUrl';
 
 export default function UpdateList({ processoId }) {
   const { token, user } = useAuthContext();
@@ -45,12 +46,12 @@ export default function UpdateList({ processoId }) {
             {upd.anexo && (
               <>
                 <br />
-                <a href={upd.anexo} target="_blank" rel="noopener noreferrer">Ver anexo</a>
+                <a href={getFileUrl(upd.anexo)} target="_blank" rel="noopener noreferrer">Ver anexo</a>
               </>
             )}
             <br />
             <small>Por: {upd.usuario_nome} em {new Date(upd.data_atualizacao).toLocaleString()}</small>
-            {user.role && user.role.toLowerCase() === 'professor' && (
+            {user.role && ['professor', 'admin'].includes(user.role.toLowerCase()) && (
               <button
                 style={{ marginLeft: 12, color: '#fff', background: '#d32f2f', border: 'none', borderRadius: 4, padding: '2px 10px', fontWeight: 500, cursor: 'pointer' }}
                 onClick={async () => {

@@ -9,9 +9,13 @@ exports.uploadArquivo = [
         return res.status(400).json({ erro: 'Nenhum arquivo enviado' });
       }
 
+      // Garante que o caminho salvo seja sempre relativo à pasta uploads
+      let caminhoRelativo = req.file.path.replace(/\\/g, '/');
+      const idx = caminhoRelativo.indexOf('uploads/');
+      if (idx !== -1) caminhoRelativo = caminhoRelativo.substring(idx);
       const metadados = {
         nome: req.file.originalname,
-        caminho: req.file.path,
+        caminho: caminhoRelativo,
         tamanho: req.file.size,
         tipo: req.file.mimetype,
         processo_id: req.body.processo_id && req.body.processo_id !== 'undefined' ? req.body.processo_id : null,

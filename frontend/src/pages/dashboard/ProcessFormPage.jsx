@@ -1,10 +1,12 @@
 import React from "react";
-import ProcessForm from "../../components/processos/ProcessForm";
+import FullProcessCreateForm from '../../components/FullProcessCreateForm';
 
 export default function ProcessFormPage() {
+  console.log('ProcessFormPage carregado');
+
   return (
-    <div style={{ maxWidth: 500, margin: "auto", paddingTop: 40 }}>
-      <ProcessForm />
+    <div style={{ flex: 1, padding: '32px', boxSizing: 'border-box' }}>
+      <FullProcessCreateForm />
     </div>
   );
 }

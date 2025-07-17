@@ -14,7 +14,15 @@ const storage = multer.diskStorage({
 
 // Filtros de validação
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+  const allowedTypes = [
+    'image/jpeg', 'image/png', 'application/pdf',
+    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain', 'application/vnd.oasis.opendocument.text',
+    'application/vnd.oasis.opendocument.spreadsheet',
+    'application/vnd.oasis.opendocument.presentation'
+  ];
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -26,7 +34,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 } // Limite de 5MB
+  limits: { fileSize: 10 * 1024 * 1024 } // Limite de 10MB
 });
 
 module.exports = upload;

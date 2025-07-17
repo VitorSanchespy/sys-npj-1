@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { apiRequest } from "../../api/apiRequest";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { getFileUrl } from '../../utils/fileUrl';
 
 export default function FileList({ processoId }) {
   const { token, user } = useAuthContext();
@@ -39,9 +40,16 @@ export default function FileList({ processoId }) {
       <ul>
         {arquivos.map(arquivo => (
           <li key={arquivo.id}>
-            <a href={`http://localhost:3001/${arquivo.caminho.replace(/^\/+/, '')}`} target="_blank" rel="noopener noreferrer">{arquivo.nome}</a>
-            {" "}
+            <span>{arquivo.nome}</span>{" "}
             <small>({Math.round(arquivo.tamanho / 1024)} KB)</small>
+            <a
+              href={getFileUrl(arquivo.caminho)}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ marginLeft: 8 }}
+            >
+              Abrir
+            </a>
             {(user.role === "admin" || user.role === "professor") && (
               <button onClick={() => handleDelete(arquivo.id)} style={{ marginLeft: 8 }}>
                 Excluir

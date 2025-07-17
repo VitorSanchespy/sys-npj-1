@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext js,jsx --fix"
+    "lint": "eslint . --ext js,jsx --fix",
+    "clean": "node scripts/clean.js"
   },
   "dependencies": {
     "@mantine/core": "^7.5.0",

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { apiRequest } from "../../api/apiRequest";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { getFileUrl } from '../../utils/fileUrl';
 
 export default function FileAttachToProcess({ processoId, onAttach }) {
   const { token, user } = useAuthContext();
@@ -56,7 +57,10 @@ export default function FileAttachToProcess({ processoId, onAttach }) {
         <select value={selectedId} onChange={e => setSelectedId(e.target.value)} required style={{ marginLeft: 8 }}>
           <option value="">-- Escolha um arquivo --</option>
           {arquivos.map(arq => (
-            <option key={arq.id} value={arq.id}>{arq.nome}</option>
+            <option key={arq.id} value={arq.id}>
+              {arq.nome} - 
+              <a href={getFileUrl(arq.caminho)} target="_blank" rel="noopener noreferrer" style={{marginLeft:4}}>ver</a>
+            </option>
           ))}
         </select>
       </label>

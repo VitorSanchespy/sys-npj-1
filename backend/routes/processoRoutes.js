@@ -1,26 +1,24 @@
-
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
-const processoController = require('../controllers/processesController');
 const { validate } = require('../middleware/validationMiddleware');
 
 module.exports = (processoController) => {
     router.use(authMiddleware);
 
-    router.post('/', 
-        validate('criarProcesso'), 
+    router.post('/novo',
+        validate('criarProcesso'),
         processoController.criarProcesso
     );
 
     router.get('/', processoController.listarProcessos);
 
-    router.post('/atribuir-aluno', 
+    router.post('/atribuir-aluno',
         validate('atribuirAluno'),
         processoController.atribuirAluno
     );
 
-    router.delete('/remover-aluno', 
+    router.delete('/remover-aluno',
         validate('atribuirAluno'),
         processoController.removerAluno
     );
@@ -34,18 +32,18 @@ module.exports = (processoController) => {
         processoController.removerAtualizacao
     );
 
-    router.get('/:processo_id/alunos', 
+    router.get('/:processo_id/alunos',
         authMiddleware,
         processoController.listarAlunosPorProcesso
     );
 
     router.get('/meus-processos', processoController.listarMeusProcessos);
 
-    router.get('/:processo_id/atualizacoes', 
+    router.get('/:processo_id/atualizacoes',
         processoController.listarAtualizacoes
     );
 
-    router.get('/buscar', 
+    router.get('/buscar',
         authMiddleware,
         processoController.buscarProcessos
     );

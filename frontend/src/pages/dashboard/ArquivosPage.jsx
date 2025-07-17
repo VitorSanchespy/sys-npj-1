@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { apiRequest } from "@/api/apiRequest";
 import { useAuthContext } from "@/contexts/AuthContext";
 import FileUploadForm from "@/components/arquivos/FileUploadForm";
+import { getFileUrl } from '@/utils/fileUrl';
 
 export default function ArquivosPage() {
   const { token, user } = useAuthContext();
@@ -48,7 +49,7 @@ export default function ArquivosPage() {
                 <td>{arquivo.criado_em ? new Date(arquivo.criado_em).toLocaleString() : "-"}</td>
                 <td>{arquivo.tamanho ? `${Math.round(arquivo.tamanho / 1024)} KB` : "-"}</td>
                 <td>
-                  <button onClick={() => window.open(arquivo.caminho, "_blank")}>Abrir</button>
+                  <button onClick={() => window.open(getFileUrl(arquivo.caminho), "_blank")}>Abrir</button>
                 </td>
               </tr>
             ))}

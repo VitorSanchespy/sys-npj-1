@@ -1,31 +1,33 @@
-const db = require('../config/db');
 
-class Atualizacao {
-    static async criar({ usuario_id, processo_id, descricao, tipo = null, anexo = null }) {
-        const [id] = await db('atualizacoes').insert({
-            usuario_id,
-            processo_id,
-            descricao,
-            tipo,
-            anexo
-        });
-        return id;
-    }
+const { DataTypes, Model } = require('sequelize');
+const sequelize = require('../config/sequelize');
 
-    static async listarPorProcesso(processoId) {
-        return db('atualizacoes')
-            .join('usuarios', 'atualizacoes.usuario_id', 'usuarios.id')
-            .where('atualizacoes.processo_id', processoId)
-            .where('usuarios.ativo', true)
-            .select('atualizacoes.*', 'usuarios.nome as usuario_nome')
-            .orderBy('atualizacoes.data_atualizacao', 'desc');
-    }
+class Atualizacao extends Model {
+  static async criar({ usuario_id, processo_id, descricao, tipo = null, anexo = null }) {
+    const atualizacao = await Atualizacao.create({ usuario_id, processo_id, descricao, tipo, anexo });
+    return atualizacao.id;
+  }
 
-    static async remover({ processo_id, atualizacao_id }) {
-        return db('atualizacoes')
-            .where({ id: atualizacao_id, processo_id })
-            .del();
-    }
+  static async listarPorProcesso(processoId) {
+    return await Atualizacao.findAll({
+      where: { processo_id: processoId },
+      order: [['data_atualizacao', 'DESC']]
+    });
+  }
+
+  static async remover({ processo_id, atualizacao_id }) {
+    return await Atualizacao.destroy({ where: { id: atualizacao_id, processo_id } });
+  }
 }
+
+Atualizacao.init({
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  usuario_id: { type: DataTypes.INTEGER, allowNull: false },
+  processo_id: { type: DataTypes.INTEGER, allowNull: false },
+  descricao: { type: DataTypes.STRING },
+  tipo: { type: DataTypes.STRING },
+  anexo: { type: DataTypes.STRING },
+  data_atualizacao: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+}, { sequelize, modelName: 'atualizacoes', timestamps: false });
 
 module.exports = Atualizacao;

@@ -1,14 +1,15 @@
 const Processo = require('../models/processesModels');
 const Atualizacao = require('../models/updateModels');
 const NotificacaoService = require('../services/notificacaoService');
+const { sendNotification } = require('../services/notificationService');
 
 class ProcessoController {
     async removerAtualizacao(req, res) {
         try {
             const { processo_id, atualizacao_id } = req.params;
-            // Permitir apenas professor
-            if (req.usuario.role !== 'Professor') {
-                return res.status(403).json({ erro: 'Apenas professores podem remover atualizações' });
+            // Permitir apenas professor ou admin
+            if (req.usuario.role !== 'Professor' && req.usuario.role !== 'Admin') {
+                return res.status(403).json({ erro: 'Apenas professores ou administradores podem remover atualizações' });
             }
             const count = await Atualizacao.remover({ processo_id, atualizacao_id });
             if (count === 0) {
@@ -39,7 +40,7 @@ class ProcessoController {
                 num_processo_sei,
                 assistido
             } = req.body;
-            if (!numero_processo || !descricao || !status || !materia_assunto_id || !local_tramitacao || !sistema || !fase_id || !diligencia_id || !idusuario_responsavel) {
+            if (!numero_processo || !status || !materia_assunto_id || !local_tramitacao || !sistema || !fase_id || !diligencia_id || !idusuario_responsavel) {
                 return res.status(400).json({ erro: 'Preencha todos os campos obrigatórios' });
             }
             const id = await Processo.criar({
@@ -58,6 +59,14 @@ class ProcessoController {
                 assistido
             });
             const processo = await Processo.buscarPorId(id);
+
+            // Enviar notificação após a criação do processo
+            await sendNotification(
+                'admin@example.com',
+                'Novo Processo Criado',
+                `Um novo processo foi criado: ${id}`
+            );
+
             res.status(201).json(processo);
         } catch (error) {
             res.status(500).json({ erro: error.message });
@@ -89,15 +98,14 @@ class ProcessoController {
     async listarProcessos(req, res) {
         try {
             let processos;
-            
-            if (req.usuario.role === 'Aluno') {
+            const role = (req.usuario.role || '').toLowerCase();
+            if (role === 'aluno') {
                 processos = await Processo.listarPorAluno(req.usuario.id);
-            } else if (req.usuario.role === 'Professor') {
-                processos = await Processo.listarPorResponsavel(req.usuario.id);
+            } else if (role === 'professor' || role === 'admin') {
+                processos = await Processo.listarTodos();
             } else {
                 processos = await Processo.listarTodos();
             }
-            
             res.json(processos);
         } catch (error) {
             res.status(500).json({ erro: error.message });

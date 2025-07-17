@@ -1,42 +1,68 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { apiRequest } from "../../api/apiRequest";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { getFileUrl } from '../../utils/fileUrl';
 
-export default function UpdateForm({ processoId, onSuccess }) {
+function UpdateForm({ processoId, onSuccess }) {
   const { token, user } = useAuthContext();
   const [descricao, setDescricao] = useState("");
   const [tipo, setTipo] = useState("");
-  const [anexo, setAnexo] = useState(null);
+  const [anexoId, setAnexoId] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [tipos, setTipos] = useState([
+    "Despacho",
+    "Petição",
+    "Audiência",
+    "Observação"
+  ]);
+  const [novoTipo, setNovoTipo] = useState("");
+  const [meusArquivos, setMeusArquivos] = useState([]);
+
+  useEffect(() => {
+    async function fetchArquivos() {
+      try {
+        const data = await apiRequest(`/api/arquivos/usuario/${user.id}`, { token });
+        setMeusArquivos(data);
+      } catch {
+        setMeusArquivos([]);
+      }
+    }
+    if (user?.id) fetchArquivos();
+  }, [user, token]);
 
   const handleSubmit = async e => {
     e.preventDefault();
     setMsg("");
+    if (!tipo) {
+      setMsg("Selecione ou adicione um tipo de atualização.");
+      return;
+    }
+    if (!descricao.trim()) {
+      setMsg("Descrição é obrigatória.");
+      return;
+    }
+    if (!anexoId) {
+      setMsg("Selecione um anexo já enviado.");
+      return;
+    }
     setLoading(true);
     try {
-      let anexoPath = null;
-      if (anexo) {
-        // Simulação de upload, ajuste conforme seu backend de upload
-        const formData = new FormData();
-        formData.append("file", anexo);
-        const uploadResp = await fetch("/api/arquivos/upload", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData
-        });
-        const uploadData = await uploadResp.json();
-        anexoPath = uploadData.caminho || null;
+      const arquivoSelecionado = meusArquivos.find(a => a.id === anexoId);
+      if (!arquivoSelecionado) {
+        setMsg("Arquivo selecionado não encontrado.");
+        setLoading(false);
+        return;
       }
       await apiRequest(`/api/processos/${processoId}/atualizacoes`, {
         method: "POST",
         token,
-        body: { descricao, tipo, anexo: anexoPath }
+        body: { descricao, tipo, anexo: arquivoSelecionado.caminho }
       });
       setMsg("Atualização cadastrada!");
       setDescricao("");
       setTipo("");
-      setAnexo(null);
+      setAnexoId("");
       if (onSuccess) onSuccess();
     } catch (err) {
       setMsg(err.message || "Erro ao cadastrar atualização.");
@@ -50,13 +76,26 @@ export default function UpdateForm({ processoId, onSuccess }) {
       {msg && <div>{msg}</div>}
       <div>
         <label>Tipo:</label>
-        <select value={tipo} onChange={e => setTipo(e.target.value)}>
+        <select value={tipo} onChange={e => setTipo(e.target.value)} required>
           <option value="">Selecione</option>
-          <option value="Despacho">Despacho</option>
-          <option value="Petição">Petição</option>
-          <option value="Audiência">Audiência</option>
-          <option value="Observação">Observação</option>
+          {tipos.map((t, i) => (
+            <option key={i} value={t}>{t}</option>
+          ))}
         </select>
+        <input
+          type="text"
+          placeholder="Novo tipo"
+          value={novoTipo}
+          onChange={e => setNovoTipo(e.target.value)}
+          style={{ marginLeft: 8 }}
+        />
+        <button type="button" onClick={() => {
+          if (novoTipo && !tipos.includes(novoTipo)) {
+            setTipos([...tipos, novoTipo]);
+            setTipo(novoTipo);
+            setNovoTipo("");
+          }
+        }}>Adicionar tipo</button>
       </div>
       <div>
         <label>Descrição:</label>
@@ -68,7 +107,25 @@ export default function UpdateForm({ processoId, onSuccess }) {
       </div>
       <div>
         <label>Anexo:</label>
-        <input type="file" onChange={e => setAnexo(e.target.files[0])} />
+        <select value={anexoId} onChange={e => setAnexoId(e.target.value)} required>
+          <option value="">Selecione um arquivo já enviado</option>
+          {meusArquivos.map(a => (
+            <option key={a.id} value={a.id}>{a.nome}</option>
+          ))}
+        </select>
+        {anexoId && (
+          (() => {
+            const arquivo = meusArquivos.find(a => a.id === anexoId);
+            if (!arquivo) return null;
+            const url = getFileUrl(arquivo.caminho);
+            return (
+              <a href={url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 8 }}>
+                Visualizar anexo selecionado
+              </a>
+            );
+          })()
+        )}
+        <a href="/arquivos" target="_blank" rel="noopener noreferrer" style={{ marginLeft: 8 }}>Enviar novo arquivo</a>
       </div>
       <button type="submit" disabled={loading}>
         {loading ? "Salvando..." : "Salvar"}
@@ -76,3 +133,5 @@ export default function UpdateForm({ processoId, onSuccess }) {
     </form>
   );
 }
+
+export default UpdateForm;

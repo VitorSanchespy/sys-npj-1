@@ -1,150 +1,105 @@
-const db = require('../config/db');
+
+const { Op } = require('sequelize');
 const { gerarHash } = require('../utils/authUtils');
+const Usuario = require('./Usuario');
+const Role = require('./Role');
 
-class Usuario {
-    // Busca paginada apenas por nome
-    static async buscarTodosPaginado({ search = "", page = 1, pageSize = 20 }) {
-        const query = db('usuarios')
-            .join('roles', 'usuarios.role_id', 'roles.id')
-            .where(function() {
-                this.where('usuarios.ativo', true).orWhere('usuarios.ativo', 1);
-            });
+class UsuarioModel {
+  static async buscarTodosPaginado({ search = "", page = 1, pageSize = 20 }) {
+    return await Usuario.findAll({
+      where: {
+        ativo: true,
+        nome: { [Op.like]: `%${search}%` }
+      },
+      include: [{ model: Role, attributes: ['nome'] }],
+      limit: pageSize,
+      offset: (page - 1) * pageSize
+    });
+  }
 
-        if (search) {
-            // Busca flexível: ignora maiúsculas/minúsculas e acentuação
-            // Usando COLLATE utf8_general_ci para MySQL
-            query.andWhereRaw(`usuarios.nome COLLATE utf8_general_ci LIKE ?`, [`%${search}%`]);
-        }
+  static async buscarAlunosPaginado({ search = "", page = 1, pageSize = 20 }) {
+    return await Usuario.findAll({
+      where: {
+        ativo: true,
+        nome: { [Op.like]: `%${search}%` },
+        role_id: 2 // id do papel Aluno
+      },
+      include: [{ model: Role, attributes: ['nome'] }],
+      limit: pageSize,
+      offset: (page - 1) * pageSize
+    });
+  }
 
-        return query
-            .select(
-                'usuarios.id',
-                'usuarios.nome',
-                'usuarios.email',
-                'usuarios.criado_em',
-                'roles.nome as role'
-            )
-            .limit(pageSize)
-            .offset((page - 1) * pageSize);
-    }
+  static async buscarAlunosPorNome(nome) {
+    return await Usuario.findAll({
+      where: {
+        ativo: true,
+        nome: { [Op.like]: `%${nome}%` },
+        role_id: 2
+      },
+      include: [{ model: Role, attributes: ['nome'] }]
+    });
+  }
 
-    static async buscarAlunosPaginado({ search = "", page = 1, pageSize = 20 }) {
-        const query = db('usuarios')
-            .join('roles', 'usuarios.role_id', 'roles.id')
-            .where('roles.nome', 'Aluno')
-            .where(function() {
-                this.where('usuarios.ativo', true).orWhere('usuarios.ativo', 1);
-            });
+  static async criar({ nome, email, senha, role_id }) {
+    const senhaHash = await gerarHash(senha);
+    const usuario = await Usuario.create({ nome, email, senha: senhaHash, role_id, ativo: true });
+    return usuario.id;
+  }
 
-        if (search) {
-            query.andWhereRaw(`usuarios.nome COLLATE utf8_general_ci LIKE ?`, [`%${search}%`]);
-        }
+  static async buscarTodos() {
+    return await Usuario.findAll({
+      where: { ativo: true },
+      include: [{ model: Role, attributes: ['nome'] }]
+    });
+  }
 
-        return query
-            .select(
-                'usuarios.id',
-                'usuarios.nome',
-                'usuarios.email',
-                'usuarios.criado_em',
-                'roles.nome as role'
-            )
-            .limit(pageSize)
-            .offset((page - 1) * pageSize);
-    }
-    static async buscarAlunosPorNome(nome) {
-        return db('usuarios')
-            .join('roles', 'usuarios.role_id', 'roles.id')
-            .where('roles.nome', 'Aluno')
-            .where(function() {
-                this.where('usuarios.ativo', true).orWhere('usuarios.ativo', 1);
-            })
-            .whereRaw(`usuarios.nome COLLATE utf8_general_ci LIKE ?`, [`%${nome}%`])
-            .select('usuarios.id', 'usuarios.nome', 'usuarios.email');
-    }
-    static async criar({ nome, email, senha, role_id }) {
-        const senhaHash = await gerarHash(senha);
-        const [id] = await db('usuarios').insert({
-            nome,
-            email,
-            senha: senhaHash,
-            role_id,
-            ativo: true
-        });
-        return id;
-    }
+  static async buscarPorId(id) {
+    return await Usuario.findOne({
+      where: { id, ativo: true },
+      include: [{ model: Role, attributes: ['nome'] }]
+    });
+  }
 
-    static async buscarTodos() {
-          return db('usuarios')
-            .join('roles', 'usuarios.role_id', 'roles.id')
-            .where(function() {
-                this.where('usuarios.ativo', true).orWhere('usuarios.ativo', 1);
-            })
-            .select('usuarios.id', 'usuarios.nome', 'usuarios.email', 'usuarios.criado_em', 'roles.nome as role');
-    }
+  static async buscarPorEmail(email) {
+    return await Usuario.findOne({
+      where: { email, ativo: true },
+      include: [{ model: Role, attributes: ['nome'] }]
+    });
+  }
 
-    static async buscarPorId(id) {
-        return db('usuarios')
-            .join('roles', 'usuarios.role_id', 'roles.id')
-            .where('usuarios.id', id)
-            .where(function() {
-                this.where('usuarios.ativo', true).orWhere('usuarios.ativo', 1);
-            })
-            .select('usuarios.id', 'usuarios.nome', 'usuarios.email', 'usuarios.criado_em', 'roles.nome as role')
-            .first();
-    }
+  static async atualizar(id, { nome, email, role_id }) {
+    return await Usuario.update({ nome, email, role_id }, { where: { id } });
+  }
 
-    static async buscarPorEmail(email) {
-         return db('usuarios')
-            .join('roles', 'usuarios.role_id', 'roles.id')
-            .where('usuarios.email', email)
-            .where(function() {
-                this.where('usuarios.ativo', true).orWhere('usuarios.ativo', 1);
-            })
-            .select('usuarios.*', 'roles.nome as role')
-            .first();
-    }
+  static async reativar(id) {
+    return await Usuario.update({ ativo: true }, { where: { id } });
+  }
 
-    static async atualizar(id, { nome, email, role_id }) {
-       return db('usuarios')
-            .where('id', id)
-            .update({ nome, email, role_id });
-    }
+  static async atualizarSenha(id, senha) {
+    const senhaHash = await gerarHash(senha);
+    return await Usuario.update({ senha: senhaHash }, { where: { id } });
+  }
 
-    static async reativar(id) {
-        return db('usuarios')
-            .where('id', id)
-            .update({ ativo: 1 }); // 1 para ativo
-    }
+  static async listarPorRole(roleName) {
+    const role = await Role.findOne({ where: { nome: roleName } });
+    if (!role) return [];
+    return await Usuario.findAll({
+      where: { role_id: role.id, ativo: true },
+      include: [{ model: Role, attributes: ['nome'] }]
+    });
+  }
 
-    static async atualizarSenha(id, senha) {
-        const senhaHash = await gerarHash(senha);
-        return db('usuarios')
-            .where('id', id)
-            .update({ senha: senhaHash });
-    }
+  static async deletar(id) {
+    return await Usuario.update({ ativo: false }, { where: { id } });
+  }
 
-    static async listarPorRole(roleName) {
-        return db('usuarios')
-            .join('roles', 'usuarios.role_id', 'roles.id')
-            .where('roles.nome', roleName)
-            .where('usuarios.ativo', true)
-            .select('usuarios.id', 'usuarios.nome', 'usuarios.email');
-    }
-
-    static async deletar(id) {
-        // Soft delete
-        return db('usuarios')
-            .where('id', id)
-            .update({ ativo: 0 }); // 0 para inativo
-    }
-
-    static async usuarioCompleto(id) { 
-    return db('usuarios')
-      .join('roles', 'usuarios.role_id', 'roles.id')
-      .where('usuarios.id', id)
-      .select('usuarios.*', 'roles.nome as role')
-      .first();
-    }
+  static async usuarioCompleto(id) {
+    return await Usuario.findOne({
+      where: { id },
+      include: [{ model: Role, attributes: ['nome'] }]
+    });
+  }
 }
 
-module.exports = Usuario;
+module.exports = UsuarioModel;

@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -13,6 +12,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const app = express();
 
+module.exports = app; // Exporta o app para testes
 
 // Configuração básica de segurança
 app.use(helmet());
@@ -37,6 +37,8 @@ app.use(cors(corsOptions));
 
 const auxTablesRoutes = require('./routes/auxTablesRoutes');
 app.use('/api/aux', auxTablesRoutes);
+const localTramitacaoRoutes = require('./routes/localTramitacaoRoutes');
+app.use('/api/aux/local-tramitacao', localTramitacaoRoutes);
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -65,7 +67,7 @@ app.use((req, res, next) => {
 const server = http.createServer(app); // Cria servidor HTTP
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000", // Altere para seu frontend
+    origin: "http://localhost:5173", // Altere para seu frontend
     methods: ["GET", "POST"]
   }
 });
@@ -143,7 +145,12 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Rota não encontrada' });
 });
 
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
+const errorHandler = require('./middleware/errorHandlerMiddleware');
+app.use(errorHandler);
+
+if (require.main === module) {
+  const PORT = process.env.PORT || 3001;
+  server.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+  });
+}

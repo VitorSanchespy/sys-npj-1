@@ -18,11 +18,13 @@ export async function apiRequest(endpoint, { method = "GET", token, body } = {})
 
   const response = await fetch(url, options);
   if (!response.ok) {
-    let message = "Erro desconhecido";
+    let message = `Erro ${response.status}: ${response.statusText}`;
     try {
       const data = await response.json();
       message = data.message || data.error || message;
-    } catch {}
+    } catch (err) {
+      console.error('Erro ao interpretar resposta:', err);
+    }
     throw new Error(message);
   }
   if (response.status === 204) return null;

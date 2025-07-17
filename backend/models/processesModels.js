@@ -1,168 +1,84 @@
-// removido método fora da classe
-const db = require('../config/db');
-
-class Processo {
-    static async criar({ numero_processo, descricao, status, materia_assunto_id, local_tramitacao, sistema, fase_id, diligencia_id, idusuario_responsavel, data_encerramento, observacoes, num_processo_sei, assistido }) {
-        const [id] = await db('processos').insert({
-            numero_processo,
-            descricao,
-            status,
-            materia_assunto_id,
-            local_tramitacao,
-            sistema,
-            fase_id,
-            diligencia_id,
-            idusuario_responsavel,
-            data_encerramento,
-            observacoes,
-            num_processo_sei,
-            assistido
-        });
-        return id;
-    }
-    static async atribuirAluno(processoId, usuarioId) {
-        try {
-            // Verifica se já existe
-            const existe = await db('alunos_processos')
-                .where({ usuario_id: usuarioId, processo_id: processoId })
-                .first();
-            if (existe) {
-                const err = new Error('Aluno já está atribuído a este processo');
-                err.status = 409;
-                throw err;
-            }
-            await db('alunos_processos').insert({
-                usuario_id: usuarioId,
-                processo_id: processoId
-            });
-            return true;
-        } catch (error) {
-            if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-                throw new Error('Processo ou aluno não encontrado');
-            }
-            throw error;
-        }
-    }
-
-    static async buscarPorId(id) {
-        return db('processos')
-            .leftJoin('usuarios as responsavel', 'processos.idusuario_responsavel', 'responsavel.id')
-            .where('processos.id', id)
-            .select(
-                'processos.*',
-                db.raw('(SELECT COUNT(*) FROM alunos_processos WHERE processo_id = processos.id) as total_alunos'),
-                'responsavel.nome as responsavel_nome',
-                'processos.num_processo_sei',
-                'processos.assistido'
-            )
-            .first();
-    }
-
-    static async buscarComFiltros(filtros = {}, paginacao = {}) {
-    const { pagina = 1, porPagina = 10 } = paginacao;
-    const offset = (pagina - 1) * porPagina;
-
-    let query = db('processos')
-        .leftJoin('alunos_processos', 'processos.id', 'alunos_processos.processo_id')
-        .leftJoin('usuarios', 'alunos_processos.usuario_id', 'usuarios.id')
-        .groupBy('processos.id');
-
-    // Filtros dinâmicos
-    if (filtros.numero_processo) {
-        query.where('processos.numero_processo', 'like', `%${filtros.numero_processo}%`);
-    }
-    
-    if (filtros.descricao) {
-        query.where('processos.descricao', 'like', `%${filtros.descricao}%`);
-    }
-    
-    if (filtros.aluno_id) {
-        query.where('alunos_processos.usuario_id', filtros.aluno_id);
-    }
-
-    // Executa a query com paginação
-    const processos = await query
-        .select('processos.*')
-        .limit(porPagina)
-        .offset(offset);
-
-    const total = (await query.clone().count('processos.id as total').first()).total;
-    const ordenacao = filtros.ordenarPor || 'criado_em';
-    const direcao = filtros.ordenarDirecao || 'desc';
-
-    query.orderBy(ordenacao, direcao);
-    return {
-        dados: processos,
-        paginacao: {
-            pagina,
-            porPagina,
-            total: parseInt(total),
-            totalPaginas: Math.ceil(total / porPagina)
-        }
-    };
-    }
 
 
-    static async listarPorAluno(alunoId) {
-        return db('processos')
-            .join('alunos_processos', 'processos.id', 'alunos_processos.processo_id')
-            .where('alunos_processos.usuario_id', alunoId)
-            .select('processos.*', 'alunos_processos.data_atribuicao');
-    }
+const { DataTypes, Model } = require('sequelize');
+const sequelize = require('../config/sequelize');
 
-    static async listarPorResponsavel() {
-        return db('processos')
-            .select(
-                '*',
-                db.raw('(SELECT COUNT(*) FROM alunos_processos WHERE processo_id = processos.id) as total_alunos'),
-                db.raw('(SELECT MAX(data_atualizacao) FROM atualizacoes WHERE processo_id = processos.id) as ultima_atualizacao')
-            );
-    }
+class Processo extends Model {
+  static async listarAlunosPorProcesso(processoId) {
+    const AlunosProcessos = require('./AlunosProcessos');
+    const Usuario = require('./Usuario');
+    const relacoes = await AlunosProcessos.findAll({ where: { processo_id: processoId } });
+    const ids = relacoes.map(r => r.usuario_id);
+    if (!ids.length) return [];
+    return await Usuario.findAll({ where: { id: ids } });
+  }
+  static async buscarPorId(id) {
+    return await Processo.findByPk(id);
+  }
+  static async listarPorAluno(usuarioId) {
+    // Supondo que existe um relacionamento AlunoProcesso
+    const AlunosProcessos = require('./AlunosProcessos');
+    const relacoes = await AlunosProcessos.findAll({ where: { usuario_id: usuarioId } });
+    const ids = relacoes.map(r => r.processo_id);
+    if (!ids.length) return [];
+    return await Processo.findAll({ where: { id: ids } });
+  }
+  static async listarTodos() {
+    return await Processo.findAll();
+  }
+  static async criar({ numero_processo, descricao, status, materia_assunto_id, local_tramitacao, sistema, fase_id, diligencia_id, idusuario_responsavel, data_encerramento, observacoes, num_processo_sei, assistido }) {
+    const processo = await Processo.create({
+      numero_processo,
+      descricao,
+      status,
+      materia_assunto_id,
+      local_tramitacao,
+      sistema,
+      fase_id,
+      diligencia_id,
+      idusuario_responsavel,
+      data_encerramento,
+      observacoes,
+      num_processo_sei,
+      assistido
+    });
+    return processo.id;
+  }
 
-    static async listarTodos() {
-        return db('processos')
-            .select(
-                '*',
-                db.raw('(SELECT COUNT(*) FROM alunos_processos WHERE processo_id = processos.id) as total_alunos'),
-                db.raw('(SELECT MAX(data_atualizacao) FROM atualizacoes WHERE processo_id = processos.id) as ultima_atualizacao')
-            );
+  // Para atribuir aluno, seria melhor criar um modelo AlunoProcesso
+  static async atribuirAluno(processoId, usuarioId) {
+    const AlunosProcessos = require('./AlunosProcessos');
+    const existe = await AlunosProcessos.findOne({ where: { usuario_id: usuarioId, processo_id: processoId } });
+    if (existe) {
+      const err = new Error('Aluno já está atribuído a este processo');
+      err.status = 409;
+      throw err;
     }
-    static async removerAluno(processoId, alunoId) {
-        try {
-            const result = await db('alunos_processos')
-                .where({
-                    processo_id: processoId,
-                    usuario_id: alunoId
-                })
-                .del();
+    await AlunosProcessos.create({ usuario_id: usuarioId, processo_id: processoId });
+    return true;
+  }
 
-            if (result === 0) {
-                throw new Error('Aluno não está atribuído a este processo');
-            }
-            return true;
-        } catch (error) {
-            throw error;
-        }
-    }
-    static async listarAlunosPorProcesso(processoId) {
-    return db('alunos_processos')
-        .join('usuarios', 'alunos_processos.usuario_id', 'usuarios.id')
-        .where('alunos_processos.processo_id', processoId)
-        .select(
-            'usuarios.id as aluno_id',
-            'usuarios.nome as aluno_nome',
-            'usuarios.email as aluno_email',
-            'usuarios.telefone as aluno_telefone',
-            'alunos_processos.data_atribuicao'
-        )
-        .orderBy('usuarios.nome', 'asc');
-    }
-    static async verificarAlunoNoProcesso(processoId, alunoId) {
-    const resultado = await db('alunos_processos')
-        .where({ processo_id: processoId, usuario_id: alunoId })
-        .first();
-    return !!resultado;
-    }
+  static async listarPorResponsavel(usuarioId) {
+    // Considera campo idusuario_responsavel como responsável
+    return await Processo.findAll({ where: { idusuario_responsavel: usuarioId } });
+  }
 }
+
+Processo.init({
+  id: { type: require('sequelize').DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  numero_processo: { type: require('sequelize').DataTypes.STRING },
+  descricao: { type: require('sequelize').DataTypes.STRING },
+  status: { type: require('sequelize').DataTypes.STRING },
+  materia_assunto_id: { type: require('sequelize').DataTypes.INTEGER },
+  local_tramitacao: { type: require('sequelize').DataTypes.STRING },
+  sistema: { type: require('sequelize').DataTypes.STRING },
+  fase_id: { type: require('sequelize').DataTypes.INTEGER },
+  diligencia_id: { type: require('sequelize').DataTypes.INTEGER },
+  idusuario_responsavel: { type: require('sequelize').DataTypes.INTEGER },
+  data_encerramento: { type: require('sequelize').DataTypes.DATE },
+  observacoes: { type: require('sequelize').DataTypes.STRING },
+  num_processo_sei: { type: require('sequelize').DataTypes.STRING },
+  assistido: { type: require('sequelize').DataTypes.STRING },
+}, { sequelize: require('../config/sequelize'), modelName: 'processos', timestamps: false });
 
 module.exports = Processo;
