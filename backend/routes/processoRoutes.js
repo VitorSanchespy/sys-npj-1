@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
-const { validate } = require('../middleware/validationMiddleware');
-
+const { validate, handleValidation } = require('../middleware/validationMiddleware');
+const processoController = require('../controllers/processesController');
 module.exports = (processoController) => {
     router.use(authMiddleware);
 
@@ -51,6 +51,28 @@ module.exports = (processoController) => {
     router.get('/:processo_id',
         authMiddleware,
         processoController.buscarProcessoPorId
+    );
+
+    router.get('/:processo_id/usuarios',
+        authMiddleware,
+        processoController.listarUsuariosPorProcesso
+    );
+
+    router.post('/vincular-usuario',
+        validate('vincularUsuario'),
+        processoController.vincularUsuario
+    );
+
+    router.get('/buscar-usuarios',
+        authMiddleware,
+        processoController.buscarUsuarios
+    );
+
+    // Nova rota para adicionar usuários ao processo
+    router.post('/processos/adicionarUsuario',
+        validate('adicionarUsuario'),
+        handleValidation,
+        processoController.adicionarUsuario
     );
 
     return router;

@@ -1,5 +1,3 @@
-
-
 const { DataTypes, Model } = require('sequelize');
 const sequelize = require('../config/sequelize');
 
@@ -62,6 +60,67 @@ class Processo extends Model {
     // Considera campo idusuario_responsavel como responsável
     return await Processo.findAll({ where: { idusuario_responsavel: usuarioId } });
   }
+
+  static async vincularUsuario(processoId, usuarioId, role) {
+    const Model = role === 'Professor' ? require('./ProfessoresProcessos') : require('./AlunosProcessos');
+    await Model.create({ processo_id: processoId, usuario_id: usuarioId });
+  }
+
+  static async listarUsuariosPorProcesso(processoId, pagina = 1, porPagina = 10) {
+    const Usuario = require('./Usuario');
+    const AlunosProcessos = require('./AlunosProcessos');
+    const ProfessoresProcessos = require('./ProfessoresProcessos');
+
+    const alunosRelacoes = await AlunosProcessos.findAll({
+      where: { processo_id: processoId },
+      attributes: ['usuario_id'],
+      offset: (pagina - 1) * porPagina,
+      limit: porPagina
+    });
+
+    const professoresRelacoes = await ProfessoresProcessos.findAll({
+      where: { processo_id: processoId },
+      attributes: ['usuario_id'],
+      offset: (pagina - 1) * porPagina,
+      limit: porPagina
+    });
+
+    const usuarioIds = [...alunosRelacoes.map(r => r.usuario_id), ...professoresRelacoes.map(r => r.usuario_id)];
+
+    const usuarios = await Usuario.findAll({
+      where: { id: usuarioIds },
+      attributes: ['id', 'nome', 'role']
+    });
+
+    return usuarios;
+  }
+
+  static async adicionarUsuarioAoProcesso(processoId, usuarioId) {
+    const Usuario = require('./Usuario');
+
+    // Verificar se o usuário existe e tem role_id 2 ou 3
+    const usuario = await Usuario.findByPk(usuarioId);
+    if (!usuario || ![2, 3].includes(usuario.role_id)) {
+        throw new Error('Usuário inválido ou não permitido');
+    }
+
+    // Verificar se o usuário já está vinculado ao processo
+    const AlunosProcessos = require('./AlunosProcessos');
+    const ProfessoresProcessos = require('./ProfessoresProcessos');
+
+    const jaVinculado = await AlunosProcessos.findOne({ where: { processo_id: processoId, usuario_id: usuarioId } }) ||
+                        await ProfessoresProcessos.findOne({ where: { processo_id: processoId, usuario_id: usuarioId } });
+
+    if (jaVinculado) {
+        throw new Error('Usuário já vinculado ao processo');
+    }
+
+    // Vincular o usuário ao processo
+    const Model = usuario.role_id === 2 ? AlunosProcessos : ProfessoresProcessos;
+    await Model.create({ processo_id: processoId, usuario_id: usuarioId });
+
+    return true;
+}
 }
 
 Processo.init({

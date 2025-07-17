@@ -52,9 +52,9 @@ const validate = (method) => {
         check('numero_processo').notEmpty().withMessage('Número do processo é obrigatório')
           .isString().withMessage('Número do processo deve ser texto')
           .trim(),
-        check('descricao').notEmpty().withMessage('Descrição é obrigatória')
-          .isString().withMessage('Descrição deve ser texto')
-          .trim()
+        check('contato_assistido').notEmpty().withMessage('Contato do assistido é obrigatório')
+          .isString().withMessage('Contato do assistido deve ser texto')
+          .trim(),
       ];
     
     case 'buscarProcessos':
@@ -96,6 +96,14 @@ const validate = (method) => {
       return [
         check('processo_id').isInt({ min: 1 }).withMessage('ID de processo inválido')
           .toInt()
+      ];
+
+    // Validações para atribuição de usuários a processos
+    case 'atribuirUsuario':
+      return [
+        check('processo_id').isInt({ min: 1 }).withMessage('ID de processo inválido'),
+        check('usuario_id').isInt({ min: 1 }).withMessage('ID de usuário inválido'),
+        check('role').isIn(['Aluno', 'Professor']).withMessage('Role inválida')
       ];
 
     default:

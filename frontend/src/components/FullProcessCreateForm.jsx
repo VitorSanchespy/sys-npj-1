@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuthContext } from '@/contexts/AuthContext';
 
 const FullProcessCreateForm = () => {
-  const { token } = useAuthContext();
+  const { token, user } = useAuthContext();
   const [formData, setFormData] = useState({
     numero_processo: '',
     num_processo_sei: '',
@@ -119,11 +119,12 @@ const FullProcessCreateForm = () => {
           Authorization: `Bearer ${token}`,
         },
       };
-      const response = await axios.post('http://localhost:5173/processos/novo', { ...formData, contatoAssistido }, config);
+      const userId = user?.id || null; // Obtém o ID do usuário a partir do contexto de autenticação
+      const response = await axios.post('http://localhost:3001/api/processos/novo', { ...formData, contato_assistido: contatoAssistido, idusuario_responsavel: userId }, config);
       alert('Processo criado com sucesso!');
     } catch (error) {
-      console.error('Erro ao criar processo:', error);
-      alert(`Erro ao criar processo: ${error.message}`);
+      console.error('Erro ao criar processo:',  error, error.response?.data);
+      alert(`Erro ao criar processo: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -398,7 +399,7 @@ const FullProcessCreateForm = () => {
           <button
             type="button"
             className="bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-            onClick={() => window.location.href = 'http://localhost:5173/processos/novo'}
+            onClick={() => window.location.href = 'http://localhost:5173/processos/'}
           >
             Cancelar
           </button>

@@ -2,6 +2,8 @@ const Processo = require('../models/processesModels');
 const Atualizacao = require('../models/updateModels');
 const NotificacaoService = require('../services/notificacaoService');
 const { sendNotification } = require('../services/notificationService');
+const Usuario = require('../models/Usuario');
+const { Op } = require('sequelize');
 
 class ProcessoController {
     async removerAtualizacao(req, res) {
@@ -38,9 +40,22 @@ class ProcessoController {
                 data_encerramento,
                 observacoes,
                 num_processo_sei,
-                assistido
+                assistido,
+                contato_assistido
             } = req.body;
-            if (!numero_processo || !status || !materia_assunto_id || !local_tramitacao || !sistema || !fase_id || !diligencia_id || !idusuario_responsavel) {
+            console.log('Dados recebidos:', req.body);
+            if (!numero_processo || !status || !materia_assunto_id || !local_tramitacao || !sistema || !fase_id || !diligencia_id || !idusuario_responsavel || !contato_assistido) {
+                console.log('Campo faltando:', {
+                    numero_processo,
+                    status,
+                    materia_assunto_id,
+                    local_tramitacao,
+                    sistema,
+                    fase_id,
+                    diligencia_id,
+                    idusuario_responsavel,
+                    contato_assistido
+                });
                 return res.status(400).json({ erro: 'Preencha todos os campos obrigatórios' });
             }
             const id = await Processo.criar({
@@ -56,7 +71,8 @@ class ProcessoController {
                 data_encerramento,
                 observacoes,
                 num_processo_sei,
-                assistido
+                assistido,
+                contato_assistido
             });
             const processo = await Processo.buscarPorId(id);
 
@@ -222,10 +238,14 @@ class ProcessoController {
             if (!["Admin", "Professor"].includes(req.usuario.role) && !isAlunoDono) {
                 return res.status(403).json({ erro: 'Acesso não autorizado' });
             }
-            const alunos = await Processo.listarAlunosPorProcesso(processo_id);
-            return res.json(alunos || []);
+            const usuarios = await Processo.listarUsuariosPorProcesso(processo_id);
+            const usuariosComRole = usuarios.map(usuario => ({
+                nome: usuario.nome,
+                role: usuario.role === 'Professor' ? 'Professor(a)' : 'Aluno(a)'
+            }));
+            return res.json(usuariosComRole);
         } catch (error) {
-            console.error('Erro ao listar alunos do processo:', error);
+            console.error('Erro ao listar usuários do processo:', error);
             return res.status(500).json({ erro: 'Erro interno do servidor' });
         }
     }
@@ -239,6 +259,91 @@ class ProcessoController {
         } catch (error) {
             console.error('Erro ao buscar processo por ID:', error);
             return res.status(500).json({ erro: 'Erro ao buscar processo.' });
+        }
+    }
+
+    async listarUsuariosPorProcesso(req, res) {
+        try {
+            const { processo_id } = req.params;
+            const { pagina = 1, porPagina = 10 } = req.query;
+
+            if (!processo_id || isNaN(Number(processo_id))) {
+                return res.status(400).json({ erro: 'ID do processo inválido' });
+            }
+
+            const usuarios = await Processo.listarUsuariosPorProcesso(processo_id, pagina, porPagina);
+            const usuariosComRole = usuarios.map(usuario => ({
+                nome: usuario.nome,
+                role: usuario.role === 'Professor' ? 'Professor(a)' : 'Aluno(a)'
+            }));
+
+            return res.json(usuariosComRole);
+        } catch (error) {
+            console.error('Erro ao listar usuários do processo:', error);
+            return res.status(500).json({ erro: 'Erro interno do servidor' });
+        }
+    }
+
+    async vincularUsuario(req, res) {
+        try {
+            const { processo_id, usuario_id, role } = req.body;
+            if (!processo_id || !usuario_id || !role) {
+                return res.status(400).json({ erro: 'processo_id, usuario_id e role são obrigatórios' });
+            }
+            if (!['Aluno', 'Professor'].includes(role)) {
+                return res.status(400).json({ erro: 'Role inválida' });
+            }
+            await Processo.vincularUsuario(processo_id, usuario_id, role);
+            return res.json({ mensagem: 'Usuário vinculado com sucesso' });
+        } catch (error) {
+            console.error('Erro ao vincular usuário:', error);
+            return res.status(500).json({ erro: 'Erro interno do servidor' });
+        }
+    }
+
+    async buscarUsuarios(req, res) {
+        try {
+            const { nome } = req.query;
+            if (!nome) {
+                return res.status(400).json({ erro: 'O parâmetro nome é obrigatório' });
+            }
+
+            const usuarios = await Usuario.findAll({
+                where: {
+                    nome: {
+                        [Op.like]: `%${nome}%`
+                    }
+                },
+                attributes: ['id', 'nome', 'role']
+            });
+
+            const usuariosComRole = usuarios.map(usuario => ({
+                id: usuario.id,
+                nome: usuario.nome,
+                role: usuario.role === 'Professor' ? 'Professor(a)' : 'Aluno(a)'
+            }));
+
+            return res.json(usuariosComRole);
+        } catch (error) {
+            console.error('Erro ao buscar usuários:', error);
+            return res.status(500).json({ erro: 'Erro interno do servidor' });
+        }
+    }
+
+    async adicionarUsuario(req, res) {
+        try {
+            const { processo_id, usuario_id } = req.body;
+
+            if (!processo_id || !usuario_id) {
+                return res.status(400).json({ erro: 'processo_id e usuario_id são obrigatórios' });
+            }
+
+            await Processo.adicionarUsuarioAoProcesso(processo_id, usuario_id);
+
+            return res.json({ mensagem: 'Usuário adicionado ao processo com sucesso' });
+        } catch (error) {
+            console.error('Erro ao adicionar usuário ao processo:', error);
+            return res.status(500).json({ erro: error.message });
         }
     }
 }
