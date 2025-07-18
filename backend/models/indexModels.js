@@ -1,34 +1,37 @@
-
 const Sequelize = require('sequelize');
 const sequelize = require('../config/sequelize');
 
-const Usuario = require('./usuarioModels');
-const UsuariosProcesso = require('./usuariosProcessoModels');
-const Processo = require('./processoModels');
-const Arquivo = require('./arquivoModels');
-const MateriaAssunto = require('./materiaAssuntoModels');
-const Fase = require('./faseModels');
-const Diligencia = require('./diligenciaModels');
-const LocalTramitacao = require('./localTramitacaoModels');
-const Role = require('./roleModels');
-const AtualizacoesProcesso = require('./atualizacaoProcessoModels');
+const rolesModels = require('./rolesModels');
+const usuariosModels = require('./usuariosModels');
+const diligenciaModels = require('./diligenciaModels');
+const faseModels = require('./faseModels');
+const materiaAssuntoModels = require('./materiaAssuntoModels');
+const localTramitacaoModels = require('./localTramitacaoModels');
+const processoModels = require('./processoModels');
+const arquivoModels = require('./arquivoModels');
+const atualizacoesProcessoModels = require('./atualizacoesProcessoModels');
+const usuariosProcessoModels = require('./usuariosProcessoModels');
 
-// Adicione as associações entre os modelos aqui, se necessário
-// Exemplo:
-// Usuario.hasMany(Processo, { foreignKey: 'usuario_id' });
-// Processo.belongsTo(Usuario, { foreignKey: 'usuario_id' });
-
-module.exports = {
-  Usuario,
-  UsuariosProcesso,
-  Processo,
-  Arquivo,
-  MateriaAssunto,
-  Fase,
-  Diligencia,
-  LocalTramitacao,
-  Role,
-  AtualizacoesProcesso,
+const models = {
+  rolesModels,
+  usuariosModels,
+  diligenciaModels,
+  faseModels,
+  materiaAssuntoModels,
+  localTramitacaoModels,
+  processoModels,
+  arquivoModels,
+  atualizacoesProcessoModels,
+  usuariosProcessoModels,
   sequelize,
   Sequelize
 };
+
+// Inicializar associações
+Object.values(models).forEach(model => {
+  if (model.associate) {
+    model.associate(models);
+  }
+});
+
+module.exports = models;

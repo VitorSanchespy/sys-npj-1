@@ -3,9 +3,17 @@ const sequelize = require('../config/sequelize');
 
 class MateriaAssunto extends Model {}
 
-MateriaAssunto.init({
-  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  nome: { type: DataTypes.STRING, allowNull: false, unique: true }
-}, { sequelize, modelName: 'materia_assunto', tableName: 'materia_assunto', timestamps: false });
+MateriaAssunto.init(
+  {
+    id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+    nome: { type: DataTypes.STRING(100), allowNull: false, unique: true }
+  },
+  {
+    sequelize,
+    modelName: 'MateriaAssunto',
+    tableName: 'materia_assunto',
+    timestamps: false
+  }
+);
 
 module.exports = MateriaAssunto;
