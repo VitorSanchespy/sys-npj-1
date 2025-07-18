@@ -1,7 +1,7 @@
 
 const { Op } = require('sequelize');
 const { gerarHash } = require('../utils/authUtils');
-const Usuario = require('./Usuario');
+const Usuario = require('./usuarioModels');
 const Role = require('./roleModels');
 
 class UsuarioModel {

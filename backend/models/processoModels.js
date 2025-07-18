@@ -1,30 +1,23 @@
 const { DataTypes, Model } = require('sequelize');
 const sequelize = require('../config/sequelize');
-
 class Processo extends Model {
-  static async listarAlunosPorProcesso(processoId) {
-    const AlunosProcessos = require('./AlunosProcessos');
-    const Usuario = require('./Usuario');
-    const relacoes = await AlunosProcessos.findAll({ where: { processo_id: processoId } });
-    const ids = relacoes.map(r => r.usuario_id);
-    if (!ids.length) return [];
-    return await Usuario.findAll({ where: { id: ids } });
+  static async buscarPorNumero(numero) {
+    const resultado = await Processo.findOne({ where: { numero_processo: numero } });
+    if (!resultado) {
+      throw new Error('Processo não encontrado');
+    }
+    console.log(`[DEBUG] Processo encontrado:`, resultado);
+    return resultado;
   }
+
   static async buscarPorId(id) {
     return await Processo.findByPk(id);
-  }
-  static async listarPorAluno(usuarioId) {
-    // Supondo que existe um relacionamento AlunoProcesso
-    const AlunosProcessos = require('./AlunosProcessos');
-    const relacoes = await AlunosProcessos.findAll({ where: { usuario_id: usuarioId } });
-    const ids = relacoes.map(r => r.processo_id);
-    if (!ids.length) return [];
-    return await Processo.findAll({ where: { id: ids } });
   }
   static async listarTodos() {
     console.log('Executing listarTodos query...');
     return await Processo.findAll();
   }
+
   static async criar({ numero_processo, descricao, status, materia_assunto_id, local_tramitacao_id, sistema, fase_id, diligencia_id, idusuario_responsavel, data_encerramento, observacoes, num_processo_sei, assistido }) {
     const processo = await Processo.create({
       numero_processo,
@@ -45,8 +38,8 @@ class Processo extends Model {
   }
 
   // Para atribuir aluno, seria melhor criar um modelo AlunoProcesso
-  static async atribuirAluno(processoId, usuarioId) {
-    const AlunosProcessos = require('./AlunosProcessos');
+  static async atribuirUsuario(processoId, usuarioId) {
+    const AlunosProcessos = require('./usuariosProcessoModels');
     const existe = await AlunosProcessos.findOne({ where: { usuario_id: usuarioId, processo_id: processoId } });
     if (existe) {
       const err = new Error('Aluno já está atribuído a este processo');
@@ -68,8 +61,8 @@ class Processo extends Model {
   }
 
   static async listarUsuariosPorProcesso(processoId, pagina = 1, porPagina = 10) {
-    const Usuario = require('./Usuario');
-    const UsuariosProcesso = require('./UsuariosProcesso');
+    const Usuario = require('./usuarioModels');
+    const UsuariosProcesso = require('./usuariosProcessoModels');
 
     const relacoes = await UsuariosProcesso.findAll({
       where: { processo_id: processoId },
@@ -89,7 +82,7 @@ class Processo extends Model {
   }
 
   static async adicionarUsuarioAoProcesso(processoId, usuarioId) {
-    const Usuario = require('./Usuario');
+    const Usuario = require('./usuarioModels');
 
     // Verificar se o usuário existe e tem role_id 2 ou 3
     const usuario = await Usuario.findByPk(usuarioId);

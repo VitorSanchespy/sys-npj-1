@@ -2,7 +2,7 @@ const Processo = require('../models/processoModels');
 const Atualizacao = require('../models/updateModels');
 const NotificacaoService = require('../services/notificacaoService');
 const { sendNotification } = require('../services/notificationService');
-const Usuario = require('../models/Usuario');
+const Usuario = require('../models/usuarioModels');
 const { Op } = require('sequelize');
 
 class ProcessoController {

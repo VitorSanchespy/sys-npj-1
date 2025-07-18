@@ -2,9 +2,9 @@
 const Sequelize = require('sequelize');
 const sequelize = require('../config/sequelize');
 
-const Usuario = require('./Usuario');
-const UsuariosProcesso = require('./UsuariosProcesso');
-const Processo = require('./Processo');
+const Usuario = require('./usuarioModels');
+const UsuariosProcesso = require('./usuariosProcessoModels');
+const Processo = require('./processoModels');
 const Arquivo = require('./arquivoModels');
 const MateriaAssunto = require('./materiaAssuntoModels');
 const Fase = require('./faseModels');
