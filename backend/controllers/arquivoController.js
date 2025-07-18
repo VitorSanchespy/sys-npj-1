@@ -1,5 +1,5 @@
 const upload = require('../middleware/uploadMiddleware');
-const Arquivo = require('../models/arquivo.js');
+const Arquivo = require('../models/arquivoModels.js');
 
 exports.uploadArquivo = [
   upload.single('arquivo'), // 'arquivo' é o nome do campo no form

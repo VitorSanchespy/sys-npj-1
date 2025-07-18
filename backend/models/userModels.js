@@ -2,7 +2,7 @@
 const { Op } = require('sequelize');
 const { gerarHash } = require('../utils/authUtils');
 const Usuario = require('./Usuario');
-const Role = require('./Role');
+const Role = require('./roleModels');
 
 class UsuarioModel {
   static async buscarTodosPaginado({ search = "", page = 1, pageSize = 20 }) {

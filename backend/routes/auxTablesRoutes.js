@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const auxTablesController = require('../controllers/auxTablesController');
-const MateriaAssunto = require('../models/materiaAssunto');
-const Fase = require('../models/fase');
-const Diligencia = require('../models/diligencia');
+const MateriaAssunto = require('../models/materiaAssuntoModels');
+const Fase = require('../models/faseModels');
+const Diligencia = require('../models/diligenciaModels');
 
 router.use(authMiddleware);
 

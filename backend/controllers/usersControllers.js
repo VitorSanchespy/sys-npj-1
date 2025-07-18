@@ -1,7 +1,7 @@
 // Endpoint temporário para depuração: lista todos os usuários e todos os campos
 exports.listarUsuariosDebug = async (req, res) => {
     try {
-        const usuarios = await require('../config/db')('usuarios').select('*');
+        const usuarios = await Usuario.findAll();
         res.json(usuarios);
     } catch (error) {
         console.error('Erro ao listar usuários (debug):', error);
@@ -99,19 +99,6 @@ exports.atualizarSenha = async (req, res) => {
     }
 };
 
-exports.deletarUsuario = async (req, res) => {
-    try {
-        const usuario = await Usuario.buscarPorId(req.params.id);
-        if (!usuario) {
-            return res.status(404).json({ erro: 'Usuário não encontrado' });
-        }
-        await Usuario.deletar(req.params.id);
-        res.json({ mensagem: 'Usuário deletado com sucesso' });
-    } catch (error) {
-        console.error('Erro ao deletar usuário:', error);
-        res.status(500).json({ erro: 'Erro interno do servidor' });
-    }
-};
 // Soft delete: inativa o usuário
 exports.softDeleteUsuario = async (req, res) => {
     try {

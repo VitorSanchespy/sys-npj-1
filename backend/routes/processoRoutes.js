@@ -18,7 +18,7 @@ module.exports = (processoController) => {
         processoController.atribuirAluno
     );
 
-    router.delete('/remover-aluno',
+    router.delete('/remover-usuario',
         validate('atribuirAluno'),
         processoController.removerAluno
     );

@@ -11,7 +11,7 @@ const FullProcessCreateForm = () => {
     descricao: '',
     status: '',
     materia_assunto_id: '',
-    local_tramitacao: '',
+    local_tramitacao_id: '',
     sistema: '',
     fase_id: '',
     diligencia_id: '',
@@ -96,7 +96,7 @@ const FullProcessCreateForm = () => {
       if (field === 'materia-assunto') {
         setFormData({ ...formData, materia_assunto_id: response.data.id });
       } else if (field === 'local-tramitacao') {
-        setFormData({ ...formData, local_tramitacao: response.data.id });
+        setFormData({ ...formData, local_tramitacao_id: response.data.id });
       } else if (field === 'fase') {
         setFormData({ ...formData, fase_id: response.data.id });
       } else if (field === 'diligencia') {
@@ -246,7 +246,7 @@ const FullProcessCreateForm = () => {
           <label className="block text-sm font-medium text-gray-700">Local de Tramitação</label>
           <select
             name="local_tramitacao"
-            value={formData.local_tramitacao}
+            value={formData.local_tramitacao_id}
             onChange={handleChange}
             className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
             required

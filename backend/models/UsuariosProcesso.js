@@ -38,21 +38,4 @@ UsuariosProcesso.init(
   }
 );
 
-module.exports = {
-  up: async (queryInterface, Sequelize) => {
-    const table = await queryInterface.describeTable('processos');
-    if (!table.contato_assistido) {
-      await queryInterface.addColumn('processos', 'contato_assistido', {
-        type: Sequelize.STRING,
-        allowNull: true,
-      });
-    }
-  },
-
-  down: async (queryInterface) => {
-    const table = await queryInterface.describeTable('processos');
-    if (table.contato_assistido) {
-      await queryInterface.removeColumn('processos', 'contato_assistido');
-    }
-  },
-};
+module.exports = UsuariosProcesso;

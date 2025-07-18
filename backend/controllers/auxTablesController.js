@@ -1,13 +1,15 @@
-  // Padronização de imports
-const MateriaAssunto = require('../models/materiaAssunto');
-const Fase = require('../models/fase');
-const Diligencia = require('../models/diligencia');
+// Padronização de imports
+const MateriaAssunto = require('../models/materiaAssuntoModels');
+const Fase = require('../models/faseModels');
+const Diligencia = require('../models/diligenciaModels');
+const LocalTramitacao = require('../models/localTramitacaoModels');
 
 // Centralização de models auxiliares
 const modelMap = {
   materia_assunto: MateriaAssunto,
   fase: Fase,
-  diligencia: Diligencia
+  diligencia: Diligencia,
+  local_tramitacao: LocalTramitacao
 };
 
 exports.listar = (table) => async (req, res) => {

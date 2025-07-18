@@ -22,15 +22,16 @@ class Processo extends Model {
     return await Processo.findAll({ where: { id: ids } });
   }
   static async listarTodos() {
+    console.log('Executing listarTodos query...');
     return await Processo.findAll();
   }
-  static async criar({ numero_processo, descricao, status, materia_assunto_id, local_tramitacao, sistema, fase_id, diligencia_id, idusuario_responsavel, data_encerramento, observacoes, num_processo_sei, assistido }) {
+  static async criar({ numero_processo, descricao, status, materia_assunto_id, local_tramitacao_id, sistema, fase_id, diligencia_id, idusuario_responsavel, data_encerramento, observacoes, num_processo_sei, assistido }) {
     const processo = await Processo.create({
       numero_processo,
       descricao,
       status,
       materia_assunto_id,
-      local_tramitacao,
+      local_tramitacao_id,
       sistema,
       fase_id,
       diligencia_id,
@@ -68,24 +69,16 @@ class Processo extends Model {
 
   static async listarUsuariosPorProcesso(processoId, pagina = 1, porPagina = 10) {
     const Usuario = require('./Usuario');
-    const AlunosProcessos = require('./AlunosProcessos');
-    const ProfessoresProcessos = require('./ProfessoresProcessos');
+    const UsuariosProcesso = require('./UsuariosProcesso');
 
-    const alunosRelacoes = await AlunosProcessos.findAll({
+    const relacoes = await UsuariosProcesso.findAll({
       where: { processo_id: processoId },
       attributes: ['usuario_id'],
       offset: (pagina - 1) * porPagina,
       limit: porPagina
     });
 
-    const professoresRelacoes = await ProfessoresProcessos.findAll({
-      where: { processo_id: processoId },
-      attributes: ['usuario_id'],
-      offset: (pagina - 1) * porPagina,
-      limit: porPagina
-    });
-
-    const usuarioIds = [...alunosRelacoes.map(r => r.usuario_id), ...professoresRelacoes.map(r => r.usuario_id)];
+    const usuarioIds = relacoes.map(r => r.usuario_id);
 
     const usuarios = await Usuario.findAll({
       where: { id: usuarioIds },
@@ -121,6 +114,13 @@ class Processo extends Model {
 
     return true;
 }
+
+static associate(models) {
+    Processo.belongsTo(models.LocalTramitacao, {
+      foreignKey: 'local_tramitacao_id',
+      as: 'localTramitacao'
+    });
+  }
 }
 
 Processo.init({
@@ -129,7 +129,7 @@ Processo.init({
   descricao: { type: require('sequelize').DataTypes.STRING },
   status: { type: require('sequelize').DataTypes.STRING },
   materia_assunto_id: { type: require('sequelize').DataTypes.INTEGER },
-  local_tramitacao: { type: require('sequelize').DataTypes.STRING },
+  local_tramitacao_id: { type: require('sequelize').DataTypes.INTEGER },
   sistema: { type: require('sequelize').DataTypes.STRING },
   fase_id: { type: require('sequelize').DataTypes.INTEGER },
   diligencia_id: { type: require('sequelize').DataTypes.INTEGER },

@@ -1,4 +1,4 @@
-const Processo = require('../models/processesModels');
+const Processo = require('../models/processoModels');
 const Atualizacao = require('../models/updateModels');
 const NotificacaoService = require('../services/notificacaoService');
 const { sendNotification } = require('../services/notificationService');
@@ -32,7 +32,7 @@ class ProcessoController {
                 descricao,
                 status,
                 materia_assunto_id,
-                local_tramitacao,
+                local_tramitacao_id,
                 sistema,
                 fase_id,
                 diligencia_id,
@@ -44,12 +44,12 @@ class ProcessoController {
                 contato_assistido
             } = req.body;
             console.log('Dados recebidos:', req.body);
-            if (!numero_processo || !status || !materia_assunto_id || !local_tramitacao || !sistema || !fase_id || !diligencia_id || !idusuario_responsavel || !contato_assistido) {
+            if (!numero_processo || !status || !materia_assunto_id || !local_tramitacao_id || !sistema || !fase_id || !diligencia_id || !idusuario_responsavel || !contato_assistido) {
                 console.log('Campo faltando:', {
                     numero_processo,
                     status,
                     materia_assunto_id,
-                    local_tramitacao,
+                    local_tramitacao_id,
                     sistema,
                     fase_id,
                     diligencia_id,
@@ -63,7 +63,7 @@ class ProcessoController {
                 descricao,
                 status,
                 materia_assunto_id,
-                local_tramitacao,
+                local_tramitacao_id,
                 sistema,
                 fase_id,
                 diligencia_id,
@@ -89,21 +89,21 @@ class ProcessoController {
         }
     }
 
-    async atribuirAluno(req, res) {
+    async atribuirUsuario(req, res) {
         try {
-            const { processo_id, aluno_id } = req.body;
+            const { processo_id, usuario_id } = req.body;
             // Validação dos campos
-            if (!processo_id || !aluno_id) {
-                return res.status(400).json({ erro: 'processo_id e aluno_id são obrigatórios' });
+            if (!processo_id || !usuario_id) {
+                return res.status(400).json({ erro: 'processo_id e usuario_id são obrigatórios' });
             }
             // Verificar se o usuário é um professor
             if (req.usuario.role !== 'Professor') {
                 return res.status(403).json({ erro: 'Apenas professores podem atribuir alunos' });
             }
-            await Processo.atribuirAluno(processo_id, aluno_id);
-            res.json({ mensagem: 'Aluno atribuído com sucesso' });
+            await Processo.atribuirAluno(processo_id, ususario_id);
+            res.json({ mensagem: 'Usuario atribuído com sucesso' });
         } catch (error) {
-            console.error('Erro ao atribuir aluno:', error);
+            console.error('Erro ao atribuir usuario:', error);
             if (error.status === 409) {
                 return res.status(409).json({ erro: error.message });
             }
@@ -128,35 +128,6 @@ class ProcessoController {
         }
     }
 
-    async adicionarAtualizacao(req, res) {
-    try {
-        const { processo_id } = req.params;
-        const { descricao, tipo, anexo } = req.body;
-
-        if (!descricao) {
-            return res.status(400).json({ erro: 'Descrição é obrigatória' });
-        }
-
-        const atualizacaoId = await Atualizacao.criar({
-            usuario_id: req.usuario.id,
-            processo_id,
-            descricao,
-            tipo,
-            anexo
-        });
-
-        // Notifica os usuários vinculados ao processo
-        this.notificacaoService.enviarParaProcesso(processo_id, {
-            tipo: 'ATUALIZACAO',
-            texto: 'Nova atualização no processo'
-        });
-
-        res.status(201).json({ id: atualizacaoId });
-    } catch (error) {
-        res.status(500).json({ erro: error.message });
-    }
-    }
-
     async buscarProcessos(req, res) {
     try {
         // Recebe filtros da query string (?numero_processo=123&aluno_id=1)
@@ -177,18 +148,6 @@ class ProcessoController {
     } catch (error) {
         res.status(500).json({ erro: error.message });
     }
-    }
-
-    async listarAtualizacoes(req, res) {
-        try {
-            const { processo_id } = req.params;
-            
-            const atualizacoes = await Atualizacao.listarPorProcesso(processo_id);
-            
-            res.json(atualizacoes);
-        } catch (error) {
-            res.status(500).json({ erro: error.message });
-        }
     }
 
 
@@ -233,7 +192,7 @@ class ProcessoController {
             if (!processo_id || isNaN(Number(processo_id))) {
                 return res.status(400).json({ erro: 'ID do processo inválido' });
             }
-            // Apenas Admin, Professor ou Aluno dono do processo pode acessar
+            // Apenas Admin, Professor ou 
             const isAlunoDono = req.usuario.role === 'Aluno' && await Processo.verificarAlunoNoProcesso(processo_id, req.usuario.id);
             if (!["Admin", "Professor"].includes(req.usuario.role) && !isAlunoDono) {
                 return res.status(403).json({ erro: 'Acesso não autorizado' });
@@ -349,3 +308,4 @@ class ProcessoController {
 }
 
 module.exports = ProcessoController;
+

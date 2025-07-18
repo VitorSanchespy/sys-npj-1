@@ -112,7 +112,7 @@ const speedLimiter = slowDown({
 app.use(speedLimiter);
 
 // Conexão com o banco de dados
-require('./config/db');
+require('./config/config');
 
 
 // Cria a pasta 'uploads' se não existir

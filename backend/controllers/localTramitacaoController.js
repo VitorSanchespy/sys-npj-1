@@ -1,9 +1,9 @@
-const db = require('../config/db');
+const LocalTramitacao = require('../models/localTramitacaoModels');
 
 // Controlador para obter todos os locais de tramitação
 const getLocalTramitacoes = async (req, res) => {
   try {
-    const locais = await db('local_tramitacao').select('*');
+    const locais = await LocalTramitacao.findAll();
     res.status(200).json(locais);
   } catch (error) {
     console.error('Erro ao buscar locais de tramitação:', error);
@@ -19,8 +19,8 @@ const addLocalTramitacao = async (req, res) => {
       return res.status(400).json({ error: 'Nome é obrigatório' });
     }
 
-    const [id] = await db('local_tramitacao').insert({ nome }).returning('id');
-    res.status(201).json({ id, nome });
+    const local = await LocalTramitacao.create({ nome });
+    res.status(201).json(local);
   } catch (error) {
     console.error('Erro ao adicionar local de tramitação:', error);
     res.status(500).json({ error: 'Erro ao adicionar local de tramitação' });
