@@ -5,25 +5,13 @@ const { validate,  handleValidation } = require('../middleware/validationMiddlew
 const verificarToken = require('../middleware/authMiddleware');
 const verificarTokenReset = require('../middleware/resetPasswordMiddleware');
 
-/**
- * @swagger
- * /auth/registrar:
- *   post:
- *     summary: Registra um novo usuário
- *     tags: [Auth]
- */
+// registrar novo usuário
 router.post('/registrar', [
   validate('registrarUsuario'),
   handleValidation
 ], authController.registrar);
 
-/**
- * @swagger
- * /auth/login:
- *   post:
- *     summary: Login do usuário
- *     tags: [Auth]
- */
+// Login de usuário
 router.post('/login', [
   validate('loginUsuario'),
   handleValidation
@@ -34,13 +22,7 @@ router.post('/esqueci-senha', authController.solicitarRecuperacao);
 router.post('/solicitar-recuperacao', authController.solicitarRecuperacao);
 router.post('/redefinir-senha', verificarTokenReset, authController.redefinirSenha);
 
-/**
- * @swagger
- * /auth/perfil:
- *   get:
- *     summary: Retorna dados do usuário logado
- *     tags: [Auth]
- */
+// perfil do usuário autenticado 
 router.get('/perfil', verificarToken, authController.perfil);
 
 module.exports = router;

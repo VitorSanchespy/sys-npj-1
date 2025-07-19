@@ -14,6 +14,7 @@ const modelMap = {
   local_tramitacao: LocalTramitacao
 };
 
+// Listar tabelas auxiliares
 exports.listar = (table) => async (req, res) => {
   try {
     const Model = modelMap[table];
@@ -27,6 +28,7 @@ exports.listar = (table) => async (req, res) => {
   }
 };
 
+// Adicionar item a uma tabela auxiliar
 exports.adicionar = (table) => async (req, res) => {
   try {
     const { nome } = req.body;
@@ -59,6 +61,7 @@ exports.adicionar = (table) => async (req, res) => {
   }
 };
 
+// adicionar item a uma tabela auxiliar com nome único
 exports.buscarPorNome = (table) => async (req, res) => {
   try {
     const { nome } = req.query;

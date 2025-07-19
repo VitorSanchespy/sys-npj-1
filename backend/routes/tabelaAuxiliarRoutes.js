@@ -21,4 +21,9 @@ router.get('/diligencia', auxTablesController.listar('diligencia'));
 router.post('/diligencia', auxTablesController.adicionar('diligencia'));
 router.get('/diligencia/buscar', auxTablesController.buscarPorNome('diligencia'));
 
+// Local de Tramitação
+router.get('/local-tramitacao', auxTablesController.listar('local_tramitacao'));
+router.post('/local-tramitacao', auxTablesController.adicionar('local_tramitacao'));
+router.get('/local-tramitacao/buscar', auxTablesController.buscarPorNome('local_tramitacao'));
+
 module.exports = router;

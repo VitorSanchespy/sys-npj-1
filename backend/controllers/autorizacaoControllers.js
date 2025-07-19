@@ -4,6 +4,7 @@ const { enviarEmailRecuperacao } = require('../services/emailService');
 const verificarTokenReset = require('../middleware/resetPasswordMiddleware');
 const RESET_TOKEN_EXPIRATION = '1h';
 
+// Registrar um novo usuário
 exports.registrar = async (req, res) => {
   try {
     const { nome, email, senha, role_id } = req.body;
@@ -19,6 +20,7 @@ exports.registrar = async (req, res) => {
   }
 };
 
+// Login de usuário
 exports.login = async (req, res) => {
   try {
     const { email, senha } = req.body;
@@ -49,7 +51,7 @@ exports.login = async (req, res) => {
   }
 };
 
-
+// Recuperação de senha
 exports.solicitarRecuperacao = async (req, res) => {
   try {
     const { email } = req.body;
@@ -76,6 +78,7 @@ exports.solicitarRecuperacao = async (req, res) => {
   }
 };
 
+// Redefinir senha
 exports.redefinirSenha = [
   verificarTokenReset, // Middleware específico para redefinição
   async (req, res) => {
@@ -92,7 +95,7 @@ exports.redefinirSenha = [
   }
 ];
 
-
+// Perfil do usuário
 exports.perfil = async (req, res) => {
   try {
     const usuarioCompleto = await Usuario.usuarioCompleto(req.usuario.id);

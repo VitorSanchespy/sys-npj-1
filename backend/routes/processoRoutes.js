@@ -1,77 +1,67 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
+const roleMiddleware = require('../middleware/roleMiddleware.js');
 const { validate, handleValidation } = require('../middleware/validationMiddleware');
-const processoController = require('../controllers/processoControllers');
+// Importando os controladores de processo
+const {
+    criarProcessos,  vincularUsuarioProcessos, atualizarProcessos,
+    listarProcessos, removerUsuarioProcessos,
+    listarUsuariosPorProcessos, listarMeusProcessos,
+    buscarProcessos
+} = require('../controllers/processoControllers.js');
+
+// Aplicar middleware de autenticação a todas as rotas
 router.use(authMiddleware);
 
+// criar novo processo
 router.post('/novo',
+    roleMiddleware(['Professor', 'Admin']),
     validate('criarProcesso'),
-    processoController.criarProcesso
+    criarProcessos
 );
 
-router.get('/', processoController.listarProcessos);
+// Atualizar processo existente
+router.patch('/:processo_id',
+    roleMiddleware(['Professor', 'Admin']),
+    validate('atualizarProcesso'),
+    handleValidation,
+    atualizarProcessos
+)
 
-router.post('/atribuir-aluno',
-    validate('atribuirAluno'),
-    processoController.atribuirUsuario
-);
+// listar processos
+router.get('/', 
+    roleMiddleware(['Professor', 'Admin']),
+    listarProcessos);
 
+// Remover usuário de processo -implementar validação
 router.delete('/remover-usuario',
-    validate('atribuirAluno'),
-    processoController.removerAluno
+    validate('removerUsuario'),
+    removerUsuarioProcessos
 );
 
-router.post('/:processo_id/atualizacoes',
-    validate('adicionarAtualizacao'),
-    processoController.adicionarAtualizacao
+// Listar usuários vinculados a um processo
+router.get('/:processo_id/usuarios',
+    listarUsuariosPorProcessos
 );
 
-router.delete('/:processo_id/atualizacoes/:atualizacao_id',
-    processoController.removerAtualizacao
-);
+// Listar meus processos (Alunos e Professores)
+router.get('/meus-processos', listarMeusProcessos);
 
-router.get('/:processo_id/alunos',
-    authMiddleware,
-    processoController.listarAlunosPorProcesso
-);
+// Buscar processos por numero
+router.get('/buscar', buscarProcessos);
 
-router.get('/meus-processos', processoController.listarMeusProcessos);
-
-router.get('/:processo_id/atualizacoes',
-    processoController.listarAtualizacoes
-);
-
-router.get('/buscar',
-    authMiddleware,
-    processoController.buscarProcessos
-);
-
-router.get('/:processo_id',
-    authMiddleware,
-    processoController.buscarProcessoPorId
-);
-
+// listar usuários vinculados a um processo
 router.get('/:processo_id/usuarios',
     authMiddleware,
-    processoController.listarUsuariosPorProcesso
+    listarUsuariosPorProcessos
 );
 
+// Vincular usuário a processo
 router.post('/vincular-usuario',
+    roleMiddleware(['Professor', 'Admin']),
     validate('vincularUsuario'),
-    processoController.vincularUsuario
-);
-
-router.get('/buscar-usuarios',
-    authMiddleware,
-    processoController.buscarUsuarios
-);
-
-// Nova rota para adicionar usuários ao processo
-router.post('/processos/adicionarUsuario',
-    validate('adicionarUsuario'),
-    handleValidation,
-    processoController.adicionarUsuario
+    vincularUsuarioProcessos
 );
 
 module.exports = router;

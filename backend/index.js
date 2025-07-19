@@ -37,8 +37,6 @@ app.use(cors(corsOptions));
 
 const auxTablesRoutes = require('./routes/tabelaAuxiliarRoutes');
 app.use('/api/aux', auxTablesRoutes);
-const localTramitacaoRoutes = require('./routes/localTramitacaoRoutes');
-app.use('/api/aux/local-tramitacao', localTramitacaoRoutes);
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -128,10 +126,9 @@ app.use('/uploads', express.static(uploadDir));
 
 // Rotas
 const ProcessoController = require('./controllers/processoControllers');
-const processoController = new ProcessoController(io);
 app.use('/auth', require('./routes/autorizacaoRoutes'));
 app.use('/api/usuarios', require('./routes/usuarioRoutes'));
-app.use('/api/processos', require('./routes/processoRoutes')(processoController));
+app.use('/api/processos', require('./routes/processoRoutes'));
 app.use('/api/arquivos', require('./routes/arquivoRoutes'));
 app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoutes'));
 // Tratamento de erros

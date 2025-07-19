@@ -32,7 +32,7 @@ exports.uploadArquivo = [
   }
 ];
 
-
+// Listar arquivos de um processo específico
 exports.listarArquivos = async (req, res) => {
   try {
     const { processo_id } = req.params;
