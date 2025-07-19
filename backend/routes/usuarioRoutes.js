@@ -1,10 +1,13 @@
 
 const express = require('express');
 const router = express.Router();
-const { listarUsuarios, criarUsuario, buscarUsuarioPorId, atualizarUsuario, deletarUsuario, reativarUsuario, softDeleteUsuario, reactivateUsuario, listarUsuariosDebug } = require('../controllers/usersControllers');
+const { listarUsuarios, criarUsuario, buscarUsuarioPorId,
+atualizarUsuario, reativarUsuario, softDeleteUsuario, 
+reactivateUsuario, listarUsuariosDebug, 
+atualizarSenha, listarAlunos, listarAlunosParaAtribuicao } = require('../controllers/usuarioControllers.js');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware.js'); // Novo middleware para roles
-const usuarioController = require('../controllers/usersControllers');
+const usuarioController = require('../controllers/usuarioControllers.js');
 const { validate, handleValidation, } = require('../middleware/validationMiddleware'); // Middleware de validação
 
 // Soft delete usuário
@@ -93,7 +96,7 @@ router.put('/:id/senha', [
  */
 router.delete('/:id', [
   roleMiddleware(['Professor', 'Admin']),
-  usuarioController.deletarUsuario
+  usuarioController.softDeleteUsuario
 ]);
 
 /**

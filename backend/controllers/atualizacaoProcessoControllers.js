@@ -1,4 +1,4 @@
-const AtualizacoesProcesso = require('../models/atualizacaoProcessoModels');
+const { atualizacoesProcessoModels: AtualizacoesProcesso, usuariosModels: Usuario, processoModels: Processo, arquivoModels: Arquivo } = require('../models/indexModels');
 
 const createUpdate = async (req, res) => {
   try {
@@ -17,7 +17,16 @@ const createUpdate = async (req, res) => {
       arquivos_id: tipo_atualizacao === 'arquivo' ? arquivos_id : null
     });
 
-    res.status(201).json(update);
+    // Retorna a atualização já com os relacionamentos
+    const updateWithAssociations = await AtualizacoesProcesso.findByPk(update.id, {
+      include: [
+        { model: Usuario, as: 'usuario' },
+        { model: Processo, as: 'processo' },
+        { model: Arquivo, as: 'arquivo' }
+      ]
+    });
+
+    res.status(201).json(updateWithAssociations);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao criar atualização.' });
   }
@@ -26,7 +35,14 @@ const createUpdate = async (req, res) => {
 const listUpdates = async (req, res) => {
   try {
     const { processo_id } = req.params;
-    const updates = await AtualizacoesProcesso.findAll({ where: { processo_id } });
+    const updates = await AtualizacoesProcesso.findAll({
+      where: { processo_id },
+      include: [
+        { model: Usuario, as: 'usuario' },
+        { model: Processo, as: 'processo' },
+        { model: Arquivo, as: 'arquivo' }
+      ]
+    });
     res.json(updates);
   } catch (err) {
     res.status(500).json({ error: 'Erro ao buscar atualizações.' });

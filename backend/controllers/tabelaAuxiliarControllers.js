@@ -1,8 +1,10 @@
 // Padronização de imports
-const MateriaAssunto = require('../models/materiaAssuntoModels');
-const Fase = require('../models/faseModels');
-const Diligencia = require('../models/diligenciaModels');
-const LocalTramitacao = require('../models/localTramitacaoModels');
+const {
+  materiaAssuntoModels: MateriaAssunto,
+  faseModels: Fase,
+  diligenciaModels: Diligencia,
+  localTramitacaoModels: LocalTramitacao
+} = require('../models/indexModels');
 
 // Centralização de models auxiliares
 const modelMap = {
@@ -63,7 +65,8 @@ exports.buscarPorNome = (table) => async (req, res) => {
     if (!nome) return res.status(400).json({ erro: 'Nome é obrigatório.' });
     const Model = modelMap[table];
     if (!Model) return res.status(400).json({ erro: 'Tabela inválida.' });
-    const items = await Model.findAll({ where: { nome: { [require('sequelize').Op.like]: `%${nome}%` } } });
+    const { Op } = require('sequelize');
+    const items = await Model.findAll({ where: { nome: { [Op.like]: `%${nome}%` } } });
     res.json(items);
   } catch (err) {
     // Log detalhado para debug

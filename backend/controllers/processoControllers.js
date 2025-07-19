@@ -1,19 +1,26 @@
-const Processo = require('../models/processoModels');
-const Atualizacao = require('../models/updateModels');
+const {
+  processoModels: Processo,
+  usuariosModels: Usuario,
+  atualizacoesProcessoModels: AtualizacoesProcesso,
+  usuariosProcessoModels: UsuariosProcesso,
+  arquivoModels: Arquivo,
+  materiaAssuntoModels: MateriaAssunto,
+  faseModels: Fase,
+  diligenciaModels: Diligencia,
+  localTramitacaoModels: LocalTramitacao
+} = require('../models/indexModels');
 const NotificacaoService = require('../services/notificacaoService');
 const { sendNotification } = require('../services/notificationService');
-const Usuario = require('../models/usuarioModels');
 const { Op } = require('sequelize');
 
 class ProcessoController {
     async removerAtualizacao(req, res) {
         try {
             const { processo_id, atualizacao_id } = req.params;
-            // Permitir apenas professor ou admin
             if (req.usuario.role !== 'Professor' && req.usuario.role !== 'Admin') {
                 return res.status(403).json({ erro: 'Apenas professores ou administradores podem remover atualizações' });
             }
-            const count = await Atualizacao.remover({ processo_id, atualizacao_id });
+            const count = await AtualizacoesProcesso.destroy({ where: { id: atualizacao_id, processo_id } });
             if (count === 0) {
                 return res.status(404).json({ erro: 'Atualização não encontrada' });
             }
@@ -43,22 +50,10 @@ class ProcessoController {
                 assistido,
                 contato_assistido
             } = req.body;
-            console.log('Dados recebidos:', req.body);
             if (!numero_processo || !status || !materia_assunto_id || !local_tramitacao_id || !sistema || !fase_id || !diligencia_id || !idusuario_responsavel || !contato_assistido) {
-                console.log('Campo faltando:', {
-                    numero_processo,
-                    status,
-                    materia_assunto_id,
-                    local_tramitacao_id,
-                    sistema,
-                    fase_id,
-                    diligencia_id,
-                    idusuario_responsavel,
-                    contato_assistido
-                });
                 return res.status(400).json({ erro: 'Preencha todos os campos obrigatórios' });
             }
-            const id = await Processo.criar({
+            const processo = await Processo.create({
                 numero_processo,
                 descricao,
                 status,
@@ -74,15 +69,11 @@ class ProcessoController {
                 assistido,
                 contato_assistido
             });
-            const processo = await Processo.buscarPorId(id);
-
-            // Enviar notificação após a criação do processo
             await sendNotification(
                 'admin@example.com',
                 'Novo Processo Criado',
-                `Um novo processo foi criado: ${id}`
+                `Um novo processo foi criado: ${processo.id}`
             );
-
             res.status(201).json(processo);
         } catch (error) {
             res.status(500).json({ erro: error.message });
@@ -92,16 +83,15 @@ class ProcessoController {
     async atribuirUsuario(req, res) {
         try {
             const { processo_id, usuario_id } = req.body;
-            // Validação dos campos
             if (!processo_id || !usuario_id) {
                 return res.status(400).json({ erro: 'processo_id e usuario_id são obrigatórios' });
             }
-            // Verificar se o usuário é um professor
             if (req.usuario.role !== 'Professor') {
                 return res.status(403).json({ erro: 'Apenas professores podem atribuir alunos' });
             }
-            await Processo.atribuirAluno(processo_id, ususario_id);
-            res.json({ mensagem: 'Usuario atribuído com sucesso' });
+            // Cria vínculo na tabela de associação
+            await UsuariosProcesso.create({ processo_id, usuario_id });
+            res.json({ mensagem: 'Usuário atribuído com sucesso' });
         } catch (error) {
             console.error('Erro ao atribuir usuario:', error);
             if (error.status === 409) {
@@ -113,15 +103,26 @@ class ProcessoController {
 
     async listarProcessos(req, res) {
         try {
-            let processos;
+            let where = {};
             const role = (req.usuario.role || '').toLowerCase();
             if (role === 'aluno') {
-                processos = await Processo.listarPorAluno(req.usuario.id);
-            } else if (role === 'professor' || role === 'admin') {
-                processos = await Processo.listarTodos();
-            } else {
-                processos = await Processo.listarTodos();
+                // Busca processos em que o aluno está vinculado
+                const vinculos = await UsuariosProcesso.findAll({ where: { usuario_id: req.usuario.id } });
+                const ids = vinculos.map(v => v.processo_id);
+                where = { id: ids };
             }
+            const processos = await Processo.findAll({
+                where,
+                include: [
+                    { model: AtualizacoesProcesso, as: 'atualizacoes' },
+                    { model: Arquivo, as: 'arquivos' },
+                    { model: UsuariosProcesso, as: 'usuariosProcesso' },
+                    { model: MateriaAssunto, as: 'materiaAssunto' },
+                    { model: Fase, as: 'fase' },
+                    { model: Diligencia, as: 'diligencia' },
+                    { model: LocalTramitacao, as: 'localTramitacao' }
+                ]
+            });
             res.json(processos);
         } catch (error) {
             res.status(500).json({ erro: error.message });
@@ -129,25 +130,39 @@ class ProcessoController {
     }
 
     async buscarProcessos(req, res) {
-    try {
-        // Recebe filtros da query string (?numero_processo=123&aluno_id=1)
-        const filtros = req.query;
-        
-        // Recebe parâmetros de paginação
-        const paginacao = {
-            pagina: parseInt(req.query.pagina) || 1,
-            porPagina: parseInt(req.query.porPagina) || 10
-        };
-
-        // Remove campos de paginação dos filtros
-        delete filtros.pagina;
-        delete filtros.porPagina;
-
-        const resultado = await Processo.buscarComFiltros(filtros, paginacao);
-        res.json(resultado);
-    } catch (error) {
-        res.status(500).json({ erro: error.message });
-    }
+        try {
+            const filtros = { ...req.query };
+            const pagina = parseInt(filtros.pagina) || 1;
+            const porPagina = parseInt(filtros.porPagina) || 10;
+            delete filtros.pagina;
+            delete filtros.porPagina;
+            // Monta where dinâmico
+            const where = {};
+            if (filtros.numero_processo) where.numero_processo = { [Op.like]: `%${filtros.numero_processo}%` };
+            if (filtros.status) where.status = filtros.status;
+            if (filtros.aluno_id) {
+                const vinculos = await UsuariosProcesso.findAll({ where: { usuario_id: filtros.aluno_id } });
+                const ids = vinculos.map(v => v.processo_id);
+                where.id = ids;
+            }
+            const { count, rows } = await Processo.findAndCountAll({
+                where,
+                include: [
+                    { model: AtualizacoesProcesso, as: 'atualizacoes' },
+                    { model: Arquivo, as: 'arquivos' },
+                    { model: UsuariosProcesso, as: 'usuariosProcesso' },
+                    { model: MateriaAssunto, as: 'materiaAssunto' },
+                    { model: Fase, as: 'fase' },
+                    { model: Diligencia, as: 'diligencia' },
+                    { model: LocalTramitacao, as: 'localTramitacao' }
+                ],
+                limit: porPagina,
+                offset: (pagina - 1) * porPagina
+            });
+            res.json({ total: count, processos: rows });
+        } catch (error) {
+            res.status(500).json({ erro: error.message });
+        }
     }
 
 
@@ -156,7 +171,20 @@ class ProcessoController {
             if (req.usuario.role !== 'Aluno') {
                 return res.status(403).json({ erro: 'Acesso permitido apenas para alunos' });
             }
-            const processos = await Processo.listarPorAluno(req.usuario.id);
+            const vinculos = await UsuariosProcesso.findAll({ where: { usuario_id: req.usuario.id } });
+            const ids = vinculos.map(v => v.processo_id);
+            const processos = await Processo.findAll({
+                where: { id: ids },
+                include: [
+                    { model: AtualizacoesProcesso, as: 'atualizacoes' },
+                    { model: Arquivo, as: 'arquivos' },
+                    { model: UsuariosProcesso, as: 'usuariosProcesso' },
+                    { model: MateriaAssunto, as: 'materiaAssunto' },
+                    { model: Fase, as: 'fase' },
+                    { model: Diligencia, as: 'diligencia' },
+                    { model: LocalTramitacao, as: 'localTramitacao' }
+                ]
+            });
             return res.json(processos);
         } catch (error) {
             console.error('Erro ao listar meus processos:', error);
@@ -170,17 +198,16 @@ class ProcessoController {
             if (!processo_id || !aluno_id) {
                 return res.status(400).json({ erro: 'processo_id e aluno_id são obrigatórios' });
             }
-            // Verificar se o usuário é um professor/admin
             if (!["Professor", "Admin"].includes(req.usuario.role)) {
                 return res.status(403).json({ erro: 'Apenas professores ou admins podem remover alunos' });
             }
-            await Processo.removerAluno(processo_id, aluno_id);
+            const count = await UsuariosProcesso.destroy({ where: { processo_id, usuario_id: aluno_id } });
+            if (count === 0) {
+                return res.status(400).json({ erro: 'Aluno não está atribuído a este processo' });
+            }
             return res.json({ mensagem: 'Aluno removido do processo com sucesso' });
         } catch (error) {
             console.error('Erro ao remover aluno:', error);
-            if (error.message === 'Aluno não está atribuído a este processo') {
-                return res.status(400).json({ erro: error.message });
-            }
             return res.status(500).json({ erro: 'Erro interno do servidor' });
         }
     }
@@ -188,19 +215,18 @@ class ProcessoController {
     async listarAlunosPorProcesso(req, res) {
         try {
             const { processo_id } = req.params;
-            // Validação básica
             if (!processo_id || isNaN(Number(processo_id))) {
                 return res.status(400).json({ erro: 'ID do processo inválido' });
             }
-            // Apenas Admin, Professor ou 
-            const isAlunoDono = req.usuario.role === 'Aluno' && await Processo.verificarAlunoNoProcesso(processo_id, req.usuario.id);
+            // Apenas Admin, Professor ou aluno vinculado
+            const isAlunoDono = req.usuario.role === 'Aluno' && (await UsuariosProcesso.findOne({ where: { processo_id, usuario_id: req.usuario.id } }));
             if (!["Admin", "Professor"].includes(req.usuario.role) && !isAlunoDono) {
                 return res.status(403).json({ erro: 'Acesso não autorizado' });
             }
-            const usuarios = await Processo.listarUsuariosPorProcesso(processo_id);
-            const usuariosComRole = usuarios.map(usuario => ({
-                nome: usuario.nome,
-                role: usuario.role === 'Professor' ? 'Professor(a)' : 'Aluno(a)'
+            const vinculos = await UsuariosProcesso.findAll({ where: { processo_id }, include: [{ model: Usuario, as: 'usuario' }] });
+            const usuariosComRole = vinculos.map(v => ({
+                nome: v.usuario?.nome,
+                role: v.usuario?.role_id === 3 ? 'Professor(a)' : 'Aluno(a)'
             }));
             return res.json(usuariosComRole);
         } catch (error) {
@@ -212,7 +238,17 @@ class ProcessoController {
     async buscarProcessoPorId(req, res) {
         const { processo_id } = req.params;
         try {
-            const processo = await Processo.buscarPorId(processo_id);
+            const processo = await Processo.findByPk(processo_id, {
+                include: [
+                    { model: AtualizacoesProcesso, as: 'atualizacoes' },
+                    { model: Arquivo, as: 'arquivos' },
+                    { model: UsuariosProcesso, as: 'usuariosProcesso' },
+                    { model: MateriaAssunto, as: 'materiaAssunto' },
+                    { model: Fase, as: 'fase' },
+                    { model: Diligencia, as: 'diligencia' },
+                    { model: LocalTramitacao, as: 'localTramitacao' }
+                ]
+            });
             if (!processo) return res.status(404).json({ erro: 'Processo não encontrado' });
             return res.json(processo);
         } catch (error) {
@@ -225,17 +261,19 @@ class ProcessoController {
         try {
             const { processo_id } = req.params;
             const { pagina = 1, porPagina = 10 } = req.query;
-
             if (!processo_id || isNaN(Number(processo_id))) {
                 return res.status(400).json({ erro: 'ID do processo inválido' });
             }
-
-            const usuarios = await Processo.listarUsuariosPorProcesso(processo_id, pagina, porPagina);
-            const usuariosComRole = usuarios.map(usuario => ({
-                nome: usuario.nome,
-                role: usuario.role === 'Professor' ? 'Professor(a)' : 'Aluno(a)'
+            const vinculos = await UsuariosProcesso.findAll({
+                where: { processo_id },
+                include: [{ model: Usuario, as: 'usuario' }],
+                limit: Number(porPagina),
+                offset: (Number(pagina) - 1) * Number(porPagina)
+            });
+            const usuariosComRole = vinculos.map(v => ({
+                nome: v.usuario?.nome,
+                role: v.usuario?.role_id === 3 ? 'Professor(a)' : 'Aluno(a)'
             }));
-
             return res.json(usuariosComRole);
         } catch (error) {
             console.error('Erro ao listar usuários do processo:', error);
@@ -252,7 +290,7 @@ class ProcessoController {
             if (!['Aluno', 'Professor'].includes(role)) {
                 return res.status(400).json({ erro: 'Role inválida' });
             }
-            await Processo.vincularUsuario(processo_id, usuario_id, role);
+            await UsuariosProcesso.create({ processo_id, usuario_id });
             return res.json({ mensagem: 'Usuário vinculado com sucesso' });
         } catch (error) {
             console.error('Erro ao vincular usuário:', error);
@@ -266,22 +304,19 @@ class ProcessoController {
             if (!nome) {
                 return res.status(400).json({ erro: 'O parâmetro nome é obrigatório' });
             }
-
             const usuarios = await Usuario.findAll({
                 where: {
                     nome: {
                         [Op.like]: `%${nome}%`
                     }
                 },
-                attributes: ['id', 'nome', 'role']
+                attributes: ['id', 'nome', 'role_id']
             });
-
             const usuariosComRole = usuarios.map(usuario => ({
                 id: usuario.id,
                 nome: usuario.nome,
-                role: usuario.role === 'Professor' ? 'Professor(a)' : 'Aluno(a)'
+                role: usuario.role_id === 3 ? 'Professor(a)' : 'Aluno(a)'
             }));
-
             return res.json(usuariosComRole);
         } catch (error) {
             console.error('Erro ao buscar usuários:', error);
@@ -292,13 +327,10 @@ class ProcessoController {
     async adicionarUsuario(req, res) {
         try {
             const { processo_id, usuario_id } = req.body;
-
             if (!processo_id || !usuario_id) {
                 return res.status(400).json({ erro: 'processo_id e usuario_id são obrigatórios' });
             }
-
-            await Processo.adicionarUsuarioAoProcesso(processo_id, usuario_id);
-
+            await UsuariosProcesso.create({ processo_id, usuario_id });
             return res.json({ mensagem: 'Usuário adicionado ao processo com sucesso' });
         } catch (error) {
             console.error('Erro ao adicionar usuário ao processo:', error);

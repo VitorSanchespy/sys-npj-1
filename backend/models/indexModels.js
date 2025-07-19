@@ -9,7 +9,7 @@ const materiaAssuntoModels = require('./materiaAssuntoModels');
 const localTramitacaoModels = require('./localTramitacaoModels');
 const processoModels = require('./processoModels');
 const arquivoModels = require('./arquivoModels');
-const atualizacoesProcessoModels = require('./atualizacoesProcessoModels');
+const atualizacoesProcessoModels = require('./atualizacaoProcessoModels');
 const usuariosProcessoModels = require('./usuariosProcessoModels');
 
 const models = {

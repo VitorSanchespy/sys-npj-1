@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
-const arquivoController = require('../controllers/arquivoController');
+const arquivoController = require('../controllers/arquivoControllers');
 
 router.post('/upload', 
   authMiddleware,

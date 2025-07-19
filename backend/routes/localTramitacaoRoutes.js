@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { addLocalTramitacao, getLocalTramitacoes } = require('../controllers/localTramitacaoController');
+const { addLocalTramitacao, getLocalTramitacoes } = require('../controllers/localTramitacaoControllers');
 const authMiddleware = require('../middleware/authMiddleware');
 
 // Rota para obter todos os locais de tramitação

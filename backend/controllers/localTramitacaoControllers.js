@@ -1,4 +1,4 @@
-const LocalTramitacao = require('../models/localTramitacaoModels');
+const { localTramitacaoModels: LocalTramitacao } = require('../models/indexModels');
 
 // Controlador para obter todos os locais de tramitação
 const getLocalTramitacoes = async (req, res) => {

@@ -1,5 +1,5 @@
 const upload = require('../middleware/uploadMiddleware');
-const Arquivo = require('../models/arquivoModels.js');
+const { arquivoModels: Arquivo, processoModels: Processo, usuariosModels: Usuario } = require('../models/indexModels');
 
 exports.uploadArquivo = [
   upload.single('arquivo'), // 'arquivo' é o nome do campo no form
@@ -22,8 +22,8 @@ exports.uploadArquivo = [
         usuario_id: req.usuario.id // Usuário autenticado
       };
 
-      const id = await Arquivo.criar(metadados);
-      res.status(201).json({ id, ...metadados });
+      const arquivo = await Arquivo.create(metadados);
+      res.status(201).json(arquivo);
 
     } catch (error) {
       console.error(error);
@@ -36,7 +36,13 @@ exports.uploadArquivo = [
 exports.listarArquivos = async (req, res) => {
   try {
     const { processo_id } = req.params;
-    const arquivos = await Arquivo.listarPorProcesso(processo_id);
+    const arquivos = await Arquivo.findAll({
+      where: { processo_id },
+      include: [
+        { model: Processo, as: 'processo' },
+        { model: Usuario, as: 'usuario' }
+      ]
+    });
     res.json(arquivos);
   } catch (error) {
     res.status(500).json({ erro: error.message });
@@ -47,7 +53,13 @@ exports.listarArquivos = async (req, res) => {
 exports.listarArquivosUsuario = async (req, res) => {
   try {
     const { usuario_id } = req.params;
-    const arquivos = await Arquivo.listarPorUsuario(usuario_id);
+    const arquivos = await Arquivo.findAll({
+      where: { usuario_id },
+      include: [
+        { model: Processo, as: 'processo' },
+        { model: Usuario, as: 'usuario' }
+      ]
+    });
     res.json(arquivos);
   } catch (error) {
     res.status(500).json({ erro: error.message });

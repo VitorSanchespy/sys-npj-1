@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const processUpdatesController = require('../controllers/processUpdatesController');
+const processUpdatesController = require('../controllers/atualizacaoProcessoControllers');
 const authMiddleware = require('../middleware/authMiddleware');
 
 // Listar atualizações de um processo
