@@ -12,10 +12,10 @@ const Sidebar = () => {
         <ul>
           <li><Link to="/dashboard">Dashboard</Link></li>
           <li><Link to="/processos">Processos</Link></li>
-          <li><Link to="/arquivos">Arquivos</Link></li>
-          <li><Link to="/profile">Perfil</Link></li>
+          <li><Link to="/arquivos">Meus Arquivos</Link></li>
+          <li><Link to="/profile">Meu Perfil</Link></li>
           {hasRole(user, ["admin", "professor"]) && (
-            <li><Link to="/usuarios">Gerenciar Usuários</Link></li>
+            <li><Link to="/usuarios">Usuários</Link></li>
           )}
           <li>
             <LogoutButton />

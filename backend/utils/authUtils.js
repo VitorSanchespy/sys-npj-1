@@ -3,9 +3,11 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 // Configurações de segurança
-const saltRounds = 12; 
-const TOKEN_EXPIRATION = '6h'; 
-const JWT_ALGORITHM = 'HS256'; 
+const saltRounds = 12;
+const TOKEN_EXPIRATION = process.env.TOKEN_EXPIRATION || '24h';
+const REFRESH_TOKEN_EXPIRATION = process.env.REFRESH_TOKEN_EXPIRATION || '7d';
+const JWT_ALGORITHM = 'HS256';
+const crypto = require('crypto');
 
 async function gerarHash(senha) {
     try {
@@ -25,35 +27,48 @@ async function verificarSenha(senha, hash) {
     }
 }
 
+
 function gerarToken(usuario) {
     try {
-        return jwt.sign(
+        const token = jwt.sign(
             {
                 id: usuario.id,
                 role: usuario.role,
-                // Adicionado timestamp de emissão
                 iat: Math.floor(Date.now() / 1000)
             },
             process.env.JWT_SECRET,
-            { 
+            {
                 expiresIn: TOKEN_EXPIRATION,
                 algorithm: JWT_ALGORITHM
             }
         );
+        return token;
     } catch (error) {
         console.error('Erro ao gerar token:', error);
         throw new Error('Falha ao gerar token de acesso');
     }
 }
 
+function gerarRefreshToken(usuario) {
+    try {
+        // Gera um token aleatório seguro
+        const refreshToken = crypto.randomBytes(64).toString('hex');
+        // Opcional: pode salvar no banco de dados junto ao usuário
+        return refreshToken;
+    } catch (error) {
+        console.error('Erro ao gerar refresh token:', error);
+        throw new Error('Falha ao gerar refresh token');
+    }
+}
+
 function verificarToken(token) {
     try {
-        return jwt.verify(token, process.env.JWT_SECRET, {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET, {
             algorithms: [JWT_ALGORITHM]
         });
+        return decoded;
     } catch (error) {
         console.error('Erro ao verificar token:', error);
-        // Diferenciar tipos de erros (expirado, inválido, etc)
         if (error.name === 'TokenExpiredError') {
             throw new Error('Token expirado');
         }
@@ -61,6 +76,29 @@ function verificarToken(token) {
     }
 }
 
+// Função para logs detalhados
+function logAuthEvent(event, details) {
+    console.log(`[AUTH] ${event}:`, details);
+}
+
+// Função para validar refresh token (exemplo, precisa de persistência real)
+// Aqui apenas simula validação, mas o ideal é salvar no banco
+function validarRefreshToken(token, usuario) {
+    // Exemplo: buscar no banco se o refreshToken está ativo para o usuário
+    // Aqui só retorna true para exemplo
+    logAuthEvent('Validação de refresh token', { token, usuario });
+    return true;
+}
+
+module.exports = {
+    gerarHash,
+    verificarSenha,
+    gerarToken,
+    verificarToken,
+    gerarRefreshToken,
+    validarRefreshToken,
+    logAuthEvent
+};
 module.exports = {
     gerarHash,
     verificarSenha,

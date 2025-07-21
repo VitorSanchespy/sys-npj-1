@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { useAuthContext } from "../../contexts/AuthContext";
-import { apiRequest } from "../../api/apiRequest";
+import { fileService } from "../../api/services";
 
 export default function FileUploadForm({ processoId, onUpload }) {
   const { token, user } = useAuthContext();
@@ -27,11 +27,7 @@ export default function FileUploadForm({ processoId, onUpload }) {
     formData.append("usuario_id", user.id);
 
     try {
-      await apiRequest("/api/arquivos/upload", {
-        method: "POST",
-        token,
-        body: formData,
-      });
+      await fileService.uploadFile(formData, token);
       setMsg("Arquivo enviado com sucesso!");
       fileInput.current.value = "";
       if (onUpload) onUpload();

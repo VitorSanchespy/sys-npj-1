@@ -8,7 +8,7 @@ const {
     criarProcessos,  vincularUsuarioProcessos, atualizarProcessos,
     listarProcessos, removerUsuarioProcessos,
     listarUsuariosPorProcessos, listarMeusProcessos,
-    buscarProcessos
+    buscarProcessos, detalharProcessos
 } = require('../controllers/processoControllers.js');
 
 // Aplicar middleware de autenticação a todas as rotas
@@ -28,6 +28,12 @@ router.patch('/:processo_id',
     handleValidation,
     atualizarProcessos
 )
+
+// Detalhar processo completo
+router.get('/:processo_id/detalhes',
+    roleMiddleware(['Professor', 'Admin', 'Aluno']),
+    detalharProcessos
+);
 
 // listar processos
 router.get('/', 

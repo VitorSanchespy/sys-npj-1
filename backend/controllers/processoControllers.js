@@ -1,3 +1,4 @@
+
 const {
   processoModels: Processo,
   usuariosModels: Usuario,
@@ -105,11 +106,13 @@ const {
         try {
             let where = {};
             const role = (req.usuario.role || '').toLowerCase();
+            console.log('[listarProcessos] Usuário:', req.usuario?.id, '| Role:', req.usuario?.role, '| Nome:', req.usuario?.nome);
             if (role === 'aluno') {
                 // Busca processos em que o aluno está vinculado
                 const vinculos = await UsuariosProcesso.findAll({ where: { usuario_id: req.usuario.id } });
                 const ids = vinculos.map(v => v.processo_id);
                 where = { id: ids };
+                console.log('[listarProcessos] Aluno, ids vinculados:', ids);
             }
             const processos = await Processo.findAll({
                 where,
@@ -123,8 +126,10 @@ const {
                     { model: LocalTramitacao, as: 'localTramitacao' }
                 ]
             });
+            console.log('[listarProcessos] Total processos retornados:', processos.length);
             res.json(processos);
         } catch (error) {
+            console.error('[listarProcessos] Erro:', error);
             res.status(500).json({ erro: error.message });
         }
     }
@@ -242,6 +247,49 @@ const {
             return res.status(500).json({ erro: 'Erro interno do servidor' });
         }
     }
+
+    // Detalhar processo com todas as informações possíveis
+    exports.detalharProcessos = async (req, res) => {
+        try {
+            const { processo_id } = req.params;
+            if (!processo_id) {
+                return res.status(400).json({ erro: 'processo_id é obrigatório' });
+            }
+            // Busca o processo com todos os relacionamentos
+            const processo = await Processo.findByPk(processo_id, {
+                include: [
+                    { model: AtualizacoesProcesso, as: 'atualizacoes', include: [
+                        { model: Usuario, as: 'usuario', attributes: ['id', 'nome', 'email', 'role_id'] }
+                    ] },
+                    { model: Arquivo, as: 'arquivos' },
+                    { model: UsuariosProcesso, as: 'usuariosProcesso', include: [
+                        { model: Usuario, as: 'usuario', attributes: ['id', 'nome', 'email', 'role_id'] }
+                    ] },
+                    { model: MateriaAssunto, as: 'materiaAssunto' },
+                    { model: Fase, as: 'fase' },
+                    { model: Diligencia, as: 'diligencia' },
+                    { model: LocalTramitacao, as: 'localTramitacao' }
+                ]
+            });
+            if (!processo) {
+                return res.status(404).json({ erro: 'Processo não encontrado' });
+            }
+            // Buscar nome do usuário criador
+            let usuarioCriador = null;
+            if (processo.idusuario_responsavel) {
+                usuarioCriador = await Usuario.findByPk(processo.idusuario_responsavel, {
+                    attributes: ['id', 'nome', 'email', 'role_id']
+                });
+            }
+            res.json({
+                ...processo.toJSON(),
+                usuarioCriador
+            });
+        } catch (error) {
+            console.error('Erro ao detalhar processo:', error);
+            res.status(500).json({ erro: 'Erro ao buscar detalhes do processo.' });
+        }
+    };
 
 
 

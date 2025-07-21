@@ -3,5 +3,5 @@ export function getFileUrl(caminho) {
   if (!caminho) return '';
   // Remove barras iniciais e prefixos errados
   let clean = caminho.replace(/^.*uploads[\\/]/, 'uploads/').replace(/^\\+|^\/+/, '');
-  return `http://localhost:3001/${clean}`;
+  return `${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/${clean}`;
 }

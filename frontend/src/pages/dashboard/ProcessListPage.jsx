@@ -71,13 +71,17 @@ export default function ProcessListPage() {
       let data = [];
       if (user?.role === "Aluno") {
         data = await apiRequest("/api/processos/meus-processos", { token });
+        console.log("[ProcessListPage] (Aluno) Dados recebidos de /meus-processos:", data);
       } else if (user?.role === "Professor" || user?.role === "Admin") {
         data = await apiRequest("/api/processos", { token });
+        console.log("[ProcessListPage] (Professor/Admin) Dados recebidos de /api/processos:", data);
       }
       setProcessos(data);
+      console.log("[ProcessListPage] Estado processos após setProcessos:", data);
     } catch (err) {
       setProcessos([]);
       setError("Erro ao carregar processos.");
+      console.error("[ProcessListPage] Erro ao buscar processos:", err);
     }
     setLoading(false);
   }, [token, user]);

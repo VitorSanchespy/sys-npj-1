@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { apiRequest } from "../../api/apiRequest";
+import { processUpdatesService, fileService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { getFileUrl } from '../../utils/fileUrl';
 
@@ -22,7 +22,7 @@ function UpdateForm({ processoId, onSuccess }) {
   useEffect(() => {
     async function fetchArquivos() {
       try {
-        const data = await apiRequest(`/api/arquivos/usuario/${user.id}`, { token });
+        const data = await fileService.getFilesByUser(user.id, token);
         setMeusArquivos(data);
       } catch {
         setMeusArquivos([]);
@@ -54,11 +54,11 @@ function UpdateForm({ processoId, onSuccess }) {
         setLoading(false);
         return;
       }
-      await apiRequest(`/api/processos/${processoId}/atualizacoes`, {
-        method: "POST",
-        token,
-        body: { descricao, tipo, anexo: arquivoSelecionado.caminho }
-      });
+      await processUpdatesService.createProcessUpdate(processoId, {
+        descricao, 
+        tipo, 
+        anexo: arquivoSelecionado.caminho 
+      }, token);
       setMsg("Atualização cadastrada!");
       setDescricao("");
       setTipo("");

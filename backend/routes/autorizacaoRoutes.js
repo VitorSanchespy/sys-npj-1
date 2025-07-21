@@ -25,4 +25,7 @@ router.post('/redefinir-senha', verificarTokenReset, authController.redefinirSen
 // perfil do usuário autenticado 
 router.get('/perfil', verificarToken, authController.perfil);
 
+// Endpoint para refresh token
+router.post('/refresh', authController.refreshToken);
+
 module.exports = router;

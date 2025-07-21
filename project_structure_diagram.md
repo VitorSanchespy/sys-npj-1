@@ -71,5 +71,12 @@
 - **Backend**: Código limpo, modular e eficiente.
 - **Frontend**: Interface responsiva, intuitiva e com melhor experiência do usuário.
 - **Banco de Dados**: Estrutura consistente e otimizada.
+## Intens Faltantes
+- implementar a função "esqueci a senha"
+- configurar o servirdor de email
+- implementar um home para usuarios não logados serem direcionados
+
+
+-Criação do Processo;
 
 Este documento serve como guia para entender a estrutura atual e o objetivo final do projeto após o refinamento.

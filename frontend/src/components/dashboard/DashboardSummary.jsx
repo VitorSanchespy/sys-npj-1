@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { apiRequest } from "@/api/apiRequest";
-import { useAuthContext } from "@/contexts/AuthContext";
+import { processService, userService } from "../../api/services";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 export default function DashboardSummary() {
   const { token, user } = useAuthContext();
@@ -17,17 +17,17 @@ export default function DashboardSummary() {
       try {
         let processos = [];
         if (user?.role === "Aluno") {
-          processos = await apiRequest("/api/processos/meus-processos", { token });
+          processos = await processService.getMyProcesses(token);
         } else if (user?.role === "Professor") {
-          processos = await apiRequest("/api/processos", { token });
+          processos = await processService.getAllProcesses(token);
         } else if (user?.role === "Admin") {
-          processos = await apiRequest("/api/processos", { token });
+          processos = await processService.getAllProcesses(token);
         }
         let usuarios = [];
         if (user?.role === "Admin") {
-          usuarios = await apiRequest("/api/usuarios", { token });
+          usuarios = await userService.getAllUsers(token);
         } else if (user?.role === "Professor") {
-          usuarios = await apiRequest("/api/usuarios/alunos", { token });
+          usuarios = await userService.getStudents(token);
         }
         setData({
           processos: processos.length,

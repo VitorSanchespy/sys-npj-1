@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { apiRequest } from "../../api/apiRequest";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 export default function ForgotPasswordForm() {
+  const { forgotPassword } = useAuthContext();
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
@@ -10,14 +11,11 @@ export default function ForgotPasswordForm() {
     e.preventDefault();
     setMsg("");
     setLoading(true);
-    try {
-      await apiRequest("/auth/esqueci-senha", {
-        method: "POST",
-        body: { email }
-      });
+    const res = await forgotPassword(email);
+    if (res.success) {
       setMsg("Se o e-mail estiver cadastrado, você receberá instruções para redefinir a senha.");
-    } catch (err) {
-      setMsg("Erro ao solicitar redefinição de senha.");
+    } else {
+      setMsg(res.message || "Erro ao solicitar redefinição de senha.");
     }
     setLoading(false);
   };

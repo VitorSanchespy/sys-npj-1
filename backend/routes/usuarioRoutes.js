@@ -6,7 +6,7 @@ const { validate, handleValidation, } = require('../middleware/validationMiddlew
 // Importando os controladores de usuário
 const { listarUsuarios, criarUsuarios, listarUsuariosPorRole, buscarUsuariosPorId,
 atualizarUsuarios, reativarUsuarios, softDeleteUsuarios, 
-listarUsuariosDebug, listarUsuariosParaVinculacao, 
+listarUsuariosDebug, listarUsuariosParaVinculacao, perfilUsuario,
 atualizarSenhaUsuarios} = require('../controllers/usuarioControllers.js');
 
 // Aplicar middleware de autenticação a todas as rotas
@@ -14,6 +14,13 @@ router.use(authMiddleware);
 
 // Endpoint temporário para depuração
 router.get('/debug/all', listarUsuariosDebug);
+
+
+// Rotas de perfil do usuário autenticado (devem vir antes das rotas com :id)
+router.get('/me', perfilUsuario);
+router.put('/me', atualizarUsuarios);
+router.put('/me/senha', atualizarSenhaUsuarios);
+router.delete('/me', softDeleteUsuarios);
 
 // Soft delete usuário (padrão REST)
 router.delete('/:id', [
@@ -29,7 +36,6 @@ router.put('/:id/reativar', [
 
 //listar paginação de usuários
 router.get('/pagina', roleMiddleware(['Admin']), listarUsuarios);
-
 
 // lista usuários para vinculação ao processo
 router.get('/vincular', roleMiddleware(['Professor', 'Admin']), listarUsuariosParaVinculacao);
@@ -67,6 +73,7 @@ router.put('/:id/senha', [
   validate('updateSenha'),
   handleValidation,
   atualizarSenhaUsuarios
-]);;
+]);
+
 
 module.exports = router;

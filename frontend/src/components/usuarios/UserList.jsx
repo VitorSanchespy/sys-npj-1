@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import ConfirmDialog from "../common/ConfirmDialog";
-import { apiRequest } from "../../api/apiRequest";
+import { userService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { Link } from "react-router-dom";
 import UserCreateForm from "./UserCreateForm";
@@ -41,7 +41,7 @@ export default function UserList() {
 
   async function handleSoftDelete(usuario) {
     try {
-      await apiRequest(`/api/usuarios/${usuario.id}/soft-delete`, { token, method: 'PATCH' });
+      await userService.deleteUser(usuario.id, token);
       setActionMsg(`Usuário ${usuario.nome} inativado.`);
       setUsuarios(prev => prev.map(u => u.id === usuario.id ? { ...u, ativo: false } : u));
       setTimeout(() => setActionMsg(''), 2000);
@@ -53,7 +53,7 @@ export default function UserList() {
 
   async function handleReactivate(usuario) {
     try {
-      await apiRequest(`/api/usuarios/${usuario.id}/reactivate`, { token, method: 'PATCH' });
+      await userService.reactivateUser(usuario.id, token);
       setActionMsg(`Usuário ${usuario.nome} reativado.`);
       setUsuarios(prev => prev.map(u => u.id === usuario.id ? { ...u, ativo: true } : u));
       setTimeout(() => setActionMsg(''), 2000);
@@ -80,18 +80,17 @@ export default function UserList() {
     async function fetchUsuarios() {
       setLoading(true);
       try {
-        let url = "";
+        let data;
         if (user?.role === "admin") {
-          url = `/api/usuarios?search=${encodeURIComponent(debouncedSearch)}&page=${page}`;
+          data = await userService.getAllUsers(token, debouncedSearch, page);
         } else if (user?.role === "professor") {
-          url = `/api/usuarios/alunos?search=${encodeURIComponent(debouncedSearch)}&page=${page}`;
+          data = await userService.getStudents(token, debouncedSearch, page);
         } else {
           setUsuarios([]);
           setHasMore(false);
           setLoading(false);
           return;
         }
-        const data = await apiRequest(url, { token });
         if (!ignore) {
           setUsuarios(data);
           setHasMore(data.length === 20); // Supondo paginação de 20
@@ -125,16 +124,15 @@ export default function UserList() {
       setSuggestions([]);
       return;
     }
-    let url = '';
-    if (user?.role === 'admin') {
-      url = `/api/usuarios?search=${encodeURIComponent(value)}&page=1`;
-    } else if (user?.role === 'professor') {
-      url = `/api/usuarios/alunos?search=${encodeURIComponent(value)}&page=1`;
-    } else {
-      setSuggestions([]);
-      return;
-    }
-    apiRequest(url, { token })
+    
+    // Buscar sugestões
+    const searchPromise = user?.role === 'admin' 
+      ? userService.getAllUsers(token, value, 1)
+      : user?.role === 'professor'
+      ? userService.getStudents(token, value, 1)
+      : Promise.resolve([]);
+      
+    searchPromise
       .then(data => {
         if (value === search) {
           setSuggestions(Array.isArray(data) ? data : []);

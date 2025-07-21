@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { apiRequest } from "../../api/apiRequest";
+import { processUpdatesService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import UpdateForm from "./UpdateForm";
 import { getFileUrl } from '../../utils/fileUrl';
@@ -13,7 +13,7 @@ export default function UpdateList({ processoId }) {
   useEffect(() => {
     async function fetchUpdates() {
       try {
-        const data = await apiRequest(`/api/processos/${processoId}/atualizacoes`, { token });
+        const data = await processUpdatesService.getProcessUpdates(processoId, token);
         setUpdates(data);
       } catch {
         setUpdates([]);
@@ -56,10 +56,7 @@ export default function UpdateList({ processoId }) {
                 style={{ marginLeft: 12, color: '#fff', background: '#d32f2f', border: 'none', borderRadius: 4, padding: '2px 10px', fontWeight: 500, cursor: 'pointer' }}
                 onClick={async () => {
                   if(window.confirm('Tem certeza que deseja excluir esta atualização?')) {
-                    await apiRequest(`/api/processos/${upd.processo_id}/atualizacoes/${upd.id}`, {
-                      method: 'DELETE',
-                      token
-                    });
+                    await processUpdatesService.deleteProcessUpdate(upd.processo_id, upd.id, token);
                     setUpdates(updates.filter(u => u.id !== upd.id));
                   }
                 }}

@@ -108,14 +108,18 @@ exports.buscarUsuariosPorId = async (req, res) => {
     }
 };
 
-// Atualizar usuário
-exports.atualizarUsuarios = async (req, res) => {
+// Perfil
+// Perfil do usuário autenticado
+exports.perfilUsuario = async (req, res) => {
     try {
-        const { nome, email, role_id } = req.body;
-        await Usuario.update({ nome, email, role_id }, { where: { id: req.params.id } });
-        res.json({ mensagem: 'Usuário atualizado com sucesso' });
+        const usuarioId = req.usuario.id;
+        const usuario = await Usuario.findByPk(usuarioId, { include: [{ model: Role, as: 'role' }] });
+        if (!usuario) {
+            return res.status(404).json({ erro: 'Usuário não encontrado' });
+        }
+        res.json(usuario);
     } catch (error) {
-        console.error('Erro ao atualizar usuário:', error);
+        console.error('Erro ao buscar perfil do usuário:', error);
         res.status(500).json({ erro: 'Erro interno do servidor' });
     }
 };
@@ -129,6 +133,18 @@ exports.atualizarSenhaUsuarios = async (req, res) => {
         res.json({ mensagem: 'Senha atualizada com sucesso' });
     } catch (error) {
         console.error('Erro ao atualizar senha:', error);
+        res.status(500).json({ erro: 'Erro interno do servidor' });
+    }
+};
+
+// Atualizar usuário
+exports.atualizarUsuarios = async (req, res) => {
+    try {
+        const { nome, email, role_id } = req.body;
+        await Usuario.update({ nome, email, role_id }, { where: { id: req.params.id } });
+        res.json({ mensagem: 'Usuário atualizado com sucesso' });
+    } catch (error) {
+        console.error('Erro ao atualizar usuário:', error);
         res.status(500).json({ erro: 'Erro interno do servidor' });
     }
 };

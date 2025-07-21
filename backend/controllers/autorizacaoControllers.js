@@ -1,3 +1,44 @@
+// ...existing code...
+const RefreshToken = require('../models/refreshTokenModels');
+const { gerarRefreshToken, validarRefreshToken, logAuthEvent } = require('../utils/authUtils');
+const { Op } = require('sequelize');
+
+// Endpoint para refresh token
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) return res.status(400).json({ erro: 'Refresh token não fornecido.' });
+
+    // Busca o refresh token no banco
+    const tokenDoc = await RefreshToken.findOne({ where: { token: refreshToken, revoked: false, expires_at: { [Op.gt]: new Date() } } });
+    if (!tokenDoc) return res.status(401).json({ erro: 'Refresh token inválido ou expirado.' });
+
+    // Busca usuário
+    const usuario = await require('../models/usuariosModels').findByPk(tokenDoc.user_id);
+    if (!usuario) return res.status(401).json({ erro: 'Usuário não encontrado.' });
+
+    // Gera novo JWT
+    const jwtToken = require('../utils/authUtils').gerarToken(usuario);
+    logAuthEvent('Refresh JWT', { user_id: usuario.id });
+    return res.json({ token: jwtToken });
+  } catch (error) {
+    logAuthEvent('Erro no refresh', error);
+    return res.status(500).json({ erro: 'Erro ao renovar token.' });
+  }
+};
+
+// No login, gerar e salvar refresh token
+exports.login = async (req, res) => {
+  // ...código de autenticação existente...
+  // Após autenticar:
+  // const usuario = ...
+  // const token = gerarToken(usuario);
+  // NOVO:
+  const refreshToken = gerarRefreshToken(usuario);
+  const expiresAt = new Date(Date.now() + (parseInt(process.env.REFRESH_TOKEN_EXPIRATION || '7') * 24 * 60 * 60 * 1000));
+  await RefreshToken.create({ user_id: usuario.id, token: refreshToken, expires_at: expiresAt });
+  return res.json({ success: true, usuario, token, refreshToken });
+};
 const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
 const { gerarHash, verificarSenha, gerarToken } = require('../utils/authUtils');
 const { enviarEmailRecuperacao } = require('../services/emailService');

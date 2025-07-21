@@ -151,3 +151,12 @@ if (require.main === module) {
     console.log(`Servidor rodando na porta ${PORT}`);
   });
 }
+
+// Função para criar um novo processo
+app.createProcess = async (token, processData) => {
+  return await apiRequest('/api/processos/novo', {
+    method: 'POST',
+    token,
+    body: processData
+  });
+}

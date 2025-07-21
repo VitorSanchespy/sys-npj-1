@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { apiRequest } from "../../api/apiRequest";
+import { fileService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { getFileUrl } from '../../utils/fileUrl';
 
@@ -11,7 +11,7 @@ export default function FileList({ processoId }) {
   useEffect(() => {
     async function fetchArquivos() {
       try {
-        const data = await apiRequest(`/api/arquivos/processo/${processoId}`, { token });
+        const data = await fileService.getFilesByProcess(processoId, token);
         setArquivos(data);
       } catch {
         setArquivos([]);
@@ -24,7 +24,7 @@ export default function FileList({ processoId }) {
   const handleDelete = async (fileId) => {
     if (!window.confirm("Deseja realmente excluir este arquivo?")) return;
     try {
-      await apiRequest(`/api/arquivos/${fileId}`, { method: "DELETE", token });
+      await fileService.deleteFile(fileId, token);
       setArquivos(arquivos.filter(f => f.id !== fileId));
     } catch (err) {
       alert(err.message || "Erro ao excluir arquivo.");

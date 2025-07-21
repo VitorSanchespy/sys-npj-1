@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { apiRequest } from "../../api/apiRequest";
+import { userService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 
 const ROLES = [
@@ -33,11 +33,7 @@ export default function UserCreateForm({ onCreated }) {
     setMsg("");
     setLoading(true);
     try {
-      await apiRequest("/api/usuarios", {
-        method: "POST",
-        token,
-        body: form,
-      });
+      await userService.createUser(form, token);
       setMsg("Usuário cadastrado com sucesso!");
       setForm({ nome: "", email: "", senha: "", telefone: "", role_id: 2 });
       if (onCreated) onCreated();

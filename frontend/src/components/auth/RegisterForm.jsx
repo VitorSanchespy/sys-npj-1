@@ -1,10 +1,9 @@
 import React, { useState } from "react";
-import { apiRequest } from "../../api/apiRequest";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 
 export default function RegisterForm() {
-  const { user } = useAuthContext();
+  const { user, register } = useAuthContext();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -27,12 +26,13 @@ export default function RegisterForm() {
         return;
       }
       // Aluno ou não logado só pode criar Aluno
-      await apiRequest("/auth/registrar", {
-        method: "POST",
-        body: { nome, email, senha, role_id: finalRoleId }
-      });
-      setSuccess(true);
-      setTimeout(() => navigate("/login"), 1500);
+      const res = await register(nome, email, senha, finalRoleId);
+      if (res.success) {
+        setSuccess(true);
+        setTimeout(() => navigate("/login"), 1500);
+      } else {
+        setError(res.message || "Erro ao registrar");
+      }
     } catch (err) {
       setError(err.message || "Erro ao registrar");
     }

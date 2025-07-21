@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { apiRequest } from "../../api/apiRequest";
+import { fileService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { getFileUrl } from '../../utils/fileUrl';
 
@@ -17,7 +17,7 @@ export default function FileAttachToProcess({ processoId, onAttach }) {
       setError("");
       try {
         // Busca arquivos enviados pelo usuário logado
-        const data = await apiRequest(`/api/arquivos/usuario/${user.id}`, { token });
+        const data = await fileService.getFilesByUser(user.id, token);
         setArquivos(data);
       } catch (err) {
         setArquivos([]);
@@ -34,11 +34,7 @@ export default function FileAttachToProcess({ processoId, onAttach }) {
     setAttaching(true);
     setError("");
     try {
-      await apiRequest(`/api/arquivos/anexar`, {
-        method: "POST",
-        token,
-        body: { processo_id: processoId, arquivo_id: selectedId },
-      });
+      await fileService.attachFileToProcess(processoId, selectedId, token);
       if (onAttach) onAttach();
       setSelectedId("");
     } catch (err) {

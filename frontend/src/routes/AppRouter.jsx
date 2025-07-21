@@ -6,6 +6,7 @@ import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
 import FullRegisterPage from "@/pages/auth/FullRegisterPage";
 import DashboardPage from "@/pages/dashboard/DashboardPage";
+// import HomePage from "@/pages/HomePage";
 import ProfilePage from "@/pages/dashboard/ProfilePage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
@@ -23,13 +24,13 @@ import { hasRole } from "@/utils/permissions";
 function PrivateRoute({ children, roles }) {
   const { isAuthenticated, user, loading } = useAuthContext();
   if (loading) return <div>Carregando...</div>;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to="/" replace />;
   if (roles && !hasRole(user, roles)) return <Navigate to="/" replace />;
   return <MainLayout>{children}</MainLayout>;
 }
 
 function frontendToBackendUrl(url) {
-  return url.replace('localhost:5173', 'localhost:3001');
+  return url.replace('localhost:5173', process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace(/https?:\/\//, '') : 'localhost:3001');
 }
 
 export default function AppRouter() {
@@ -37,6 +38,15 @@ export default function AppRouter() {
     <AuthProvider>
       <Router>
         <Routes>
+          {/* Protegido: Todos autenticados */}
+          <Route
+            path="/"
+            element={
+              <PrivateRoute>
+                <DashboardPage />
+              </PrivateRoute>
+            }
+          />
           {/* Público */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -44,10 +54,9 @@ export default function AppRouter() {
           <Route path="/registrar-completo" element={<FullRegisterPage />} />
           <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
           <Route path="/resetar-senha" element={<ResetPasswordPage />} />
-          
           {/* Protegido: Todos autenticados */}
           <Route
-            path="/"
+            path="/dashboard"
             element={
               <PrivateRoute>
                 <DashboardPage />

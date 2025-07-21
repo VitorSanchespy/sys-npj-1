@@ -18,10 +18,12 @@ export default function ProcessDetailPage() {
     async function fetchAll() {
       setLoading(true);
       try {
-        const proc = await apiRequest(`/api/processos/${id}`, { token });
+        // Busca todos os detalhes do processo
+        const proc = await apiRequest(`/api/processos/${id}/detalhes`, { token });
         setProcesso(proc);
-        const alunosResp = await apiRequest(`/api/processos/${id}/alunos/`, { token });
-        setAlunos(alunosResp);
+        // Extrai alunos vinculados do relacionamento usuariosProcesso
+        const alunosVinculados = (proc.usuariosProcesso || []).map(v => v.usuario).filter(Boolean);
+        setAlunos(alunosVinculados);
       } catch (err) {
         setProcesso(null);
         setAlunos([]);
@@ -45,95 +47,50 @@ export default function ProcessDetailPage() {
       )}
       <p><b>Descrição:</b> {processo.descricao}</p>
       <p><b>Status:</b> {processo.status}</p>
-      <p><b>Responsável:</b> {processo.responsavel_nome || 'Não informado'}</p>
+      <p><b>Responsável:</b> {processo.usuarioCriador?.nome || 'Não informado'}</p>
       <p><b>Data de Encerramento:</b> {processo.data_encerramento || "Em aberto"}</p>
+      <p><b>Matéria/Assunto:</b> {processo.materiaAssunto?.nome || '-'}</p>
+      <p><b>Fase:</b> {processo.fase?.nome || '-'}</p>
+      <p><b>Diligência:</b> {processo.diligencia?.nome || '-'}</p>
+      <p><b>Local de Tramitação:</b> {processo.localTramitacao?.nome || '-'}</p>
       <hr />
-      <h3>Alunos Vinculados</h3>
+      <h3>Usuários Vinculados</h3>
       {alunos.length === 0 ? (
         <div style={{ color: '#888', marginBottom: 8 }}>
-          Nenhum aluno vinculado a este processo.<br />
-          {user?.role === "Professor" && (
-            <span>Utilize a busca para vincular um aluno.</span>
-          )}
+          Nenhum usuário vinculado a este processo.<br />
         </div>
       ) : (
         <ul>
           {alunos.map((aluno, idx) => (
-            <li key={aluno.aluno_id || aluno.id || idx}>
-              {aluno.aluno_nome || aluno.nome} ({aluno.aluno_email || aluno.email})<br />
+            <li key={aluno.id || idx}>
+              {aluno.nome} ({aluno.email})<br />
               <span style={{ color: '#555', fontSize: 13 }}>
-                {aluno.aluno_telefone || '(00)00000-0000'}
+                {aluno.role_id === 3 ? 'Professor(a)' : 'Aluno(a)'}
               </span>
-              {/* Botão de remover aluno só para professor */}
-              {user?.role === "Professor" && (
-                <button
-                  onClick={async () => {
-                    await apiRequest(`/api/processos/remover-aluno`, {
-                      method: "DELETE",
-                      token,
-                      body: { processo_id: processo.id, aluno_id: aluno.aluno_id || aluno.id }
-                    });
-                    window.location.reload();
-                  }}
-                  style={{
-                    color: '#fff',
-                    background: '#d32f2f',
-                    border: 'none',
-                    borderRadius: 4,
-                    padding: '4px 14px',
-                    marginLeft: 12,
-                    marginTop: 6,
-                    fontWeight: 500,
-                    fontSize: 14,
-                    cursor: 'pointer',
-                    boxShadow: '0 1px 4px #0001',
-                    transition: 'background 0.2s',
-                  }}
-                  onMouseOver={e => e.currentTarget.style.background = '#b71c1c'}
-                  onMouseOut={e => e.currentTarget.style.background = '#d32f2f'}
-                >
-                  Remover
-                </button>
-              )}
             </li>
           ))}
         </ul>
       )}
-      {/* Professor pode atribuir aluno */}
-      {user?.role === "Professor" && (
-        <Link to={`/processos/${processo.id}/atribuir`} style={{ textDecoration: 'none' }}>
-          <button
-            style={{
-              background: '#1976d2',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 4,
-              padding: '6px 18px',
-              fontWeight: 500,
-              fontSize: 15,
-              marginTop: 12,
-              marginBottom: 8,
-              cursor: 'pointer',
-              boxShadow: '0 1px 4px #0001',
-              transition: 'background 0.2s',
-            }}
-            onMouseOver={e => e.currentTarget.style.background = '#115293'}
-            onMouseOut={e => e.currentTarget.style.background = '#1976d2'}
-          >
-            Atribuir Aluno
-          </button>
-        </Link>
-      )}
-
       <hr />
-
       <h3>Arquivos</h3>
       <FileAttachToProcess processoId={processo.id} onAttach={() => window.location.reload()} />
       <FileList processoId={processo.id} />
-
       <hr />
-      <h3>Atualizações</h3>
-      <UpdateList processoId={processo.id} />
+      <h3>Histórico de Atualizações</h3>
+      {processo.atualizacoes && processo.atualizacoes.length > 0 ? (
+        <ul>
+          {processo.atualizacoes.map((at, idx) => (
+            <li key={at.id || idx}>
+              <b>{at.tipo_atualizacao}</b> - {at.descricao}<br />
+              <span style={{ color: '#555', fontSize: 13 }}>
+                {at.usuario?.nome ? `Por: ${at.usuario.nome}` : ''} em {new Date(at.data_atualizacao).toLocaleString()}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div style={{ color: '#888' }}>Nenhuma atualização registrada.</div>
+      )}
       <br />
       <Link to="/processos">Voltar</Link>
     </div>

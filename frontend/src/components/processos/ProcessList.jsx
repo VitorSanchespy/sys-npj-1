@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { apiRequest } from "../../api/apiRequest";
+import { processService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { Link } from "react-router-dom";
 import CreateProcessModal from "@/components/processos/ProcessCreateModal";
@@ -16,9 +16,9 @@ export default function ProcessList() {
     try {
       let data = [];
       if (user?.role === "Aluno") {
-        data = await apiRequest("/api/processos/meus-processos", { token });
+        data = await processService.getMyProcesses(token);
       } else if (user?.role === "Professor" || user?.role === "admin" || user?.role === "Admin" || user?.role === "professor") {
-        data = await apiRequest("/api/processos", { token });
+        data = await processService.getAllProcesses(token);
       }
       setProcessos(data);
     } catch (err) {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { apiRequest } from "../../api/apiRequest";
+import { processService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import UpdateList from "../atualizacoes/UpdateList";
 import FileList from "../arquivos/FileList";
@@ -16,7 +16,7 @@ export default function ProcessDetail() {
   useEffect(() => {
     async function fetchProc() {
       try {
-        const data = await apiRequest(`/api/processos/${id}`, { token });
+        const data = await processService.getProcessById(id, token);
         setProc(data);
       } catch {
         setProc(null);

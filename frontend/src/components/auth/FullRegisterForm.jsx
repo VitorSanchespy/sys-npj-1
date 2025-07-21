@@ -1,8 +1,9 @@
 
 import React, { useState } from "react";
-import { apiRequest } from "../../api/apiRequest";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 export default function FullRegisterForm() {
+  const { register } = useAuthContext();
   const [form, setForm] = useState({
     nome: "",
     email: "",
@@ -21,15 +22,12 @@ export default function FullRegisterForm() {
     e.preventDefault();
     setMsg("");
     setLoading(true);
-    try {
-      await apiRequest("/auth/registrar", {
-        method: "POST",
-        body: { ...form },
-      });
+    const res = await register(form.nome, form.email, form.senha, 2); // Default to student role
+    if (res.success) {
       setMsg("Usuário cadastrado com sucesso!");
       setForm({ nome: "", email: "", senha: "", telefone: "" });
-    } catch (err) {
-      setMsg(err.message || "Erro ao cadastrar usuário.");
+    } else {
+      setMsg(res.message || "Erro ao cadastrar usuário.");
     }
     setLoading(false);
   }

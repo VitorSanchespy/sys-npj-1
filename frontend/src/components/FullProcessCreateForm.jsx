@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useAuthContext } from '@/contexts/AuthContext';
+import { auxTablesService, processService } from '../api/services';
+import { useAuthContext } from '../contexts/AuthContext';
 
 const FullProcessCreateForm = () => {
   const { token, user } = useAuthContext();
@@ -47,16 +47,16 @@ const FullProcessCreateForm = () => {
         };
 
         const [materiasRes, fasesRes, diligenciasRes, localTramitacoesRes] = await Promise.all([
-          axios.get('/api/aux/materia-assunto', config),
-          axios.get('/api/aux/fase', config),
-          axios.get('/api/aux/diligencia', config),
-          axios.get('/api/aux/local-tramitacao', config),
+          auxTablesService.getMateriaAssunto(token),
+          auxTablesService.getFase(token),
+          auxTablesService.getDiligencia(token),
+          auxTablesService.getLocalTramitacao(token),
         ]);
-        console.log('Dados recebidos:', { materias: materiasRes.data, fases: fasesRes.data, diligencias: diligenciasRes.data, localTramitacoes: localTramitacoesRes.data });
-        setMaterias(materiasRes.data);
-        setFases(fasesRes.data);
-        setDiligencias(diligenciasRes.data);
-        setLocalTramitacoes(localTramitacoesRes.data);
+        console.log('Dados recebidos:', { materias: materiasRes, fases: fasesRes, diligencias: diligenciasRes, localTramitacoes: localTramitacoesRes });
+        setMaterias(materiasRes);
+        setFases(fasesRes);
+        setDiligencias(diligenciasRes);
+        setLocalTramitacoes(localTramitacoesRes);
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
         alert(`Erro ao carregar dados auxiliares: ${error.message}`);
@@ -72,35 +72,41 @@ const FullProcessCreateForm = () => {
 
   const handleAddNewValue = async (field, value) => {
     try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      };
-      const response = await axios.post(`/api/aux/${field}`, { nome: value }, config);
+      let response;
+      if (field === 'materia-assunto') {
+        response = await auxTablesService.createMateriaAssunto(token, value);
+      } else if (field === 'local-tramitacao') {
+        response = await auxTablesService.createLocalTramitacao(token, value);
+      } else if (field === 'fase') {
+        response = await auxTablesService.createFase(token, value);
+      } else if (field === 'diligencia') {
+        response = await auxTablesService.createDiligencia(token, value);
+      } else {
+        throw new Error('Tipo de campo auxiliar desconhecido.');
+      }
       alert(`${field} adicionado com sucesso!`);
 
       // Re-fetch data after adding a new value
       const [materiasRes, fasesRes, diligenciasRes, localTramitacoesRes] = await Promise.all([
-        axios.get('/api/aux/materia-assunto', config),
-        axios.get('/api/aux/fase', config),
-        axios.get('/api/aux/diligencia', config),
-        axios.get('/api/aux/local-tramitacao', config),
+        auxTablesService.getMateriaAssunto(token),
+        auxTablesService.getFase(token),
+        auxTablesService.getDiligencia(token),
+        auxTablesService.getLocalTramitacao(token),
       ]);
-      setMaterias(materiasRes.data);
-      setFases(fasesRes.data);
-      setDiligencias(diligenciasRes.data);
-      setLocalTramitacoes(localTramitacoesRes.data);
+      setMaterias(materiasRes);
+      setFases(fasesRes);
+      setDiligencias(diligenciasRes);
+      setLocalTramitacoes(localTramitacoesRes);
 
       // Automatically select the newly added value
       if (field === 'materia-assunto') {
-        setFormData({ ...formData, materia_assunto_id: response.data.id });
+        setFormData({ ...formData, materia_assunto_id: response.id });
       } else if (field === 'local-tramitacao') {
-        setFormData({ ...formData, local_tramitacao_id: response.data.id });
+        setFormData({ ...formData, local_tramitacao_id: response.id });
       } else if (field === 'fase') {
-        setFormData({ ...formData, fase_id: response.data.id });
+        setFormData({ ...formData, fase_id: response.id });
       } else if (field === 'diligencia') {
-        setFormData({ ...formData, diligencia_id: response.data.id });
+        setFormData({ ...formData, diligencia_id: response.id });
       }
 
       // Hide the input field
@@ -114,13 +120,15 @@ const FullProcessCreateForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      };
       const userId = user?.id || null; // Obtém o ID do usuário a partir do contexto de autenticação
-      const response = await axios.post('http://localhost:3001/api/processos/novo', { ...formData, contato_assistido: contatoAssistido, idusuario_responsavel: userId }, config);
+      const response = await processService.createProcess(
+        token,
+        { 
+          ...formData, 
+          contato_assistido: contatoAssistido, 
+          idusuario_responsavel: userId 
+        }
+      );
       alert('Processo criado com sucesso!');
     } catch (error) {
       console.error('Erro ao criar processo:',  error, error.response?.data);
@@ -224,28 +232,37 @@ const FullProcessCreateForm = () => {
             </button>
           )}
           {showNewValueField.materiaAssunto && (
-            <div>
+            <div className="flex flex-col gap-2 mt-2">
               <input
                 type="text"
                 placeholder="Adicionar novo Matéria/Assunto"
                 value={newMateriaAssunto}
                 onChange={(e) => setNewMateriaAssunto(e.target.value)}
-                className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
+                className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
               />
-              <button
-                type="button"
-                onClick={() => handleAddNewValue('materia-assunto', newMateriaAssunto)}
-                className="mt-2 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-              >
-                Adicionar
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleAddNewValue('materia-assunto', newMateriaAssunto)}
+                  className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                >
+                  Adicionar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowNewValueField({ ...showNewValueField, materiaAssunto: false }); setNewMateriaAssunto(''); }}
+                  className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
           )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Local de Tramitação</label>
           <select
-            name="local_tramitacao"
+            name="local_tramitacao_id"
             value={formData.local_tramitacao_id}
             onChange={handleChange}
             className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
@@ -268,21 +285,30 @@ const FullProcessCreateForm = () => {
             </button>
           )}
           {showNewValueField.localTramitacao && (
-            <div>
+            <div className="flex flex-col gap-2 mt-2">
               <input
                 type="text"
                 placeholder="Adicionar novo Local de Tramitação"
                 value={newLocalTramitacao}
                 onChange={(e) => setNewLocalTramitacao(e.target.value)}
-                className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
+                className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
               />
-              <button
-                type="button"
-                onClick={() => handleAddNewValue('local-tramitacao', newLocalTramitacao)}
-                className="mt-2 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-              >
-                Adicionar
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleAddNewValue('local-tramitacao', newLocalTramitacao)}
+                  className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                >
+                  Adicionar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowNewValueField({ ...showNewValueField, localTramitacao: false }); setNewLocalTramitacao(''); }}
+                  className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -327,21 +353,30 @@ const FullProcessCreateForm = () => {
             </button>
           )}
           {showNewValueField.fase && (
-            <div>
+            <div className="flex flex-col gap-2 mt-2">
               <input
                 type="text"
                 placeholder="Adicionar nova Fase"
                 value={newFase}
                 onChange={(e) => setNewFase(e.target.value)}
-                className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
+                className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
               />
-              <button
-                type="button"
-                onClick={() => handleAddNewValue('fase', newFase)}
-                className="mt-2 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-              >
-                Adicionar
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleAddNewValue('fase', newFase)}
+                  className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                >
+                  Adicionar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowNewValueField({ ...showNewValueField, fase: false }); setNewFase(''); }}
+                  className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -371,21 +406,30 @@ const FullProcessCreateForm = () => {
             </button>
           )}
           {showNewValueField.diligencia && (
-            <div>
+            <div className="flex flex-col gap-2 mt-2">
               <input
                 type="text"
                 placeholder="Adicionar nova Diligência"
                 value={newDiligencia}
                 onChange={(e) => setNewDiligencia(e.target.value)}
-                className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
+                className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
               />
-              <button
-                type="button"
-                onClick={() => handleAddNewValue('diligencia', newDiligencia)}
-                className="mt-2 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-              >
-                Adicionar
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleAddNewValue('diligencia', newDiligencia)}
+                  className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                >
+                  Adicionar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowNewValueField({ ...showNewValueField, diligencia: false }); setNewDiligencia(''); }}
+                  className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
           )}
         </div>

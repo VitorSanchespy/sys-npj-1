@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { apiRequest } from "@/api/apiRequest";
-import { useAuthContext } from "@/contexts/AuthContext";
-import FileUploadForm from "@/components/arquivos/FileUploadForm";
-import { getFileUrl } from '@/utils/fileUrl';
+import { fileService } from "../../api/services";
+import { useAuthContext } from "../../contexts/AuthContext";
+import FileUploadForm from "../../components/arquivos/FileUploadForm";
+import { getFileUrl } from '../../utils/fileUrl';
 
 export default function ArquivosPage() {
   const { token, user } = useAuthContext();
@@ -14,7 +14,7 @@ export default function ArquivosPage() {
       setLoading(true);
       try {
         // Busca apenas arquivos do usuário logado
-        const data = await apiRequest(`/api/arquivos/usuario/${user.id}`, { token });
+        const data = await fileService.getFilesByUser(user.id, token);
         setArquivos(data);
       } catch {
         setArquivos([]);
