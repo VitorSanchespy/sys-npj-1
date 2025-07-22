@@ -7,6 +7,14 @@ class Arquivo extends Model {
     Arquivo.belongsTo(models.usuariosModels, { foreignKey: 'usuario_id', as: 'usuario' });
     Arquivo.hasMany(models.atualizacoesProcessoModels, { foreignKey: 'arquivos_id', as: 'atualizacoes' });
   }
+
+  static async anexarAProcesso(arquivo_id, processo_id) {
+    const arquivo = await Arquivo.findByPk(arquivo_id);
+    if (!arquivo) throw new Error('Arquivo não encontrado');
+    arquivo.processo_id = processo_id;
+    await arquivo.save();
+    return arquivo;
+  }
 }
 
 Arquivo.init(

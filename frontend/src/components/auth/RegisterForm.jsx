@@ -18,7 +18,7 @@ export default function RegisterForm() {
     setSuccess(false);
     try {
       let finalRoleId = 2; // Aluno
-      if (user && user.role === "Admin") finalRoleId = roleId;
+      if (user && user.role_id === 1) finalRoleId = roleId;
       else if (user && user.role === "Professor" && (roleId === 2 || roleId === 3)) finalRoleId = roleId;
       // Professor não pode criar Admin
       else if (user && user.role === "Professor" && roleId === 1) {
@@ -55,13 +55,13 @@ export default function RegisterForm() {
         <label>Senha:</label>
         <input type="password" value={senha} onChange={e => setSenha(e.target.value)} required />
       </div>
-      {(user && (user.role === "Admin" || user.role === "Professor")) && (
+      {(user && (user.role_id === 1 || user.role_id === 3)) && (
         <div>
           <label>Tipo de usuário:</label>
           <select value={roleId} onChange={e => setRoleId(Number(e.target.value))}>
             <option value={2}>Aluno</option>
             <option value={3}>Professor</option>
-            {user.role === "Admin" && <option value={1}>Admin</option>}
+            {user.role_id === 1 && <option value={1}>Admin</option>}
           </select>
         </div>
       )}

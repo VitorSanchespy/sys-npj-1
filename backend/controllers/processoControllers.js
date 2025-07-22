@@ -278,11 +278,11 @@ const {
             const processo = await Processo.findByPk(processo_id, {
                 include: [
                     { model: AtualizacoesProcesso, as: 'atualizacoes', include: [
-                        { model: Usuario, as: 'usuario', attributes: ['id', 'nome', 'email', 'role_id'] }
+                        { model: Usuario, as: 'usuario', attributes: ['id', 'nome', 'email', 'telefone', 'role_id'] }
                     ] },
                     { model: Arquivo, as: 'arquivos' },
                     { model: UsuariosProcesso, as: 'usuariosProcesso', include: [
-                        { model: Usuario, as: 'usuario', attributes: ['id', 'nome', 'email', 'role_id'] }
+                        { model: Usuario, as: 'usuario', attributes: ['id', 'nome', 'email', 'telefone', 'role_id'] }
                     ] },
                     { model: MateriaAssunto, as: 'materiaAssunto' },
                     { model: Fase, as: 'fase' },
@@ -297,7 +297,7 @@ const {
             let usuarioCriador = null;
             if (processo.idusuario_responsavel) {
                 usuarioCriador = await Usuario.findByPk(processo.idusuario_responsavel, {
-                    attributes: ['id', 'nome', 'email', 'role_id']
+                    attributes: ['id', 'nome', 'email', 'telefone', 'role_id']
                 });
             }
             res.json({

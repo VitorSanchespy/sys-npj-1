@@ -29,6 +29,9 @@ router.post('/anexar',
 // Soft delete de arquivo
 router.delete('/:id', authMiddleware, arquivoController.softDeleteArquivo);
 
+// Rota para desvincular arquivo de um processo
+router.put('/desvincular/:id', authMiddleware, arquivoController.desvincularArquivo);
+
 
 
 module.exports = router;

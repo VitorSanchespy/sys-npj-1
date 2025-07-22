@@ -83,14 +83,54 @@ exports.listarArquivosUsuario = async (req, res) => {
 // Anexar arquivo já enviado a um processo
 exports.anexarArquivoExistente = async (req, res) => {
   try {
-    const { processo_id, arquivo_id } = req.body;
-    if (!processo_id || !arquivo_id) {
-      return res.status(400).json({ erro: 'processo_id e arquivo_id são obrigatórios' });
+    console.log('[anexarArquivoExistente] req.body:', req.body);
+    console.log('[anexarArquivoExistente] req.usuario:', req.usuario);
+    
+    let { processo_id, arquivo_id } = req.body;
+    console.log('[anexarArquivoExistente] processo_id original:', processo_id, 'tipo:', typeof processo_id);
+    console.log('[anexarArquivoExistente] arquivo_id original:', arquivo_id, 'tipo:', typeof arquivo_id);
+    
+    // Converter para números se necessário
+    processo_id = parseInt(processo_id);
+    arquivo_id = parseInt(arquivo_id);
+    
+    console.log('[anexarArquivoExistente] processo_id convertido:', processo_id, 'tipo:', typeof processo_id);
+    console.log('[anexarArquivoExistente] arquivo_id convertido:', arquivo_id, 'tipo:', typeof arquivo_id);
+    
+    if (!processo_id || !arquivo_id || isNaN(processo_id) || isNaN(arquivo_id)) {
+      console.log('[anexarArquivoExistente] Erro: processo_id ou arquivo_id inválido');
+      return res.status(400).json({ erro: 'processo_id e arquivo_id são obrigatórios e devem ser números válidos' });
     }
+    
     // Atualiza o processo_id do arquivo existente
-    await Arquivo.anexarAProcesso(arquivo_id, processo_id);
+    console.log('[anexarArquivoExistente] Chamando Arquivo.anexarAProcesso com arquivo_id:', arquivo_id, 'processo_id:', processo_id);
+    const resultado = await Arquivo.anexarAProcesso(arquivo_id, processo_id);
+    console.log('[anexarArquivoExistente] Resultado da anexação:', resultado);
+    
     res.json({ mensagem: 'Arquivo anexado ao processo com sucesso' });
   } catch (error) {
+    console.error('[anexarArquivoExistente] Erro:', error);
+    res.status(500).json({ erro: error.message });
+  }
+};
+
+// Desvincular arquivo de um processo
+exports.desvincularArquivo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const arquivo = await Arquivo.findByPk(id);
+
+    if (!arquivo) {
+      return res.status(404).json({ erro: 'Arquivo não encontrado' });
+    }
+
+    // Remove o vínculo do arquivo com o processo
+    arquivo.processo_id = null;
+    await arquivo.save();
+
+    res.json({ mensagem: 'Arquivo desvinculado do processo com sucesso' });
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ erro: error.message });
   }
 };

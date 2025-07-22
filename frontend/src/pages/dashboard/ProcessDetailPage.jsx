@@ -120,10 +120,14 @@ export default function ProcessDetailPage() {
         <ul>
           {alunos.map((aluno, idx) => (
             <li key={aluno.id || idx}>
-              {aluno.nome} ({aluno.email})<br />
-              <span style={{ color: '#555', fontSize: 13 }}>
-                {aluno.role_id === 3 ? 'Professor(a)' : 'Aluno(a)'}
-              </span>
+              <span style={{ fontWeight: 'bold' }}>
+                {aluno.role_id === 3 ? 'Professor(a)' : 'Aluno(a)'} 
+              </span>{' '}
+              {aluno.nome} 
+              {aluno.telefone && (
+                <span> ({aluno.telefone})</span>
+              )}
+              <span> ({aluno.email})</span>
             </li>
           ))}
         </ul>

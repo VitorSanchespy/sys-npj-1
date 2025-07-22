@@ -79,23 +79,39 @@ export default function UserList() {
     let ignore = false;
     async function fetchUsuarios() {
       setLoading(true);
+      console.log('[UserList] Iniciando busca de usuários');
+      console.log('[UserList] user:', user);
+      console.log('[UserList] user.role_id:', user?.role_id);
+      console.log('[UserList] token:', token ? 'presente' : 'ausente');
+      console.log('[UserList] debouncedSearch:', debouncedSearch);
+      console.log('[UserList] page:', page);
+      
       try {
         let data;
-        if (user?.role === "admin") {
+        // role_id: 1 = Admin, role_id: 3 = Professor, role_id: 2 = Aluno
+        if (user?.role_id === 1) {
+          console.log('[UserList] Chamando getAllUsers para admin');
           data = await userService.getAllUsers(token, debouncedSearch, page);
-        } else if (user?.role === "professor") {
+          console.log('[UserList] Dados recebidos (admin):', data);
+        } else if (user?.role_id === 3) {
+          console.log('[UserList] Chamando getStudents para professor');
           data = await userService.getStudents(token, debouncedSearch, page);
+          console.log('[UserList] Dados recebidos (professor):', data);
         } else {
+          console.log('[UserList] Usuário sem permissão, role_id:', user?.role_id);
           setUsuarios([]);
           setHasMore(false);
           setLoading(false);
           return;
         }
         if (!ignore) {
+          console.log('[UserList] Definindo usuários:', data);
+          console.log('[UserList] Primeiro usuário completo:', data[0]);
           setUsuarios(data);
           setHasMore(data.length === 20); // Supondo paginação de 20
         }
-      } catch {
+      } catch (error) {
+        console.error('[UserList] Erro ao buscar usuários:', error);
         if (!ignore) {
           setUsuarios([]);
           setHasMore(false);
@@ -126,9 +142,9 @@ export default function UserList() {
     }
     
     // Buscar sugestões
-    const searchPromise = user?.role === 'admin' 
+    const searchPromise = user?.role_id === 1 
       ? userService.getAllUsers(token, value, 1)
-      : user?.role === 'professor'
+      : user?.role_id === 3
       ? userService.getStudents(token, value, 1)
       : Promise.resolve([]);
       
@@ -206,7 +222,7 @@ export default function UserList() {
           )}
         </span>
       </div>
-      {(user.role === "admin" || user.role === "professor") && (
+      {(user.role_id === 1 || user.role_id === 3) && (
         <button style={{ marginBottom: 16 }} onClick={() => setShowCreate(v => !v)}>
           {showCreate ? "Fechar" : "Criar Usuário"}
         </button>
@@ -245,14 +261,16 @@ export default function UserList() {
                 <td style={{ textAlign: 'center' }}><input type="checkbox" checked={selectedIds.includes(u.id)} onChange={() => toggleSelect(u.id)} /></td>
                 <td style={{ padding: '8px 6px' }}>{u.nome}</td>
                 <td style={{ padding: '8px 6px' }}>{u.email}</td>
-                <td style={{ padding: '8px 6px' }}>{u.role}</td>
+                <td style={{ padding: '8px 6px' }}>
+                  {u.role_id === 1 ? 'Admin' : u.role_id === 2 ? 'Aluno' : u.role_id === 3 ? 'Professor' : u.role || 'N/A'}
+                </td>
                 <td style={{ padding: '8px 6px' }}>{u.ativo === false ? <span style={{ color: '#d33' }}>Inativo</span> : <span style={{ color: '#2a7' }}>Ativo</span>}</td>
                 <td style={{ padding: '8px 6px' }}>
                   <button style={{ background: 'none', border: 'none', color: '#007bff', cursor: 'pointer', textDecoration: 'underline', fontSize: 15, marginRight: 6 }}
                     onClick={() => { setSelectedUser(u); setDrawerOpen(true); }}>
                     Detalhes
                   </button>
-                  {(user.role === "admin" || user.role === "professor") && (
+                  {(user.role_id === 1 || user.role_id === 3) && (
                     <>
                       {" | "}
                       <Link to={`/usuarios/${u.id}/editar`} style={{ color: '#007bff', textDecoration: 'underline', fontSize: 15, marginRight: 6 }}>Editar</Link>

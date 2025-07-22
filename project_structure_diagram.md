@@ -80,9 +80,9 @@
 -Criação do Processo(OK);
 -Editar Processo(ok);
 -Enviar Arquivos(OK);
--vincular Arquivos ao processo();
+-vincular Arquivos ao processo(OK);
 
--Detalhes do Processo()
+-Detalhes do Processo(OK)
 
 
 -Implementar notificação em tudo()

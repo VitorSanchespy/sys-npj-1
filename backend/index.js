@@ -124,11 +124,17 @@ if (!fs.existsSync(uploadDir)) {
 // Servir arquivos estáticos da pasta uploads
 app.use('/uploads', express.static(uploadDir));
 
-// Rota de arquivos (upload) ANTES do express.json()
-app.use('/api/arquivos', require('./routes/arquivoRoutes'));
+// Adicionar express.json() ANTES das rotas (exceto para upload de arquivos)
+app.use((req, res, next) => {
+  // Pular express.json() apenas para a rota de upload de arquivos
+  if (req.path === '/api/arquivos/upload' && req.method === 'POST') {
+    return next();
+  }
+  express.json()(req, res, next);
+});
 
-// Adicionar express.json() DEPOIS da rota de upload
-app.use(express.json());
+// Rota de arquivos
+app.use('/api/arquivos', require('./routes/arquivoRoutes'));
 
 // Demais rotas
 const ProcessoController = require('./controllers/processoControllers');

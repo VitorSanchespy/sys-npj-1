@@ -17,7 +17,7 @@ export default function FileAttachToProcess({ processoId, onAttach }) {
       setError("");
       try {
         // Busca arquivos enviados pelo usuário logado
-        const data = await fileService.getFilesByUser(user.id, token);
+        const data = await fileService.getUserFiles(token, user.id);
         setArquivos(data);
       } catch (err) {
         setArquivos([]);
@@ -34,14 +34,21 @@ export default function FileAttachToProcess({ processoId, onAttach }) {
     setAttaching(true);
     setError("");
     try {
-      await fileService.attachFileToProcess(processoId, selectedId, token);
+      console.log('[FileAttachToProcess] Enviando:', { 
+        processoId: Number(processoId), 
+        selectedId: Number(selectedId) 
+      });
+      await fileService.attachFileToProcess(token, Number(processoId), Number(selectedId));
       if (onAttach) onAttach();
       setSelectedId("");
     } catch (err) {
+      console.error('[FileAttachToProcess] Erro:', err);
       setError(err.message || "Erro ao anexar arquivo.");
     }
     setAttaching(false);
   };
+
+  const selectedArquivo = arquivos.find(arq => arq.id === Number(selectedId));
 
   if (loading) return <div>Carregando arquivos do usuário...</div>;
   if (error) return <div style={{ color: "red" }}>{error}</div>;
@@ -54,11 +61,15 @@ export default function FileAttachToProcess({ processoId, onAttach }) {
           <option value="">-- Escolha um arquivo --</option>
           {arquivos.map(arq => (
             <option key={arq.id} value={arq.id}>
-              {arq.nome} - 
-              <a href={getFileUrl(arq.caminho)} target="_blank" rel="noopener noreferrer" style={{marginLeft:4}}>ver</a>
+              {arq.nome}
             </option>
           ))}
         </select>
+        {selectedArquivo && (
+          <a href={getFileUrl(selectedArquivo.caminho)} target="_blank" rel="noopener noreferrer" style={{marginLeft:8}}>
+            Ver arquivo
+          </a>
+        )}
       </label>
       <button type="submit" disabled={attaching || !selectedId} style={{ marginLeft: 8 }}>
         {attaching ? "Anexando..." : "Anexar ao Processo"}

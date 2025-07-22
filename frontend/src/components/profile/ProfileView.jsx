@@ -101,6 +101,15 @@ export default function ProfileView() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // Função para encurtar nomes de arquivos longos
+  const truncateFileName = (fileName, maxLength = 30) => {
+    if (fileName.length <= maxLength) return fileName;
+    const extension = fileName.split('.').pop();
+    const nameWithoutExt = fileName.slice(0, fileName.lastIndexOf('.'));
+    const truncatedName = nameWithoutExt.slice(0, maxLength - extension.length - 4) + '...';
+    return `${truncatedName}.${extension}`;
+  };
+
   const handleSubmit = async e => {
     e.preventDefault();
     setMsg("");
@@ -181,14 +190,16 @@ export default function ProfileView() {
         <ul className="space-y-2">
           {arquivos.map(arquivo => (
             <li key={arquivo.id} className="flex items-center justify-between bg-gray-50 rounded px-3 py-2">
-              <span>{arquivo.nome}</span>
-              <span className="text-xs text-gray-500">({Math.round(arquivo.tamanho / 1024)} KB)</span>
-              <button
-                className="ml-2 bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700 transition"
-                onClick={() => window.open(getFileUrl(arquivo.caminho), '_blank', 'noopener,noreferrer')}
-              >
-                Abrir
-              </button>
+              <span title={arquivo.nome}>{truncateFileName(arquivo.nome)}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">({Math.round(arquivo.tamanho / 1024)} KB)</span>
+                <button
+                  className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700 transition"
+                  onClick={() => window.open(getFileUrl(arquivo.caminho), '_blank', 'noopener,noreferrer')}
+                >
+                  Abrir
+                </button>
+              </div>
             </li>
           ))}
         </ul>

@@ -56,9 +56,23 @@ exports.listarUsuarios = async (req, res) => {
 // Listar usuários por role
 exports.listarUsuariosPorRole = async (req, res) => {
     try {
+        const { search = "", page = 1 } = req.query;
+        const { roleName } = req.params;
+        
+        const whereClause = {
+            ativo: true
+        };
+        
+        // Adicionar filtro de busca se fornecido
+        if (search) {
+            whereClause.nome = { [require('sequelize').Op.like]: `%${search}%` };
+        }
+        
         const usuarios = await Usuario.findAll({
-            where: { ativo: true },
-            include: [{ model: Role, as: 'role', where: { nome: req.params.roleName } }]
+            where: whereClause,
+            include: [{ model: Role, as: 'role', where: { nome: roleName } }],
+            limit: 20,
+            offset: (Number(page) - 1) * 20
         });
         res.json(usuarios);
     } catch (error) {

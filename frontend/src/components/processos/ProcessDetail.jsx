@@ -39,7 +39,7 @@ export default function ProcessDetail() {
       <div style={{ margin: "20px 0" }}>
       <FileUploadForm processoId={proc.id} onUpload={() => {/* opcional: recarregar lista */}} />
       <FileList processoId={proc.id} />
-        {(user.role === "admin" || user.role === "professor") && (
+        {(user.role_id === 1 || user.role_id === 3) && (
           <>
             <Link to={`/processos/${proc.id}/editar`}><button>Editar</button></Link>
             <Link to={`/processos/${proc.id}/atribuir`}><button>Atribuir Aluno</button></Link>

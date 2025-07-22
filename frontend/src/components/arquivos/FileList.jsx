@@ -31,6 +31,17 @@ export default function FileList({ processoId }) {
     }
   };
 
+  const handleUnlink = async (fileId) => {
+    if (!window.confirm("Deseja realmente desvincular este arquivo do processo?")) return;
+    try {
+      await fileService.unlinkFileFromProcess(fileId, token);
+      setArquivos(arquivos.filter(f => f.id !== fileId));
+      alert("Arquivo desvinculado com sucesso!");
+    } catch (err) {
+      alert(err.message || "Erro ao desvincular arquivo.");
+    }
+  };
+
   if (loading) return <div>Carregando arquivos...</div>;
 
   return (
@@ -50,7 +61,10 @@ export default function FileList({ processoId }) {
             >
               Abrir
             </a>
-            {(user.role === "admin" || user.role === "professor") && (
+            <button onClick={() => handleUnlink(arquivo.id)} style={{ marginLeft: 8 }}>
+              Desvincular
+            </button>
+            {(user.role_id === 1 || user.role_id === 3) && (
               <button onClick={() => handleDelete(arquivo.id)} style={{ marginLeft: 8 }}>
                 Excluir
               </button>

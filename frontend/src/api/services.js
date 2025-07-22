@@ -127,6 +127,32 @@ export const userService = {
       method: 'PUT',
       token
     });
+  },
+
+  // GET /api/usuarios (para admin)
+  getAllUsers: async (token, search = '', page = 1) => {
+    const queryParams = new URLSearchParams({ search, page }).toString();
+    return await apiRequest(`/api/usuarios?${queryParams}`, {
+      method: 'GET',
+      token
+    });
+  },
+
+  // GET /api/usuarios/alunos (para professor)
+  getStudents: async (token, search = '', page = 1) => {
+    const queryParams = new URLSearchParams({ search, page }).toString();
+    return await apiRequest(`/api/usuarios/alunos?${queryParams}`, {
+      method: 'GET',
+      token
+    });
+  },
+
+  // Alias para compatibilidade
+  deleteUser: async (token, id) => {
+    return await apiRequest(`/api/usuarios/${id}`, {
+      method: 'DELETE',
+      token
+    });
   }
 };
 
@@ -326,6 +352,14 @@ export const fileService = {
   deleteFile: async (fileId, token) => {
     return await apiRequest(`/api/arquivos/${fileId}`, {
       method: 'DELETE',
+      token
+    });
+  },
+
+  // PUT /api/arquivos/desvincular/:id
+  unlinkFileFromProcess: async (fileId, token) => {
+    return await apiRequest(`/api/arquivos/desvincular/${fileId}`, {
+      method: 'PUT',
       token
     });
   }
