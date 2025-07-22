@@ -3,5 +3,6 @@ export function getFileUrl(caminho) {
   if (!caminho) return '';
   // Remove barras iniciais e prefixos errados
   let clean = caminho.replace(/^.*uploads[\\/]/, 'uploads/').replace(/^\\+|^\/+/, '');
-  return `${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/${clean}`;
+  const baseUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:3001';
+  return `${baseUrl}/${clean}`;
 }

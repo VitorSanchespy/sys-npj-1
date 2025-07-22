@@ -14,7 +14,7 @@ export default function ArquivosPage() {
       setLoading(true);
       try {
         // Busca apenas arquivos do usuário logado
-        const data = await fileService.getFilesByUser(user.id, token);
+        const data = await fileService.getUserFiles(token, user.id);
         setArquivos(data);
       } catch {
         setArquivos([]);
@@ -40,19 +40,41 @@ export default function ArquivosPage() {
               <th>Data</th>
               <th>Tamanho</th>
               <th>Abrir</th>
+              <th>Excluir</th>
             </tr>
           </thead>
           <tbody>
-            {arquivos.map(arquivo => (
-              <tr key={arquivo.id}>
-                <td>{arquivo.nome}</td>
-                <td>{arquivo.criado_em ? new Date(arquivo.criado_em).toLocaleString() : "-"}</td>
-                <td>{arquivo.tamanho ? `${Math.round(arquivo.tamanho / 1024)} KB` : "-"}</td>
-                <td>
-                  <button onClick={() => window.open(getFileUrl(arquivo.caminho), "_blank")}>Abrir</button>
-                </td>
-              </tr>
-            ))}
+            {arquivos.map(arquivo => {
+              // Encurtar nome se for muito longo
+              const nomeCurto = arquivo.nome && arquivo.nome.length > 30
+                ? arquivo.nome.slice(0, 15) + '...' + arquivo.nome.slice(-10)
+                : arquivo.nome;
+              return (
+                <tr key={arquivo.id}>
+                  <td title={arquivo.nome}>{nomeCurto}</td>
+                  <td>{arquivo.criado_em ? new Date(arquivo.criado_em).toLocaleString() : "-"}</td>
+                  <td>{arquivo.tamanho ? `${Math.round(arquivo.tamanho / 1024)} KB` : "-"}</td>
+                  <td>
+                    <button onClick={() => window.open(getFileUrl(arquivo.caminho), "_blank")}>Abrir</button>
+                  </td>
+                  <td>
+                    <button
+                      style={{ background: '#d32f2f', color: 'white', border: 0, borderRadius: 4, padding: '4px 10px', cursor: 'pointer' }}
+                      onClick={async () => {
+                        if (window.confirm('Tem certeza que deseja excluir este arquivo?')) {
+                          try {
+                            await fileService.deleteFile(arquivo.id, token);
+                            setArquivos(arquivos.filter(a => a.id !== arquivo.id));
+                          } catch (err) {
+                            alert('Erro ao excluir arquivo: ' + (err.message || 'Erro desconhecido'));
+                          }
+                        }
+                      }}
+                    >Excluir</button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}

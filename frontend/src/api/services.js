@@ -1,4 +1,4 @@
-import { apiRequest } from './apiRequest.js';
+import { apiRequest, uploadFile } from './apiRequest.js';
 
 // ===== AUTH SERVICES =====
 export const authService = {
@@ -293,12 +293,8 @@ export const auxTablesService = {
 // ===== FILE SERVICES =====
 export const fileService = {
   // POST /api/arquivos/upload
-  uploadFile: async (token, formData) => {
-    return await apiRequest('/api/arquivos/upload', {
-      method: 'POST',
-      token,
-      body: formData
-    });
+  uploadFile: async (formData, token) => {
+    return await uploadFile(formData, token);
   },
 
   // GET /api/arquivos/processo/:processo_id

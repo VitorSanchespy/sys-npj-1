@@ -3,12 +3,11 @@ const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const arquivoController = require('../controllers/arquivoControllers');
 
+
 router.post('/upload', 
   authMiddleware,
   arquivoController.uploadArquivo
 );
-
-
 // Listar arquivos anexados a um processo
 router.get('/processo/:processo_id', 
   authMiddleware,
@@ -26,5 +25,10 @@ router.post('/anexar',
   authMiddleware,
   arquivoController.anexarArquivoExistente
 );
+
+// Soft delete de arquivo
+router.delete('/:id', authMiddleware, arquivoController.softDeleteArquivo);
+
+
 
 module.exports = router;

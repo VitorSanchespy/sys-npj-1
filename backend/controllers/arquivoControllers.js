@@ -1,6 +1,7 @@
 const upload = require('../middleware/uploadMiddleware');
 const { arquivoModels: Arquivo, processoModels: Processo, usuariosModels: Usuario } = require('../models/indexModels');
 
+// uploadArquivo é responsável por receber o arquivo enviado pelo usuário
 exports.uploadArquivo = [
   upload.single('arquivo'), // 'arquivo' é o nome do campo no form
   async (req, res) => {
@@ -32,12 +33,25 @@ exports.uploadArquivo = [
   }
 ];
 
+// Soft delete de arquivo
+exports.softDeleteArquivo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const arquivo = await Arquivo.findByPk(id);
+    if (!arquivo) return res.status(404).json({ erro: 'Arquivo não encontrado' });
+    arquivo.ativo = false;
+    await arquivo.save();
+    res.json({ mensagem: 'Arquivo deletado (soft delete) com sucesso' });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+};
 // Listar arquivos de um processo específico
 exports.listarArquivos = async (req, res) => {
   try {
     const { processo_id } = req.params;
     const arquivos = await Arquivo.findAll({
-      where: { processo_id },
+      where: { processo_id, ativo: true },
       include: [
         { model: Processo, as: 'processo' },
         { model: Usuario, as: 'usuario' }
@@ -54,7 +68,7 @@ exports.listarArquivosUsuario = async (req, res) => {
   try {
     const { usuario_id } = req.params;
     const arquivos = await Arquivo.findAll({
-      where: { usuario_id },
+      where: { usuario_id, ativo: true },
       include: [
         { model: Processo, as: 'processo' },
         { model: Usuario, as: 'usuario' }

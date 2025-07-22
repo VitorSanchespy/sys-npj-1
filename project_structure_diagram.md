@@ -78,8 +78,13 @@
 
 
 -Criação do Processo(OK);
--Detalhes do Processo
--Editar Processo
+-Editar Processo(ok);
+-Enviar Arquivos(OK);
+-vincular Arquivos ao processo();
 
+-Detalhes do Processo()
+
+
+-Implementar notificação em tudo()
 
 Este documento serve como guia para entender a estrutura atual e o objetivo final do projeto após o refinamento.

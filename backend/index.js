@@ -16,7 +16,7 @@ module.exports = app; // Exporta o app para testes
 
 // Configuração básica de segurança
 app.use(helmet());
-app.use(express.json());
+// express.json() será movido para depois da rota de upload
 app.use(
   mongoSanitize({
     replaceWith: '_',
@@ -27,9 +27,11 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
+
+// Configuração do CORS
 const corsOptions = {
   origin: 'http://localhost:5173',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true // Se usar cookies
 };
@@ -122,14 +124,17 @@ if (!fs.existsSync(uploadDir)) {
 // Servir arquivos estáticos da pasta uploads
 app.use('/uploads', express.static(uploadDir));
 
+// Rota de arquivos (upload) ANTES do express.json()
+app.use('/api/arquivos', require('./routes/arquivoRoutes'));
 
+// Adicionar express.json() DEPOIS da rota de upload
+app.use(express.json());
 
-// Rotas
+// Demais rotas
 const ProcessoController = require('./controllers/processoControllers');
 app.use('/auth', require('./routes/autorizacaoRoutes'));
 app.use('/api/usuarios', require('./routes/usuarioRoutes'));
 app.use('/api/processos', require('./routes/processoRoutes'));
-app.use('/api/arquivos', require('./routes/arquivoRoutes'));
 app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoutes'));
 // Tratamento de erros
 app.use((err, req, res, next) => {
