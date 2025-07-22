@@ -67,12 +67,25 @@ export default function ProcessListPage() {
   const fetchProcessos = useCallback(async () => {
     setLoading(true);
     setError("");
+    console.log("[ProcessListPage] Token atual:", token);
+    console.log("[ProcessListPage] User atual:", user);
+    
+    if (!token) {
+      console.warn("[ProcessListPage] Token não disponível!");
+      setError("Token de autenticação não disponível.");
+      setLoading(false);
+      return;
+    }
+    
     try {
       let data = [];
-      if (user?.role === "Aluno") {
+      // role_id: 2 = Aluno, role_id: 3 = Professor, role_id: 1 = Admin
+      if (user?.role_id === 2) {
+        console.log("[ProcessListPage] Fazendo requisição para /meus-processos com token:", token);
         data = await apiRequest("/api/processos/meus-processos", { token });
         console.log("[ProcessListPage] (Aluno) Dados recebidos de /meus-processos:", data);
-      } else if (user?.role === "Professor" || user?.role === "Admin") {
+      } else if (user?.role_id === 3 || user?.role_id === 1) {
+        console.log("[ProcessListPage] Fazendo requisição para /api/processos com token:", token);
         data = await apiRequest("/api/processos", { token });
         console.log("[ProcessListPage] (Professor/Admin) Dados recebidos de /api/processos:", data);
       }
@@ -87,8 +100,14 @@ export default function ProcessListPage() {
   }, [token, user]);
 
   useEffect(() => {
-    if (user?.role) fetchProcessos();
-  }, [fetchProcessos, user]);
+    console.log("[ProcessListPage] useEffect disparado - user:", user, "token:", token);
+    if (user?.role_id && token) {
+      console.log("[ProcessListPage] Condições atendidas, chamando fetchProcessos");
+      fetchProcessos();
+    } else {
+      console.log("[ProcessListPage] Condições NÃO atendidas - user.role_id:", user?.role_id, "token:", !!token);
+    }
+  }, [fetchProcessos, user, token]);
 
   if (loading) return <div style={{ padding: 24 }}>Carregando processos...</div>;
   if (error) return <div style={{ color: "red", padding: 24 }}>{error}</div>;
@@ -97,7 +116,7 @@ export default function ProcessListPage() {
     <div style={{ padding: 24 }}>
       <h2 style={{ marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         Processos
-        {user?.role === "Professor" && (
+        {user?.role_id === 3 && (
           <button onClick={() => navigate('/processos/novo')} style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 4, padding: '6px 16px', fontWeight: 500, fontSize: 15 }}>Novo Processo</button>
         )}
       </h2>
