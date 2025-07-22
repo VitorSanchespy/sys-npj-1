@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { apiRequest } from "@/api/apiRequest";
 import { useAuthContext } from "@/contexts/AuthContext";
 import UpdateList from "@/components/atualizacoes/UpdateList";
-import FileList from "@/components/arquivos/FileList";
-import FileAttachToProcess from "@/components/arquivos/FileAttachToProcess";
+// Formulário de edição baseado em FullProcessCreateForm
+import { auxTablesService, processService } from "../../api/services";
+import FileAttachToProcess from "../../components/arquivos/FileAttachToProcess";
+import FileList from "../../components/arquivos/FileList";
+
+import ProcessAssignUserModal from "../../components/processos/ProcessAssignUserModal";
+import ProcessUnassignUserModal from "../../components/processos/ProcessUnassignUserModal";
+
+
 
 
 export default function ProcessDetailPage() {
@@ -13,23 +20,28 @@ export default function ProcessDetailPage() {
   const [processo, setProcesso] = useState(null);
   const [loading, setLoading] = useState(true);
   const [alunos, setAlunos] = useState([]);
+  const navigate = useNavigate();
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showUnassignModal, setShowUnassignModal] = useState(false);
+
+  // Função de busca extraída para ser reutilizada
+  const fetchAll = async () => {
+    setLoading(true);
+    try {
+      // Busca todos os detalhes do processo
+      const proc = await apiRequest(`/api/processos/${id}/detalhes`, { token });
+      setProcesso(proc);
+      // Extrai alunos vinculados do relacionamento usuariosProcesso
+      const alunosVinculados = (proc.usuariosProcesso || []).map(v => v.usuario).filter(Boolean);
+      setAlunos(alunosVinculados);
+    } catch (err) {
+      setProcesso(null);
+      setAlunos([]);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    async function fetchAll() {
-      setLoading(true);
-      try {
-        // Busca todos os detalhes do processo
-        const proc = await apiRequest(`/api/processos/${id}/detalhes`, { token });
-        setProcesso(proc);
-        // Extrai alunos vinculados do relacionamento usuariosProcesso
-        const alunosVinculados = (proc.usuariosProcesso || []).map(v => v.usuario).filter(Boolean);
-        setAlunos(alunosVinculados);
-      } catch (err) {
-        setProcesso(null);
-        setAlunos([]);
-      }
-      setLoading(false);
-    }
     fetchAll();
   }, [id, token]);
 
@@ -38,6 +50,51 @@ export default function ProcessDetailPage() {
 
   return (
     <div>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+        <button
+          style={{ background: '#2563eb', color: 'white', padding: '8px 16px', borderRadius: 6, border: 0, cursor: 'pointer' }}
+          onClick={() => navigate(`/processos/${id}/editar`)}
+        >
+          Atualizar Processo
+        </button>
+        <button
+          style={{ background: '#059669', color: 'white', padding: '8px 16px', borderRadius: 6, border: 0, cursor: 'pointer' }}
+          onClick={() => setShowAssignModal(true)}
+        >
+          Vincular Usuário
+        </button>
+        <button
+          style={{ background: '#d32f2f', color: 'white', padding: '8px 16px', borderRadius: 6, border: 0, cursor: 'pointer' }}
+          onClick={() => setShowUnassignModal(true)}
+        >
+          Desvincular Usuário
+        </button>
+      </div>
+      {showUnassignModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: '#0008', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <ProcessUnassignUserModal
+            processoId={processo.id}
+            alunos={alunos}
+            onClose={() => setShowUnassignModal(false)}
+            onUnassigned={() => {
+              setShowUnassignModal(false);
+              fetchAll(); // Atualiza a lista após remoção
+            }}
+          />
+        </div>
+      )}
+      {showAssignModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: '#0008', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <ProcessAssignUserModal
+            processoId={processo.id}
+            onClose={() => setShowAssignModal(false)}
+            onAssigned={() => {
+              setShowAssignModal(false);
+              fetchAll(); // Atualiza a lista de usuários vinculados
+            }}
+          />
+        </div>
+      )}
       <h2>Detalhes do Processo #{processo.numero_processo}</h2>
       {processo.num_processo_sei && (
         <p><b>Nº Processo/SEI:</b> {processo.num_processo_sei}</p>
@@ -96,3 +153,4 @@ export default function ProcessDetailPage() {
     </div>
   );
 }
+

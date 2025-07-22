@@ -28,8 +28,8 @@ app.use(
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 const corsOptions = {
-  origin:'http://localhost:5173',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true // Se usar cookies
 };

@@ -40,14 +40,16 @@ router.get('/',
     roleMiddleware(['Professor', 'Admin']),
     listarProcessos);
 
-// Remover usuário de processo -implementar validação
+// Remover usuário de processo
 router.delete('/remover-usuario',
+    roleMiddleware(['Professor', 'Admin']),
     validate('removerUsuario'),
     removerUsuarioProcessos
 );
 
 // Listar usuários vinculados a um processo
 router.get('/:processo_id/usuarios',
+    roleMiddleware(['Professor', 'Admin', 'Aluno']),
     listarUsuariosPorProcessos
 );
 
@@ -56,12 +58,6 @@ router.get('/meus-processos', listarMeusProcessos);
 
 // Buscar processos por numero
 router.get('/buscar', buscarProcessos);
-
-// listar usuários vinculados a um processo
-router.get('/:processo_id/usuarios',
-    authMiddleware,
-    listarUsuariosPorProcessos
-);
 
 // Vincular usuário a processo
 router.post('/vincular-usuario',

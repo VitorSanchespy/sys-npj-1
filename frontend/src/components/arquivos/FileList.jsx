@@ -11,7 +11,7 @@ export default function FileList({ processoId }) {
   useEffect(() => {
     async function fetchArquivos() {
       try {
-        const data = await fileService.getFilesByProcess(processoId, token);
+        const data = await fileService.getProcessFiles(token, processoId);
         setArquivos(data);
       } catch {
         setArquivos([]);

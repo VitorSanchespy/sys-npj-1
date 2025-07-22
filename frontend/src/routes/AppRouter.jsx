@@ -11,8 +11,9 @@ import ProfilePage from "@/pages/dashboard/ProfilePage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
 import ProcessListPage from "@/pages/dashboard/ProcessListPage";
-import ProcessDetailPage from "@/pages/dashboard/ProcessDetailPage";
+import ProcessDetailPage from "../pages/dashboard/ProcessDetailPage";
 import ProcessFormPage from "@/pages/dashboard/ProcessFormPage";
+import ProcessEditPage from "../pages/dashboard/ProcessEditPage";
 import ProcessAssignStudentPage from "@/pages/dashboard/ProcessAssignStudentPage";
 import ProcessUpdatesPage from "@/pages/dashboard/ProcessUpdatePage";
 import UserListPage from "@/pages/dashboard/UserListPage";
@@ -94,7 +95,7 @@ export default function AppRouter() {
           <Route path="/processos/:id/atualizacoes" element={<PrivateRoute><ProcessUpdatesPage /></PrivateRoute>} />
           {/* Rotas restritas para Professor/Admin */}
           <Route path="/processos/novo" element={<PrivateRoute roles={["Professor", "admin"]}><ProcessFormPage /></PrivateRoute>} />
-          <Route path="/processos/:id/editar" element={<PrivateRoute roles={["Professor", "Admin"]}><ProcessFormPage /></PrivateRoute>} />
+          <Route path="/processos/:id/editar" element={<PrivateRoute roles={["Professor", "Admin"]}><ProcessEditPage /></PrivateRoute>} />
           <Route path="/processos/:id/atribuir" element={<PrivateRoute roles={["Professor", "Admin"]}><ProcessAssignStudentPage /></PrivateRoute>} />
          <Route path="/processos/:id/atualizacoes" element={<PrivateRoute><ProcessUpdatesPage /></PrivateRoute>} />
           {/* 404 */}

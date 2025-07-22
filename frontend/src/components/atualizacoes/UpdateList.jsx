@@ -1,14 +1,30 @@
+
 import React, { useEffect, useState } from "react";
-import { processUpdatesService } from "../../api/services";
+import { processUpdatesService, auxTablesService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import UpdateForm from "./UpdateForm";
 import { getFileUrl } from '../../utils/fileUrl';
+import { FIELD_LABELS, getFieldDisplayValue } from './fieldNameMaps';
+
+
+function formatDescricao(descricao, auxData) {
+  // Exemplo: "fase_id: '53' → '59'" ou "materia_assunto_id: '2' → '3'"
+  if (!descricao) { return ""; }
+  // Regex para encontrar padrões tipo campo: 'id1' → 'id2'
+  return descricao.replace(/([a-zA-Z_]+): '?([\d]+)'? *→ *'?([\d]+)'?/g, function(match, field, from, to) {
+    const label = FIELD_LABELS[field] || field;
+    const fromName = getFieldDisplayValue(field, from, auxData);
+    const toName = getFieldDisplayValue(field, to, auxData);
+    return `${label}: '${fromName}' → '${toName}'`;
+  });
+}
 
 export default function UpdateList({ processoId }) {
   const { token, user } = useAuthContext();
   const [updates, setUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [auxData, setAuxData] = useState({ materias: [], fases: [], diligencias: [], localTramitacoes: [] });
 
   useEffect(() => {
     async function fetchUpdates() {
@@ -22,6 +38,24 @@ export default function UpdateList({ processoId }) {
     }
     fetchUpdates();
   }, [processoId, token, showForm]);
+
+  // Carregar dados auxiliares para mapear ids para nomes
+  useEffect(() => {
+    async function fetchAux() {
+      try {
+        const [materias, fases, diligencias, localTramitacoes] = await Promise.all([
+          auxTablesService.getMateriaAssunto(token),
+          auxTablesService.getFase(token),
+          auxTablesService.getDiligencia(token),
+          auxTablesService.getLocalTramitacao(token),
+        ]);
+        setAuxData({ materias, fases, diligencias, localTramitacoes });
+      } catch {
+        setAuxData({ materias: [], fases: [], diligencias: [], localTramitacoes: [] });
+      }
+    }
+    fetchAux();
+  }, [token]);
 
   if (loading) return <div>Carregando atualizações...</div>;
   return (
@@ -42,7 +76,7 @@ export default function UpdateList({ processoId }) {
         {updates.map(upd => (
           <li key={upd.id}>
             {upd.tipo && <b>[{upd.tipo}] </b>}
-            {upd.descricao}
+            {formatDescricao(upd.descricao, auxData)}
             {upd.anexo && (
               <>
                 <br />

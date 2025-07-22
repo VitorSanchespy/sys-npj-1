@@ -27,7 +27,26 @@ const {
             if (!processo) {
                 return res.status(404).json({ erro: 'Processo não encontrado.' });
             }
+
+            // Descobrir campos alterados
+            const camposAlterados = [];
+            for (const campo in dadosAtualizar) {
+                if (processo[campo] !== undefined && processo[campo] !== dadosAtualizar[campo]) {
+                    camposAlterados.push(`${campo}: '${processo[campo]}' → '${dadosAtualizar[campo]}'`);
+                }
+            }
             await processo.update(dadosAtualizar);
+
+            // Grava histórico na tabela atualizacoes_processo
+            if (camposAlterados.length > 0) {
+                await AtualizacoesProcesso.create({
+                    processo_id: processo.id,
+                    usuario_id: req.usuario.id,
+                    tipo_atualizacao: 'Edição',
+                    descricao: `Alterações: ${camposAlterados.join('; ')}`
+                });
+            }
+
             res.json({ mensagem: 'Processo atualizado com sucesso', processo });
         } catch (error) {
             console.error('Erro ao atualizar processo:', error);

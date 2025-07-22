@@ -184,11 +184,11 @@ export const processService = {
   },
 
   // POST /api/processos/vincular-usuario
-  assignUserToProcess: async (token, processo_id, usuario_id) => {
+  assignUserToProcess: async (token, processo_id, usuario_id, role) => {
     return await apiRequest('/api/processos/vincular-usuario', {
       method: 'POST',
       token,
-      body: { processo_id, usuario_id }
+      body: { processo_id, usuario_id, role }
     });
   },
 
@@ -323,6 +323,14 @@ export const fileService = {
       method: 'POST',
       token,
       body: { processo_id, arquivo_id }
+    });
+  },
+
+  // DELETE /api/arquivos/:id
+  deleteFile: async (fileId, token) => {
+    return await apiRequest(`/api/arquivos/${fileId}`, {
+      method: 'DELETE',
+      token
     });
   }
 };

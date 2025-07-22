@@ -77,6 +77,9 @@
 - implementar um home para usuarios não logados serem direcionados
 
 
--Criação do Processo;
+-Criação do Processo(OK);
+-Detalhes do Processo
+-Editar Processo
+
 
 Este documento serve como guia para entender a estrutura atual e o objetivo final do projeto após o refinamento.
