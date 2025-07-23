@@ -20,8 +20,19 @@ export default function UserCreateForm({ onCreated }) {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Professores não podem criar Admin
-  const roleOptions = user?.role === "admin" ? ROLES : ROLES.filter(r => r.id !== 1);
+  // Professores só podem criar Aluno
+  const isProfessor = user?.role === "Professor" || user?.role === "professor" || user?.role_id === 3;
+  const isAdmin = user?.role === "Admin" || user?.role === "admin" || user?.role_id === 1;
+  
+  // Define opções de papel baseado no usuário logado
+  let roleOptions = [];
+  if (isAdmin) {
+    roleOptions = ROLES; // Admin pode criar qualquer papel
+  } else if (isProfessor) {
+    roleOptions = ROLES.filter(r => r.id !== 1); // Professor pode criar Aluno e Professor, mas não Admin
+  } else {
+    roleOptions = ROLES.filter(r => r.id === 2); // Outros só podem criar Aluno
+  }
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -33,7 +44,7 @@ export default function UserCreateForm({ onCreated }) {
     setMsg("");
     setLoading(true);
     try {
-      await userService.createUser(form, token);
+      await userService.createUser(token, form);
       setMsg("Usuário cadastrado com sucesso!");
       setForm({ nome: "", email: "", senha: "", telefone: "", role_id: 2 });
       if (onCreated) onCreated();
@@ -63,14 +74,22 @@ export default function UserCreateForm({ onCreated }) {
         <label>Telefone:</label>
         <input name="telefone" value={form.telefone} onChange={handleChange} />
       </div>
-      <div>
-        <label>Papel:</label>
-        <select name="role_id" value={form.role_id} onChange={handleChange} required>
-          {roleOptions.map((r) => (
-            <option key={r.id} value={r.id}>{r.label}</option>
-          ))}
-        </select>
-      </div>
+      {roleOptions.length > 1 ? (
+        <div>
+          <label>Papel:</label>
+          <select name="role_id" value={form.role_id} onChange={handleChange} required>
+            {roleOptions.map((r) => (
+              <option key={r.id} value={r.id}>{r.label}</option>
+            ))}
+          </select>
+        </div>
+      ) : (
+        <div>
+          <label>Papel:</label>
+          <input type="text" value={roleOptions[0]?.label || "Aluno"} disabled />
+          <input type="hidden" name="role_id" value={roleOptions[0]?.id || 2} />
+        </div>
+      )}
       <button type="submit" disabled={loading} style={{ marginTop: 16 }}>
         {loading ? "Cadastrando..." : "Cadastrar"}
       </button>

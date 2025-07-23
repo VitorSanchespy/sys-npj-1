@@ -40,10 +40,31 @@ exports.listarAtualizacaoProcesso = async (req, res) => {
         { model: Usuario, as: 'usuario' },
         { model: Processo, as: 'processo' },
         { model: Arquivo, as: 'arquivo' }
-      ]
+      ],
+      order: [['data_atualizacao', 'DESC']]
     });
     res.json(updates);
   } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar atualizações.' });
+  }
+};
+
+// Listar todas as atualizações (para dashboard)
+exports.listarTodasAtualizacoes = async (req, res) => {
+  try {
+    const limite = req.query.limite || 10;
+    const updates = await AtualizacoesProcesso.findAll({
+      include: [
+        { model: Usuario, as: 'usuario' },
+        { model: Processo, as: 'processo' },
+        { model: Arquivo, as: 'arquivo' }
+      ],
+      order: [['data_atualizacao', 'DESC']],
+      limit: parseInt(limite)
+    });
+    res.json(updates);
+  } catch (err) {
+    console.error('Erro ao buscar todas as atualizações:', err);
     res.status(500).json({ error: 'Erro ao buscar atualizações.' });
   }
 };

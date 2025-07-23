@@ -37,8 +37,14 @@ router.put('/:id/reativar', [
 //listar paginação de usuários
 router.get('/pagina', roleMiddleware(['Admin']), listarUsuarios);
 
-// Lista todos os usuários (para admin)
-router.get('/', roleMiddleware(['Admin']), listarUsuarios);
+// Lista todos os usuários (para admin) ou apenas alunos (para professor)
+router.get('/', roleMiddleware(['Admin', 'Professor']), (req, res, next) => {
+  if (req.user && req.user.role_id === 3) { // Professor
+    req.params.roleName = 'Aluno';
+    return listarUsuariosPorRole(req, res, next);
+  }
+  return listarUsuarios(req, res, next);
+});
 
 // Lista apenas alunos (para professor)
 router.get('/alunos', roleMiddleware(['Professor', 'Admin']), (req, res) => {
@@ -71,7 +77,7 @@ router.put(
 // criar novo usuário
 router.post(
   '/',
-  roleMiddleware(['Admin']),
+  roleMiddleware(['Admin', 'Professor']),
   validate('registrarUsuario'),
   handleValidation,
   criarUsuarios

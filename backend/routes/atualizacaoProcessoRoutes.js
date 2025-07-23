@@ -4,9 +4,11 @@ const processUpdatesController = require('../controllers/atualizacaoProcessoCont
 const authMiddleware = require('../middleware/authMiddleware');
 const { listar } = require('../controllers/tabelaAuxiliarControllers');
 const { adicionarAtualizacaoProcessos, 
-    removerAtualizacaoProcessos, listarAtualizacaoProcesso} = require
+    removerAtualizacaoProcessos, listarAtualizacaoProcesso, listarTodasAtualizacoes} = require
     ('../controllers/atualizacaoProcessoControllers');
 
+// Listar todas as atualizações (para dashboard)
+router.get('/', authMiddleware, listarTodasAtualizacoes);
 // Listar atualizações de um processo
 router.get('/:processo_id', authMiddleware, listarAtualizacaoProcesso);
 // Criar atualização

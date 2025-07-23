@@ -84,7 +84,8 @@
 
 -Detalhes do Processo(OK)
 
-
+-Processos fica sempre Carregando processos...
 -Implementar notificação em tudo()
-
+-Implementar o esqueci senha 
+-
 Este documento serve como guia para entender a estrutura atual e o objetivo final do projeto após o refinamento.

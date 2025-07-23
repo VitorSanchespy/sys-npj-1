@@ -41,10 +41,12 @@ export function AuthProvider({ children }) {
         } finally {
           setLoading(false);
         }
+      } else if (!token && !user) {
+        setLoading(false);
       }
     };
     verifyToken();
-  }, [token, user]);
+  }, [token]);
 
   const login = async (email, senha) => {
     setLoading(true);

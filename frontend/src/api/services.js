@@ -175,6 +175,14 @@ export const processService = {
     });
   },
 
+  // GET /api/processos - alias para compatibilidade
+  getAllProcesses: async (token) => {
+    return await apiRequest('/api/processos', {
+      method: 'GET',
+      token
+    });
+  },
+
   // GET /api/processos/buscar
   searchProcesses: async (token, filters = {}) => {
     const queryParams = new URLSearchParams(filters).toString();

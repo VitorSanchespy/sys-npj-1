@@ -84,23 +84,28 @@ exports.listarUsuariosPorRole = async (req, res) => {
 // Criar novo usuário
 exports.criarUsuarios = async (req, res) => {
     try {
-        const { nome, email, senha, role_id } = req.body;
+        const { nome, email, senha, role_id, telefone } = req.body;
         let roleNome = 'Aluno';
         if (role_id === 1) roleNome = 'Admin';
         if (role_id === 2) roleNome = 'Aluno';
         if (role_id === 3) roleNome = 'Professor';
         const usuarioLogado = req.usuario;
+        
+        console.log('[criarUsuarios] Usuario logado:', usuarioLogado);
+        console.log('[criarUsuarios] Tentando criar role:', roleNome, 'role_id:', role_id);
+        
         if (!usuarioLogado) {
             if (roleNome !== 'Aluno') {
                 return res.status(403).json({ erro: 'Só é permitido criar conta de Aluno.' });
             }
         } else if (usuarioLogado.role === 'Professor') {
+            // Professores podem criar Alunos e outros Professores, mas não Admins
             if (roleNome === 'Admin') {
                 return res.status(403).json({ erro: 'Professores não podem criar Admins.' });
             }
         }
         const senhaHash = await require('../utils/authUtils').gerarHash(senha);
-        const usuario = await Usuario.create({ nome, email, senha: senhaHash, role_id });
+        const usuario = await Usuario.create({ nome, email, senha: senhaHash, role_id, telefone });
         res.status(201).json({ id: usuario.id, mensagem: 'Usuário criado com sucesso' });
     } catch (error) {
         console.error('Erro ao criar usuário:', error);
@@ -154,8 +159,8 @@ exports.atualizarSenhaUsuarios = async (req, res) => {
 // Atualizar usuário
 exports.atualizarUsuarios = async (req, res) => {
     try {
-        const { nome, email, role_id } = req.body;
-        await Usuario.update({ nome, email, role_id }, { where: { id: req.params.id } });
+        const { nome, email, role_id, telefone } = req.body;
+        await Usuario.update({ nome, email, role_id, telefone }, { where: { id: req.params.id } });
         res.json({ mensagem: 'Usuário atualizado com sucesso' });
     } catch (error) {
         console.error('Erro ao atualizar usuário:', error);
