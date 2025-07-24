@@ -72,20 +72,12 @@
 - **Frontend**: Interface responsiva, intuitiva e com melhor experiência do usuário.
 - **Banco de Dados**: Estrutura consistente e otimizada.
 ## Intens Faltantes
-- implementar a função "esqueci a senha"
-- configurar o servirdor de email
+
+
 - implementar um home para usuarios não logados serem direcionados
-
-
--Criação do Processo(OK);
--Editar Processo(ok);
--Enviar Arquivos(OK);
--vincular Arquivos ao processo(OK);
-
--Detalhes do Processo(OK)
-
--Processos fica sempre Carregando processos...
--Implementar notificação em tudo()
--Implementar o esqueci senha 
--
+- about para explicar o sistema
+- Testar notificação()
+- Testar agendamento()
+- Testar Envio de e-mail()
+- Implementar o dashboard funcional
 Este documento serve como guia para entender a estrutura atual e o objetivo final do projeto após o refinamento.

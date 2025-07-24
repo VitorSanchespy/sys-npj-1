@@ -25,7 +25,6 @@ exports.adicionarAtualizacaoProcessos = async (req, res) => {
             });
             res.status(201).json(atualizacaoCompleta);
         } catch (error) {
-            console.error('Erro ao adicionar atualização ao processo:', error);
             res.status(500).json({ erro: 'Erro ao adicionar atualização ao processo.' });
         }
 }
@@ -64,7 +63,6 @@ exports.listarTodasAtualizacoes = async (req, res) => {
     });
     res.json(updates);
   } catch (err) {
-    console.error('Erro ao buscar todas as atualizações:', err);
     res.status(500).json({ error: 'Erro ao buscar atualizações.' });
   }
 };

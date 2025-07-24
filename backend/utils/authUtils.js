@@ -13,7 +13,6 @@ async function gerarHash(senha) {
     try {
         return await bcrypt.hash(senha, saltRounds);
     } catch (error) {
-        console.error('Erro ao gerar hash:', error);
         throw new Error('Falha ao processar senha');
     }
 }
@@ -22,7 +21,6 @@ async function verificarSenha(senha, hash) {
     try {
         return await bcrypt.compare(senha, hash);
     } catch (error) {
-        console.error('Erro ao verificar senha:', error);
         throw new Error('Falha na autenticação');
     }
 }
@@ -44,7 +42,6 @@ function gerarToken(usuario) {
         );
         return token;
     } catch (error) {
-        console.error('Erro ao gerar token:', error);
         throw new Error('Falha ao gerar token de acesso');
     }
 }
@@ -56,7 +53,6 @@ function gerarRefreshToken(usuario) {
         // Opcional: pode salvar no banco de dados junto ao usuário
         return refreshToken;
     } catch (error) {
-        console.error('Erro ao gerar refresh token:', error);
         throw new Error('Falha ao gerar refresh token');
     }
 }
@@ -68,7 +64,6 @@ function verificarToken(token) {
         });
         return decoded;
     } catch (error) {
-        console.error('Erro ao verificar token:', error);
         if (error.name === 'TokenExpiredError') {
             throw new Error('Token expirado');
         }
@@ -76,17 +71,11 @@ function verificarToken(token) {
     }
 }
 
-// Função para logs detalhados
-function logAuthEvent(event, details) {
-    console.log(`[AUTH] ${event}:`, details);
-}
-
 // Função para validar refresh token (exemplo, precisa de persistência real)
 // Aqui apenas simula validação, mas o ideal é salvar no banco
 function validarRefreshToken(token, usuario) {
     // Exemplo: buscar no banco se o refreshToken está ativo para o usuário
     // Aqui só retorna true para exemplo
-    logAuthEvent('Validação de refresh token', { token, usuario });
     return true;
 }
 
@@ -96,12 +85,5 @@ module.exports = {
     gerarToken,
     verificarToken,
     gerarRefreshToken,
-    validarRefreshToken,
-    logAuthEvent
-};
-module.exports = {
-    gerarHash,
-    verificarSenha,
-    gerarToken,
-    verificarToken
+    validarRefreshToken
 };

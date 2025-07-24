@@ -156,7 +156,31 @@ exports.atualizarSenhaUsuarios = async (req, res) => {
     }
 };
 
-// Atualizar usuário
+// Atualizar próprio perfil (usuário autenticado)
+exports.atualizarPerfilProprio = async (req, res) => {
+    try {
+        const { nome, email, telefone } = req.body;
+        const usuarioId = req.usuario.id;
+        
+        // Usuário pode editar apenas nome, email e telefone - não pode alterar role_id
+        await Usuario.update({ nome, email, telefone }, { where: { id: usuarioId } });
+        
+        // Retornar dados atualizados
+        const usuarioAtualizado = await Usuario.findByPk(usuarioId, { 
+            include: [{ model: Role, as: 'role' }] 
+        });
+        
+        res.json({ 
+            mensagem: 'Perfil atualizado com sucesso',
+            usuario: usuarioAtualizado
+        });
+    } catch (error) {
+        console.error('Erro ao atualizar perfil próprio:', error);
+        res.status(500).json({ erro: 'Erro interno do servidor' });
+    }
+};
+
+// Atualizar usuário (apenas Admin/Professor)
 exports.atualizarUsuarios = async (req, res) => {
     try {
         const { nome, email, role_id, telefone } = req.body;

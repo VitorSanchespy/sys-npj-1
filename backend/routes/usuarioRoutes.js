@@ -7,7 +7,7 @@ const { validate, handleValidation, } = require('../middleware/validationMiddlew
 const { listarUsuarios, criarUsuarios, listarUsuariosPorRole, buscarUsuariosPorId,
 atualizarUsuarios, reativarUsuarios, softDeleteUsuarios, 
 listarUsuariosDebug, listarUsuariosParaVinculacao, perfilUsuario,
-atualizarSenhaUsuarios} = require('../controllers/usuarioControllers.js');
+atualizarSenhaUsuarios, atualizarPerfilProprio} = require('../controllers/usuarioControllers.js');
 
 // Aplicar middleware de autenticação a todas as rotas
 router.use(authMiddleware);
@@ -18,7 +18,7 @@ router.get('/debug/all', listarUsuariosDebug);
 
 // Rotas de perfil do usuário autenticado (devem vir antes das rotas com :id)
 router.get('/me', perfilUsuario);
-router.put('/me', atualizarUsuarios);
+router.put('/me', atualizarPerfilProprio);
 router.put('/me/senha', atualizarSenhaUsuarios);
 router.delete('/me', softDeleteUsuarios);
 
@@ -36,6 +36,38 @@ router.put('/:id/reativar', [
 
 //listar paginação de usuários
 router.get('/pagina', roleMiddleware(['Admin']), listarUsuarios);
+
+// Contar total de usuários (para dashboard)
+router.get('/count', roleMiddleware(['Admin']), async (req, res) => {
+  try {
+    const db = require('../config/sequelize');
+    
+    // Contar usuários totais
+    const [totalResult] = await db.query('SELECT COUNT(*) as total FROM usuarios WHERE ativo = true');
+    
+    // Contar usuários por tipo
+    const [porTipoResult] = await db.query(`
+      SELECT r.nome_role as tipo, COUNT(u.id) as quantidade
+      FROM usuarios u 
+      JOIN roles r ON u.role_id = r.id 
+      WHERE u.ativo = true 
+      GROUP BY r.nome_role
+    `);
+    
+    const usuariosPorTipo = {};
+    porTipoResult.forEach(item => {
+      usuariosPorTipo[item.tipo.toLowerCase()] = parseInt(item.quantidade);
+    });
+    
+    res.json({ 
+      total: parseInt(totalResult[0].total),
+      porTipo: usuariosPorTipo
+    });
+  } catch (error) {
+    console.error('Erro ao contar usuários:', error);
+    res.status(500).json({ message: 'Erro interno do servidor' });
+  }
+});
 
 // Lista todos os usuários (para admin) ou apenas alunos (para professor)
 router.get('/', roleMiddleware(['Admin', 'Professor']), (req, res, next) => {

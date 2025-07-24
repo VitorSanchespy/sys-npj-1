@@ -3,6 +3,25 @@ import { useParams, useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api/apiRequest";
 import { useAuthContext } from "../../contexts/AuthContext";
 
+// Helper para verificar role
+const getUserRole = (user) => {
+  if (!user) return null;
+  
+  if (typeof user.role === 'string') {
+    return user.role;
+  }
+  
+  if (user.role && typeof user.role === 'object') {
+    return user.role.nome || user.role.name || null;
+  }
+  
+  if (user.role_id === 1) return 'Admin';
+  if (user.role_id === 2) return 'Aluno';
+  if (user.role_id === 3) return 'Professor';
+  
+  return null;
+};
+
 export default function UserEditForm() {
   const { id } = useParams();
   const { token, user } = useAuthContext();
@@ -54,7 +73,7 @@ export default function UserEditForm() {
   if (loading) return <div>Carregando...</div>;
 
   // Professores não podem editar/cadastrar Admin
-  const roleOptions = user?.role === "Admin"
+  const roleOptions = getUserRole(user) === "Admin"
     ? [
         { id: 2, label: "Aluno" },
         { id: 3, label: "Professor" },
@@ -83,7 +102,7 @@ export default function UserEditForm() {
           name="role_id"
           value={form.role_id}
           onChange={handleChange}
-          disabled={user?.role !== "Admin"}
+          disabled={getUserRole(user) !== "Admin"}
         >
           {roleOptions.map((r) => (
             <option key={r.id} value={r.id}>{r.label}</option>

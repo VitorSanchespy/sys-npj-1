@@ -20,9 +20,17 @@ export default function UserList() {
   // Controle de acesso - Aluno não tem acesso
   if (user?.role_id === 2) {
     return (
-      <div style={{ padding: 20, textAlign: 'center' }}>
-        <h2>Acesso Negado</h2>
-        <p>Você não tem permissão para acessar esta página.</p>
+      <div style={{ 
+        padding: '40px',
+        textAlign: 'center',
+        backgroundColor: '#fff3cd',
+        margin: '20px',
+        borderRadius: '12px',
+        border: '1px solid #ffeaa7'
+      }}>
+        <div style={{ fontSize: '3rem', marginBottom: '20px' }}>🚫</div>
+        <h2 style={{ color: '#856404', margin: '0 0 10px 0' }}>Acesso Negado</h2>
+        <p style={{ color: '#856404', margin: 0 }}>Você não tem permissão para acessar esta página.</p>
       </div>
     );
   }
@@ -164,38 +172,64 @@ export default function UserList() {
   }
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Gerenciamento de Usuários</h2>
-      
+    <div style={{ padding: '30px' }}>
       {/* Botão Criar Usuário */}
       {(user?.role_id === 1 || user?.role_id === 3) && (
-        <div style={{ marginBottom: 20 }}>
+        <div style={{ marginBottom: '25px' }}>
           <button 
             onClick={() => setShowCreate(!showCreate)}
             style={{
-              padding: '10px 20px',
-              backgroundColor: '#007bff',
+              padding: '12px 24px',
+              backgroundColor: showCreate ? '#dc3545' : '#28a745',
               color: 'white',
               border: 'none',
-              borderRadius: 5,
-              cursor: 'pointer'
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              if (showCreate) {
+                e.target.style.backgroundColor = '#c82333';
+              } else {
+                e.target.style.backgroundColor = '#218838';
+              }
+              e.target.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = showCreate ? '#dc3545' : '#28a745';
+              e.target.style.transform = 'translateY(0)';
             }}
           >
-            {showCreate ? "Cancelar" : "Criar Novo Usuário"}
+            {showCreate ? "❌ Cancelar" : "➕ Criar Novo Usuário"}
           </button>
         </div>
       )}
 
       {showCreate && (
-        <div style={{ marginBottom: 30, padding: 20, border: '1px solid #ddd', borderRadius: 8 }}>
+        <div style={{ 
+          marginBottom: '30px', 
+          padding: '25px', 
+          backgroundColor: '#f8f9fa',
+          border: '2px solid #e9ecef', 
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+        }}>
           <UserCreateForm onCreated={() => setShowCreate(false)} />
         </div>
       )}
 
       {/* Campo de Busca */}
-      <div style={{ marginBottom: 20, position: 'relative', maxWidth: 400 }}>
-        <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>
-          Buscar {user?.role_id === 3 ? 'Aluno' : 'Usuário'}:
+      <div style={{ marginBottom: '25px', position: 'relative', maxWidth: '500px' }}>
+        <label style={{ 
+          display: 'block', 
+          marginBottom: '10px', 
+          fontWeight: 'bold',
+          fontSize: '1rem',
+          color: '#333'
+        }}>
+          🔍 Buscar {user?.role_id === 3 ? 'Aluno' : 'Usuário'}:
         </label>
         <input
           type="text"
@@ -206,13 +240,24 @@ export default function UserList() {
           onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
           style={{
             width: '100%',
-            padding: '10px 40px 10px 12px',
-            border: '1px solid #ddd',
-            borderRadius: 5,
-            fontSize: 16
+            padding: '15px 50px 15px 20px',
+            border: '2px solid #e9ecef',
+            borderRadius: '25px',
+            fontSize: '1rem',
+            outline: 'none',
+            transition: 'border-color 0.3s ease',
+            boxSizing: 'border-box'
           }}
+          onFocusCapture={(e) => e.target.style.borderColor = '#007bff'}
+          onBlurCapture={(e) => e.target.style.borderColor = '#e9ecef'}
         />
-        <span style={{ position: 'absolute', right: 10, top: 35, color: '#888' }}>
+        <span style={{ 
+          position: 'absolute', 
+          right: '20px', 
+          top: '45px', 
+          color: '#999',
+          fontSize: '1.2rem'
+        }}>
           🔍
         </span>
         
@@ -224,21 +269,33 @@ export default function UserList() {
             left: 0,
             right: 0,
             backgroundColor: 'white',
-            border: '1px solid #ddd',
+            border: '2px solid #e9ecef',
             borderTop: 'none',
-            borderRadius: '0 0 5px 5px',
-            maxHeight: 200,
+            borderRadius: '0 0 12px 12px',
+            maxHeight: '300px',
             overflowY: 'auto',
             zIndex: 1000,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
           }}>
             {loading && (
-              <div style={{ padding: 10, textAlign: 'center', color: '#666' }}>
+              <div style={{ 
+                padding: '20px', 
+                textAlign: 'center', 
+                color: '#666',
+                fontSize: '1rem'
+              }}>
+                <span style={{ fontSize: '1.5rem' }}>🔄</span><br />
                 Buscando...
               </div>
             )}
             {!loading && suggestions.length === 0 && search && (
-              <div style={{ padding: 10, textAlign: 'center', color: '#666' }}>
+              <div style={{ 
+                padding: '20px', 
+                textAlign: 'center', 
+                color: '#666',
+                fontSize: '1rem'
+              }}>
+                <span style={{ fontSize: '1.5rem' }}>❌</span><br />
                 Nenhum usuário encontrado
               </div>
             )}
@@ -247,18 +304,44 @@ export default function UserList() {
                 key={usuario.id}
                 onClick={() => selectUser(usuario)}
                 style={{
-                  padding: '10px 12px',
+                  padding: '15px 20px',
                   cursor: 'pointer',
-                  borderBottom: '1px solid #eee'
+                  borderBottom: '1px solid #eee',
+                  transition: 'background-color 0.3s ease'
                 }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
                 onMouseLeave={(e) => e.target.style.backgroundColor = 'white'}
               >
-                <div style={{ fontWeight: 'bold' }}>{usuario.nome}</div>
-                <div style={{ fontSize: 14, color: '#666' }}>{usuario.email}</div>
-                <div style={{ fontSize: 12, color: '#888' }}>
-                  {usuario.role_id === 1 ? 'Admin' : usuario.role_id === 2 ? 'Aluno' : 'Professor'} 
-                  {usuario.ativo === false && ' (Inativo)'}
+                <div style={{ 
+                  fontWeight: 'bold', 
+                  fontSize: '1rem',
+                  color: '#333',
+                  marginBottom: '4px'
+                }}>{usuario.nome}</div>
+                <div style={{ 
+                  fontSize: '0.9rem', 
+                  color: '#666',
+                  marginBottom: '4px'
+                }}>{usuario.email}</div>
+                <div style={{ 
+                  fontSize: '0.8rem', 
+                  color: '#999',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span>
+                    {usuario.role_id === 1 ? '👑 Admin' : usuario.role_id === 2 ? '🎓 Aluno' : '👨‍🏫 Professor'}
+                  </span>
+                  {usuario.ativo === false && (
+                    <span style={{ 
+                      color: '#dc3545',
+                      fontWeight: 'bold',
+                      fontSize: '0.75rem'
+                    }}>
+                      ❌ Inativo
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
@@ -269,95 +352,184 @@ export default function UserList() {
       {/* Formulário de Edição */}
       {selectedUser && editingUser && (
         <div style={{
-          marginTop: 30,
-          padding: 20,
+          marginTop: '30px',
+          padding: '30px',
+          background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
           border: '2px solid #007bff',
-          borderRadius: 8,
-          backgroundColor: '#f8f9fa'
+          borderRadius: '12px',
+          boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <h3>Editando: {selectedUser.nome}</h3>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginBottom: '25px',
+            paddingBottom: '15px',
+            borderBottom: '2px solid #e9ecef'
+          }}>
+            <h3 style={{ 
+              margin: 0,
+              color: '#001F3F',
+              fontSize: '1.4rem',
+              fontWeight: 'bold'
+            }}>
+              ✏️ Editando: {selectedUser.nome}
+            </h3>
             <button 
               onClick={resetForm}
               style={{
-                padding: '5px 10px',
-                border: '1px solid #ddd',
-                borderRadius: 3,
-                cursor: 'pointer'
+                padding: '8px 12px',
+                backgroundColor: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                fontWeight: 'bold',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#c82333';
+                e.target.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = '#dc3545';
+                e.target.style.transform = 'translateY(0)';
               }}
             >
-              ✕ Fechar
+              ❌ Fechar
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+            gap: '20px', 
+            marginBottom: '25px' 
+          }}>
             <div>
-              <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>Nome:</label>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '8px', 
+                fontWeight: 'bold',
+                color: '#333',
+                fontSize: '0.9rem'
+              }}>👤 Nome:</label>
               <input
                 type="text"
                 value={editingUser.nome || ''}
                 onChange={(e) => handleEditChange('nome', e.target.value)}
                 style={{
                   width: '100%',
-                  padding: 8,
-                  border: '1px solid #ddd',
-                  borderRadius: 4
+                  padding: '12px 16px',
+                  border: '2px solid #e9ecef',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  outline: 'none',
+                  transition: 'border-color 0.3s ease',
+                  boxSizing: 'border-box'
                 }}
+                onFocus={(e) => e.target.style.borderColor = '#007bff'}
+                onBlur={(e) => e.target.style.borderColor = '#e9ecef'}
               />
             </div>
             
             <div>
-              <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>Email:</label>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '8px', 
+                fontWeight: 'bold',
+                color: '#333',
+                fontSize: '0.9rem'
+              }}>📧 Email:</label>
               <input
                 type="email"
                 value={editingUser.email || ''}
                 onChange={(e) => handleEditChange('email', e.target.value)}
                 style={{
                   width: '100%',
-                  padding: 8,
-                  border: '1px solid #ddd',
-                  borderRadius: 4
+                  padding: '12px 16px',
+                  border: '2px solid #e9ecef',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  outline: 'none',
+                  transition: 'border-color 0.3s ease',
+                  boxSizing: 'border-box'
                 }}
+                onFocus={(e) => e.target.style.borderColor = '#007bff'}
+                onBlur={(e) => e.target.style.borderColor = '#e9ecef'}
               />
             </div>
 
             {user?.role_id === 1 && (
               <div>
-                <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>Papel:</label>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '8px', 
+                  fontWeight: 'bold',
+                  color: '#333',
+                  fontSize: '0.9rem'
+                }}>🎓 Papel:</label>
                 <select
                   value={editingUser.role_id || ''}
                   onChange={(e) => handleEditChange('role_id', parseInt(e.target.value))}
                   style={{
                     width: '100%',
-                    padding: 8,
-                    border: '1px solid #ddd',
-                    borderRadius: 4
+                    padding: '12px 16px',
+                    border: '2px solid #e9ecef',
+                    borderRadius: '8px',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    transition: 'border-color 0.3s ease',
+                    boxSizing: 'border-box',
+                    backgroundColor: 'white'
                   }}
+                  onFocus={(e) => e.target.style.borderColor = '#007bff'}
+                  onBlur={(e) => e.target.style.borderColor = '#e9ecef'}
                 >
-                  <option value={1}>Admin</option>
-                  <option value={2}>Aluno</option>
-                  <option value={3}>Professor</option>
+                  <option value={1}>👑 Admin</option>
+                  <option value={2}>🎓 Aluno</option>
+                  <option value={3}>👨‍🏫 Professor</option>
                 </select>
               </div>
             )}
 
             <div>
-              <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>Telefone:</label>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '8px', 
+                fontWeight: 'bold',
+                color: '#333',
+                fontSize: '0.9rem'
+              }}>📞 Telefone:</label>
               <input
                 type="text"
                 value={editingUser.telefone || ''}
                 onChange={(e) => handleEditChange('telefone', e.target.value)}
                 style={{
                   width: '100%',
-                  padding: 8,
-                  border: '1px solid #ddd',
-                  borderRadius: 4
+                  padding: '12px 16px',
+                  border: '2px solid #e9ecef',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  outline: 'none',
+                  transition: 'border-color 0.3s ease',
+                  boxSizing: 'border-box'
                 }}
+                onFocus={(e) => e.target.style.borderColor = '#007bff'}
+                onBlur={(e) => e.target.style.borderColor = '#e9ecef'}
+                placeholder="(xx) xxxxx-xxxx"
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>Nova Senha:</label>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '8px', 
+                fontWeight: 'bold',
+                color: '#333',
+                fontSize: '0.9rem'
+              }}>🔒 Nova Senha:</label>
               <input
                 type="password"
                 value={editingUser.nova_senha || ''}
@@ -365,87 +537,155 @@ export default function UserList() {
                 placeholder="Deixe em branco para não alterar"
                 style={{
                   width: '100%',
-                  padding: 8,
-                  border: '1px solid #ddd',
-                  borderRadius: 4
+                  padding: '12px 16px',
+                  border: '2px solid #e9ecef',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  outline: 'none',
+                  transition: 'border-color 0.3s ease',
+                  boxSizing: 'border-box'
                 }}
+                onFocus={(e) => e.target.style.borderColor = '#007bff'}
+                onBlur={(e) => e.target.style.borderColor = '#e9ecef'}
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>Status:</label>
+              <label style={{ 
+                display: 'block', 
+                marginBottom: '8px', 
+                fontWeight: 'bold',
+                color: '#333',
+                fontSize: '0.9rem'
+              }}>📊 Status:</label>
               <div style={{
-                padding: 8,
-                borderRadius: 4,
+                padding: '12px 16px',
+                borderRadius: '8px',
                 backgroundColor: editingUser.ativo !== false ? '#d4edda' : '#f8d7da',
                 color: editingUser.ativo !== false ? '#155724' : '#721c24',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                border: `2px solid ${editingUser.ativo !== false ? '#c3e6cb' : '#f5c6cb'}`,
+                fontSize: '1rem'
               }}>
-                {editingUser.ativo !== false ? 'Ativo' : 'Inativo'}
+                {editingUser.ativo !== false ? '✅ Ativo' : '❌ Inativo'}
               </div>
             </div>
           </div>
 
           {/* Botões de Ação */}
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ 
+            display: 'flex', 
+            gap: '15px', 
+            flexWrap: 'wrap',
+            marginTop: '25px',
+            paddingTop: '20px',
+            borderTop: '2px solid #e9ecef'
+          }}>
             <button
               onClick={saveUser}
               disabled={loading}
               style={{
-                padding: '10px 20px',
-                backgroundColor: '#28a745',
+                padding: '12px 24px',
+                backgroundColor: loading ? '#ccc' : '#28a745',
                 color: 'white',
                 border: 'none',
-                borderRadius: 5,
+                borderRadius: '8px',
                 cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.6 : 1
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) {
+                  e.target.style.backgroundColor = '#218838';
+                  e.target.style.transform = 'translateY(-2px)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!loading) {
+                  e.target.style.backgroundColor = '#28a745';
+                  e.target.style.transform = 'translateY(0)';
+                }
               }}
             >
-              {loading ? 'Salvando...' : 'Salvar Alterações'}
+              {loading ? '⏳ Salvando...' : '💾 Salvar Alterações'}
             </button>
 
             {editingUser.ativo !== false ? (
               <button
                 onClick={() => setConfirm({ open: true, user: editingUser, action: 'delete' })}
                 style={{
-                  padding: '10px 20px',
+                  padding: '12px 24px',
                   backgroundColor: '#dc3545',
                   color: 'white',
                   border: 'none',
-                  borderRadius: 5,
-                  cursor: 'pointer'
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#c82333';
+                  e.target.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = '#dc3545';
+                  e.target.style.transform = 'translateY(0)';
                 }}
               >
-                Inativar Usuário
+                🚫 Inativar Usuário
               </button>
             ) : (
               <button
                 onClick={() => setConfirm({ open: true, user: editingUser, action: 'reactivate' })}
                 style={{
-                  padding: '10px 20px',
+                  padding: '12px 24px',
                   backgroundColor: '#17a2b8',
                   color: 'white',
                   border: 'none',
-                  borderRadius: 5,
-                  cursor: 'pointer'
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#138496';
+                  e.target.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = '#17a2b8';
+                  e.target.style.transform = 'translateY(0)';
                 }}
               >
-                Reativar Usuário
+                ✅ Reativar Usuário
               </button>
             )}
 
             <button
               onClick={resetForm}
               style={{
-                padding: '10px 20px',
+                padding: '12px 24px',
                 backgroundColor: '#6c757d',
                 color: 'white',
                 border: 'none',
-                borderRadius: 5,
-                cursor: 'pointer'
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#5a6268';
+                e.target.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = '#6c757d';
+                e.target.style.transform = 'translateY(0)';
               }}
             >
-              Cancelar
+              ❌ Cancelar
             </button>
           </div>
         </div>
@@ -454,14 +694,18 @@ export default function UserList() {
       {/* Mensagem de feedback */}
       {actionMsg && (
         <div style={{
-          marginTop: 20,
-          padding: 10,
+          marginTop: '25px',
+          padding: '15px 20px',
           backgroundColor: actionMsg.includes('Erro') ? '#f8d7da' : '#d4edda',
           color: actionMsg.includes('Erro') ? '#721c24' : '#155724',
-          border: `1px solid ${actionMsg.includes('Erro') ? '#f5c6cb' : '#c3e6cb'}`,
-          borderRadius: 5
+          border: `2px solid ${actionMsg.includes('Erro') ? '#f5c6cb' : '#c3e6cb'}`,
+          borderRadius: '12px',
+          fontWeight: 'bold',
+          fontSize: '1rem',
+          textAlign: 'center',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
         }}>
-          {actionMsg}
+          {actionMsg.includes('Erro') ? '❌' : '✅'} {actionMsg}
         </div>
       )}
 
@@ -469,7 +713,7 @@ export default function UserList() {
       {confirm.open && (
         <ConfirmDialog
           open={confirm.open}
-          title={confirm.action === 'delete' ? 'Inativar usuário?' : 'Reativar usuário?'}
+          title={confirm.action === 'delete' ? '🚫 Inativar usuário?' : '✅ Reativar usuário?'}
           message={`Tem certeza que deseja ${confirm.action === 'delete' ? 'inativar' : 'reativar'} o usuário ${confirm.user.nome}?`}
           onCancel={() => setConfirm({ open: false, user: null, action: null })}
           onConfirm={async () => {

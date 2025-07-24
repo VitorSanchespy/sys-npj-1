@@ -2,6 +2,25 @@ import React, { useState } from "react";
 import { userService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 
+// Helper para verificar role
+const getUserRole = (user) => {
+  if (!user) return null;
+  
+  if (typeof user.role === 'string') {
+    return user.role;
+  }
+  
+  if (user.role && typeof user.role === 'object') {
+    return user.role.nome || user.role.name || null;
+  }
+  
+  if (user.role_id === 1) return 'Admin';
+  if (user.role_id === 2) return 'Aluno';
+  if (user.role_id === 3) return 'Professor';
+  
+  return null;
+};
+
 const ROLES = [
   { id: 2, label: "Aluno" },
   { id: 3, label: "Professor" },
@@ -21,8 +40,9 @@ export default function UserCreateForm({ onCreated }) {
   const [loading, setLoading] = useState(false);
 
   // Professores só podem criar Aluno
-  const isProfessor = user?.role === "Professor" || user?.role === "professor" || user?.role_id === 3;
-  const isAdmin = user?.role === "Admin" || user?.role === "admin" || user?.role_id === 1;
+  const userRole = getUserRole(user);
+  const isProfessor = userRole === "Professor";
+  const isAdmin = userRole === "Admin";
   
   // Define opções de papel baseado no usuário logado
   let roleOptions = [];

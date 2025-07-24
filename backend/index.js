@@ -19,10 +19,7 @@ app.use(helmet());
 // express.json() será movido para depois da rota de upload
 app.use(
   mongoSanitize({
-    replaceWith: '_',
-    onSanitize: ({ req, key }) => {
-      console.warn(`[Sanitize] Campo suspeito em ${req.path}: ${key}`);
-    }
+    replaceWith: '_'
   })
 );
 app.use(express.urlencoded({ extended: true }));
@@ -73,8 +70,6 @@ const io = socketIo(server, {
 });
 
 io.on('connection', (socket) => {
-  console.log(`Novo cliente conectado: ${socket.id}`);
-
   // Inscreve o usuário em canais
   socket.on('inscrever', (data) => {
     if (data.processoId) {
@@ -86,7 +81,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(`Cliente desconectado: ${socket.id}`);
+    // Client disconnected
   });
 });
 
@@ -142,9 +137,9 @@ app.use('/auth', require('./routes/autorizacaoRoutes'));
 app.use('/api/usuarios', require('./routes/usuarioRoutes'));
 app.use('/api/processos', require('./routes/processoRoutes'));
 app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoutes'));
+app.use('/api/agendamentos', require('./routes/agendamentoRoutes'));
 // Tratamento de erros
 app.use((err, req, res, next) => {
-  console.error(err.stack);
   res.status(500).json({ error: 'Erro interno do servidor' });
 });
 
@@ -158,8 +153,13 @@ app.use(errorHandler);
 
 if (require.main === module) {
   const PORT = process.env.PORT || 3001;
+  
+  // Inicializar sistema de notificações
+  const { inicializarCronJobs } = require('./services/notificationScheduler');
+  inicializarCronJobs();
+  
   server.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+    // Server started
   });
 }
 

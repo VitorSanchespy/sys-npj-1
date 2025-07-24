@@ -11,6 +11,9 @@ const processoModels = require('./processoModels');
 const arquivoModels = require('./arquivoModels');
 const atualizacoesProcessoModels = require('./atualizacaoProcessoModels');
 const usuariosProcessoModels = require('./usuariosProcessoModels');
+const agendamentoModels = require('./agendamentoModels');
+const notificacaoModels = require('./notificacaoModels');
+const configuracaoNotificacaoModels = require('./configuracaoNotificacaoModels');
 
 const models = {
   rolesModels,
@@ -23,6 +26,9 @@ const models = {
   arquivoModels,
   atualizacoesProcessoModels,
   usuariosProcessoModels,
+  agendamentoModels,
+  notificacaoModels,
+  configuracaoNotificacaoModels,
   sequelize,
   Sequelize
 };

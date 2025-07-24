@@ -98,6 +98,21 @@ const validate = (method) => {
           .toInt()
       ];
 
+    // Validações para atualização de processos
+    case 'atualizarProcesso':
+      return [
+        check('numero_processo').optional().notEmpty().withMessage('Número do processo não pode estar vazio')
+          .isString().withMessage('Número do processo deve ser texto')
+          .trim(),
+        check('contato_assistido').optional().notEmpty().withMessage('Contato do assistido não pode estar vazio')
+          .isString().withMessage('Contato do assistido deve ser texto')
+          .trim(),
+        check('assistido').optional().trim(),
+        check('descricao').optional().trim(),
+        check('status').optional().trim(),
+        check('sistema').optional().trim()
+      ];
+
     // Validações para atribuição de usuários a processos
     case 'atribuirUsuario':
       return [

@@ -19,10 +19,7 @@ const {
             if (!processo_id) {
                 return res.status(400).json({ erro: 'processo_id é obrigatório na URL.' });
             }
-            // Só permite atualização por Professor/Admin
-            if (!['Professor', 'Admin'].includes(req.usuario.role)) {
-                return res.status(403).json({ erro: 'Apenas professores ou admins podem atualizar processos.' });
-            }
+            
             const processo = await Processo.findByPk(processo_id);
             if (!processo) {
                 return res.status(404).json({ erro: 'Processo não encontrado.' });

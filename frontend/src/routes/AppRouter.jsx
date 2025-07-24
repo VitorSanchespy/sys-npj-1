@@ -6,7 +6,7 @@ import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
 import FullRegisterPage from "@/pages/auth/FullRegisterPage";
 import DashboardPage from "@/pages/dashboard/DashboardPage";
-// import HomePage from "@/pages/HomePage";
+import HomePage from "@/pages/HomePage";
 import ProfilePage from "@/pages/dashboard/ProfilePage";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
@@ -20,6 +20,7 @@ import UserListPage from "@/pages/dashboard/UserListPage";
 import UserDetailPage from "@/pages/dashboard/UserDetailPage";
 import UserEditPage from "@/pages/dashboard/UserEditPage";
 import ArquivosPage from "@/pages/dashboard/ArquivosPage";
+import AgendamentosPage from "@/pages/AgendamentosPage";
 import { hasRole } from "@/utils/permissions";
 
 function PrivateRoute({ children, roles }) {
@@ -39,15 +40,7 @@ export default function AppRouter() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Protegido: Todos autenticados */}
-          <Route
-            path="/"
-            element={
-              <PrivateRoute>
-                <DashboardPage />
-              </PrivateRoute>
-            }
-          />
+          <Route path="/" element={<HomePage />} />
           {/* Público */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -56,14 +49,6 @@ export default function AppRouter() {
           <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
           <Route path="/resetar-senha" element={<ResetPasswordPage />} />
           {/* Protegido: Todos autenticados */}
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                <DashboardPage />
-              </PrivateRoute>
-            }
-          />
           <Route
             path="/dashboard"
             element={
@@ -82,6 +67,7 @@ export default function AppRouter() {
           />
           <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} /> 
           <Route path="/arquivos" element={<PrivateRoute><ArquivosPage /></PrivateRoute>} /> 
+          <Route path="/agendamentos" element={<PrivateRoute><AgendamentosPage /></PrivateRoute>} /> 
           {/* Protegido: Admin */}
           {/* Usuários (admin/professor) */}
           <Route path="/usuarios" element={<PrivateRoute roles={["Professor", "Admin"]}><UserListPage /></PrivateRoute>} />
@@ -93,9 +79,9 @@ export default function AppRouter() {
           <Route path="/processos" element={<PrivateRoute><ProcessListPage /></PrivateRoute>} />
           <Route path="/processos/:id" element={<PrivateRoute><ProcessDetailPage /></PrivateRoute>} />
           <Route path="/processos/:id/atualizacoes" element={<PrivateRoute><ProcessUpdatesPage /></PrivateRoute>} />
+          <Route path="/processos/:id/editar" element={<PrivateRoute><ProcessEditPage /></PrivateRoute>} />
           {/* Rotas restritas para Professor/Admin */}
           <Route path="/processos/novo" element={<PrivateRoute roles={["Professor", "admin"]}><ProcessFormPage /></PrivateRoute>} />
-          <Route path="/processos/:id/editar" element={<PrivateRoute roles={["Professor", "Admin"]}><ProcessEditPage /></PrivateRoute>} />
           <Route path="/processos/:id/atribuir" element={<PrivateRoute roles={["Professor", "Admin"]}><ProcessAssignStudentPage /></PrivateRoute>} />
          <Route path="/processos/:id/atualizacoes" element={<PrivateRoute><ProcessUpdatesPage /></PrivateRoute>} />
           {/* 404 */}

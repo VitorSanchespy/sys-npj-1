@@ -4,6 +4,25 @@ import { useAuthContext } from "../../contexts/AuthContext";
 import { Link } from "react-router-dom";
 import CreateProcessModal from "@/components/processos/ProcessCreateModal";
 
+// Helper para verificar role
+const getUserRole = (user) => {
+  if (!user) return null;
+  
+  if (typeof user.role === 'string') {
+    return user.role;
+  }
+  
+  if (user.role && typeof user.role === 'object') {
+    return user.role.nome || user.role.name || null;
+  }
+  
+  if (user.role_id === 1) return 'Admin';
+  if (user.role_id === 2) return 'Aluno';
+  if (user.role_id === 3) return 'Professor';
+  
+  return null;
+};
+
 export function ProcessList() {
   const { token, user } = useAuthContext();
   const [processos, setProcessos] = useState([]);
@@ -16,22 +35,23 @@ export function ProcessList() {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchProcessos = useCallback(async (search = "", myProcesses = false) => {
-    if (!token || !user?.role) {
-      console.log("fetchProcessos: token ou user não disponível", { token: !!token, userRole: user?.role });
+    const userRole = getUserRole(user);
+    if (!token || !userRole) {
+      console.log("fetchProcessos: token ou user não disponível", { token: !!token, userRole });
       return;
     }
     
-    console.log("fetchProcessos iniciado:", { search, myProcesses, userRole: user?.role });
+    console.log("fetchProcessos iniciado:", { search, myProcesses, userRole });
     setLoading(true);
     setError("");
     try {
       let data = [];
       
-      if (user.role === "Aluno") {
+      if (userRole === "Aluno") {
         console.log("Buscando processos para Aluno");
         // Alunos sempre veem apenas seus processos (mesmo durante pesquisa)
         data = await processService.getMyProcesses(token);
-      } else if (user.role === "Professor") {
+      } else if (userRole === "Professor") {
         if (search.trim()) {
           console.log("Professor pesquisando - buscando todos os processos");
           // Professor pesquisando: buscar em TODOS os processos
@@ -49,7 +69,7 @@ export function ProcessList() {
             .sort((a, b) => new Date(b.updatedAt || b.criado_em) - new Date(a.updatedAt || a.criado_em))
             .slice(0, 4);
         }
-      } else if (user.role === "Admin") {
+      } else if (userRole === "Admin") {
         if (myProcesses) {
           data = await processService.getMyProcesses(token);
         } else {
@@ -73,19 +93,20 @@ export function ProcessList() {
       setError("Erro ao carregar processos.");
     }
     setLoading(false);
-  }, [token, user?.role]);
+  }, [token, user]);
 
   // Carregamento inicial quando user e token estão disponíveis
   useEffect(() => {
-    console.log("useEffect inicial:", { userRole: user?.role, token: !!token });
-    if (user?.role && token) {
+    const userRole = getUserRole(user);
+    console.log("useEffect inicial:", { userRole, token: !!token });
+    if (userRole && token) {
       // Para alunos, sempre mostrar apenas seus processos
-      if (user.role === "Aluno") {
+      if (userRole === "Aluno") {
         setShowMyProcesses(true);
       }
       fetchProcessos("", showMyProcesses);
     }
-  }, [user?.role, token, fetchProcessos]);
+  }, [user, token, fetchProcessos]);
 
   // Debounce para searchTerm
   useEffect(() => {
@@ -98,10 +119,11 @@ export function ProcessList() {
 
   // Efeito para busca em tempo real (agora usando debouncedSearch)
   useEffect(() => {
-    if (user?.role && token) {
+    const userRole = getUserRole(user);
+    if (userRole && token) {
       fetchProcessos(debouncedSearch, showMyProcesses);
     }
-  }, [debouncedSearch, showMyProcesses, fetchProcessos, user?.role, token]);
+  }, [debouncedSearch, showMyProcesses, fetchProcessos, user, token]);
 
   const handleSearch = (e) => {
     const value = e.target.value;
@@ -109,7 +131,7 @@ export function ProcessList() {
   };
 
   const handleMyProcessesToggle = () => {
-    if (user?.role !== "Aluno") { // Alunos não podem alternar
+    if (getUserRole(user) !== "Aluno") { // Alunos não podem alternar
       const newValue = !showMyProcesses;
       setShowMyProcesses(newValue);
     }
@@ -128,7 +150,7 @@ export function ProcessList() {
         <h2>Processos</h2>
         
         {/* Botão Criar Processo - apenas para Professor e Admin */}
-        {(user?.role === "Professor" || user?.role === "Admin") && (
+        {(getUserRole(user) === "Professor" || getUserRole(user) === "Admin") && (
           <button 
             onClick={() => setShowCreateModal(true)}
             style={{
@@ -164,7 +186,7 @@ export function ProcessList() {
       </div>
 
       {/* Botão Meus Processos - apenas para Professor e Admin */}
-      {(user?.role === "Professor" || user?.role === "Admin") && (
+      {(getUserRole(user) === "Professor" || getUserRole(user) === "Admin") && (
         <div style={{ marginBottom: 20 }}>
           <button
             onClick={handleMyProcessesToggle}
@@ -180,7 +202,7 @@ export function ProcessList() {
             {showMyProcesses ? 'Mostrar Todos' : 'Meus Processos'}
           </button>
           
-          {!showMyProcesses && user?.role === "Professor" && (
+          {!showMyProcesses && getUserRole(user) === "Professor" && (
             <span style={{ marginLeft: 10, fontSize: 14, color: '#666' }}>
               (Mostrando últimos 4 processos atualizados)
             </span>

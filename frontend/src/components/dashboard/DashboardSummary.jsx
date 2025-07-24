@@ -1,686 +1,601 @@
-import React, { useEffect, useState } from "react";
-import { apiRequest } from "../../api/apiRequest";
-import { useAuthContext } from "../../contexts/AuthContext";
+import React from "react";
+import useApi from '../../hooks/useApi.jsx';
+const { getUserRole } = useApi();
 
-export default function DashboardSummary() {
-  const { token, user } = useAuthContext();
-  const [data, setData] = useState({
-    processos: [],
-    usuarios: [],
-    atualizacoes: [],
-    alertas: 0,
-    estatisticas: {
-      totalProcessos: 0,
-      processosAbertos: 0,
-      processosAndamento: 0,
-      processosFinalizados: 0,
-      totalUsuarios: 0,
-      totalAlunos: 0,
-      totalProfessores: 0,
-      totalAdmins: 0,
-      sistemaFisico: 0,
-      sistemaPEA: 0,
-      sistemaPJE: 0
-    }
-  });
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterPeriod, setFilterPeriod] = useState("30");
-  const [filterStatus, setFilterStatus] = useState("");
-
-  useEffect(() => {
-    async function fetchDashboard() {
-      try {
-        let processos = [];
-        let usuarios = [];
-        let atualizacoes = [];
-
-        // Buscar processos baseado no role
-        if (user?.role === "Aluno") {
-          processos = await apiRequest("/api/processos/meus-processos", { token });
-        } else if (user?.role === "Professor") {
-          processos = await apiRequest("/api/processos", { token });
-        } else if (user?.role === "Admin") {
-          processos = await apiRequest("/api/processos", { token });
-        }
-
-        // Buscar usuários para Professor/Admin
-        if (user?.role === "Admin") {
-          try {
-            const usersResponse = await apiRequest("/api/usuarios/pagina", { token });
-            usuarios = usersResponse?.usuarios || usersResponse?.data || [];
-          } catch (err) {
-            console.log("Erro ao buscar usuários (admin):", err);
-            // Fallback: tentar endpoint simples
-            try {
-              usuarios = await apiRequest("/api/usuarios", { token });
-            } catch (err2) {
-              console.log("Erro no fallback de usuários:", err2);
-              usuarios = [];
-            }
-          }
-        } else if (user?.role === "Professor") {
-          try {
-            // Professores só veem alunos
-            usuarios = await apiRequest("/api/usuarios/alunos", { token });
-          } catch (err) {
-            console.log("Erro ao buscar alunos:", err);
-            usuarios = [];
-          }
-        }
-
-        // Buscar atualizações recentes
-        try {
-          atualizacoes = await apiRequest("/api/atualizacoes?limite=5", { token });
-        } catch (err) {
-          console.log("Erro ao buscar atualizações:", err);
-          atualizacoes = [];
-        }
-
-        // Calcular estatísticas
-        const stats = calculateStatistics(processos, usuarios);
-
-        setData({
-          processos: processos || [],
-          usuarios: usuarios || [],
-          atualizacoes: atualizacoes || [],
-          alertas: calculateAlerts(processos || []),
-          estatisticas: stats
-        });
-      } catch (error) {
-        console.error("Erro ao carregar dashboard:", error);
-        setData({ 
-          processos: [], 
-          usuarios: [], 
-          atualizacoes: [], 
-          alertas: 0,
-          estatisticas: {
-            totalProcessos: 0, processosAbertos: 0, processosAndamento: 0, processosFinalizados: 0,
-            totalUsuarios: 0, totalAlunos: 0, totalProfessores: 0, totalAdmins: 0,
-            sistemaFisico: 0, sistemaPEA: 0, sistemaPJE: 0
-          }
-        });
-      }
-      setLoading(false);
-    }
-    if (user?.role && token) fetchDashboard();
-  }, [token, user]);
-
-  const calculateStatistics = (processos, usuarios) => {
-    const stats = {
-      totalProcessos: processos.length,
-      processosAbertos: processos.filter(p => p.status === "Aberto").length,
-      processosAndamento: processos.filter(p => p.status === "Em andamento").length,
-      processosFinalizados: processos.filter(p => p.status === "Finalizado").length,
-      totalUsuarios: usuarios.length,
-      totalAlunos: usuarios.filter(u => u.role === "Aluno" || u.role_id === 2).length,
-      totalProfessores: usuarios.filter(u => u.role === "Professor" || u.role_id === 3).length,
-      totalAdmins: usuarios.filter(u => u.role === "Admin" || u.role_id === 1).length,
-      sistemaFisico: processos.filter(p => p.sistema === "Físico").length,
-      sistemaPEA: processos.filter(p => p.sistema === "PEA").length,
-      sistemaPJE: processos.filter(p => p.sistema === "PJE").length
-    };
-    return stats;
-  };
-
-  const calculateAlerts = (processos) => {
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    return processos.filter(proc => {
-      const lastUpdate = new Date(proc.updatedAt || proc.criado_em);
-      return lastUpdate < thirtyDaysAgo && proc.status !== "Finalizado";
-    }).length;
-  };
-
-  const handleGlobalSearch = (e) => {
-    setSearchTerm(e.target.value);
-    // Apenas visual - não navega
-  };
-
-  if (loading) return <div style={{ padding: 20 }}>Carregando painel...</div>;
-
-  return (
-    <div style={{ padding: 20, maxWidth: 1200, margin: "0 auto" }}>
-      {/* Header com busca global e filtros */}
-      <div style={{ marginBottom: 30 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <h1 style={{ margin: 0, color: "#333" }}>Dashboard - Sistema NPJ</h1>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {data.alertas > 0 && (
-              <div style={{
-                backgroundColor: "#dc3545",
-                color: "white",
-                borderRadius: "50%",
-                width: 25,
-                height: 25,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 12,
-                fontWeight: "bold"
-              }}>
-                {data.alertas}
-              </div>
-            )}
-            <span style={{ color: "#666", fontSize: 14 }}>Bem-vindo, {user?.nome}</span>
-          </div>
-        </div>
-        
-        {/* Busca Global e Filtros - apenas visual */}
-        <div style={{ display: "flex", gap: 15, alignItems: "center", flexWrap: "wrap" }}>
-          <input
-            type="text"
-            placeholder="Busca visual: digite para filtrar dados..."
-            value={searchTerm}
-            onChange={handleGlobalSearch}
-            style={{
-              flex: 1,
-              minWidth: 300,
-              padding: "10px 15px",
-              border: "1px solid #ddd",
-              borderRadius: 8,
-              fontSize: 14
-            }}
-          />
-          <select
-            value={filterPeriod}
-            onChange={(e) => setFilterPeriod(e.target.value)}
-            style={{ padding: "10px", border: "1px solid #ddd", borderRadius: 8 }}
-          >
-            <option value="7">Últimos 7 dias</option>
-            <option value="30">Últimos 30 dias</option>
-            <option value="90">Últimos 90 dias</option>
-          </select>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            style={{ padding: "10px", border: "1px solid #ddd", borderRadius: 8 }}
-          >
-            <option value="">Todos os status</option>
-            <option value="Aberto">Aberto</option>
-            <option value="Em andamento">Em andamento</option>
-            <option value="Finalizado">Finalizado</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Dashboard baseado no role */}
-      {user?.role === "Aluno" && <AlunosDashboard data={data} searchTerm={searchTerm} />}
-      {user?.role === "Professor" && <ProfessoresDashboard data={data} searchTerm={searchTerm} />}
-      {user?.role === "Admin" && <AdminsDashboard data={data} searchTerm={searchTerm} />}
-    </div>
-  );
-}
-
-// Dashboard para Alunos
-function AlunosDashboard({ data, searchTerm }) {
-  const processos = data.processos || [];
-  const stats = data.estatisticas;
-  
-  // Filtrar processos baseado na busca
-  const filteredProcessos = searchTerm ? 
-    processos.filter(p => 
-      p.numero_processo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.assistido?.toLowerCase().includes(searchTerm.toLowerCase())
-    ) : processos;
-
-  const progresso = stats.totalProcessos > 0 ? (stats.processosFinalizados / stats.totalProcessos) * 100 : 0;
-
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
-      {/* Card Meus Processos */}
-      <Card title="Meus Processos" color="#007bff">
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 15 }}>
-          <StatItem label="Total" value={stats.totalProcessos} />
-          <StatItem label="Abertos" value={stats.processosAbertos} color="#28a745" />
-          <StatItem label="Em Andamento" value={stats.processosAndamento} color="#ffc107" />
-          <StatItem label="Finalizados" value={stats.processosFinalizados} color="#6c757d" />
-        </div>
-        <div>
-          <div style={{ fontSize: 12, color: "#666", marginBottom: 5 }}>
-            Progresso: {progresso.toFixed(1)}%
-          </div>
-          <div style={{ 
-            backgroundColor: "#e9ecef", 
-            borderRadius: 10, 
-            height: 8, 
-            overflow: "hidden" 
-          }}>
-            <div style={{
-              backgroundColor: "#28a745",
-              height: "100%",
-              width: `${progresso}%`,
-              transition: "width 0.3s ease"
-            }}></div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Card Próximas Diligências */}
-      <Card title="Processos Recentes" color="#28a745">
-        <div style={{ fontSize: 14, color: "#666" }}>
-          {filteredProcessos.length > 0 ? (
-            filteredProcessos.slice(0, 3).map(proc => (
-              <div key={proc.id} style={{ 
-                padding: "8px 0", 
-                borderBottom: "1px solid #eee",
-                display: "flex",
-                justifyContent: "space-between"
-              }}>
-                <span style={{ fontSize: 12, fontWeight: "bold" }}>
-                  {proc.numero_processo || `Proc. ${proc.id}`}
-                </span>
-                <StatusBadge status={proc.status} />
-              </div>
-            ))
-          ) : (
-            <div style={{ textAlign: "center", color: "#999" }}>
-              {searchTerm ? "Nenhum processo encontrado na busca" : "Nenhum processo encontrado"}
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {/* Card Últimas Atualizações */}
-      <Card title="Últimas Atualizações" color="#ffc107">
-        <div style={{ fontSize: 14 }}>
-          {data.atualizacoes && data.atualizacoes.length > 0 ? (
-            data.atualizacoes.slice(0, 3).map((att, index) => (
-              <div key={index} style={{ 
-                padding: "8px 0", 
-                borderBottom: "1px solid #eee" 
-              }}>
-                <div style={{ fontWeight: "bold" }}>
-                  {att.tipo_atualizacao || "Atualização"}
-                </div>
-                <div style={{ fontSize: 12, color: "#666" }}>
-                  {att.processo?.numero_processo || "Processo"} - {att.descricao || "Nova atualização"}
-                </div>
-                <div style={{ fontSize: 11, color: "#999" }}>
-                  {att.data_atualizacao 
-                    ? new Date(att.data_atualizacao).toLocaleDateString('pt-BR')
-                    : "Data não disponível"
-                  }
-                </div>
-              </div>
-            ))
-          ) : (
-            <div style={{ textAlign: "center", color: "#999" }}>
-              Nenhuma atualização recente
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {/* Card Status dos Processos */}
-      <Card title="Visão Geral dos Status" color="#6f42c1">
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <StatRow label="Abertos" value={stats.processosAbertos} color="#28a745" />
-          <StatRow label="Em Andamento" value={stats.processosAndamento} color="#ffc107" />
-          <StatRow label="Finalizados" value={stats.processosFinalizados} color="#6c757d" />
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-// Dashboard para Professores
-function ProfessoresDashboard({ data, searchTerm }) {
-  const processos = data.processos || [];
-  const usuarios = data.usuarios || [];
-  const stats = data.estatisticas;
-  
-  // Filtrar dados baseado na busca
-  const filteredProcessos = searchTerm ? 
-    processos.filter(p => 
-      p.numero_processo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.assistido?.toLowerCase().includes(searchTerm.toLowerCase())
-    ) : processos;
-
-  const filteredAlunos = searchTerm ? 
-    usuarios.filter(u => 
-      u.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    ) : usuarios;
-  
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
-      {/* Card Processos sob Supervisão */}
-      <Card title="Processos sob Supervisão" color="#007bff">
-        <PieChart data={[
-          { label: "Abertos", value: stats.processosAbertos, color: "#28a745" },
-          { label: "Em Andamento", value: stats.processosAndamento, color: "#ffc107" },
-          { label: "Finalizados", value: stats.processosFinalizados, color: "#6c757d" }
-        ]} />
-        <div style={{ marginTop: 15, textAlign: "center" }}>
-          <div style={{ fontSize: 12, color: "#666" }}>
-            Total: {stats.totalProcessos} processos
-          </div>
-        </div>
-      </Card>
-
-      {/* Card Alunos Orientados */}
-      <Card title="Alunos Orientados" color="#28a745">
-        <div style={{ marginBottom: 15 }}>
-          <StatItem label="Total de Alunos" value={stats.totalAlunos} />
-        </div>
-        <div style={{ fontSize: 14, maxHeight: 150, overflowY: "auto" }}>
-          {filteredAlunos.slice(0, 5).map(aluno => (
-            <div key={aluno.id} style={{ 
-              padding: "5px 0", 
-              display: "flex", 
-              justifyContent: "space-between",
-              borderBottom: "1px solid #eee"
-            }}>
-              <span style={{ fontSize: 12 }}>{aluno.nome}</span>
-              <span style={{ color: "#007bff", fontSize: 11 }}>
-                {processos.filter(p => p.idusuario_responsavel === aluno.id).length} proc.
-              </span>
-            </div>
-          ))}
-          {filteredAlunos.length === 0 && (
-            <div style={{ textAlign: "center", color: "#999", fontSize: 12 }}>
-              {searchTerm ? "Nenhum aluno encontrado na busca" : "Nenhum aluno encontrado"}
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {/* Card Tramitação por Local */}
-      <Card title="Tramitação por Sistema" color="#ffc107">
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <StatRow 
-            label="Físico" 
-            value={stats.sistemaFisico}
-            total={stats.totalProcessos}
-            color="#007bff"
-          />
-          <StatRow 
-            label="PEA" 
-            value={stats.sistemaPEA}
-            total={stats.totalProcessos}
-            color="#28a745"
-          />
-          <StatRow 
-            label="PJE" 
-            value={stats.sistemaPJE}
-            total={stats.totalProcessos}
-            color="#ffc107"
-          />
-        </div>
-      </Card>
-
-      {/* Card Alertas de Supervisão */}
-      <Card title="Alertas de Supervisão" color="#dc3545">
-        <div style={{ fontSize: 14 }}>
-          <div style={{ padding: "10px 0", borderBottom: "1px solid #eee" }}>
-            <div style={{ fontWeight: "bold" }}>Processos sem atualização:</div>
-            <div style={{ color: "#dc3545", fontWeight: "bold", fontSize: 18 }}>
-              {data.alertas} processos
-            </div>
-            <div style={{ fontSize: 11, color: "#666" }}>
-              Há mais de 30 dias
-            </div>
-          </div>
-          <div style={{ padding: "10px 0" }}>
-            <div style={{ fontWeight: "bold" }}>Processos Abertos:</div>
-            <div style={{ color: "#ffc107", fontWeight: "bold", fontSize: 18 }}>
-              {stats.processosAbertos}
-            </div>
-            <div style={{ fontSize: 11, color: "#666" }}>
-              Precisam de atenção
-            </div>
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-// Dashboard para Admins
-function AdminsDashboard({ data, searchTerm }) {
-  const processos = data.processos || [];
-  const usuarios = data.usuarios || [];
-  const stats = data.estatisticas;
-  
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
-      {/* Card Visão Geral do Sistema */}
-      <Card title="Visão Geral do Sistema" color="#007bff">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 15 }}>
-          <StatItem label="Processos" value={stats.totalProcessos} />
-          <StatItem label="Usuários" value={stats.totalUsuarios} />
-          <StatItem label="Professores" value={stats.totalProfessores} />
-          <StatItem label="Alunos" value={stats.totalAlunos} />
-        </div>
-        <div style={{ marginTop: 15, padding: "10px", backgroundColor: "#f8f9fa", borderRadius: 5 }}>
-          <div style={{ fontSize: 12, color: "#666", textAlign: "center" }}>
-            Sistema operando com {stats.totalUsuarios} usuários ativos
-          </div>
-        </div>
-      </Card>
-
-      {/* Card Estatísticas de Processos */}
-      <Card title="Estatísticas de Processos" color="#28a745">
-        <div style={{ marginBottom: 15 }}>
-          <PieChart data={[
-            { label: "Abertos", value: stats.processosAbertos, color: "#28a745" },
-            { label: "Andamento", value: stats.processosAndamento, color: "#ffc107" },
-            { label: "Finalizados", value: stats.processosFinalizados, color: "#6c757d" }
-          ]} />
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 5, fontSize: 12 }}>
-          <StatRow label="Físico" value={stats.sistemaFisico} total={stats.totalProcessos} color="#007bff" />
-          <StatRow label="PEA" value={stats.sistemaPEA} total={stats.totalProcessos} color="#28a745" />
-          <StatRow label="PJE" value={stats.sistemaPJE} total={stats.totalProcessos} color="#ffc107" />
-        </div>
-      </Card>
-
-      {/* Card Atividade do Sistema */}
-      <Card title="Atividade Recente" color="#ffc107">
-        <div style={{ fontSize: 14, maxHeight: 200, overflowY: "auto" }}>
-          {data.atualizacoes && data.atualizacoes.length > 0 ? (
-            data.atualizacoes.slice(0, 4).map((att, index) => (
-              <div key={index} style={{ 
-                padding: "8px 0", 
-                borderBottom: "1px solid #eee" 
-              }}>
-                <div style={{ fontWeight: "bold", fontSize: 12 }}>
-                  {att.tipo_atualizacao || "Atividade do Sistema"}
-                </div>
-                <div style={{ fontSize: 11, color: "#666" }}>
-                  {att.processo?.numero_processo || "Sistema"} - {att.usuario?.nome || "Usuário"}
-                </div>
-                <div style={{ fontSize: 10, color: "#999" }}>
-                  {att.data_atualizacao 
-                    ? new Date(att.data_atualizacao).toLocaleDateString('pt-BR')
-                    : "Hoje"
-                  }
-                </div>
-              </div>
-            ))
-          ) : (
-            <div style={{ textAlign: "center", color: "#999" }}>
-              Nenhuma atividade recente
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {/* Card Indicadores do Sistema */}
-      <Card title="Indicadores do Sistema" color="#6f42c1">
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ padding: "8px", backgroundColor: "#f8f9fa", borderRadius: 5 }}>
-            <div style={{ fontWeight: "bold", fontSize: 12 }}>Alertas Ativos</div>
-            <div style={{ color: "#dc3545", fontWeight: "bold", fontSize: 16 }}>
-              {data.alertas}
-            </div>
-            <div style={{ fontSize: 10, color: "#666" }}>
-              Processos sem atualização há mais de 30 dias
-            </div>
-          </div>
-          
-          <div style={{ padding: "8px", backgroundColor: "#f8f9fa", borderRadius: 5 }}>
-            <div style={{ fontWeight: "bold", fontSize: 12 }}>Taxa de Conclusão</div>
-            <div style={{ color: "#28a745", fontWeight: "bold", fontSize: 16 }}>
-              {stats.totalProcessos > 0 ? ((stats.processosFinalizados / stats.totalProcessos) * 100).toFixed(1) : 0}%
-            </div>
-            <div style={{ fontSize: 10, color: "#666" }}>
-              Processos finalizados vs total
-            </div>
-          </div>
-
-          <div style={{ padding: "8px", backgroundColor: "#f8f9fa", borderRadius: 5 }}>
-            <div style={{ fontWeight: "bold", fontSize: 12 }}>Processos Ativos</div>
-            <div style={{ color: "#ffc107", fontWeight: "bold", fontSize: 16 }}>
-              {stats.processosAbertos + stats.processosAndamento}
-            </div>
-            <div style={{ fontSize: 10, color: "#666" }}>
-              Abertos + Em andamento
-            </div>
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-// Componentes auxiliares
-function Card({ title, children, color = "#007bff" }) {
-  return (
-    <div style={{
-      border: "1px solid #ddd",
-      borderRadius: 12,
-      padding: 20,
-      backgroundColor: "white",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-      borderTop: `4px solid ${color}`
-    }}>
-      <h3 style={{ margin: "0 0 15px 0", color: color, fontSize: 16 }}>{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function StatItem({ label, value, color = "#333" }) {
+// Componentes auxiliares para o dashboard
+function StatItem({ label, value, color = "#333", icon = "" }) {
   return (
     <div style={{ textAlign: "center" }}>
-      <div style={{ fontSize: 20, fontWeight: "bold", color }}>{value}</div>
-      <div style={{ fontSize: 12, color: "#666" }}>{label}</div>
+      <div style={{ fontSize: 24, fontWeight: "bold", color }}>
+        {icon && <span style={{ marginRight: 8 }}>{icon}</span>}
+        {value}
+      </div>
+      <div style={{ fontSize: 13, color: "#666", marginTop: 4 }}>{label}</div>
     </div>
   );
 }
 
-function StatRow({ label, value, total, color = "#007bff" }) {
+function StatusProgressBar({ label, value, total, color = "#007bff" }) {
   const percentage = total > 0 ? (value / total) * 100 : 0;
   
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <div style={{ flex: 1 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12 }}>
-          <span>{label}</span>
-          <span style={{ fontWeight: "bold" }}>{value}</span>
-        </div>
-        {total && (
-          <div style={{ 
-            backgroundColor: "#e9ecef", 
-            borderRadius: 10, 
-            height: 4, 
-            overflow: "hidden",
-            marginTop: 2
-          }}>
-            <div style={{
-              backgroundColor: color,
-              height: "100%",
-              width: `${percentage}%`,
-              transition: "width 0.3s ease"
-            }}></div>
-          </div>
-        )}
+    <div style={{ marginBottom: 8 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
+        <span>{label}</span>
+        <span style={{ fontWeight: "bold" }}>{value}</span>
       </div>
+      <div style={{ 
+        backgroundColor: "#e9ecef", 
+        borderRadius: 12, 
+        height: 8, 
+        overflow: "hidden"
+      }}>
+        <div style={{
+          backgroundColor: color,
+          height: "100%",
+          width: `${percentage}%`,
+          transition: "width 0.5s ease",
+          borderRadius: 12
+        }}></div>
+      </div>
+      {total > 0 && (
+        <div style={{ fontSize: 10, color: "#666", marginTop: 2, textAlign: "right" }}>
+          {percentage.toFixed(1)}%
+        </div>
+      )}
     </div>
   );
 }
 
 function StatusBadge({ status }) {
   const getStatusColor = (status) => {
-    switch(status) {
-      case "Aberto": return { bg: "#d4edda", color: "#155724" };
-      case "Em andamento": return { bg: "#fff3cd", color: "#856404" };
-      case "Finalizado": return { bg: "#f8d7da", color: "#721c24" };
-      default: return { bg: "#e9ecef", color: "#6c757d" };
+    switch (status?.toLowerCase()) {
+      case "em_andamento": return "#ffc107";
+      case "aguardando": return "#fd7e14";
+      case "finalizado": return "#28a745";
+      case "arquivado": return "#6c757d";
+      default: return "#007bff";
     }
   };
 
-  const { bg, color } = getStatusColor(status);
+  const getStatusLabel = (status) => {
+    switch (status?.toLowerCase()) {
+      case "em_andamento": return "Em Andamento";
+      case "aguardando": return "Aguardando";
+      case "finalizado": return "Finalizado";
+      case "arquivado": return "Arquivado";
+      default: return status || "Não Definido";
+    }
+  };
 
   return (
     <span style={{
-      padding: '2px 6px',
-      borderRadius: 4,
-      fontSize: 10,
-      backgroundColor: bg,
-      color: color
+      backgroundColor: getStatusColor(status),
+      color: "white",
+      padding: "4px 8px",
+      borderRadius: 12,
+      fontSize: 11,
+      fontWeight: "bold",
+      textTransform: "uppercase"
     }}>
-      {status || "N/A"}
+      {getStatusLabel(status)}
     </span>
   );
 }
 
-function PieChart({ data }) {
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-  
-  if (total === 0) {
+function Card({ title, children, color = "#007bff" }) {
+  return (
+    <div style={{
+      backgroundColor: "white",
+      borderRadius: 12,
+      padding: 20,
+      marginBottom: 20,
+      boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+      border: `3px solid ${color}20`,
+      transition: "transform 0.2s ease, box-shadow 0.2s ease",
+    }}
+    onMouseEnter={(e) => {
+      e.target.style.transform = "translateY(-2px)";
+      e.target.style.boxShadow = "0 4px 20px rgba(0,0,0,0.12)";
+    }}
+    onMouseLeave={(e) => {
+      e.target.style.transform = "translateY(0)";
+      e.target.style.boxShadow = "0 2px 10px rgba(0,0,0,0.08)";
+    }}>
+      {title && (
+        <h3 style={{
+          color: color,
+          marginBottom: 16,
+          fontSize: 16,
+          fontWeight: "bold",
+          borderBottom: `2px solid ${color}20`,
+          paddingBottom: 8
+        }}>
+          {title}
+        </h3>
+      )}
+      {children}
+    </div>
+  );
+}
+
+function PieChart({ data, title }) {
+  if (!data || data.length === 0) {
     return (
-      <div style={{ textAlign: "center", color: "#999", padding: 20 }}>
-        <div style={{ fontSize: 14 }}>Nenhum dado disponível</div>
+      <div style={{ textAlign: "center", padding: 20, color: "#666" }}>
+        <p>Sem dados para exibir</p>
       </div>
     );
   }
-  
+
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  let currentAngle = 0;
+
+  const colors = ["#007bff", "#28a745", "#ffc107", "#dc3545", "#6c757d", "#17a2b8"];
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: 10 }}>
-        <div style={{
-          width: 80,
-          height: 80,
-          borderRadius: "50%",
-          background: `conic-gradient(
-            ${data[0]?.color || "#28a745"} 0deg ${(data[0]?.value || 0) / total * 360}deg,
-            ${data[1]?.color || "#ffc107"} ${(data[0]?.value || 0) / total * 360}deg ${((data[0]?.value || 0) + (data[1]?.value || 0)) / total * 360}deg,
-            ${data[2]?.color || "#6c757d"} ${((data[0]?.value || 0) + (data[1]?.value || 0)) / total * 360}deg 360deg
-          )`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        }}>
-          <div style={{
-            width: 50,
-            height: 50,
-            borderRadius: "50%",
-            backgroundColor: "white",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 12,
-            fontWeight: "bold"
-          }}>
-            {total}
-          </div>
+    <div style={{ textAlign: "center" }}>
+      {title && <h4 style={{ marginBottom: 16, color: "#333" }}>{title}</h4>}
+      
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        {/* Chart */}
+        <div style={{ position: "relative" }}>
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <circle
+              cx="60"
+              cy="60"
+              r="54"
+              fill="none"
+              stroke="#e9ecef"
+              strokeWidth="12"
+            />
+            {data.map((item, index) => {
+              const percentage = (item.value / total) * 100;
+              const angle = (item.value / total) * 360;
+              const largeArcFlag = angle > 180 ? 1 : 0;
+              
+              const startX = 60 + 54 * Math.cos((currentAngle - 90) * Math.PI / 180);
+              const startY = 60 + 54 * Math.sin((currentAngle - 90) * Math.PI / 180);
+              
+              currentAngle += angle;
+              
+              const endX = 60 + 54 * Math.cos((currentAngle - 90) * Math.PI / 180);
+              const endY = 60 + 54 * Math.sin((currentAngle - 90) * Math.PI / 180);
+              
+              if (item.value === 0) return null;
+              
+              return (
+                <path
+                  key={index}
+                  d={`M 60 60 L ${startX} ${startY} A 54 54 0 ${largeArcFlag} 1 ${endX} ${endY} Z`}
+                  fill={colors[index % colors.length]}
+                  opacity="0.8"
+                />
+              );
+            })}
+          </svg>
+        </div>
+
+        {/* Legend */}
+        <div style={{ flex: 1, marginLeft: 20 }}>
+          {data.map((item, index) => (
+            <div key={index} style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              marginBottom: 8,
+              fontSize: 12
+            }}>
+              <div style={{
+                width: 12,
+                height: 12,
+                backgroundColor: colors[index % colors.length],
+                borderRadius: "50%",
+                marginRight: 8,
+                opacity: 0.8
+              }}></div>
+              <span style={{ flex: 1 }}>{item.label}</span>
+              <span style={{ fontWeight: "bold", marginLeft: 8 }}>
+                {item.value} ({total > 0 ? ((item.value / total) * 100).toFixed(1) : 0}%)
+              </span>
+            </div>
+          ))}
         </div>
       </div>
-      {data.map((item, index) => (
-        <div key={index} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
-          <div style={{
-            width: 12,
-            height: 12,
-            borderRadius: "50%",
-            backgroundColor: item.color
-          }}></div>
-          <span>{item.label}: {item.value}</span>
+    </div>
+  );
+}
+
+// Dashboard específico para Alunos
+function AlunosDashboard({ dashboardData, user }) {
+  const meusProcessos = dashboardData?.processos || [];
+  const processosAtivos = meusProcessos.filter(p => p.status !== 'arquivado').length;
+  const processosFinalizados = meusProcessos.filter(p => p.status === 'finalizado').length;
+  
+  // Dados para o gráfico de status
+  const statusData = [
+    { label: "Em Andamento", value: meusProcessos.filter(p => p.status === 'em_andamento').length },
+    { label: "Aguardando", value: meusProcessos.filter(p => p.status === 'aguardando').length },
+    { label: "Finalizados", value: processosFinalizados },
+    { label: "Arquivados", value: meusProcessos.filter(p => p.status === 'arquivado').length }
+  ];
+
+  const processosRecentes = meusProcessos.slice(0, 3);
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+      {/* Resumo dos Processos */}
+      <Card title="📋 Meus Processos" color="#007bff">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 15, marginBottom: 20 }}>
+          <StatItem 
+            label="Total" 
+            value={meusProcessos.length} 
+            color="#007bff"
+            icon="📊"
+          />
+          <StatItem 
+            label="Ativos" 
+            value={processosAtivos} 
+            color="#28a745"
+            icon="⚡"
+          />
+          <StatItem 
+            label="Finalizados" 
+            value={processosFinalizados} 
+            color="#6c757d"
+            icon="✅"
+          />
         </div>
-      ))}
+        
+        <div style={{ marginTop: 15 }}>
+          <StatusProgressBar 
+            label="Progresso Geral"
+            value={processosFinalizados}
+            total={meusProcessos.length}
+            color="#28a745"
+          />
+        </div>
+      </Card>
+
+      {/* Gráfico de Status */}
+      <Card title="📈 Status dos Processos" color="#17a2b8">
+        <PieChart data={statusData} />
+      </Card>
+
+      {/* Processos Recentes */}
+      <Card title="🕒 Últimos Processos" color="#ffc107">
+        {processosRecentes.length > 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {processosRecentes.map((processo, index) => (
+              <div key={index} style={{
+                padding: 12,
+                backgroundColor: "#f8f9fa",
+                borderRadius: 8,
+                borderLeft: `4px solid #ffc107`
+              }}>
+                <div style={{ fontWeight: "bold", marginBottom: 4 }}>
+                  {processo.numero || `Processo ${index + 1}`}
+                </div>
+                <div style={{ fontSize: 12, color: "#666", marginBottom: 6 }}>
+                  {processo.descricao || "Sem descrição"}
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <StatusBadge status={processo.status} />
+                  <span style={{ fontSize: 11, color: "#999" }}>
+                    {processo.created_at ? new Date(processo.created_at).toLocaleDateString() : 'N/A'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ textAlign: "center", color: "#666", padding: 20 }}>
+            <p>🔍 Nenhum processo encontrado</p>
+            <p style={{ fontSize: 12, marginTop: 8 }}>
+              Seus processos aparecerão aqui quando forem criados.
+            </p>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+// Dashboard específico para Professores
+function ProfessoresDashboard({ dashboardData, user }) {
+  const processosSupervisionados = dashboardData?.processos || [];
+  const alunosOrientados = dashboardData?.alunos || [];
+  const processosAtivos = processosSupervisionados.filter(p => p.status !== 'arquivado').length;
+  
+  // Dados estatísticos
+  const statusData = [
+    { label: "Em Andamento", value: processosSupervisionados.filter(p => p.status === 'em_andamento').length },
+    { label: "Aguardando", value: processosSupervisionados.filter(p => p.status === 'aguardando').length },
+    { label: "Finalizados", value: processosSupervisionados.filter(p => p.status === 'finalizado').length },
+    { label: "Arquivados", value: processosSupervisionados.filter(p => p.status === 'arquivado').length }
+  ];
+
+  const processosRecentes = processosSupervisionados.slice(0, 3);
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+      {/* Supervisão Geral */}
+      <Card title="🎓 Supervisão Acadêmica" color="#28a745">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 15, marginBottom: 20 }}>
+          <StatItem 
+            label="Processos" 
+            value={processosSupervisionados.length} 
+            color="#28a745"
+            icon="📚"
+          />
+          <StatItem 
+            label="Ativos" 
+            value={processosAtivos} 
+            color="#17a2b8"
+            icon="⚡"
+          />
+          <StatItem 
+            label="Alunos" 
+            value={alunosOrientados.length} 
+            color="#ffc107"
+            icon="👥"
+          />
+        </div>
+        
+        <div style={{ marginTop: 15 }}>
+          <StatusProgressBar 
+            label="Processos Finalizados"
+            value={processosSupervisionados.filter(p => p.status === 'finalizado').length}
+            total={processosSupervisionados.length}
+            color="#28a745"
+          />
+        </div>
+      </Card>
+
+      {/* Distribuição de Status */}
+      <Card title="📊 Distribuição de Status" color="#6f42c1">
+        <PieChart data={statusData} />
+      </Card>
+
+      {/* Processos Supervisionados Recentes */}
+      <Card title="🔍 Processos Supervisionados" color="#dc3545">
+        {processosRecentes.length > 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {processosRecentes.map((processo, index) => (
+              <div key={index} style={{
+                padding: 12,
+                backgroundColor: "#f8f9fa",
+                borderRadius: 8,
+                borderLeft: `4px solid #dc3545`
+              }}>
+                <div style={{ fontWeight: "bold", marginBottom: 4 }}>
+                  {processo.numero || `Processo ${index + 1}`}
+                </div>
+                <div style={{ fontSize: 12, color: "#666", marginBottom: 6 }}>
+                  Aluno: {processo.aluno_nome || "N/A"}
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <StatusBadge status={processo.status} />
+                  <span style={{ fontSize: 11, color: "#999" }}>
+                    {processo.updated_at ? new Date(processo.updated_at).toLocaleDateString() : 'N/A'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ textAlign: "center", color: "#666", padding: 20 }}>
+            <p>📋 Nenhum processo sob supervisão</p>
+            <p style={{ fontSize: 12, marginTop: 8 }}>
+              Processos supervisionados aparecerão aqui.
+            </p>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+// Dashboard específico para Administradores
+function AdminsDashboard({ dashboardData }) {
+  const totalProcessos = dashboardData?.totalProcessos || 0;
+  const totalUsuarios = dashboardData?.totalUsuarios || 0;
+  const processosAtivos = dashboardData?.processosAtivos || 0;
+  const usuariosAtivos = dashboardData?.usuariosAtivos || 0;
+  
+  // Dados para gráficos
+  const statusData = [
+    { label: "Em Andamento", value: dashboardData?.processosPorStatus?.em_andamento || 0 },
+    { label: "Aguardando", value: dashboardData?.processosPorStatus?.aguardando || 0 },
+    { label: "Finalizados", value: dashboardData?.processosPorStatus?.finalizado || 0 },
+    { label: "Arquivados", value: dashboardData?.processosPorStatus?.arquivado || 0 }
+  ];
+
+  const usuariosPorTipo = [
+    { label: "Alunos", value: dashboardData?.usuariosPorTipo?.aluno || 0 },
+    { label: "Professores", value: dashboardData?.usuariosPorTipo?.professor || 0 },
+    { label: "Admins", value: dashboardData?.usuariosPorTipo?.admin || 0 }
+  ];
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
+      {/* Estatísticas Gerais do Sistema */}
+      <Card title="🏛️ Visão Geral do Sistema" color="#6f42c1">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 15, marginBottom: 20 }}>
+          <StatItem 
+            label="Total Processos" 
+            value={totalProcessos} 
+            color="#6f42c1"
+            icon="📋"
+          />
+          <StatItem 
+            label="Processos Ativos" 
+            value={processosAtivos} 
+            color="#28a745"
+            icon="⚡"
+          />
+          <StatItem 
+            label="Total Usuários" 
+            value={totalUsuarios} 
+            color="#17a2b8"
+            icon="👥"
+          />
+          <StatItem 
+            label="Usuários Ativos" 
+            value={usuariosAtivos} 
+            color="#ffc107"
+            icon="✅"
+          />
+        </div>
+        
+        <div style={{ marginTop: 15 }}>
+          <StatusProgressBar 
+            label="Taxa de Processos Ativos"
+            value={processosAtivos}
+            total={totalProcessos}
+            color="#28a745"
+          />
+          <StatusProgressBar 
+            label="Taxa de Usuários Ativos"
+            value={usuariosAtivos}
+            total={totalUsuarios}
+            color="#17a2b8"
+          />
+        </div>
+      </Card>
+
+      {/* Distribuição de Status dos Processos */}
+      <Card title="📊 Status dos Processos" color="#dc3545">
+        <PieChart data={statusData} />
+      </Card>
+
+      {/* Distribuição de Usuários */}
+      <Card title="👥 Tipos de Usuários" color="#fd7e14">
+        <PieChart data={usuariosPorTipo} />
+      </Card>
+
+      {/* Ações Administrativas */}
+      <Card title="⚙️ Ações Administrativas" color="#20c997">
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <button style={{
+            padding: 12,
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: 8,
+            cursor: "pointer",
+            fontSize: 14,
+            fontWeight: "bold"
+          }}>
+            📊 Relatório Completo
+          </button>
+          <button style={{
+            padding: 12,
+            backgroundColor: "#28a745",
+            color: "white",
+            border: "none",
+            borderRadius: 8,
+            cursor: "pointer",
+            fontSize: 14,
+            fontWeight: "bold"
+          }}>
+            👤 Gerenciar Usuários
+          </button>
+          <button style={{
+            padding: 12,
+            backgroundColor: "#ffc107",
+            color: "#212529",
+            border: "none",
+            borderRadius: 8,
+            cursor: "pointer",
+            fontSize: 14,
+            fontWeight: "bold"
+          }}>
+            📋 Gerenciar Processos
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// Componente principal do Dashboard
+export default function DashboardSummary({ dashboardData, user }) {
+  if (!dashboardData || !user) {
+    return (
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "center", 
+        alignItems: "center", 
+        height: 200,
+        backgroundColor: "#f8f9fa",
+        borderRadius: 12,
+        color: "#666"
+      }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 24, marginBottom: 8 }}>⏳</div>
+          <div>Carregando dashboard...</div>
+        </div>
+      </div>
+    );
+  }
+
+  const userRole = getUserRole(user);
+  
+  return (
+    <div style={{ 
+      padding: 20,
+      backgroundColor: "#f8f9fa",
+      minHeight: "100vh"
+    }}>
+      {/* Cabeçalho do Dashboard */}
+      <div style={{
+        marginBottom: 30,
+        textAlign: "center",
+        padding: 20,
+        backgroundColor: "white",
+        borderRadius: 12,
+        boxShadow: "0 2px 10px rgba(0,0,0,0.08)"
+      }}>
+        <h1 style={{ 
+          color: "#333", 
+          marginBottom: 8,
+          fontSize: 28,
+          fontWeight: "bold"
+        }}>
+          🏛️ Sistema Jurídico NPJ
+        </h1>
+        <p style={{ 
+          color: "#666", 
+          fontSize: 16,
+          margin: 0
+        }}>
+          Bem-vindo(a), <strong>{user.nome}</strong> - {userRole}
+        </p>
+      </div>
+
+      {/* Dashboard baseado no papel do usuário */}
+      {userRole === "Aluno" && (
+        <AlunosDashboard dashboardData={dashboardData} user={user} />
+      )}
+      
+      {userRole === "Professor" && (
+        <ProfessoresDashboard dashboardData={dashboardData} user={user} />
+      )}
+      
+      {userRole === "Admin" && (
+        <AdminsDashboard dashboardData={dashboardData} user={user} />
+      )}
+      
+      {!["Aluno", "Professor", "Admin"].includes(userRole) && (
+        <Card title="⚠️ Acesso Restrito" color="#dc3545">
+          <div style={{ textAlign: "center", color: "#666", padding: 20 }}>
+            <p>Papel de usuário não reconhecido: {userRole}</p>
+            <p style={{ fontSize: 12, marginTop: 8 }}>
+              Entre em contato com o administrador do sistema.
+            </p>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

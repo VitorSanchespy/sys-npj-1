@@ -8,7 +8,20 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const local = localStorage.getItem("user");
-    return local ? JSON.parse(local) : null;
+    const userData = local ? JSON.parse(local) : null;
+    
+    // Debug: mostrar dados do usuário carregado apenas uma vez
+    if (userData && !window.userLoggedOnce) {
+      console.log('👤 Usuário carregado do localStorage:', {
+        nome: userData.nome,
+        role: userData.role,
+        roleId: userData.role_id,
+        id: userData.id
+      });
+      window.userLoggedOnce = true;
+    }
+    
+    return userData;
   });
   const [token, setToken] = useState(() => localStorage.getItem("token") || "");
   const [refreshToken, setRefreshToken] = useState(() => localStorage.getItem("refreshToken") || "");

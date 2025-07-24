@@ -2,6 +2,25 @@ import React, { useState, useEffect } from "react";
 import { apiRequest } from "@/api/apiRequest";
 import { useAuthContext } from "@/contexts/AuthContext";
 
+// Helper para verificar role
+const getUserRole = (user) => {
+  if (!user) return null;
+  
+  if (typeof user.role === 'string') {
+    return user.role;
+  }
+  
+  if (user.role && typeof user.role === 'object') {
+    return user.role.nome || user.role.name || null;
+  }
+  
+  if (user.role_id === 1) return 'Admin';
+  if (user.role_id === 2) return 'Aluno';
+  if (user.role_id === 3) return 'Professor';
+  
+  return null;
+};
+
 export default function CreateProcessModal({ onCreated, onClose }) {
   const { token, user } = useAuthContext();
   const [usuarios, setUsuarios] = useState([]);
@@ -20,7 +39,7 @@ export default function CreateProcessModal({ onCreated, onClose }) {
   useEffect(() => {
     // Busca usuários conforme o papel
     let url = "/api/usuarios";
-    if (user?.role === "Professor") url = "/api/usuarios/alunos";
+    if (getUserRole(user) === "Professor") url = "/api/usuarios/alunos";
     apiRequest(url, { token })
       .then(data => setUsuarios(data))
       .catch(() => setUsuarios([]));
