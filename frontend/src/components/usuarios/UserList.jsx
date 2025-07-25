@@ -1,7 +1,10 @@
 import React, { useState, useRef } from "react";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
+import Button from "@/components/common/Button";
+import StatusBadge from "@/components/common/StatusBadge";
 import { userService } from "@/api/services";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { getUserRole, hasRole, renderValue } from "@/utils/commonUtils";
 import UserCreateForm from "./UserCreateForm";
 
 export default function UserList() {
@@ -174,36 +177,19 @@ export default function UserList() {
   return (
     <div style={{ padding: '30px' }}>
       {/* Botão Criar Usuário */}
-      {(user?.role_id === 1 || user?.role_id === 3) && (
+      {hasRole(user, ['Admin', 'Professor']) && (
         <div style={{ marginBottom: '25px' }}>
-          <button 
+          <Button
+            variant={showCreate ? "danger" : "success"}
             onClick={() => setShowCreate(!showCreate)}
             style={{
               padding: '12px 24px',
-              backgroundColor: showCreate ? '#dc3545' : '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
               fontSize: '1rem',
-              fontWeight: 'bold',
-              transition: 'all 0.3s ease'
-            }}
-            onMouseEnter={(e) => {
-              if (showCreate) {
-                e.target.style.backgroundColor = '#c82333';
-              } else {
-                e.target.style.backgroundColor = '#218838';
-              }
-              e.target.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = showCreate ? '#dc3545' : '#28a745';
-              e.target.style.transform = 'translateY(0)';
+              fontWeight: 'bold'
             }}
           >
             {showCreate ? "❌ Cancelar" : "➕ Criar Novo Usuário"}
-          </button>
+          </Button>
         </div>
       )}
 

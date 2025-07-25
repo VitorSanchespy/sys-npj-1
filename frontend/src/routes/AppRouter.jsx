@@ -48,6 +48,7 @@ export default function AppRouter() {
           <Route path="/registrar-completo" element={<FullRegisterPage />} />
           <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
           <Route path="/resetar-senha" element={<ResetPasswordPage />} />
+          
           {/* Protegido: Todos autenticados */}
           <Route
             path="/dashboard"

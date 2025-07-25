@@ -1,9 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { apiRequest } from "@/api/apiRequest";
 import { useAuthContext } from "@/contexts/AuthContext";
+import MainLayout from "@/components/layout/MainLayout";
+import PageContent from "@/components/layout/PageContent";
+import Button from "@/components/common/Button";
+import StatusBadge from "@/components/common/StatusBadge";
+import Loader from "@/components/layout/Loader";
 import UpdateList from "@/components/atualizacoes/UpdateList";
-// Formulário de edição baseado em FullProcessCreateForm
+import { getUserRole, hasRole, formatDate, renderValue } from "@/utils/commonUtils";
 
 export default function ProcessDetailPage() {
   const { id } = useParams();
@@ -43,196 +48,220 @@ export default function ProcessDetailPage() {
     fetchAlunos();
   }, [id]);
 
-  // ...código para atualização e vinculação de usuários...
+  // Funções para vinculação/desvinculação (será implementado conforme necessário)
+  const handleAssignUser = async (userId) => {
+    // Implementar lógica de vinculação
+    console.log("Vinculando usuário:", userId);
+  };
 
-  let content;
+  const handleUnassignUser = async (userId) => {
+    // Implementar lógica de desvinculação  
+    console.log("Desvinculando usuário:", userId);
+  };
+
   if (loading) {
-    content = (
-      <div style={{ paddingTop: '100px', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-        <div style={{
-          backgroundColor: 'white',
-          padding: '40px',
-          borderRadius: '20px',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
-          textAlign: 'center',
-          border: '1px solid rgba(255,255,255,0.1)',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <div style={{ fontSize: '2rem', marginBottom: '20px' }}>⏳</div>
-          <div style={{ fontSize: '1.2rem', color: '#333' }}>Carregando processo...</div>
-        </div>
-      </div>
-    );
-  } else if (!processo) {
-    content = (
-      <div style={{ paddingTop: '100px', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-        <div style={{
-          backgroundColor: 'white',
-          padding: '40px',
-          borderRadius: '20px',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
-          textAlign: 'center',
-          maxWidth: '400px',
-          border: '1px solid rgba(255,255,255,0.1)',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <>
-            <div style={{ fontSize: '2rem', marginBottom: '20px', color: '#dc3545' }}>❌</div>
-            <div style={{ fontSize: '1.2rem', color: '#dc3545', marginBottom: '20px' }}>
-              Processo não encontrado
-            </div>
-            <button 
-              onClick={() => navigate('/processos')}
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#0056b3'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#007bff'}
-            >
-              ← Voltar para Lista
-            </button>
-          </>
-        </div>
-      </div>
-    );
-  } else {
-    content = (
-      <div style={{ paddingTop: '100px' }}>
-        {/* ...todo o conteúdo detalhado do processo... */}
-        {/* (mantém o conteúdo do return principal, exceto header/footer) */}
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          backgroundColor: 'white',
-          borderRadius: '20px',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
-          overflow: 'hidden',
-          border: '1px solid rgba(255,255,255,0.1)',
-          backdropFilter: 'blur(10px)'
-        }}>
-          {/* Header, Action Buttons, Content, Modals, etc. */}
-          {/* ...mantém o conteúdo já existente... */}
-          {/* (não altera a estrutura interna, apenas move para dentro de content) */}
-        </div>
-      </div>
-    );
+    return <Loader message="Carregando processo..." />;
+  }
+
+  if (!processo) {
+    return <Loader error="Processo não encontrado" />;
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #001F3F 0%, #003366 100%)',
-      padding: '20px'
-    }}>
-      {/* Header fixo */}
+    <MainLayout>
       <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: '#001F3F',
-        padding: '15px 0',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        zIndex: 100
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        padding: '24px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        border: '1px solid #e9ecef',
+        marginBottom: '24px'
       }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 20px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '15px'
+        <h1 style={{
+          margin: 0,
+          fontSize: '24px',
+          fontWeight: '600',
+          color: '#212529'
         }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.2rem',
-            fontWeight: 'bold',
-            color: '#001F3F'
-          }}>
-            NPJ
-          </div>
-          <h1 style={{
-            color: 'white',
-            margin: 0,
-            fontSize: '1.3rem',
-            fontWeight: 'bold'
-          }}>
-            Sistema NPJ - UFMT
-          </h1>
+          Processo Nº {processo.numero_processo || processo.numero}
+        </h1>
+        <p style={{
+          margin: '8px 0 0 0',
+          fontSize: '14px',
+          color: '#6c757d'
+        }}>
+          Detalhes completos do processo
+        </p>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', margin: '20px 0' }}>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/processos')}
+          >
+            ← Voltar à Lista
+          </Button>
+          {hasRole(user, ['Administrador', 'Professor']) && (
+            <Button
+              variant="primary"
+              onClick={() => navigate(`/processos/${id}/editar`)}
+            >
+              ✏️ Editar
+            </Button>
+          )}
         </div>
-      </div>
 
-      <div style={{ paddingTop: '100px' }}>
+        {/* Informações Básicas */}
         <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          backgroundColor: 'white',
-          borderRadius: '20px',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
-          overflow: 'hidden',
-          border: '1px solid rgba(255,255,255,0.1)',
-          backdropFilter: 'blur(10px)'
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '20px',
+          marginBottom: '24px'
         }}>
-          {/* Conteúdo detalhado do processo */}
           <div style={{
-            background: 'linear-gradient(135deg, #001F3F 0%, #004080 100%)',
-            color: 'white',
-            padding: '30px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '20px'
+            backgroundColor: '#f8f9fa',
+            padding: '20px',
+            borderRadius: '8px',
+            border: '1px solid #e9ecef'
           }}>
-            <div>
-              <h1 style={{ 
-                margin: 0, 
-                fontSize: '2rem', 
-                fontWeight: 'bold',
-                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)'
-              }}>
-                📋 Processo Nº {processo.numero_processo || processo.numero}
-              </h1>
-              <p style={{ 
-                margin: '8px 0 0 0', 
-                opacity: 0.9,
-                fontSize: '1rem'
-              }}>
-                Visualização detalhada do processo
-              </p>
+            <h3 style={{
+              margin: '0 0 16px 0',
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#495057'
+            }}>
+              📊 Status e Informações
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <strong>Status:</strong>
+                <div style={{ marginTop: '4px' }}>
+                  <StatusBadge status={processo.status} />
+                </div>
+              </div>
+              <div>
+                <strong>Descrição:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {renderValue(processo.descricao)}
+                </p>
+              </div>
+              <div>
+                <strong>Data de Criação:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {formatDate(processo.created_at)}
+                </p>
+              </div>
+              <div>
+                <strong>Última Atualização:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {formatDate(processo.updated_at)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{
+            backgroundColor: '#f8f9fa',
+            padding: '20px',
+            borderRadius: '8px',
+            border: '1px solid #e9ecef'
+          }}>
+            <h3 style={{
+              margin: '0 0 16px 0',
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#495057'
+            }}>
+              👤 Assistido
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <strong>Nome:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {renderValue(processo.assistido)}
+                </p>
+              </div>
+              <div>
+                <strong>Contato:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {renderValue(processo.contato_assistido)}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Footer */}
-      <div style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        textAlign: 'center',
-        padding: '20px',
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: '0.9rem'
-      }}>
-        © 2025 Universidade Federal de Mato Grosso - NPJ
+        {/* Usuários Vinculados */}
+        {alunos && alunos.length > 0 && (
+          <div style={{
+            backgroundColor: '#f8f9fa',
+            padding: '20px',
+            borderRadius: '8px',
+            border: '1px solid #e9ecef',
+            marginBottom: '24px'
+          }}>
+            <h3 style={{
+              margin: '0 0 16px 0',
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#495057'
+            }}>
+              👥 Usuários Vinculados
+            </h3>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+              gap: '12px'
+            }}>
+              {alunos.map((aluno) => (
+                <div key={aluno.id} style={{
+                  backgroundColor: 'white',
+                  padding: '12px',
+                  borderRadius: '6px',
+                  border: '1px solid #dee2e6',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <p style={{ margin: 0, fontWeight: '500' }}>{aluno.nome}</p>
+                    <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#6c757d' }}>
+                      {aluno.email}
+                    </p>
+                  </div>
+                  {hasRole(user, ['Administrador', 'Professor']) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleUnassignUser(aluno.id)}
+                    >
+                      ✖
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Lista de Atualizações */}
+        <div style={{
+          backgroundColor: '#f8f9fa',
+          padding: '20px',
+          borderRadius: '8px',
+          border: '1px solid #e9ecef'
+        }}>
+          <h3 style={{
+            margin: '0 0 16px 0',
+            fontSize: '16px',
+            fontWeight: '600',
+            color: '#495057'
+          }}>
+            📝 Atualizações do Processo
+          </h3>
+          <UpdateList processoId={id} />
+        </div>
+
       </div>
-    </div>
+    </MainLayout>
   );
 }
 

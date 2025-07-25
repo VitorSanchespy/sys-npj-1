@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { auxTablesService, processService } from '../api/services';
 import { useAuthContext } from '../contexts/AuthContext';
+import Button from './common/Button';
+import { getUserRole, hasRole, renderValue } from '../utils/commonUtils';
 
 const FullProcessCreateForm = () => {
   const { token, user } = useAuthContext();
@@ -137,9 +139,8 @@ const FullProcessCreateForm = () => {
   };
 
   return (
-    <div className="bg-gray-100 p-6 rounded-lg shadow-lg">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <h3 className="text-xl font-semibold mb-6 text-gray-800">Novo Processo</h3>
-      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700">Número do Processo</label>
           <input
@@ -449,7 +450,6 @@ const FullProcessCreateForm = () => {
           </button>
         </div>
       </form>
-    </div>
   );
 };
 

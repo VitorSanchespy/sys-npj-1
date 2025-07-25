@@ -542,37 +542,7 @@ export default function DashboardSummary({ dashboardData, user }) {
   const userRole = getUserRole(user);
   
   return (
-    <div style={{ 
-      padding: 20,
-      backgroundColor: "#f8f9fa",
-      minHeight: "100vh"
-    }}>
-      {/* Cabeçalho do Dashboard */}
-      <div style={{
-        marginBottom: 30,
-        textAlign: "center",
-        padding: 20,
-        backgroundColor: "white",
-        borderRadius: 12,
-        boxShadow: "0 2px 10px rgba(0,0,0,0.08)"
-      }}>
-        <h1 style={{ 
-          color: "#333", 
-          marginBottom: 8,
-          fontSize: 28,
-          fontWeight: "bold"
-        }}>
-          🏛️ Sistema Jurídico NPJ
-        </h1>
-        <p style={{ 
-          color: "#666", 
-          fontSize: 16,
-          margin: 0
-        }}>
-          Bem-vindo(a), <strong>{user.nome}</strong> - {userRole}
-        </p>
-      </div>
-
+    <div>
       {/* Dashboard baseado no papel do usuário */}
       {userRole === "Aluno" && (
         <AlunosDashboard dashboardData={dashboardData} user={user} />
