@@ -1,10 +1,9 @@
 version: '3.8'
 
 services:
-  # Banco de dados MySQL (configurado com seus parâmetros)
-  sistema-npj-db-1:  # Nome do serviço igual ao usado no host
+  sistema-npj-db-1:
     image: mysql:8.0
-    container_name: sistema-npj-db-1  # Nome explícito do container
+    container_name: sistema-npj-db-1
     environment:
       MYSQL_ROOT_PASSWORD: 12345678@
       MYSQL_DATABASE: npjdatabase
@@ -14,44 +13,41 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql  # Script SQL inicial
+      - ./db:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Backend Node.js
   backend:
-    build: ./backend
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: npj-backend
     ports:
       - "3001:3001"
     environment:
-      DB_HOST: sistema-npj-db-1  # Mesmo nome do serviço MySQL
+      DB_HOST: sistema-npj-db-1
       DB_USER: appuser
       DB_PASS: app123
       DB_NAME: npjdatabase
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
     depends_on:
       sistema-npj-db-1:
         condition: service_healthy
+    restart: unless-stopped
 
-  # Frontend (Vite/React/Vue)
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: npj-frontend
     ports:
-      - "5173:5173"  # Porta do Vite
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    stdin_open: true  # Necessário para Vite
-    tty: true         # Necessário para Vite
+      - "5173:5173"
     depends_on:
       - backend
+    restart: unless-stopped
 
 volumes:
   mysql_data:
+    driver: local
