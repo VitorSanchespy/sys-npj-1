@@ -1,11 +1,9 @@
 import React from "react";
-import MainLayout from "@/components/layout/MainLayout";
-import PageContent from "@/components/layout/PageContent";
 import FullProcessCreateForm from '@/components/FullProcessCreateForm';
 
 export default function ProcessFormPage() {
   return (
-    <MainLayout>
+    <>
       <div style={{ marginBottom: '20px' }}>
         <h1 style={{ 
           margin: 0, 
@@ -24,9 +22,7 @@ export default function ProcessFormPage() {
         </p>
       </div>
       
-      <PageContent>
-        <FullProcessCreateForm />
-      </PageContent>
-    </MainLayout>
+      <FullProcessCreateForm />
+    </>
   );
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
+import { useAuthContext } from "@/contexts/AuthContext";
 import MainLayout from "@/components/layout/MainLayout";
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
@@ -37,9 +37,8 @@ function frontendToBackendUrl(url) {
 
 export default function AppRouter() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
+    <Router>
+      <Routes>
           <Route path="/" element={<HomePage />} />
           {/* Público */}
           <Route path="/login" element={<LoginPage />} />
@@ -84,11 +83,9 @@ export default function AppRouter() {
           {/* Rotas restritas para Professor/Admin */}
           <Route path="/processos/novo" element={<PrivateRoute roles={["Professor", "admin"]}><ProcessFormPage /></PrivateRoute>} />
           <Route path="/processos/:id/atribuir" element={<PrivateRoute roles={["Professor", "Admin"]}><ProcessAssignStudentPage /></PrivateRoute>} />
-         <Route path="/processos/:id/atualizacoes" element={<PrivateRoute><ProcessUpdatesPage /></PrivateRoute>} />
           {/* 404 */}
-          <Route path="*" element={<div>Página não encontrada</div>} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+        <Route path="*" element={<div>Página não encontrada</div>} />
+      </Routes>
+    </Router>
   );
 }

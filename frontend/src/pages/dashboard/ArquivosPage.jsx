@@ -3,8 +3,6 @@ import { fileService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import FileUploadForm from "../../components/arquivos/FileUploadForm";
 import { getFileUrl } from '../../utils/fileUrl';
-import MainLayout from "../../components/layout/MainLayout";
-import PageContent from "../../components/layout/PageContent";
 
 export default function ArquivosPage() {
   const { token, user } = useAuthContext();
@@ -27,14 +25,26 @@ export default function ArquivosPage() {
   }, [token, user]);
 
   return (
-    <MainLayout>
-      <PageHeader 
-        title="Meus Arquivos" 
-        icon="📁"
-      />
+    <>
+      <div style={{ marginBottom: '20px' }}>
+        <h1 style={{ 
+          margin: 0, 
+          fontSize: '24px', 
+          fontWeight: '600',
+          color: '#343a40'
+        }}>
+          📁 Meus Arquivos
+        </h1>
+        <p style={{ 
+          margin: '8px 0 0 0', 
+          fontSize: '14px', 
+          color: '#6c757d' 
+        }}>
+          Gerencie seus arquivos e documentos
+        </p>
+      </div>
       
-      <PageContent>
-        <FileUploadForm onUpload={() => window.location.reload()} />
+      <FileUploadForm onUpload={() => window.location.reload()} />
         {loading ? (
           <div>Carregando arquivos...</div>
         ) : arquivos.length === 0 ? (
@@ -84,7 +94,6 @@ export default function ArquivosPage() {
             </tbody>
           </table>
         )}
-      </PageContent>
-    </MainLayout>
+    </>
   );
 }

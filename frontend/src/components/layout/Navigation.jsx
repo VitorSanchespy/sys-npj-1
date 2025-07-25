@@ -14,12 +14,13 @@ const Navigation = () => {
   };
 
   const menuItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: '🏠', roles: ['admin', 'professor', 'aluno'] },
-    { path: '/processos', label: 'Processos', icon: '📋', roles: ['admin', 'professor', 'aluno'] },
-    { path: '/agendamentos', label: 'Agendamentos', icon: '📅', roles: ['admin', 'professor', 'aluno'] },
-    { path: '/arquivos', label: 'Arquivos', icon: '📁', roles: ['admin', 'professor', 'aluno'] },
-    { path: '/usuarios', label: 'Usuários', icon: '👥', roles: ['admin', 'professor'] },
-    { path: '/profile', label: 'Perfil', icon: '👤', roles: ['admin', 'professor', 'aluno'] },
+    { path: '/dashboard', label: 'Dashboard', icon: '🏠', roles: ['Admin', 'Professor', 'Aluno'] },
+    { path: '/processos', label: 'Processos', icon: '📋', roles: ['Admin', 'Professor', 'Aluno'] },
+    { path: '/agendamentos', label: 'Agendamentos', icon: '📅', roles: ['Admin', 'Professor', 'Aluno'] },
+    { path: '/arquivos', label: 'Arquivos', icon: '📁', roles: ['Admin', 'Professor', 'Aluno'] },
+    { path: '/usuarios', label: 'Usuários', icon: '👥', roles: ['Admin', 'Professor'] },
+    { path: '/profile', label: 'Perfil', icon: '👤', roles: ['Admin', 'Professor', 'Aluno'] },
+    
   ];
 
   const filteredMenuItems = menuItems.filter(item => 
@@ -28,26 +29,34 @@ const Navigation = () => {
 
   const isActive = (path) => location.pathname === path;
 
-  // Garantir que role seja string
-  let roleText = user?.role;
-  if (typeof roleText === 'object' && roleText !== null) {
-    roleText = roleText.nome || roleText.name || JSON.stringify(roleText);
-  }
+  // Melhorar tratamento do role para evitar duplicidade
+  const getRoleText = () => {
+    if (!user?.role) return 'Usuário';
+    if (typeof user.role === 'string') return user.role;
+    if (typeof user.role === 'object' && user.role !== null) {
+      return user.role.nome || user.role.name || 'Usuário';
+    }
+    return 'Usuário';
+  };
 
   return (
-    <div style={{
-      height: 'calc(100vh - 76px)',
-      display: 'flex',
-      flexDirection: 'column',
-      overflowY: 'auto'
-    }}>
-      {/* User info */}
-      <div style={{
-        padding: '20px',
-        borderBottom: '1px solid #e9ecef',
-        textAlign: 'center',
-        backgroundColor: '#f8f9fa'
+    <div 
+      data-testid="navigation-container"
+      style={{
+        height: 'calc(100vh - 76px)',
+        display: 'flex',
+        flexDirection: 'column',
+        overflowY: 'auto'
       }}>
+      {/* User info */}
+      <div 
+        data-testid="user-info-section"
+        style={{
+          padding: '20px',
+          borderBottom: '1px solid #e9ecef',
+          textAlign: 'center',
+          backgroundColor: '#f8f9fa'
+        }}>
         <div style={{
           width: '50px',
           height: '50px',
@@ -67,16 +76,19 @@ const Navigation = () => {
           {user?.nome || 'Usuário'}
         </div>
         <div style={{ fontSize: '12px', color: '#6c757d' }}>
-          {roleText || 'Usuário'}
+          {getRoleText()}
         </div>
       </div>
 
       {/* Menu Items */}
-      <div style={{ flex: 1, padding: '16px 0' }}>
+      <div 
+        data-testid="menu-items-section"
+        style={{ flex: 1, padding: '16px 0' }}>
         {filteredMenuItems.map((item) => (
           <Link
             key={item.path}
             to={item.path}
+            data-testid={`menu-item-${item.path.replace('/', '')}`}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -108,12 +120,15 @@ const Navigation = () => {
       </div>
 
       {/* Logout Button */}
-      <div style={{
-        padding: '16px 20px',
-        borderTop: '1px solid #e9ecef'
-      }}>
+      <div 
+        data-testid="logout-section"
+        style={{
+          padding: '16px 20px',
+          borderTop: '1px solid #e9ecef'
+        }}>
         <button
           onClick={handleLogout}
+          data-testid="logout-button"
           style={{
             width: '100%',
             padding: '10px',

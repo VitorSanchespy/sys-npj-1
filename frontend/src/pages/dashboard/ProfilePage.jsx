@@ -1,11 +1,9 @@
 import React from "react";
 import ProfileView from "@/components/profile/ProfileView";
-import MainLayout from "@/components/layout/MainLayout";
-import PageContent from "@/components/layout/PageContent";
 
 export default function ProfilePage() {
   return (
-    <MainLayout>
+    <>
       <div style={{ marginBottom: '20px' }}>
         <h1 style={{ 
           margin: 0, 
@@ -24,9 +22,7 @@ export default function ProfilePage() {
         </p>
       </div>
       
-      <PageContent>
-        <ProfileView />
-      </PageContent>
-    </MainLayout>
+      <ProfileView />
+    </>
   );
 }

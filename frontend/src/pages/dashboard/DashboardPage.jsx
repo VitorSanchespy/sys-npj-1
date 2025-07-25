@@ -2,7 +2,6 @@ import React from "react";
 import DashboardSummary from "@/components/dashboard/DashboardSummary";
 import { useDashboardData } from "@/hooks/useApi.jsx";
 import { useAuthContext } from "@/contexts/AuthContext";
-import MainLayout from "@/components/layout/MainLayout";
 import Loader from "@/components/layout/Loader";
 
 export default function DashboardPage() {
@@ -18,7 +17,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <MainLayout>
+    <>
       <div style={{
         backgroundColor: 'white',
         borderRadius: '8px',
@@ -45,6 +44,6 @@ export default function DashboardPage() {
       </div>
       
       <DashboardSummary dashboardData={dashboardData} user={user} />
-    </MainLayout>
+    </>
   );
 }
