@@ -33,9 +33,6 @@ const corsOptions = {
   credentials: true // Se usar cookies
 };
 app.use(cors(corsOptions));
-
-const auxTablesRoutes = require('./routes/tabelaAuxiliarRoutes');
-app.use('/api/aux', auxTablesRoutes);
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -119,13 +116,20 @@ if (!fs.existsSync(uploadDir)) {
 // Servir arquivos estáticos da pasta uploads
 app.use('/uploads', express.static(uploadDir));
 
-// Adicionar express.json() ANTES das rotas (exceto para upload de arquivos)
+// Adicionar express.json() globalmente ANTES das rotas
+app.use(express.json());
+
+// Rotas auxiliares
+const auxTablesRoutes = require('./routes/tabelaAuxiliarRoutes');
+app.use('/api/aux', auxTablesRoutes);
+
+// Middleware condicional para arquivos de upload (se necessário)
 app.use((req, res, next) => {
-  // Pular express.json() apenas para a rota de upload de arquivos
+  // Pular processamento adicional apenas para a rota de upload de arquivos
   if (req.path === '/api/arquivos/upload' && req.method === 'POST') {
-    return next();
+    // Para upload, pode precisar de tratamento especial
   }
-  express.json()(req, res, next);
+  next();
 });
 
 // Rota de arquivos

@@ -73,19 +73,37 @@ const FullProcessCreateForm = () => {
   };
 
   const handleAddNewValue = async (field, value) => {
+    // Validar se o valor não está vazio
+    if (!value || !value.trim()) {
+      alert('Por favor, digite um valor válido.');
+      return;
+    }
+    
+    console.log(`Tentando adicionar novo valor para ${field}:`, value.trim());
+    console.log('Token sendo usado:', token ? 'Token presente' : 'Token ausente');
+    console.log('Dados que serão enviados:', { nome: value.trim() });
+    
     try {
       let response;
+      
+      // Teste específico para debug - vamos ver se outros endpoints funcionam
+      console.log('Testando requisição direta...');
+      
       if (field === 'materia-assunto') {
-        response = await auxTablesService.createMateriaAssunto(token, value);
+        // Vamos tentar uma abordagem alternativa para materia-assunto
+        console.log('Fazendo requisição para materia-assunto com dados:', { nome: value.trim() });
+        response = await auxTablesService.createMateriaAssunto(token, value.trim());
       } else if (field === 'local-tramitacao') {
-        response = await auxTablesService.createLocalTramitacao(token, value);
+        response = await auxTablesService.createLocalTramitacao(token, value.trim());
       } else if (field === 'fase') {
-        response = await auxTablesService.createFase(token, value);
+        response = await auxTablesService.createFase(token, value.trim());
       } else if (field === 'diligencia') {
-        response = await auxTablesService.createDiligencia(token, value);
+        response = await auxTablesService.createDiligencia(token, value.trim());
       } else {
         throw new Error('Tipo de campo auxiliar desconhecido.');
       }
+      
+      console.log(`${field} adicionado com sucesso:`, response);
       alert(`${field} adicionado com sucesso!`);
 
       // Re-fetch data after adding a new value
@@ -111,11 +129,32 @@ const FullProcessCreateForm = () => {
         setFormData({ ...formData, diligencia_id: response.id });
       }
 
-      // Hide the input field
-      setShowNewValueField({ ...showNewValueField, [field]: false });
+      // Hide the input field and clear the respective input
+      if (field === 'materia-assunto') {
+        setShowNewValueField({ ...showNewValueField, materiaAssunto: false });
+        setNewMateriaAssunto('');
+      } else if (field === 'local-tramitacao') {
+        setShowNewValueField({ ...showNewValueField, localTramitacao: false });
+        setNewLocalTramitacao('');
+      } else if (field === 'fase') {
+        setShowNewValueField({ ...showNewValueField, fase: false });
+        setNewFase('');
+      } else if (field === 'diligencia') {
+        setShowNewValueField({ ...showNewValueField, diligencia: false });
+        setNewDiligencia('');
+      }
     } catch (error) {
       console.error(`Erro ao adicionar novo valor em ${field}:`, error);
-      alert(`Erro ao adicionar novo valor: ${error.message}`);
+      
+      // Tentar extrair a mensagem de erro específica do backend
+      let errorMessage = error.message || 'Erro desconhecido';
+      if (error.response && error.response.data && error.response.data.erro) {
+        errorMessage = error.response.data.erro;
+      } else if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      alert(`Erro ao adicionar novo valor: ${errorMessage}`);
     }
   };
 
@@ -244,7 +283,10 @@ const FullProcessCreateForm = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => handleAddNewValue('materia-assunto', newMateriaAssunto)}
+                  onClick={() => {
+                    console.log('Valor atual de newMateriaAssunto:', newMateriaAssunto);
+                    handleAddNewValue('materia-assunto', newMateriaAssunto);
+                  }}
                   className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                 >
                   Adicionar
@@ -297,7 +339,10 @@ const FullProcessCreateForm = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => handleAddNewValue('local-tramitacao', newLocalTramitacao)}
+                  onClick={() => {
+                    console.log('Valor atual de newLocalTramitacao:', newLocalTramitacao);
+                    handleAddNewValue('local-tramitacao', newLocalTramitacao);
+                  }}
                   className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                 >
                   Adicionar
@@ -365,7 +410,10 @@ const FullProcessCreateForm = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => handleAddNewValue('fase', newFase)}
+                  onClick={() => {
+                    console.log('Valor atual de newFase:', newFase);
+                    handleAddNewValue('fase', newFase);
+                  }}
                   className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                 >
                   Adicionar
@@ -418,7 +466,10 @@ const FullProcessCreateForm = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => handleAddNewValue('diligencia', newDiligencia)}
+                  onClick={() => {
+                    console.log('Valor atual de newDiligencia:', newDiligencia);
+                    handleAddNewValue('diligencia', newDiligencia);
+                  }}
                   className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                 >
                   Adicionar
