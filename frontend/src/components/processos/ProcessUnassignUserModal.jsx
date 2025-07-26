@@ -16,7 +16,7 @@ export default function ProcessUnassignUserModal({ processoId, alunos, onClose, 
       await processService.removeUserFromProcess(token, processoId, Number(selected));
       setMsg("Usuário desvinculado com sucesso!");
       setSelected("");
-      if (onUnassigned) onUnassigned();
+      if (onUnassigned) onUnassigned(Number(selected));
       setTimeout(() => { setMsg(""); if (onClose) onClose(); }, 1000);
     } catch (err) {
       setMsg(err.message || "Erro ao desvincular usuário.");
@@ -32,7 +32,9 @@ export default function ProcessUnassignUserModal({ processoId, alunos, onClose, 
         <select value={selected} onChange={e => setSelected(e.target.value)} required style={{ width: '100%', marginBottom: 8 }}>
           <option value="">Selecione um usuário vinculado</option>
           {alunos.map(u => (
-            <option key={u.id} value={u.id}>{u.nome} ({u.email})</option>
+            <option key={u.id} value={u.id}>
+              {u.nome} ({u.email}){u.telefone ? ` - ${u.telefone}` : ''}
+            </option>
           ))}
         </select>
         <div style={{ display: 'flex', gap: 8 }}>

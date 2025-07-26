@@ -5,6 +5,7 @@ import { useAuthContext } from "../../contexts/AuthContext";
 import UpdateForm from "./UpdateForm";
 import { getFileUrl } from '../../utils/fileUrl';
 import { FIELD_LABELS, getFieldDisplayValue } from './fieldNameMaps';
+import { requestCache } from '../../utils/requestCache';
 
 
 function formatDescricao(descricao, auxData) {
@@ -39,22 +40,36 @@ export default function UpdateList({ processoId }) {
     fetchUpdates();
   }, [processoId, token, showForm]);
 
-  // Carregar dados auxiliares para mapear ids para nomes
+  // Carregar dados auxiliares para mapear ids para nomes (com cache global)
   useEffect(() => {
+    let isMounted = true;
+    
     async function fetchAux() {
       try {
+        // Usando cache global para cada requisição individual
         const [materias, fases, diligencias, localTramitacoes] = await Promise.all([
-          auxTablesService.getMateriaAssunto(token),
-          auxTablesService.getFase(token),
-          auxTablesService.getDiligencia(token),
-          auxTablesService.getLocalTramitacao(token),
+          requestCache.getOrFetch('aux:materias', () => auxTablesService.getMateriaAssunto(token)),
+          requestCache.getOrFetch('aux:fases', () => auxTablesService.getFase(token)),
+          requestCache.getOrFetch('aux:diligencias', () => auxTablesService.getDiligencia(token)),
+          requestCache.getOrFetch('aux:localTramitacoes', () => auxTablesService.getLocalTramitacao(token)),
         ]);
-        setAuxData({ materias, fases, diligencias, localTramitacoes });
-      } catch {
-        setAuxData({ materias: [], fases: [], diligencias: [], localTramitacoes: [] });
+        
+        if (isMounted) {
+          setAuxData({ materias, fases, diligencias, localTramitacoes });
+        }
+      } catch (error) {
+        console.error('Erro ao carregar dados auxiliares:', error);
+        if (isMounted) {
+          setAuxData({ materias: [], fases: [], diligencias: [], localTramitacoes: [] });
+        }
       }
     }
+    
     fetchAux();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [token]);
 
   if (loading) return <div>Carregando atualizações...</div>;

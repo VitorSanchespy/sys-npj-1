@@ -5,12 +5,6 @@ export async function apiRequest(endpoint, { method = "GET", token, body } = {})
     ? endpoint
     : `${API_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
 
-  console.log(`🌐 API Request: ${method} ${url}`, {
-    hasToken: !!token,
-    tokenLength: token?.length,
-    body: body ? (body instanceof FormData ? 'FormData' : JSON.stringify(body)) : 'none'
-  });
-
   const headers = {};
   if (!(body instanceof FormData)) headers["Content-Type"] = "application/json";
   if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -25,12 +19,6 @@ export async function apiRequest(endpoint, { method = "GET", token, body } = {})
   try {
     const response = await fetch(url, options);
     
-    console.log(`📡 API Response: ${response.status} ${response.statusText}`, {
-      url,
-      status: response.status,
-      ok: response.ok
-    });
-
     if (!response.ok) {
       let message = `Erro ${response.status}: ${response.statusText}`;
       try {
@@ -46,7 +34,6 @@ export async function apiRequest(endpoint, { method = "GET", token, body } = {})
     if (response.status === 204) return null;
     
     const data = await response.json();
-    console.log(`✅ API Success:`, { url, dataLength: JSON.stringify(data).length });
     return data;
     
   } catch (error) {

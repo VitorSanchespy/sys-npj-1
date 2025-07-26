@@ -10,14 +10,8 @@ export function AuthProvider({ children }) {
     const local = localStorage.getItem("user");
     const userData = local ? JSON.parse(local) : null;
     
-    // Debug: mostrar dados do usuário carregado apenas uma vez
+    // Marcar que o usuário foi carregado para evitar logs desnecessários
     if (userData && !window.userLoggedOnce) {
-      console.log('👤 Usuário carregado do localStorage:', {
-        nome: userData.nome,
-        role: userData.role,
-        roleId: userData.role_id,
-        id: userData.id
-      });
       window.userLoggedOnce = true;
     }
     

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '../api/apiRequest';
 import { useAuthContext } from '../contexts/AuthContext';
+import { requestCache } from '../utils/requestCache';
 
 // Helper para verificar role
 export const getUserRole = (user) => {
@@ -109,20 +110,10 @@ export function useCidades(estadoId) {
 export function useDashboardData() {
   const { token, user } = useAuthContext();
   
-  console.log('🔍 useDashboardData: Estado atual', {
-    hasToken: !!token,
-    hasUser: !!user,
-    userRole: getUserRole(user),
-    userId: user?.id,
-    userName: user?.nome,
-    timestamp: new Date().toLocaleTimeString()
-  });
-  
   return useQuery({
     queryKey: ['dashboard', user?.id, getUserRole(user)],
     queryFn: async () => {
       const userRole = getUserRole(user);  
-      console.log('🚀 useDashboardData: Iniciando busca...', { userRole, token: !!token });
       
       if (!token || !userRole) {
         const errorMsg = `Token ou usuário não disponível - token: ${!!token}, userRole: ${userRole}`;
@@ -138,24 +129,24 @@ export function useDashboardData() {
           processosStats,
           atualizacoes
         ] = await Promise.all([
-          apiRequest("/api/processos", { token }),
+          requestCache.getOrFetch('dashboard:processos', () => apiRequest("/api/processos", { token })),
           userRole === "Admin" 
-            ? apiRequest("/api/usuarios/count", { token }).catch(() => ({ total: 0, porTipo: {} }))
+            ? requestCache.getOrFetch('dashboard:usuarios-count', () => 
+                apiRequest("/api/usuarios/count", { token }).catch(() => ({ total: 0, porTipo: {} }))
+              )
             : Promise.resolve({ total: 0, porTipo: {} }),
-          apiRequest("/api/processos/recentes", { token }).catch(() => []),
+          requestCache.getOrFetch('dashboard:processos-recentes', () => 
+            apiRequest("/api/processos/recentes", { token }).catch(() => [])
+          ),
           (userRole === "Admin" || userRole === "Professor")
-            ? apiRequest("/api/processos/stats", { token }).catch(() => ({ total: 0, porStatus: {}, ativos: 0 }))
+            ? requestCache.getOrFetch('dashboard:processos-stats', () =>
+                apiRequest("/api/processos/stats", { token }).catch(() => ({ total: 0, porStatus: {}, ativos: 0 }))
+              )
             : Promise.resolve({ total: 0, porStatus: {}, ativos: 0 }),
-          apiRequest("/api/atualizacoes?limite=5", { token }).catch(() => [])
+          requestCache.getOrFetch('dashboard:atualizacoes', () =>
+            apiRequest("/api/atualizacoes?limite=5", { token }).catch(() => [])
+          )
         ]);
-
-        console.log('✅ useDashboardData: Dados recebidos', {
-          processos: processosResponse?.length || 0,
-          processosRecentes: processosRecentes?.length || 0,
-          usuariosCount: usuariosCount?.total || 0,
-          atualizacoes: atualizacoes?.length || 0,
-          processosStats
-        });
 
         // Processar dados baseado no papel do usuário
         let dashboardData = {

@@ -37,31 +37,25 @@ export function ProcessList() {
   const fetchProcessos = useCallback(async (search = "", myProcesses = false) => {
     const userRole = getUserRole(user);
     if (!token || !userRole) {
-      console.log("fetchProcessos: token ou user não disponível", { token: !!token, userRole });
       return;
     }
     
-    console.log("fetchProcessos iniciado:", { search, myProcesses, userRole });
     setLoading(true);
     setError("");
     try {
       let data = [];
       
       if (userRole === "Aluno") {
-        console.log("Buscando processos para Aluno");
         // Alunos sempre veem apenas seus processos (mesmo durante pesquisa)
         data = await processService.getMyProcesses(token);
       } else if (userRole === "Professor") {
         if (search.trim()) {
-          console.log("Professor pesquisando - buscando todos os processos");
           // Professor pesquisando: buscar em TODOS os processos
           data = await processService.getAllProcesses(token);
         } else if (myProcesses) {
-          console.log("Professor vendo meus processos");
           // Professor quer ver apenas seus processos vinculados
           data = await processService.getMyProcesses(token);
         } else {
-          console.log("Professor vendo processos recentes");
           // Professor quer ver processos recentes (últimos 4)
           const allProcesses = await processService.getAllProcesses(token);
           // Ordenar por data de atualização mais recente e pegar os 4 primeiros
@@ -79,13 +73,11 @@ export function ProcessList() {
 
       // Filtrar por termo de busca se fornecido (busca por número do processo)
       if (search.trim()) {
-        console.log("Filtrando por termo de busca:", search);
         data = data.filter(proc => 
           proc.numero_processo && proc.numero_processo.toLowerCase().includes(search.toLowerCase())
         );
       }
 
-      console.log("fetchProcessos concluído:", data);
       setProcessos(data);
     } catch (err) {
       console.error("Erro ao buscar processos:", err);
@@ -98,7 +90,6 @@ export function ProcessList() {
   // Carregamento inicial quando user e token estão disponíveis
   useEffect(() => {
     const userRole = getUserRole(user);
-    console.log("useEffect inicial:", { userRole, token: !!token });
     if (userRole && token) {
       // Para alunos, sempre mostrar apenas seus processos
       if (userRole === "Aluno") {

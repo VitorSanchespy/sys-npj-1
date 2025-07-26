@@ -37,7 +37,6 @@ const FullProcessCreateForm = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('Iniciando chamadas à API para dados auxiliares');
         if (!token) {
           throw new Error('Token de autenticação não encontrado. Certifique-se de que o usuário está logado.');
         }
@@ -54,7 +53,6 @@ const FullProcessCreateForm = () => {
           auxTablesService.getDiligencia(token),
           auxTablesService.getLocalTramitacao(token),
         ]);
-        console.log('Dados recebidos:', { materias: materiasRes, fases: fasesRes, diligencias: diligenciasRes, localTramitacoes: localTramitacoesRes });
         setMaterias(materiasRes);
         setFases(fasesRes);
         setDiligencias(diligenciasRes);
@@ -79,19 +77,10 @@ const FullProcessCreateForm = () => {
       return;
     }
     
-    console.log(`Tentando adicionar novo valor para ${field}:`, value.trim());
-    console.log('Token sendo usado:', token ? 'Token presente' : 'Token ausente');
-    console.log('Dados que serão enviados:', { nome: value.trim() });
-    
     try {
       let response;
       
-      // Teste específico para debug - vamos ver se outros endpoints funcionam
-      console.log('Testando requisição direta...');
-      
       if (field === 'materia-assunto') {
-        // Vamos tentar uma abordagem alternativa para materia-assunto
-        console.log('Fazendo requisição para materia-assunto com dados:', { nome: value.trim() });
         response = await auxTablesService.createMateriaAssunto(token, value.trim());
       } else if (field === 'local-tramitacao') {
         response = await auxTablesService.createLocalTramitacao(token, value.trim());
@@ -103,7 +92,6 @@ const FullProcessCreateForm = () => {
         throw new Error('Tipo de campo auxiliar desconhecido.');
       }
       
-      console.log(`${field} adicionado com sucesso:`, response);
       alert(`${field} adicionado com sucesso!`);
 
       // Re-fetch data after adding a new value
@@ -284,7 +272,6 @@ const FullProcessCreateForm = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    console.log('Valor atual de newMateriaAssunto:', newMateriaAssunto);
                     handleAddNewValue('materia-assunto', newMateriaAssunto);
                   }}
                   className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
@@ -340,7 +327,6 @@ const FullProcessCreateForm = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    console.log('Valor atual de newLocalTramitacao:', newLocalTramitacao);
                     handleAddNewValue('local-tramitacao', newLocalTramitacao);
                   }}
                   className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
@@ -411,7 +397,6 @@ const FullProcessCreateForm = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    console.log('Valor atual de newFase:', newFase);
                     handleAddNewValue('fase', newFase);
                   }}
                   className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
@@ -467,7 +452,6 @@ const FullProcessCreateForm = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    console.log('Valor atual de newDiligencia:', newDiligencia);
                     handleAddNewValue('diligencia', newDiligencia);
                   }}
                   className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"

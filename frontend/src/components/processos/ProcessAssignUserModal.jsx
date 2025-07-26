@@ -30,8 +30,6 @@ export default function ProcessAssignUserModal({ processoId, onClose, onAssigned
     e.preventDefault();
     setMsg("");
     setLoading(true);
-    // Log para depuração
-    console.log("[Vincular Usuário] processoId:", processoId, "selected:", selected);
     if (!selected) {
       setMsg("Selecione um usuário válido.");
       setLoading(false);
@@ -41,7 +39,6 @@ export default function ProcessAssignUserModal({ processoId, onClose, onAssigned
       // Garante que o ID seja número
       const usuarioId = Number(selected);
       const usuarioObj = usuarios.find(u => u.id === usuarioId);
-      console.log('[Vincular Usuário] Usuário selecionado:', usuarioObj);
       // Mapear role_id para nome da role aceito pelo backend
       const roleMap = { 2: 'Aluno', 3: 'Professor' };
       const role = roleMap[usuarioObj.role_id];
@@ -54,7 +51,7 @@ export default function ProcessAssignUserModal({ processoId, onClose, onAssigned
       await processService.assignUserToProcess(token, processoId, usuarioId, role);
       setMsg("Usuário vinculado com sucesso!");
       setSelected("");
-      if (onAssigned) onAssigned();
+      if (onAssigned) onAssigned(usuarioId);
       setTimeout(() => { setMsg(""); if (onClose) onClose(); }, 1000);
     } catch (err) {
       setMsg(err.message || "Erro ao vincular usuário.");
@@ -77,7 +74,9 @@ export default function ProcessAssignUserModal({ processoId, onClose, onAssigned
         <select value={selected} onChange={e => setSelected(e.target.value)} required style={{ width: '100%', marginBottom: 8 }}>
           <option value="">Selecione um usuário</option>
           {usuarios.map(u => (
-            <option key={u.id} value={u.id}>{u.nome} ({u.email})</option>
+            <option key={u.id} value={u.id}>
+              {u.nome} ({u.email}){u.telefone ? ` - ${u.telefone}` : ''}
+            </option>
           ))}
         </select>
         <div style={{ display: 'flex', gap: 8 }}>

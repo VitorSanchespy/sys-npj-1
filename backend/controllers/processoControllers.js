@@ -254,7 +254,10 @@ const {
                 offset: (Number(pagina) - 1) * Number(porPagina)
             });
             const usuariosComRole = vinculos.map(v => ({
+                id: v.usuario?.id,
                 nome: v.usuario?.nome,
+                email: v.usuario?.email,
+                telefone: v.usuario?.telefone || null,
                 role: v.usuario?.role_id === 3 ? 'Professor(a)' : 'Aluno(a)'
             }));
             return res.json(usuariosComRole);

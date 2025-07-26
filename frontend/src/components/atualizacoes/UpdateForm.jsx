@@ -25,10 +25,7 @@ function UpdateForm({ processoId, onSuccess }) {
     async function fetchArquivos() {
       try {
         setLoadingArquivos(true);
-        console.log("Buscando arquivos para usuário:", user.id);
         const data = await fileService.getUserFiles(token, user.id);
-        console.log("Arquivos encontrados:", data);
-        console.log("Tipo de dados:", typeof data, "É array:", Array.isArray(data));
         setMeusArquivos(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Erro ao buscar arquivos:", error);
@@ -70,17 +67,20 @@ function UpdateForm({ processoId, onSuccess }) {
     }
     setLoading(true);
     try {
-      const arquivoSelecionado = meusArquivos.find(a => a.id === anexoId);
+      // Converter para número para garantir compatibilidade
+      const anexoIdNumerico = Number(anexoId);
+      const arquivoSelecionado = meusArquivos.find(a => a.id === anexoIdNumerico);
+      
       if (!arquivoSelecionado) {
-        setMsg("Arquivo selecionado não encontrado.");
+        setMsg("Arquivo selecionado não foi encontrado. Verifique se o arquivo ainda existe ou recarregue a página.");
         setLoading(false);
         return;
       }
       await processUpdatesService.createProcessUpdate(token, {
-        processoId,
+        processo_id: processoId,
         descricao, 
-        tipo, 
-        anexo: arquivoSelecionado.caminho 
+        tipo_atualizacao: tipo,
+        arquivos_id: anexoIdNumerico
       });
       setMsg("Atualização cadastrada!");
       setDescricao("");

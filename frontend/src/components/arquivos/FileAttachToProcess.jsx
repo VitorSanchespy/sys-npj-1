@@ -34,10 +34,6 @@ export default function FileAttachToProcess({ processoId, onAttach }) {
     setAttaching(true);
     setError("");
     try {
-      console.log('[FileAttachToProcess] Enviando:', { 
-        processoId: Number(processoId), 
-        selectedId: Number(selectedId) 
-      });
       await fileService.attachFileToProcess(token, Number(processoId), Number(selectedId));
       if (onAttach) onAttach();
       setSelectedId("");
