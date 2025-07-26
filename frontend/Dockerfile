@@ -5,16 +5,13 @@ WORKDIR /app
 # Copiar arquivos de dependências
 COPY package*.json ./
 
-# Usar npm install em vez de npm ci (quando não há package-lock.json)
+# Instalar todas as dependências (incluindo dev)
 RUN npm install
 
 # Copiar código fonte
 COPY . .
 
-# Build da aplicação
-RUN npm run build
-
 EXPOSE 5173
 
-# Usar preview para servir os arquivos buildados
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0"]
+# Rodar Vite em modo desenvolvimento para hot reload
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

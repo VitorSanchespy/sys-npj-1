@@ -1,6 +1,5 @@
 # sistema-npj
 Sistema de gerenciamentos de processos do NPJ/CUA
-Backend API para gerenciamento de processos, alunos e professores.
 
 ### Pré-requisitos
 - Node.js (v18+)
