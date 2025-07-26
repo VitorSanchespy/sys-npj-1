@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { agendamentoService } from '../api/services';
+import { processService } from '../api/services';
 import { useAuthContext } from '../contexts/AuthContext';
 // MainLayout removido: este componente NÃO deve importar ou usar MainLayout.
 
 // Removido qualquer uso de MainLayout aqui. O componente exporta apenas o conteúdo da página.
 const AgendamentoManager = ({ processoId = null }) => {
-  const { userData } = useAuthContext();
+  const { user, token } = useAuthContext();
   const [agendamentos, setAgendamentos] = useState([]);
+  const [processos, setProcessos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editando, setEditando] = useState(null);
@@ -47,13 +49,26 @@ const AgendamentoManager = ({ processoId = null }) => {
 
   useEffect(() => {
     carregarAgendamentos();
+    if (!processoId) {
+      carregarProcessos();
+    }
   }, [processoId, filtros]);
 
+  const carregarProcessos = async () => {
+    if (!user || !token) return;
+    try {
+      const response = await processService.listProcesses(token);
+      setProcessos(response);
+    } catch (error) {
+      console.error('Erro ao carregar processos:', error);
+    }
+  };
+
   const carregarAgendamentos = async () => {
-    if (!userData || !userData.token) return;
+    if (!user || !token) return;
     setLoading(true);
     try {
-      const response = await agendamentoService.listAgendamentos(userData.token);
+      const response = await agendamentoService.listAgendamentos(token);
       setAgendamentos(response);
     } catch (error) {
       console.error('Erro ao carregar agendamentos:', error);
@@ -64,12 +79,21 @@ const AgendamentoManager = ({ processoId = null }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!userData || !userData.token) return;
+    if (!user || !token) {
+      console.error('Dados de usuário ou token não encontrados:', { user, token });
+      alert('Erro: Usuário não autenticado');
+      return;
+    }
+    
+    console.log('Dados do formulário sendo enviados:', formData);
+    
     try {
       if (editando) {
-        await agendamentoService.updateAgendamento(userData.token, editando, formData);
+        await agendamentoService.updateAgendamento(token, editando, formData);
+        console.log('Agendamento atualizado com sucesso');
       } else {
-        await agendamentoService.createAgendamento(userData.token, formData);
+        const resultado = await agendamentoService.createAgendamento(token, formData);
+        console.log('Agendamento criado com sucesso:', resultado);
       }
       setShowForm(false);
       setEditando(null);
@@ -77,6 +101,7 @@ const AgendamentoManager = ({ processoId = null }) => {
       carregarAgendamentos();
     } catch (error) {
       console.error('Erro ao salvar agendamento:', error);
+      alert(`Erro ao salvar agendamento: ${error.message || error}`);
     }
   };
 
@@ -90,10 +115,10 @@ const AgendamentoManager = ({ processoId = null }) => {
   };
 
   const handleDelete = async (id) => {
-    if (!userData || !userData.token) return;
+    if (!user || !token) return;
     if (window.confirm('Tem certeza que deseja excluir este agendamento?')) {
       try {
-        await agendamentoService.deleteAgendamento(userData.token, id);
+        await agendamentoService.deleteAgendamento(token, id);
         carregarAgendamentos();
       } catch (error) {
         console.error('Erro ao excluir agendamento:', error);
@@ -254,7 +279,30 @@ const AgendamentoManager = ({ processoId = null }) => {
                     ))}
                   </select>
                 </div>
+              </div>
 
+              {!processoId && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Processo *
+                  </label>
+                  <select
+                    required
+                    value={formData.processo_id}
+                    onChange={(e) => setFormData({ ...formData, processo_id: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  >
+                    <option value="">Selecione um processo</option>
+                    {processos.map(processo => (
+                      <option key={processo.id} value={processo.id}>
+                        {processo.numero_processo} - {processo.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Data e Hora *

@@ -6,7 +6,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import OptimizedTable from "@/components/common/OptimizedTable";
 import Button from "@/components/common/Button";
 import StatusBadge from "@/components/common/StatusBadge";
-import Loader from "@/components/layout/Loader";
+import Loader from "@/components/common/Loader";
 import { getUserRole, canCreateProcess, formatDate, renderValue } from "@/utils/commonUtils";
 
 export default function ProcessListPage() {

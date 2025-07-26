@@ -4,7 +4,7 @@ import { apiRequest } from "@/api/apiRequest";
 import { useAuthContext } from "@/contexts/AuthContext";
 import Button from "@/components/common/Button";
 import StatusBadge from "@/components/common/StatusBadge";
-import Loader from "@/components/layout/Loader";
+import Loader from "@/components/common/Loader";
 import UpdateList from "@/components/atualizacoes/UpdateList";
 import ProcessAssignUserModal from "@/components/processos/ProcessAssignUserModal";
 import ProcessUnassignUserModal from "@/components/processos/ProcessUnassignUserModal";
