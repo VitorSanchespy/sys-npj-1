@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiRequest } from '../api/apiRequest';
+import { agendamentoService } from '../api/services';
 import { useAuthContext } from '../contexts/AuthContext';
 // MainLayout removido: este componente NÃO deve importar ou usar MainLayout.
 
@@ -11,7 +11,7 @@ const AgendamentoManager = ({ processoId = null }) => {
   const [showForm, setShowForm] = useState(false);
   const [editando, setEditando] = useState(null);
   const [filtros, setFiltros] = useState({
-    tipo_evento: '',
+    tipo: '',
     status: '',
     data_inicio: '',
     data_fim: ''
@@ -21,9 +21,9 @@ const AgendamentoManager = ({ processoId = null }) => {
     titulo: '',
     descricao: '',
     data_evento: '',
-    tipo_evento: 'audiencia',
+    tipo: 'audiencia',
     processo_id: processoId || '',
-    local: '',
+    local_evento: '',
     lembrete_1_dia: true,
     lembrete_2_dias: true,
     lembrete_1_semana: false,
@@ -34,8 +34,8 @@ const AgendamentoManager = ({ processoId = null }) => {
     { value: 'audiencia', label: 'Audiência' },
     { value: 'prazo', label: 'Prazo' },
     { value: 'reuniao', label: 'Reunião' },
-    { value: 'diligencia', label: 'Diligência' },
-    { value: 'outro', label: 'Outro' }
+    { value: 'evento', label: 'Evento' },
+    { value: 'outros', label: 'Outros' }
   ];
 
   const statusOptions = [
@@ -53,16 +53,7 @@ const AgendamentoManager = ({ processoId = null }) => {
     if (!userData || !userData.token) return;
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (processoId) params.append('processo_id', processoId);
-      if (filtros.tipo_evento) params.append('tipo_evento', filtros.tipo_evento);
-      if (filtros.status) params.append('status', filtros.status);
-      if (filtros.data_inicio) params.append('data_inicio', filtros.data_inicio);
-      if (filtros.data_fim) params.append('data_fim', filtros.data_fim);
-
-      const response = await apiRequest(`/api/agendamentos?${params.toString()}`, {
-        token: userData.token
-      });
+      const response = await agendamentoService.listAgendamentos(userData.token);
       setAgendamentos(response);
     } catch (error) {
       console.error('Erro ao carregar agendamentos:', error);
@@ -76,17 +67,9 @@ const AgendamentoManager = ({ processoId = null }) => {
     if (!userData || !userData.token) return;
     try {
       if (editando) {
-        await apiRequest(`/api/agendamentos/${editando}`, {
-          method: 'PUT',
-          token: userData.token,
-          body: formData
-        });
+        await agendamentoService.updateAgendamento(userData.token, editando, formData);
       } else {
-        await apiRequest('/api/agendamentos', {
-          method: 'POST',
-          token: userData.token,
-          body: formData
-        });
+        await agendamentoService.createAgendamento(userData.token, formData);
       }
       setShowForm(false);
       setEditando(null);
@@ -110,10 +93,7 @@ const AgendamentoManager = ({ processoId = null }) => {
     if (!userData || !userData.token) return;
     if (window.confirm('Tem certeza que deseja excluir este agendamento?')) {
       try {
-        await apiRequest(`/api/agendamentos/${id}`, { 
-          method: 'DELETE',
-          token: userData.token
-        });
+        await agendamentoService.deleteAgendamento(userData.token, id);
         carregarAgendamentos();
       } catch (error) {
         console.error('Erro ao excluir agendamento:', error);
@@ -126,9 +106,9 @@ const AgendamentoManager = ({ processoId = null }) => {
       titulo: '',
       descricao: '',
       data_evento: '',
-      tipo_evento: 'audiencia',
+      tipo: 'audiencia',
       processo_id: processoId || '',
-      local: '',
+      local_evento: '',
       lembrete_1_dia: true,
       lembrete_2_dias: true,
       lembrete_1_semana: false,
@@ -161,8 +141,8 @@ const AgendamentoManager = ({ processoId = null }) => {
       'audiencia': '⚖️',
       'prazo': '⏰',
       'reuniao': '👥',
-      'diligencia': '📋',
-      'outro': '📅'
+      'evento': '📋',
+      'outros': '📅'
     };
     return icons[tipo] || '📅';
   };
@@ -197,8 +177,8 @@ const AgendamentoManager = ({ processoId = null }) => {
       <div className="bg-white rounded-lg shadow p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <select
-            value={filtros.tipo_evento}
-            onChange={(e) => setFiltros({ ...filtros, tipo_evento: e.target.value })}
+            value={filtros.tipo}
+            onChange={(e) => setFiltros({ ...filtros, tipo: e.target.value })}
             className="border border-gray-300 rounded-lg px-3 py-2"
           >
             <option value="">Todos os tipos</option>
@@ -265,8 +245,8 @@ const AgendamentoManager = ({ processoId = null }) => {
                   </label>
                   <select
                     required
-                    value={formData.tipo_evento}
-                    onChange={(e) => setFormData({ ...formData, tipo_evento: e.target.value })}
+                    value={formData.tipo}
+                    onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2"
                   >
                     {tiposEvento.map(tipo => (
@@ -310,8 +290,8 @@ const AgendamentoManager = ({ processoId = null }) => {
                 </label>
                 <input
                   type="text"
-                  value={formData.local}
-                  onChange={(e) => setFormData({ ...formData, local: e.target.value })}
+                  value={formData.local_evento}
+                  onChange={(e) => setFormData({ ...formData, local_evento: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 />
               </div>
@@ -427,7 +407,7 @@ const AgendamentoManager = ({ processoId = null }) => {
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <span className="text-2xl">{getTipoIcon(agendamento.tipo_evento)}</span>
+                    <span className="text-2xl">{getTipoIcon(agendamento.tipo)}</span>
                     <h3 className="text-lg font-semibold text-gray-900">
                       {agendamento.titulo}
                     </h3>

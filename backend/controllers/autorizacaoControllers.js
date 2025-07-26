@@ -139,15 +139,31 @@ exports.redefinirSenha = [
 // Perfil do usuário
 exports.perfil = async (req, res) => {
   try {
-    const usuarioCompleto = await Usuario.usuarioCompleto(req.usuario.id);
+    const usuario = await Usuario.findOne({
+      where: { id: req.usuario.id },
+      include: [{ 
+        model: Role, 
+        as: 'role',
+        required: false  // LEFT JOIN para não falhar se não houver role
+      }],
+      attributes: ['id', 'nome', 'email', 'role_id', 'telefone', 'criado_em']
+    });
+    
+    if (!usuario) {
+      return res.status(404).json({ erro: 'Usuário não encontrado' });
+    }
+    
     res.json({
-      id: usuarioCompleto.id,
-      nome: usuarioCompleto.nome,
-      email: usuarioCompleto.email,
-      role: usuarioCompleto.role ? usuarioCompleto.role.nome : undefined,
-      // ... outros campos
+      id: usuario.id,
+      nome: usuario.nome,
+      email: usuario.email,
+      role_id: usuario.role_id,
+      role: usuario.role ? usuario.role.nome : null,
+      telefone: usuario.telefone,
+      criado_em: usuario.criado_em
     });
   } catch (error) {
+    console.error('Erro ao buscar perfil:', error);
     res.status(500).json({ erro: error.message });
   }
 };

@@ -390,5 +390,82 @@ export const processUpdatesService = {
       token,
       body: updateData
     });
+  },
+
+  // DELETE /api/atualizacoes/:processo_id/atualizacoes/:atualizacao_id
+  deleteProcessUpdate: async (processoId, updateId, token) => {
+    return await apiRequest(`/api/atualizacoes/${processoId}/atualizacoes/${updateId}`, {
+      method: 'DELETE',
+      token
+    });
+  }
+};
+
+// ===== AGENDAMENTO SERVICES =====
+export const agendamentoService = {
+  // GET /api/agendamentos
+  listAgendamentos: async (token) => {
+    return await apiRequest('/api/agendamentos', {
+      method: 'GET',
+      token
+    });
+  },
+
+  // GET /api/agendamentos/:id
+  getAgendamentoById: async (token, id) => {
+    return await apiRequest(`/api/agendamentos/${id}`, {
+      method: 'GET',
+      token
+    });
+  },
+
+  // POST /api/agendamentos
+  createAgendamento: async (token, agendamentoData) => {
+    return await apiRequest('/api/agendamentos', {
+      method: 'POST',
+      token,
+      body: agendamentoData
+    });
+  },
+
+  // PUT /api/agendamentos/:id
+  updateAgendamento: async (token, id, agendamentoData) => {
+    return await apiRequest(`/api/agendamentos/${id}`, {
+      method: 'PUT',
+      token,
+      body: agendamentoData
+    });
+  },
+
+  // DELETE /api/agendamentos/:id
+  deleteAgendamento: async (token, id) => {
+    return await apiRequest(`/api/agendamentos/${id}`, {
+      method: 'DELETE',
+      token
+    });
+  },
+
+  // GET /api/agendamentos/calendario/:ano/:mes
+  getCalendarioAgendamentos: async (token, ano, mes) => {
+    return await apiRequest(`/api/agendamentos/calendario/${ano}/${mes}`, {
+      method: 'GET',
+      token
+    });
+  },
+
+  // GET /api/agendamentos/admin/todos
+  getAllAgendamentos: async (token) => {
+    return await apiRequest('/api/agendamentos/admin/todos', {
+      method: 'GET',
+      token
+    });
+  },
+
+  // GET /api/agendamentos/stats/resumo
+  getEstatisticas: async (token) => {
+    return await apiRequest('/api/agendamentos/stats/resumo', {
+      method: 'GET',
+      token
+    });
   }
 };

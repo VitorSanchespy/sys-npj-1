@@ -38,9 +38,9 @@ exports.softDeleteArquivo = async (req, res) => {
     const { id } = req.params;
     const arquivo = await Arquivo.findByPk(id);
     if (!arquivo) return res.status(404).json({ erro: 'Arquivo não encontrado' });
-    arquivo.ativo = false;
-    await arquivo.save();
-    res.json({ mensagem: 'Arquivo deletado (soft delete) com sucesso' });
+    // Como não há campo ativo, fazemos delete real
+    await arquivo.destroy();
+    res.json({ mensagem: 'Arquivo deletado com sucesso' });
   } catch (error) {
     res.status(500).json({ erro: error.message });
   }

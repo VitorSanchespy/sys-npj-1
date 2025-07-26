@@ -24,7 +24,12 @@ exports.listarAgendamentos = async (req, res) => {
         where: { idusuario_responsavel: userId }
       });
       const processoIds = processos.map(p => p.id);
-      whereClause.processo_id = processoIds;
+      if (processoIds.length > 0) {
+        whereClause.processo_id = processoIds;
+      } else {
+        // Se não tem processos, retorna vazio
+        return res.json([]);
+      }
     }
     // Admin vê todos
 
@@ -42,14 +47,24 @@ exports.listarAgendamentos = async (req, res) => {
     const agendamentos = await Agendamento.findAll({
       where: whereClause,
       include: [
-        { model: Processo, as: 'processo' },
-        { model: Usuario, as: 'usuario', attributes: ['id', 'nome', 'email'] }
+        { 
+          model: Processo, 
+          as: 'processo',
+          required: false // LEFT JOIN
+        },
+        { 
+          model: Usuario, 
+          as: 'usuario', 
+          attributes: ['id', 'nome', 'email'],
+          required: false // LEFT JOIN
+        }
       ],
       order: [['data_evento', 'ASC']]
     });
 
     res.json(agendamentos);
   } catch (error) {
+    console.error('Erro ao listar agendamentos:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
