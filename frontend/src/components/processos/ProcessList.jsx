@@ -230,11 +230,11 @@ export function ProcessList() {
             </thead>
             <tbody>
               {processos.map((proc) => (
-                <tr key={proc.id} style={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
+                <tr key={proc.id}>
                   <td style={{ padding: 12, border: '1px solid #ddd' }}>
                     <Link 
                       to={`/processos/${proc.id}`}
-                      style={{ color: '#007bff', textDecoration: 'none' }}
+                      style={{ color: '#007bff', textDecoration: 'none', backgroundColor: 'transparent' }}
                     >
                       {proc.numero_processo || proc.numero || "-"}
                     </Link>

@@ -29,7 +29,7 @@ export default function UpdateList({ processoId }) {
   useEffect(() => {
     async function fetchUpdates() {
       try {
-        const data = await processUpdatesService.getProcessUpdates(processoId, token);
+        const data = await processUpdatesService.getProcessUpdates(token, processoId);
         setUpdates(data);
       } catch {
         setUpdates([]);
@@ -60,7 +60,7 @@ export default function UpdateList({ processoId }) {
   if (loading) return <div>Carregando atualizações...</div>;
   return (
     <div>
-      {["admin", "professor", "aluno"].includes((user.role || "").toLowerCase()) && (
+      {["admin", "professor", "aluno"].includes((user.role?.nome || user.role || "").toLowerCase()) && (
         <button onClick={() => setShowForm(v => !v)}>
           {showForm ? "Fechar" : "Nova Atualização"}
         </button>
@@ -85,7 +85,7 @@ export default function UpdateList({ processoId }) {
             )}
             <br />
             <small>Por: {upd.usuario_nome} em {new Date(upd.data_atualizacao).toLocaleString()}</small>
-            {user.role && ['professor', 'admin'].includes(user.role.toLowerCase()) && (
+            {user.role && ['professor', 'admin'].includes((user.role?.nome || user.role || "").toLowerCase()) && (
               <button
                 style={{ marginLeft: 12, color: '#fff', background: '#d32f2f', border: 'none', borderRadius: 4, padding: '2px 10px', fontWeight: 500, cursor: 'pointer' }}
                 onClick={async () => {

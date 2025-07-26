@@ -11,7 +11,7 @@ import { getUserRole, hasRole, formatDate, renderValue } from "@/utils/commonUti
 export default function ProcessDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuthContext();
+  const { user, token } = useAuthContext();
   const [processo, setProcesso] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -23,8 +23,8 @@ export default function ProcessDetailPage() {
     const fetchProcesso = async () => {
       setLoading(true);
       try {
-        const response = await apiRequest.get(`/processos/${id}`);
-        setProcesso(response.data);
+        const response = await apiRequest(`/api/processos/${id}/detalhes`, { method: "GET", token });
+        setProcesso(response);
       } catch (error) {
         console.error("Erro ao buscar processo:", error);
       } finally {
@@ -35,16 +35,18 @@ export default function ProcessDetailPage() {
     // Função para buscar todos os usuários vinculados ao processo
     const fetchAlunos = async () => {
       try {
-        const response = await apiRequest.get(`/processos/${id}/usuarios`);
-        setAlunos(response.data);
+        const response = await apiRequest(`/api/processos/${id}/usuarios`, { method: "GET", token });
+        setAlunos(response);
       } catch (error) {
         console.error("Erro ao buscar usuários vinculados:", error);
       }
     };
 
-    fetchProcesso();
-    fetchAlunos();
-  }, [id]);
+    if (token) {
+      fetchProcesso();
+      fetchAlunos();
+    }
+  }, [id, token]);
 
   // Funções para vinculação/desvinculação (será implementado conforme necessário)
   const handleAssignUser = async (userId) => {
@@ -208,8 +210,8 @@ export default function ProcessDetailPage() {
               gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
               gap: '12px'
             }}>
-              {alunos.map((aluno) => (
-                <div key={aluno.id} style={{
+              {alunos.map((aluno, index) => (
+                <div key={aluno.id || aluno.email || index} style={{
                   backgroundColor: 'white',
                   padding: '12px',
                   borderRadius: '6px',

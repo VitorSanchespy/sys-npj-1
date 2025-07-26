@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/apiRequest';
 import { useAuthContext } from '../contexts/AuthContext';
+// MainLayout removido: este componente NÃO deve importar ou usar MainLayout.
 
+// Removido qualquer uso de MainLayout aqui. O componente exporta apenas o conteúdo da página.
 const AgendamentoManager = ({ processoId = null }) => {
   const { userData } = useAuthContext();
   const [agendamentos, setAgendamentos] = useState([]);
@@ -166,7 +168,14 @@ const AgendamentoManager = ({ processoId = null }) => {
   };
 
   return (
+
     <div className="space-y-6">
+      {/* Título e ícone */}
+      <div className="flex items-center space-x-3 mb-2">
+        <span className="text-3xl">📅</span>
+        <h1 className="text-3xl font-bold text-gray-900">Agendamentos</h1>
+      </div>
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">
