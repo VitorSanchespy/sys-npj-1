@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { agendamentoService } from '../api/services';
-import { processService } from '../api/services';
+import { apiRequest } from '../api/apiRequest';
 import { useAuthContext } from '../contexts/AuthContext';
-// MainLayout removido: este componente NÃO deve importar ou usar MainLayout.
 
-// Removido qualquer uso de MainLayout aqui. O componente exporta apenas o conteúdo da página.
 const AgendamentoManager = ({ processoId = null }) => {
-  const { user, token } = useAuthContext();
+  const { userData } = useAuthContext();
   const [agendamentos, setAgendamentos] = useState([]);
-  const [processos, setProcessos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editando, setEditando] = useState(null);
   const [filtros, setFiltros] = useState({
-    tipo: '',
+    tipo_evento: '',
     status: '',
     data_inicio: '',
     data_fim: ''
@@ -23,9 +19,9 @@ const AgendamentoManager = ({ processoId = null }) => {
     titulo: '',
     descricao: '',
     data_evento: '',
-    tipo: 'audiencia',
+    tipo_evento: 'audiencia',
     processo_id: processoId || '',
-    local_evento: '',
+    local: '',
     lembrete_1_dia: true,
     lembrete_2_dias: true,
     lembrete_1_semana: false,
@@ -36,8 +32,8 @@ const AgendamentoManager = ({ processoId = null }) => {
     { value: 'audiencia', label: 'Audiência' },
     { value: 'prazo', label: 'Prazo' },
     { value: 'reuniao', label: 'Reunião' },
-    { value: 'evento', label: 'Evento' },
-    { value: 'outros', label: 'Outros' }
+    { value: 'diligencia', label: 'Diligência' },
+    { value: 'outro', label: 'Outro' }
   ];
 
   const statusOptions = [
@@ -49,26 +45,22 @@ const AgendamentoManager = ({ processoId = null }) => {
 
   useEffect(() => {
     carregarAgendamentos();
-    if (!processoId) {
-      carregarProcessos();
-    }
   }, [processoId, filtros]);
 
-  const carregarProcessos = async () => {
-    if (!user || !token) return;
-    try {
-      const response = await processService.listProcesses(token);
-      setProcessos(response);
-    } catch (error) {
-      console.error('Erro ao carregar processos:', error);
-    }
-  };
-
   const carregarAgendamentos = async () => {
-    if (!user || !token) return;
+    if (!userData || !userData.token) return;
     setLoading(true);
     try {
-      const response = await agendamentoService.listAgendamentos(token);
+      const params = new URLSearchParams();
+      if (processoId) params.append('processo_id', processoId);
+      if (filtros.tipo_evento) params.append('tipo_evento', filtros.tipo_evento);
+      if (filtros.status) params.append('status', filtros.status);
+      if (filtros.data_inicio) params.append('data_inicio', filtros.data_inicio);
+      if (filtros.data_fim) params.append('data_fim', filtros.data_fim);
+
+      const response = await apiRequest(`/api/agendamentos?${params.toString()}`, {
+        token: userData.token
+      });
       setAgendamentos(response);
     } catch (error) {
       console.error('Erro ao carregar agendamentos:', error);
@@ -79,21 +71,20 @@ const AgendamentoManager = ({ processoId = null }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!user || !token) {
-      console.error('Dados de usuário ou token não encontrados:', { user, token });
-      alert('Erro: Usuário não autenticado');
-      return;
-    }
-    
-    console.log('Dados do formulário sendo enviados:', formData);
-    
+    if (!userData || !userData.token) return;
     try {
       if (editando) {
-        await agendamentoService.updateAgendamento(token, editando, formData);
-        console.log('Agendamento atualizado com sucesso');
+        await apiRequest(`/api/agendamentos/${editando}`, {
+          method: 'PUT',
+          token: userData.token,
+          body: formData
+        });
       } else {
-        const resultado = await agendamentoService.createAgendamento(token, formData);
-        console.log('Agendamento criado com sucesso:', resultado);
+        await apiRequest('/api/agendamentos', {
+          method: 'POST',
+          token: userData.token,
+          body: formData
+        });
       }
       setShowForm(false);
       setEditando(null);
@@ -101,7 +92,6 @@ const AgendamentoManager = ({ processoId = null }) => {
       carregarAgendamentos();
     } catch (error) {
       console.error('Erro ao salvar agendamento:', error);
-      alert(`Erro ao salvar agendamento: ${error.message || error}`);
     }
   };
 
@@ -115,10 +105,13 @@ const AgendamentoManager = ({ processoId = null }) => {
   };
 
   const handleDelete = async (id) => {
-    if (!user || !token) return;
+    if (!userData || !userData.token) return;
     if (window.confirm('Tem certeza que deseja excluir este agendamento?')) {
       try {
-        await agendamentoService.deleteAgendamento(token, id);
+        await apiRequest(`/api/agendamentos/${id}`, { 
+          method: 'DELETE',
+          token: userData.token
+        });
         carregarAgendamentos();
       } catch (error) {
         console.error('Erro ao excluir agendamento:', error);
@@ -131,9 +124,9 @@ const AgendamentoManager = ({ processoId = null }) => {
       titulo: '',
       descricao: '',
       data_evento: '',
-      tipo: 'audiencia',
+      tipo_evento: 'audiencia',
       processo_id: processoId || '',
-      local_evento: '',
+      local: '',
       lembrete_1_dia: true,
       lembrete_2_dias: true,
       lembrete_1_semana: false,
@@ -166,21 +159,14 @@ const AgendamentoManager = ({ processoId = null }) => {
       'audiencia': '⚖️',
       'prazo': '⏰',
       'reuniao': '👥',
-      'evento': '📋',
-      'outros': '📅'
+      'diligencia': '📋',
+      'outro': '📅'
     };
     return icons[tipo] || '📅';
   };
 
   return (
-
     <div className="space-y-6">
-      {/* Título e ícone */}
-      <div className="flex items-center space-x-3 mb-2">
-        <span className="text-3xl">📅</span>
-        <h1 className="text-3xl font-bold text-gray-900">Agendamentos</h1>
-      </div>
-
       {/* Header */}
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">
@@ -202,8 +188,8 @@ const AgendamentoManager = ({ processoId = null }) => {
       <div className="bg-white rounded-lg shadow p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <select
-            value={filtros.tipo}
-            onChange={(e) => setFiltros({ ...filtros, tipo: e.target.value })}
+            value={filtros.tipo_evento}
+            onChange={(e) => setFiltros({ ...filtros, tipo_evento: e.target.value })}
             className="border border-gray-300 rounded-lg px-3 py-2"
           >
             <option value="">Todos os tipos</option>
@@ -270,8 +256,8 @@ const AgendamentoManager = ({ processoId = null }) => {
                   </label>
                   <select
                     required
-                    value={formData.tipo}
-                    onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
+                    value={formData.tipo_evento}
+                    onChange={(e) => setFormData({ ...formData, tipo_evento: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2"
                   >
                     {tiposEvento.map(tipo => (
@@ -279,30 +265,7 @@ const AgendamentoManager = ({ processoId = null }) => {
                     ))}
                   </select>
                 </div>
-              </div>
 
-              {!processoId && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Processo *
-                  </label>
-                  <select
-                    required
-                    value={formData.processo_id}
-                    onChange={(e) => setFormData({ ...formData, processo_id: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  >
-                    <option value="">Selecione um processo</option>
-                    {processos.map(processo => (
-                      <option key={processo.id} value={processo.id}>
-                        {processo.numero_processo} - {processo.nome}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Data e Hora *
@@ -338,8 +301,8 @@ const AgendamentoManager = ({ processoId = null }) => {
                 </label>
                 <input
                   type="text"
-                  value={formData.local_evento}
-                  onChange={(e) => setFormData({ ...formData, local_evento: e.target.value })}
+                  value={formData.local}
+                  onChange={(e) => setFormData({ ...formData, local: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2"
                 />
               </div>
@@ -455,7 +418,7 @@ const AgendamentoManager = ({ processoId = null }) => {
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <span className="text-2xl">{getTipoIcon(agendamento.tipo)}</span>
+                    <span className="text-2xl">{getTipoIcon(agendamento.tipo_evento)}</span>
                     <h3 className="text-lg font-semibold text-gray-900">
                       {agendamento.titulo}
                     </h3>

@@ -2,19 +2,18 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Instalar dependências necessárias para bcrypt e nodemon
+# Instalar dependências necessárias para bcrypt
 RUN apk add --no-cache python3 make g++
 
 # Copiar apenas os arquivos de dependências primeiro
 COPY package*.json ./
 
-# Instalar todas as dependências (incluindo dev)
-RUN npm install
+# Usar npm install em vez de npm ci
+RUN npm install --only=production
 
 # Copiar o resto do código
 COPY . .
 
 EXPOSE 3001
 
-# Usar nodemon para desenvolvimento (hot reload)
-CMD ["npx", "nodemon", "index.js"]
+CMD ["npm", "start"]

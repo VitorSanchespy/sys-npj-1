@@ -33,6 +33,9 @@ const corsOptions = {
   credentials: true // Se usar cookies
 };
 app.use(cors(corsOptions));
+
+const auxTablesRoutes = require('./routes/tabelaAuxiliarRoutes');
+app.use('/api/aux', auxTablesRoutes);
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -104,11 +107,7 @@ const speedLimiter = slowDown({
 app.use(speedLimiter);
 
 // Conexão com o banco de dados
-console.log('🔌 Conectando ao banco de dados...');
 require('./config/config');
-console.log('✅ Configuração do banco carregada');
-
-console.log('📁 Verificando pasta uploads...');
 
 
 // Cria a pasta 'uploads' se não existir
@@ -120,20 +119,13 @@ if (!fs.existsSync(uploadDir)) {
 // Servir arquivos estáticos da pasta uploads
 app.use('/uploads', express.static(uploadDir));
 
-// Adicionar express.json() globalmente ANTES das rotas
-app.use(express.json());
-
-// Rotas auxiliares
-const auxTablesRoutes = require('./routes/tabelaAuxiliarRoutes');
-app.use('/api/aux', auxTablesRoutes);
-
-// Middleware condicional para arquivos de upload (se necessário)
+// Adicionar express.json() ANTES das rotas (exceto para upload de arquivos)
 app.use((req, res, next) => {
-  // Pular processamento adicional apenas para a rota de upload de arquivos
+  // Pular express.json() apenas para a rota de upload de arquivos
   if (req.path === '/api/arquivos/upload' && req.method === 'POST') {
-    // Para upload, pode precisar de tratamento especial
+    return next();
   }
-  next();
+  express.json()(req, res, next);
 });
 
 // Rota de arquivos
@@ -162,16 +154,12 @@ app.use(errorHandler);
 if (require.main === module) {
   const PORT = process.env.PORT || 3001;
   
-  console.log('🚀 Inicializando sistema de notificações...');
   // Inicializar sistema de notificações
   const { inicializarCronJobs } = require('./services/notificationScheduler');
   inicializarCronJobs();
-  console.log('✅ Sistema de notificações iniciado com sucesso!');
   
-  console.log(`🌐 Iniciando servidor na porta ${PORT}...`);
   server.listen(PORT, () => {
-    console.log(`✅ Servidor rodando na porta ${PORT}`);
-    console.log(`🔗 API disponível em http://localhost:${PORT}`);
+    // Server started
   });
 }
 

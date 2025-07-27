@@ -12,8 +12,8 @@ exports.adicionarAtualizacaoProcessos = async (req, res) => {
                 processo_id,
                 usuario_id,
                 tipo_atualizacao,
-                descricao,
-                arquivos_id: arquivos_id || null
+                descricao: tipo_atualizacao === 'informacao' ? descricao : null,
+                arquivos_id: tipo_atualizacao === 'arquivo' ? arquivos_id : null
             });
             // Retorna a atualização já com os relacionamentos
             const atualizacaoCompleta = await AtualizacoesProcesso.findByPk(novaAtualizacao.id, {

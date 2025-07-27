@@ -37,12 +37,7 @@ function frontendToBackendUrl(url) {
 
 export default function AppRouter() {
   return (
-    <Router
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true
-      }}
-    >
+    <Router>
       <Routes>
           <Route path="/" element={<HomePage />} />
           {/* Público */}
