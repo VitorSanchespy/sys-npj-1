@@ -29,8 +29,8 @@ services:
       - "3001:3001"
     environment:
       DB_HOST: sistema-npj-db-1
-      DB_USER: appuser
-      DB_PASS: app123
+      DB_USER: root
+      DB_PASSWORD: 12345678@
       DB_NAME: npjdatabase
     depends_on:
       sistema-npj-db-1:

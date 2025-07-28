@@ -14,7 +14,7 @@ const verificarToken = async (req, res, next) => {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const usuario = await Usuario.findOne({
-            where: { id: decoded.id, ativo: true },
+            where: { id: decoded.id, ativo: [true, 1] },
             include: [{ model: Role, as: 'role' }],
             attributes: ['id', 'nome', 'email', 'role_id']
         });

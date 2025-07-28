@@ -43,8 +43,12 @@ export function AuthProvider({ children }) {
           const profileData = await authService.getProfile(token);
           setUser(profileData);
         } catch (error) {
-          console.error('Token inválido:', error);
-          logout();
+          console.error('Token inválido na inicialização:', error);
+          // Tentar renovar o token primeiro
+          const refreshed = await tryRefreshToken();
+          if (!refreshed) {
+            logout();
+          }
         } finally {
           setLoading(false);
         }

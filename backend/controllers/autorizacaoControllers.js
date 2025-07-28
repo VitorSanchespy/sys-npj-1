@@ -26,19 +26,6 @@ exports.refreshToken = async (req, res) => {
     return res.status(500).json({ erro: 'Erro ao renovar token.' });
   }
 };
-
-// No login, gerar e salvar refresh token
-exports.login = async (req, res) => {
-  // ...código de autenticação existente...
-  // Após autenticar:
-  // const usuario = ...
-  // const token = gerarToken(usuario);
-  // NOVO:
-  const refreshToken = gerarRefreshToken(usuario);
-  const expiresAt = new Date(Date.now() + (parseInt(process.env.REFRESH_TOKEN_EXPIRATION || '7') * 24 * 60 * 60 * 1000));
-  await RefreshToken.create({ user_id: usuario.id, token: refreshToken, expires_at: expiresAt });
-  return res.json({ success: true, usuario, token, refreshToken });
-};
 const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
 const { gerarHash, verificarSenha, gerarToken } = require('../utils/authUtils');
 const { enviarEmailRecuperacao } = require('../services/emailService');
@@ -77,9 +64,21 @@ exports.login = async (req, res) => {
       id: usuario.id,
       role: usuario.role?.nome
     });
+    
+    // Gerar refresh token
+    console.log('🔄 Gerando refresh token...');
+    const { gerarRefreshToken } = require('../utils/authUtils');
+    const refreshToken = gerarRefreshToken(usuario);
+    console.log('🔄 Refresh token gerado:', refreshToken);
+    const expiresAt = new Date(Date.now() + (parseInt(process.env.REFRESH_TOKEN_EXPIRATION || '7') * 24 * 60 * 60 * 1000));
+    console.log('🔄 Salvando refresh token no banco...');
+    await RefreshToken.create({ user_id: usuario.id, token: refreshToken, expires_at: expiresAt });
+    console.log('🔄 Refresh token salvo com sucesso!');
+    
     res.json({
       success: true,
       token,
+      refreshToken,
       usuario: {
         id: usuario.id,
         nome: usuario.nome,
@@ -88,6 +87,7 @@ exports.login = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('❌ Erro no login:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
