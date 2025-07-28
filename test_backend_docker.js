@@ -152,7 +152,7 @@ async function testCriarAgendamento() {
             titulo: 'Teste Automatizado Docker',
             descricao: 'Agendamento criado por teste automatizado',
             data_evento: new Date(Date.now() + 86400000).toISOString(), // amanhã
-            tipo: 'reuniao',
+            tipo_evento: 'reuniao',
             local: 'Container Docker',
             status: 'agendado',
             processo_id: processos.data[0].id
