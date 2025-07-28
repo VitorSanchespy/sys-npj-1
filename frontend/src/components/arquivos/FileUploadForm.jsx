@@ -21,18 +21,10 @@ export default function FileUploadForm({ processoId, onUpload }) {
     }
 
     const formData = new FormData();
+    formData.append("nome", file.name);
     formData.append("arquivo", file); // nome do campo deve ser 'arquivo' para o multer
-    
-    // Só adicionar processo_id se for válido
-    if (processoId && processoId !== 'undefined' && processoId !== 'null') {
-      formData.append("processo_id", processoId);
-    }
-    
-    console.log('📤 Enviando upload:', {
-      fileName: file.name,
-      fileSize: file.size,
-      processoId: processoId
-    });
+    formData.append("processo_id", processoId);
+    formData.append("usuario_id", user.id);
 
     try {
       await fileService.uploadFile(formData, token);

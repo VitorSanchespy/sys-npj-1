@@ -20,12 +20,6 @@ router.get('/usuario/:usuario_id',
   arquivoController.listarArquivosUsuario
 );
 
-// Listar arquivos não anexados (arquivos "soltos")
-router.get('/nao-anexados', 
-  authMiddleware,
-  arquivoController.listarArquivosNaoAnexados
-);
-
 // Anexar arquivo já enviado a um processo
 router.post('/anexar', 
   authMiddleware,

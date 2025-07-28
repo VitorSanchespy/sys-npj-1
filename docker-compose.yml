@@ -32,9 +32,6 @@ services:
       DB_USER: appuser
       DB_PASS: app123
       DB_NAME: npjdatabase
-    volumes:
-      - ./backend:/app
-      - ./backend/uploads:/app/uploads
     depends_on:
       sistema-npj-db-1:
         condition: service_healthy
@@ -47,8 +44,6 @@ services:
     container_name: npj-frontend
     ports:
       - "5173:5173"
-    volumes:
-      - ./frontend:/app
     depends_on:
       - backend
     restart: unless-stopped

@@ -104,11 +104,7 @@ const speedLimiter = slowDown({
 app.use(speedLimiter);
 
 // Conexão com o banco de dados
-console.log('🔌 Conectando ao banco de dados...');
 require('./config/config');
-console.log('✅ Configuração do banco carregada');
-
-console.log('📁 Verificando pasta uploads...');
 
 
 // Cria a pasta 'uploads' se não existir
@@ -162,16 +158,12 @@ app.use(errorHandler);
 if (require.main === module) {
   const PORT = process.env.PORT || 3001;
   
-  console.log('🚀 Inicializando sistema de notificações...');
   // Inicializar sistema de notificações
   const { inicializarCronJobs } = require('./services/notificationScheduler');
   inicializarCronJobs();
-  console.log('✅ Sistema de notificações iniciado com sucesso!');
   
-  console.log(`🌐 Iniciando servidor na porta ${PORT}...`);
   server.listen(PORT, () => {
-    console.log(`✅ Servidor rodando na porta ${PORT}`);
-    console.log(`🔗 API disponível em http://localhost:${PORT}`);
+    // Server started
   });
 }
 

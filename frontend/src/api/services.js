@@ -347,14 +347,6 @@ export const fileService = {
     });
   },
 
-  // GET /api/arquivos/nao-anexados - Listar arquivos não anexados
-  getUnattachedFiles: async (token) => {
-    return await apiRequest('/api/arquivos/nao-anexados', {
-      method: 'GET',
-      token
-    });
-  },
-
   // POST /api/arquivos/anexar
   attachFileToProcess: async (token, processo_id, arquivo_id) => {
     return await apiRequest('/api/arquivos/anexar', {
