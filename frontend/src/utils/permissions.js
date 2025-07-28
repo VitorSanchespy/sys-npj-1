@@ -1,28 +1,21 @@
 export function hasRole(user, roles) {
   if (!user) return false;
 
-  // Função helper para obter role do usuário
-  const getUserRole = (user) => {
-    if (!user) return null;
-    
-    if (typeof user.role === 'string') {
-      return user.role;
+  // Prioriza o role_id se disponível
+  if (user.role_id) {
+    const roleMap = { 1: 'admin', 2: 'aluno', 3: 'professor' };
+    const userRole = roleMap[user.role_id];
+    if (Array.isArray(roles)) {
+      return roles.map(r => String(r).toLowerCase()).includes(userRole);
     }
-    
-    if (user.role && typeof user.role === 'object') {
-      return user.role.nome || user.role.name || null;
-    }
-    
-    if (user.role_id === 1) return 'Admin';
-    if (user.role_id === 2) return 'Aluno';
-    if (user.role_id === 3) return 'Professor';
-    
-    return null;
-  };
+    return userRole === String(roles).toLowerCase();
+  }
 
-  const userRole = getUserRole(user);
-  if (!userRole) return false;
-  
-  const allowedRoles = Array.isArray(roles) ? roles : [roles];
-  return allowedRoles.includes(userRole);
+  // Fallback para o campo 'role' (string)
+  if (!user.role) return false;
+  const userRoleString = String(user.role).toLowerCase();
+  if (Array.isArray(roles)) {
+    return roles.map(r => String(r).toLowerCase()).includes(userRoleString);
+  }
+  return userRoleString === String(roles).toLowerCase();
 }

@@ -26,7 +26,8 @@ Arquivo.init(
     tipo: { type: DataTypes.STRING, allowNull: false },
     processo_id: { type: DataTypes.INTEGER },
     usuario_id: { type: DataTypes.INTEGER, allowNull: false },
-    criado_em: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+    criado_em: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+    ativo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true }
   },
   {
     sequelize,

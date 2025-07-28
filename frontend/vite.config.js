@@ -17,19 +17,5 @@ export default defineConfig({
     alias: {
       '@': '/src'
     }
-  },
-  // Otimizações para desenvolvimento
-  optimizeDeps: {
-    include: ['react', 'react-dom']
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          api: ['axios', '@tanstack/react-query']
-        }
-      }
-    }
   }
 });

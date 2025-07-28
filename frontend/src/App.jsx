@@ -5,6 +5,11 @@ import { AuthProvider } from "./contexts/AuthContext";
 import AppRouter from "@/routes/AppRouter";
 import { queryClient } from "./hooks/useQueryClient";
 
+// Debug tools apenas em desenvolvimento
+if (import.meta.env.DEV) {
+  import('./debug/apiTester.js');
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>

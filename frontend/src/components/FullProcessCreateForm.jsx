@@ -37,6 +37,7 @@ const FullProcessCreateForm = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log('Iniciando chamadas à API para dados auxiliares');
         if (!token) {
           throw new Error('Token de autenticação não encontrado. Certifique-se de que o usuário está logado.');
         }
@@ -53,6 +54,7 @@ const FullProcessCreateForm = () => {
           auxTablesService.getDiligencia(token),
           auxTablesService.getLocalTramitacao(token),
         ]);
+        console.log('Dados recebidos:', { materias: materiasRes, fases: fasesRes, diligencias: diligenciasRes, localTramitacoes: localTramitacoesRes });
         setMaterias(materiasRes);
         setFases(fasesRes);
         setDiligencias(diligenciasRes);
@@ -71,27 +73,19 @@ const FullProcessCreateForm = () => {
   };
 
   const handleAddNewValue = async (field, value) => {
-    // Validar se o valor não está vazio
-    if (!value || !value.trim()) {
-      alert('Por favor, digite um valor válido.');
-      return;
-    }
-    
     try {
       let response;
-      
       if (field === 'materia-assunto') {
-        response = await auxTablesService.createMateriaAssunto(token, value.trim());
+        response = await auxTablesService.createMateriaAssunto(token, value);
       } else if (field === 'local-tramitacao') {
-        response = await auxTablesService.createLocalTramitacao(token, value.trim());
+        response = await auxTablesService.createLocalTramitacao(token, value);
       } else if (field === 'fase') {
-        response = await auxTablesService.createFase(token, value.trim());
+        response = await auxTablesService.createFase(token, value);
       } else if (field === 'diligencia') {
-        response = await auxTablesService.createDiligencia(token, value.trim());
+        response = await auxTablesService.createDiligencia(token, value);
       } else {
         throw new Error('Tipo de campo auxiliar desconhecido.');
       }
-      
       alert(`${field} adicionado com sucesso!`);
 
       // Re-fetch data after adding a new value
@@ -117,32 +111,11 @@ const FullProcessCreateForm = () => {
         setFormData({ ...formData, diligencia_id: response.id });
       }
 
-      // Hide the input field and clear the respective input
-      if (field === 'materia-assunto') {
-        setShowNewValueField({ ...showNewValueField, materiaAssunto: false });
-        setNewMateriaAssunto('');
-      } else if (field === 'local-tramitacao') {
-        setShowNewValueField({ ...showNewValueField, localTramitacao: false });
-        setNewLocalTramitacao('');
-      } else if (field === 'fase') {
-        setShowNewValueField({ ...showNewValueField, fase: false });
-        setNewFase('');
-      } else if (field === 'diligencia') {
-        setShowNewValueField({ ...showNewValueField, diligencia: false });
-        setNewDiligencia('');
-      }
+      // Hide the input field
+      setShowNewValueField({ ...showNewValueField, [field]: false });
     } catch (error) {
       console.error(`Erro ao adicionar novo valor em ${field}:`, error);
-      
-      // Tentar extrair a mensagem de erro específica do backend
-      let errorMessage = error.message || 'Erro desconhecido';
-      if (error.response && error.response.data && error.response.data.erro) {
-        errorMessage = error.response.data.erro;
-      } else if (error.response && error.response.data && error.response.data.message) {
-        errorMessage = error.response.data.message;
-      }
-      
-      alert(`Erro ao adicionar novo valor: ${errorMessage}`);
+      alert(`Erro ao adicionar novo valor: ${error.message}`);
     }
   };
 
@@ -271,9 +244,7 @@ const FullProcessCreateForm = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    handleAddNewValue('materia-assunto', newMateriaAssunto);
-                  }}
+                  onClick={() => handleAddNewValue('materia-assunto', newMateriaAssunto)}
                   className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                 >
                   Adicionar
@@ -326,9 +297,7 @@ const FullProcessCreateForm = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    handleAddNewValue('local-tramitacao', newLocalTramitacao);
-                  }}
+                  onClick={() => handleAddNewValue('local-tramitacao', newLocalTramitacao)}
                   className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                 >
                   Adicionar
@@ -396,9 +365,7 @@ const FullProcessCreateForm = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    handleAddNewValue('fase', newFase);
-                  }}
+                  onClick={() => handleAddNewValue('fase', newFase)}
                   className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                 >
                   Adicionar
@@ -451,9 +418,7 @@ const FullProcessCreateForm = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    handleAddNewValue('diligencia', newDiligencia);
-                  }}
+                  onClick={() => handleAddNewValue('diligencia', newDiligencia)}
                   className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                 >
                   Adicionar

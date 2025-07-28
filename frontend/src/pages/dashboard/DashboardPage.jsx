@@ -2,7 +2,7 @@ import React from "react";
 import DashboardSummary from "@/components/dashboard/DashboardSummary";
 import { useDashboardData } from "@/hooks/useApi.jsx";
 import { useAuthContext } from "@/contexts/AuthContext";
-import Loader from "@/components/common/Loader";
+import Loader from "@/components/layout/Loader";
 
 export default function DashboardPage() {
   const { user } = useAuthContext();
