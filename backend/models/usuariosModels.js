@@ -8,6 +8,13 @@ class Usuario extends Model {
     Usuario.hasMany(models.arquivoModels, { foreignKey: 'usuario_id', as: 'arquivos' });
     Usuario.hasMany(models.usuariosProcessoModels, { foreignKey: 'usuario_id', as: 'usuariosProcesso' });
   }
+
+  static async usuarioCompleto(id) {
+    const { rolesModels } = require('./indexModels');
+    return await Usuario.findByPk(id, {
+      include: [{ model: rolesModels, as: 'role' }]
+    });
+  }
 }
 
 Usuario.init(

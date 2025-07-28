@@ -30,7 +30,7 @@ exports.listarAgendamentos = async (req, res) => {
 
     // Filtros adicionais
     if (processo_id) whereClause.processo_id = processo_id;
-    if (tipo) whereClause.tipo = tipo;
+    if (tipo) whereClause.tipo_evento = tipo;
     if (status) whereClause.status = status;
     
     if (data_inicio && data_fim) {
@@ -59,12 +59,11 @@ exports.criarAgendamento = async (req, res) => {
   try {
     const {
       processo_id,
-      tipo,
+      tipo_evento,
       titulo,
       descricao,
       data_evento,
-      hora_evento,
-      local_evento,
+      local,
       lembrete_1_dia,
       lembrete_2_dias,
       lembrete_1_semana,
@@ -94,12 +93,11 @@ exports.criarAgendamento = async (req, res) => {
     const agendamento = await Agendamento.create({
       processo_id,
       usuario_id,
-      tipo,
+      tipo_evento,
       titulo,
       descricao,
       data_evento,
-      hora_evento,
-      local_evento,
+      local,
       lembrete_1_dia: lembrete_1_dia || true,
       lembrete_2_dias: lembrete_2_dias || true,
       lembrete_1_semana: lembrete_1_semana || false,
