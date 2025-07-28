@@ -4,6 +4,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AuthProvider } from "./contexts/AuthContext";
 import AppRouter from "@/routes/AppRouter";
 import { queryClient } from "./hooks/useQueryClient";
+import PerformanceMonitor from "./components/dev/PerformanceMonitor";
 
 // Debug tools apenas em desenvolvimento
 if (import.meta.env.DEV) {
@@ -17,6 +18,8 @@ function App() {
         <AppRouter />
         {/* DevTools apenas em desenvolvimento */}
         {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+        {/* Monitor de Performance */}
+        <PerformanceMonitor />
       </AuthProvider>
     </QueryClientProvider>
   );

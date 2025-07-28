@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useAuthContext } from '../contexts/AuthContext';
 
 // Hook para gerenciar estados de loading otimizado
 export const useOptimizedLoading = (initialStates = {}) => {
@@ -130,3 +131,87 @@ export const useFilters = (initialFilters = {}) => {
     hasActiveFilters
   };
 };
+
+// Hook para renovação automática de token
+export function useTokenRefresh() {
+  const { token, refreshToken, logout, fetchWithAuth } = useAuthContext();
+  const refreshTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    if (!token || !refreshToken) return;
+
+    // Decodificar token para obter tempo de expiração (se JWT)
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const expirationTime = payload.exp * 1000; // Converter para millisegundos
+      const currentTime = Date.now();
+      const timeUntilExpiry = expirationTime - currentTime;
+      
+      // Renovar 2 minutos antes da expiração
+      const refreshTime = Math.max(timeUntilExpiry - (2 * 60 * 1000), 0);
+
+      if (refreshTime > 0) {
+        refreshTimeoutRef.current = setTimeout(async () => {
+          try {
+            await fetchWithAuth(async () => {
+              // Forçar uma requisição que vai disparar o refresh
+              const response = await fetch('http://localhost:3001/api/usuarios/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              if (!response.ok) throw new Error('Token expired');
+            });
+          } catch (error) {
+            console.warn('Falha na renovação automática do token:', error);
+            logout(); // Logout se não conseguir renovar
+          }
+        }, refreshTime);
+      }
+    } catch (error) {
+      // Se não conseguir decodificar, assumir que expira em 1 hora
+      refreshTimeoutRef.current = setTimeout(async () => {
+        try {
+          await fetchWithAuth(async () => {
+            throw new Error('Token refresh needed');
+          });
+        } catch (error) {
+          logout();
+        }
+      }, 58 * 60 * 1000); // 58 minutos
+    }
+
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+  }, [token, refreshToken, logout, fetchWithAuth]);
+}
+
+// Hook para detectar quando o usuário fica offline/online
+export function useOnlineStatus() {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Quando voltar online, limpar cache para forçar refresh
+      if (window.clearCache) {
+        window.clearCache();
+      }
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  return isOnline;
+}

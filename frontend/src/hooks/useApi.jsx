@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '../api/apiRequest';
 import { useAuthContext } from '../contexts/AuthContext';
+import { requestCache } from '../utils/requestCache';
 
 // Helper para verificar role
 export const getUserRole = (user) => {
@@ -109,123 +110,109 @@ export function useCidades(estadoId) {
 export function useDashboardData() {
   const { token, user } = useAuthContext();
   
-  console.log('🔍 useDashboardData: Estado atual', {
-    hasToken: !!token,
-    hasUser: !!user,
-    userRole: getUserRole(user),
-    userId: user?.id,
-    userName: user?.nome,
-    timestamp: new Date().toLocaleTimeString()
-  });
-  
   return useQuery({
     queryKey: ['dashboard', user?.id, getUserRole(user)],
     queryFn: async () => {
       const userRole = getUserRole(user);  
-      console.log('🚀 useDashboardData: Iniciando busca...', { userRole, token: !!token });
       
       if (!token || !userRole) {
-        const errorMsg = `Token ou usuário não disponível - token: ${!!token}, userRole: ${userRole}`;
-        console.error('❌ useDashboardData:', errorMsg);
-        throw new Error(errorMsg);
+        throw new Error(`Token ou usuário não disponível`);
       }
       
       try {
-        const [
-          processosResponse,
-          usuariosCount,
-          processosRecentes,
-          processosStats,
-          atualizacoes
-        ] = await Promise.all([
-          apiRequest("/api/processos", { token }),
-          userRole === "Admin" 
-            ? apiRequest("/api/usuarios/count", { token }).catch(() => ({ total: 0, porTipo: {} }))
-            : Promise.resolve({ total: 0, porTipo: {} }),
-          apiRequest("/api/processos/recentes", { token }).catch(() => []),
-          (userRole === "Admin" || userRole === "Professor")
-            ? apiRequest("/api/processos/stats", { token }).catch(() => ({ total: 0, porStatus: {}, ativos: 0 }))
-            : Promise.resolve({ total: 0, porStatus: {}, ativos: 0 }),
-          apiRequest("/api/atualizacoes?limite=5", { token }).catch(() => [])
-        ]);
+        // Usar cache para requisições simultâneas
+        const requests = [
+          { key: 'processos', url: '/api/processos' },
+          { key: 'processosRecentes', url: '/api/processos/recentes' },
+          { key: 'atualizacoes', url: '/api/atualizacoes?limite=5' }
+        ];
 
-        console.log('✅ useDashboardData: Dados recebidos', {
-          processos: processosResponse?.length || 0,
-          processosRecentes: processosRecentes?.length || 0,
-          usuariosCount: usuariosCount?.total || 0,
-          atualizacoes: atualizacoes?.length || 0,
-          processosStats
-        });
+        // Adicionar requisições específicas para Admin/Professor
+        if (userRole === "Admin") {
+          requests.push({ key: 'usuariosCount', url: '/api/usuarios/count' });
+        }
+        
+        if (userRole === "Admin" || userRole === "Professor") {
+          requests.push({ key: 'processosStats', url: '/api/processos/stats' });
+        }
 
-        // Processar dados baseado no papel do usuário
-        let dashboardData = {
-          processos: processosResponse || [],
-          processosRecentes: processosRecentes || [],
-          usuarios: [],
-          atualizacoes: atualizacoes || []
-        };
+        // Executar todas as requisições com cache
+        const results = await Promise.allSettled(
+          requests.map(({ key, url }) => 
+            requestCache.getOrFetch(
+              `${url}:${token}`,
+              () => apiRequest(url, { token })
+            ).catch(error => {
+              console.warn(`⚠️ Falha em ${url}:`, error.message);
+              return getDefaultValue(key);
+            })
+          )
+        );
 
-        // Usar dados das estatísticas se disponível, caso contrário calcular
-        const statusCounts = processosStats?.porStatus || dashboardData.processos.reduce((acc, proc) => {
-          const status = proc.status || 'Indefinido';
-          acc[status] = (acc[status] || 0) + 1;
+        // Processar resultados
+        const data = requests.reduce((acc, { key }, index) => {
+          const result = results[index];
+          acc[key] = result.status === 'fulfilled' ? result.value : getDefaultValue(key);
           return acc;
         }, {});
 
+        // Estruturar dados do dashboard
+        const dashboardData = {
+          processos: data.processos || [],
+          processosRecentes: data.processosRecentes || [],
+          atualizacoes: data.atualizacoes || [],
+          usuarios: []
+        };
+
+        // Calcular estatísticas
+        const statusCounts = data.processosStats?.porStatus || 
+          dashboardData.processos.reduce((acc, proc) => {
+            const status = proc.status || 'Indefinido';
+            acc[status] = (acc[status] || 0) + 1;
+            return acc;
+          }, {});
+
         dashboardData.statusCounts = statusCounts;
-        dashboardData.totalProcessos = processosStats?.total || dashboardData.processos.length;
+        dashboardData.totalProcessos = data.processosStats?.total || dashboardData.processos.length;
+        dashboardData.processosAtivos = data.processosStats?.ativos || 
+          dashboardData.processos.filter(p => p.status !== 'arquivado').length;
         
-        // Dados estruturados para o componente Admin
         dashboardData.processosPorStatus = {
           em_andamento: statusCounts.em_andamento || 0,
           aguardando: statusCounts.aguardando || 0,
           finalizado: statusCounts.finalizado || 0,
           arquivado: statusCounts.arquivado || 0
         };
-        
-        dashboardData.processosAtivos = processosStats?.ativos || dashboardData.processos.filter(p => p.status !== 'arquivado').length;
 
         if (userRole === "Admin") {
-          dashboardData.totalUsuarios = usuariosCount.total || 0;
-          dashboardData.usuariosAtivos = usuariosCount.total || 0; // Por enquanto igual ao total
-          dashboardData.usuariosPorTipo = usuariosCount.porTipo || {};
+          dashboardData.totalUsuarios = data.usuariosCount?.total || 0;
+          dashboardData.usuariosAtivos = data.usuariosCount?.total || 0;
+          dashboardData.usuariosPorTipo = data.usuariosCount?.porTipo || {};
         }
 
         return dashboardData;
       } catch (error) {
         console.error('Erro na busca do dashboard:', error);
-        // Retornar dados vazios em caso de erro
-        return {
-          processos: [],
-          processosRecentes: [],
-          usuarios: [],
-          atualizacoes: [],
-          statusCounts: {},
-          totalProcessos: 0,
-          totalUsuarios: 0,
-          processosAtivos: 0,
-          usuariosAtivos: 0,
-          usuariosPorTipo: {},
-          processosPorStatus: {
-            em_andamento: 0,
-            aguardando: 0,
-            finalizado: 0,
-            arquivado: 0
-          }
-        };
+        throw error;
       }
     },
-    enabled: !!(token && user && getUserRole(user)),
-    staleTime: 1000 * 60 * 2, // 2 minutos
-    gcTime: 1000 * 60 * 10, // 10 minutos
-    retry: (failureCount, error) => {
-      // Não retry se for erro de autenticação
-      if (error?.status === 401 || error?.status === 403) {
-        return false;
-      }
-      return failureCount < 2;
-    },
+    enabled: !!(token && user),
+    staleTime: 30 * 1000, // 30 segundos
+    gcTime: 5 * 60 * 1000, // 5 minutos
+    retry: 2
   });
+}
+
+// Função helper para valores padrão
+function getDefaultValue(key) {
+  const defaults = {
+    processos: [],
+    processosRecentes: [],
+    atualizacoes: [],
+    usuariosCount: { total: 0, porTipo: {} },
+    processosStats: { total: 0, porStatus: {}, ativos: 0 }
+  };
+  return defaults[key] || null;
 }
 
 // ===== HOOKS PARA USUÁRIOS =====
