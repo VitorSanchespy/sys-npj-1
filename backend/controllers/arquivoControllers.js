@@ -1,7 +1,22 @@
+/**
+ * @fileoverview Controladores para gerenciamento de arquivos dos processos
+ * @description Upload, listagem e exclusão de arquivos vinculados aos processos
+ * @version 1.0.0
+ */
+
 const upload = require('../middleware/uploadMiddleware');
 const { arquivoModels: Arquivo, processoModels: Processo, usuariosModels: Usuario } = require('../models/indexModels');
 
-// uploadArquivo é responsável por receber o arquivo enviado pelo usuário
+/**
+ * Faz upload de arquivo para o sistema
+ * @route POST /api/arquivos/upload
+ * @access Private
+ * @param {Object} req - Objeto de requisição Express com arquivo
+ * @param {Object} req.body.processo_id - ID do processo (opcional)
+ * @param {Object} req.usuario - Dados do usuário autenticado
+ * @param {Object} res - Objeto de resposta Express
+ * @returns {Object} Dados do arquivo criado
+ */
 exports.uploadArquivo = [
   upload.single('arquivo'), // 'arquivo' é o nome do campo no form
   async (req, res) => {
@@ -10,10 +25,11 @@ exports.uploadArquivo = [
         return res.status(400).json({ erro: 'Nenhum arquivo enviado' });
       }
 
-      // Garante que o caminho salvo seja sempre relativo à pasta uploads
+      // Garantir que o caminho salvo seja sempre relativo à pasta uploads
       let caminhoRelativo = req.file.path.replace(/\\/g, '/');
       const idx = caminhoRelativo.indexOf('uploads/');
       if (idx !== -1) caminhoRelativo = caminhoRelativo.substring(idx);
+      
       const metadados = {
         nome: req.file.originalname,
         caminho: caminhoRelativo,
