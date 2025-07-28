@@ -3,7 +3,7 @@ const Sequelize = require('sequelize');
 
 // Conectar diretamente como root
 const sequelize = new Sequelize('npjdatabase', 'root', '12345678@', {
-    host: 'sistema-npj-db-1',
+    host: 'localhost',
     dialect: 'mysql',
     logging: false
 });
