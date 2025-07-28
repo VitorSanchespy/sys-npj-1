@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const { usuariosModels, rolesModels } = require('./models/indexModels');
+const { usuariosModels, rolesModels } = require('../../backend/models/indexModels');
 
 async function criarUsuarioTeste() {
     try {

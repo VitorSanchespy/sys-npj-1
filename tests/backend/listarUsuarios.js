@@ -1,4 +1,4 @@
-const { usuariosModels } = require('./models/indexModels');
+const { usuariosModels } = require('../../backend/models/indexModels');
 
 async function listarUsuarios() {
     try {

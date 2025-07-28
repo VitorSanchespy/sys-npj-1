@@ -1,4 +1,4 @@
-const { processoModels } = require('./models/indexModels');
+const { processoModels } = require('../../backend/models/indexModels');
 
 async function listarProcessos() {
     try {
