@@ -20,6 +20,6 @@ router.get('/:id', agendController.buscarAgendamentoPorId);
 router.put('/:id', agendController.atualizarAgendamento);
 
 // DELETE /api/agendamentos/:id - Deletar agendamento
-router.delete('/:id', agendController.deletarAgendamento);
+router.delete('/:id', agendController.excluirAgendamento);
 
 module.exports = router;

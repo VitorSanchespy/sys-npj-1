@@ -8,9 +8,15 @@ class Agendamento extends Model {
       foreignKey: 'processo_id',
       as: 'processo'
     });
+    // Quem criou o agendamento
+    Agendamento.belongsTo(models.usuariosModels, {
+      foreignKey: 'criado_por',
+      as: 'criador'
+    });
+    // Para quem é o agendamento
     Agendamento.belongsTo(models.usuariosModels, {
       foreignKey: 'usuario_id',
-      as: 'usuario'
+      as: 'destinatario'
     });
   }
 }
@@ -24,6 +30,14 @@ Agendamento.init({
   processo_id: {
     type: DataTypes.INTEGER,
     allowNull: true
+  },
+  criado_por: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'usuarios',
+      key: 'id'
+    }
   },
   usuario_id: {
     type: DataTypes.INTEGER,
