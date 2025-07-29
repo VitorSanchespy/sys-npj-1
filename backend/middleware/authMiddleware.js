@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const { usuariosModels: Usuario, rolesModels: Role } = require('../db/indexModels');
+const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
 
 const verificarToken = async (req, res, next) => {
     if (req.method === 'OPTIONS') return next();

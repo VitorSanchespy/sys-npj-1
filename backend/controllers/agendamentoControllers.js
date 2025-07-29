@@ -1,5 +1,5 @@
 // Controlador de Agendamentos
-const { agendamentoModels: Agendamento, usuariosModels: Usuario } = require('../db/indexModels');
+const { agendamentoModels: Agendamento, usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
 const { Op } = require('sequelize');
 
 // Lista agendamentos baseado no role do usuário
@@ -22,22 +22,41 @@ exports.listarAgendamentos = async (req, res) => {
       whereCondition = { criado_por: usuarioLogado.id };
     }
 
-    const agendamentos = await Agendamento.findAll({
-      where: whereCondition,
-      include: [
-        {
-          model: Usuario,
-          as: 'criador',
-          attributes: ['id', 'nome', 'role']
-        },
-        {
-          model: Usuario,
-          as: 'destinatario',
-          attributes: ['id', 'nome', 'role']
-        }
-      ],
-      order: [['data_evento', 'ASC']]
-    });
+    let agendamentos;
+    try {
+      agendamentos = await Agendamento.findAll({
+        where: whereCondition,
+        include: [
+          {
+            model: Usuario,
+            as: 'criador',
+            attributes: ['id', 'nome'],
+            include: [{
+              model: Role,
+              as: 'role',
+              attributes: ['nome']
+            }]
+          },
+          {
+            model: Usuario,
+            as: 'destinatario',
+            attributes: ['id', 'nome'],
+            include: [{
+              model: Role,
+              as: 'role',
+              attributes: ['nome']
+            }]
+          }
+        ],
+        order: [['data_evento', 'ASC']]
+      });
+    } catch (includeError) {
+      console.log('Aviso: Erro ao buscar com includes, buscando sem includes:', includeError.message);
+      agendamentos = await Agendamento.findAll({
+        where: whereCondition,
+        order: [['data_evento', 'ASC']]
+      });
+    }
     
     res.json(agendamentos);
   } catch (error) {
@@ -64,6 +83,11 @@ exports.criarAgendamento = async (req, res) => {
     
     const usuarioLogado = req.usuario;
     
+    // Log para debug
+    console.log('🔍 DEBUG - Criação de agendamento:');
+    console.log('👤 Usuario logado:', usuarioLogado);
+    console.log('📅 Dados do agendamento:', { processo_id, usuario_id, tipo_evento, titulo });
+    
     // Validação de permissões por role
     if (usuario_id && usuario_id !== usuarioLogado.id) {
       // Só Admin e Professor podem criar agendamentos para outros
@@ -74,7 +98,13 @@ exports.criarAgendamento = async (req, res) => {
       }
     }
     
-    const agendamento = await Agendamento.create({
+    // Validação para garantir que usuarioLogado.id existe
+    if (!usuarioLogado || !usuarioLogado.id) {
+      console.error('❌ ERRO: Usuario logado sem ID válido:', usuarioLogado);
+      return res.status(401).json({ erro: 'Usuario não autenticado corretamente' });
+    }
+    
+    const agendamentoData = {
       processo_id: processo_id || null,
       criado_por: usuarioLogado.id, // Quem criou
       usuario_id: usuario_id || usuarioLogado.id, // Para quem é
@@ -87,9 +117,45 @@ exports.criarAgendamento = async (req, res) => {
       lembrete_1_dia: lembrete_1_dia || false,
       lembrete_2_dias: lembrete_2_dias || false,
       lembrete_1_semana: lembrete_1_semana || false
-    });
+    };
     
-    res.status(201).json(agendamento);
+    console.log('📝 Dados para criar agendamento:', agendamentoData);
+    
+    const agendamento = await Agendamento.create(agendamentoData);
+    
+    // Buscar o agendamento criado com includes se possível
+    let agendamentoCompleto;
+    try {
+      agendamentoCompleto = await Agendamento.findByPk(agendamento.id, {
+        include: [
+          {
+            model: Usuario,
+            as: 'criador',
+            attributes: ['id', 'nome'],
+            include: [{
+              model: Role,
+              as: 'role',
+              attributes: ['nome']
+            }]
+          },
+          {
+            model: Usuario,
+            as: 'destinatario',
+            attributes: ['id', 'nome'],
+            include: [{
+              model: Role,
+              as: 'role',
+              attributes: ['nome']
+            }]
+          }
+        ]
+      });
+    } catch (includeError) {
+      console.log('Aviso: Erro ao buscar includes, retornando agendamento básico:', includeError.message);
+      agendamentoCompleto = agendamento;
+    }
+    
+    res.status(201).json(agendamentoCompleto);
   } catch (error) {
     console.error('Erro ao criar agendamento:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
@@ -160,12 +226,22 @@ exports.buscarAgendamentoPorId = async (req, res) => {
         {
           model: Usuario,
           as: 'criador',
-          attributes: ['id', 'nome', 'role']
+          attributes: ['id', 'nome'],
+          include: [{
+            model: Role,
+            as: 'role',
+            attributes: ['nome']
+          }]
         },
         {
           model: Usuario,
           as: 'destinatario',
-          attributes: ['id', 'nome', 'role']
+          attributes: ['id', 'nome'],
+          include: [{
+            model: Role,
+            as: 'role',
+            attributes: ['nome']
+          }]
         }
       ]
     });

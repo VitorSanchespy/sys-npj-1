@@ -4,7 +4,7 @@ const {
   faseModels: Fase,
   diligenciaModels: Diligencia,
   localTramitacaoModels: LocalTramitacao
-} = require('../db/indexModels');
+} = require('../models/indexModels');
 
 // Centralização de models auxiliares
 const modelMap = {

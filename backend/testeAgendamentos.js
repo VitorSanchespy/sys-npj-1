@@ -100,37 +100,32 @@ async function testarSistemaAgendamentos() {
     
     // Admin criando para si mesmo
     await criarAgendamento(tokens.admin, 'Admin', {
-        processo_id: 1,
-        tipo_evento: 'reuniao',
-        titulo: 'Reunião Administrativa',
-        descricao: 'Reunião mensal da coordenação',
-        data_evento: '2025-03-01T10:00:00Z',
-        local: 'Sala da Coordenação'
+      tipo_evento: 'reuniao',
+      titulo: 'Reunião Administrativa',
+      descricao: 'Reunião mensal da coordenação',
+      data_evento: '2025-03-01T10:00:00Z',
+      local: 'Sala da Coordenação'
     });
 
     // Professor criando para aluno (deve funcionar)
     const agendamentoProfessorParaAluno = await criarAgendamento(tokens.professor, 'Professor', {
-        processo_id: 2,
-        usuario_id: 3, // ID da Maria (aluna)
-        tipo_evento: 'reuniao',
-        titulo: 'Orientação de TCC',
-        descricao: 'Orientação sobre desenvolvimento do TCC',
-        data_evento: '2025-03-05T14:00:00Z',
-        local: 'Sala do Professor'
+      usuario_id: 353, // ID da Maria (aluna)
+      tipo_evento: 'reuniao',
+      titulo: 'Orientação de TCC',
+      descricao: 'Orientação sobre desenvolvimento do TCC',
+      data_evento: '2025-03-05T14:00:00Z',
+      local: 'Sala do Professor'
     });
 
     // Aluno tentando criar para professor (deve falhar)
     await criarAgendamento(tokens.aluno, 'Aluno', {
-        processo_id: 1,
-        usuario_id: 1, // ID do Admin
-        tipo_evento: 'reuniao',
-        titulo: 'Tentativa Inválida',
-        descricao: 'Aluno tentando criar para admin',
-        data_evento: '2025-03-10T10:00:00Z',
-        local: 'Qualquer lugar'
-    });
-
-    // 4. Testar exclusão de agendamentos
+      usuario_id: 352, // ID do Admin
+      tipo_evento: 'reuniao',
+      titulo: 'Tentativa Inválida',
+      descricao: 'Aluno tentando criar para admin',
+      data_evento: '2025-03-10T10:00:00Z',
+      local: 'Qualquer lugar'
+    });    // 4. Testar exclusão de agendamentos
     console.log('\n4️⃣ Testando exclusão de agendamentos...');
     
     if (agendamentosAdmin.length > 0) {

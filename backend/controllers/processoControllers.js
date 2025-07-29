@@ -3,7 +3,7 @@ const {
   processoModels: Processo,
   usuariosModels: Usuario,
   usuariosProcessoModels: UsuariosProcesso
-} = require('../db/indexModels');
+} = require('../models/indexModels.js');
 
 // Lista processos
 // Lista processos

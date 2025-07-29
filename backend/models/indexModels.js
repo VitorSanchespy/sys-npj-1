@@ -11,7 +11,7 @@ const processoModels = require('./processoModels');
 const arquivoModels = require('./arquivoModels');
 const atualizacoesProcessoModels = require('./atualizacaoProcessoModels');
 const usuariosProcessoModels = require('./usuariosProcessoModels');
-const agendamentoModels = require('./agendamentoModels');
+const agendamentoModels = require('../db/agendamentoModels');
 const notificacaoModels = require('./notificacaoModels');
 const configuracaoNotificacaoModels = require('./configuracaoNotificacaoModels');
 
