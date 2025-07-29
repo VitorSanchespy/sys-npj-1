@@ -1,0 +1,81 @@
+{
+  "timestamp": "2025-07-29T19:13:43.525Z",
+  "testResults": {
+    "login": true,
+    "dashboard": true,
+    "usuarios": true,
+    "processos": true,
+    "agendamentos": true,
+    "navigation": true
+  },
+  "successRate": 100,
+  "errors": [
+    {
+      "type": "console_error",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "timestamp": "2025-07-29T19:13:19.284Z"
+    },
+    {
+      "type": "console_error",
+      "message": "❌ API Error Details: JSHandle@object",
+      "timestamp": "2025-07-29T19:13:19.286Z"
+    },
+    {
+      "type": "console_error",
+      "message": "❌ API Request Failed: JSHandle@object",
+      "timestamp": "2025-07-29T19:13:19.287Z"
+    },
+    {
+      "type": "console_error",
+      "message": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "timestamp": "2025-07-29T19:13:19.304Z"
+    },
+    {
+      "type": "console_error",
+      "message": "❌ API Error Details: JSHandle@object",
+      "timestamp": "2025-07-29T19:13:19.304Z"
+    },
+    {
+      "type": "console_error",
+      "message": "❌ API Request Failed: JSHandle@object",
+      "timestamp": "2025-07-29T19:13:19.305Z"
+    },
+    {
+      "type": "console_error",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "timestamp": "2025-07-29T19:13:19.308Z"
+    },
+    {
+      "type": "console_error",
+      "message": "❌ API Error Details: JSHandle@object",
+      "timestamp": "2025-07-29T19:13:19.309Z"
+    },
+    {
+      "type": "console_error",
+      "message": "❌ API Request Failed: JSHandle@object",
+      "timestamp": "2025-07-29T19:13:19.310Z"
+    },
+    {
+      "type": "console_error",
+      "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "timestamp": "2025-07-29T19:13:19.310Z"
+    },
+    {
+      "type": "console_error",
+      "message": "❌ API Error Details: JSHandle@object",
+      "timestamp": "2025-07-29T19:13:19.311Z"
+    },
+    {
+      "type": "console_error",
+      "message": "❌ API Request Failed: JSHandle@object",
+      "timestamp": "2025-07-29T19:13:19.311Z"
+    }
+  ],
+  "warnings": [],
+  "networkErrors": [],
+  "summary": {
+    "totalTests": 6,
+    "passedTests": 6,
+    "failedTests": 0
+  }
+}

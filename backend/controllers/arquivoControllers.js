@@ -1,5 +1,4 @@
-
-
+// Controlador para Arquivos
 const upload = require('../middleware/uploadMiddleware');
 const { arquivoModels: Arquivo, processoModels: Processo, usuariosModels: Usuario } = require('../models/indexModels');
 
@@ -12,97 +11,185 @@ exports.uploadArquivo = [
         return res.status(400).json({ erro: 'Nenhum arquivo enviado' });
       }
 
-      // Garantir que o caminho salvo seja sempre relativo à pasta uploads
-      let caminhoRelativo = req.file.path.replace(/\\/g, '/');
-      const idx = caminhoRelativo.indexOf('uploads/');
-      if (idx !== -1) caminhoRelativo = caminhoRelativo.substring(idx);
-      
-      const metadados = {
-        nome: req.file.originalname,
-        caminho: caminhoRelativo,
-        tamanho: req.file.size,
+      const { processo_id } = req.body;
+      const { id: usuarioId } = req.usuario;
+
+      const novoArquivo = await Arquivo.create({
+        nome_original: req.file.originalname,
+        nome_arquivo: req.file.filename,
+        caminho: req.file.path,
         tipo: req.file.mimetype,
-        processo_id: req.body.processo_id && req.body.processo_id !== 'undefined' ? req.body.processo_id : null,
-        usuario_id: req.usuario.id // Usuário autenticado
-      };
+        tamanho: req.file.size,
+        usuario_id: usuarioId,
+        processo_id: processo_id || null,
+        ativo: true
+      });
 
-      const arquivo = await Arquivo.create(metadados);
-      res.status(201).json(arquivo);
-
+      res.status(201).json({
+        mensagem: 'Arquivo enviado com sucesso',
+        arquivo: novoArquivo
+      });
     } catch (error) {
-      res.status(500).json({ erro: error.message });
+      console.error('Erro no upload:', error);
+      res.status(500).json({ erro: 'Erro interno do servidor' });
     }
   }
 ];
 
-// Soft delete de arquivo
-// Desativa arquivo
-exports.softDeleteArquivo = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const arquivo = await Arquivo.findByPk(id);
-    if (!arquivo) return res.status(404).json({ erro: 'Arquivo não encontrado' });
-    arquivo.ativo = false;
-    await arquivo.save();
-    res.json({ mensagem: 'Arquivo deletado (soft delete) com sucesso' });
-  } catch (error) {
-    res.status(500).json({ erro: error.message });
-  }
-};
-// Listar arquivos de um processo específico
-// Lista arquivos do processo
-exports.listarArquivos = async (req, res) => {
+// Listar arquivos por processo
+exports.listarArquivosPorProcesso = async (req, res) => {
   try {
     const { processo_id } = req.params;
+    
     const arquivos = await Arquivo.findAll({
-      where: { processo_id, ativo: true },
-      include: [
-        { model: Processo, as: 'processo' },
-        { model: Usuario, as: 'usuario' }
-      ]
+      where: { 
+        processo_id,
+        ativo: true
+      },
+      include: [{
+        model: Usuario,
+        as: 'usuario',
+        attributes: ['nome']
+      }],
+      order: [['criado_em', 'DESC']]
     });
+
     res.json(arquivos);
   } catch (error) {
-    res.status(500).json({ erro: error.message });
+    console.error('Erro ao listar arquivos:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
 
-// Listar arquivos enviados por um usuário
+// Buscar arquivo por ID
+exports.buscarArquivoPorId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const arquivo = await Arquivo.findOne({
+      where: { 
+        id,
+        ativo: true
+      },
+      include: [{
+        model: Usuario,
+        as: 'usuario',
+        attributes: ['nome']
+      }]
+    });
+
+    if (!arquivo) {
+      return res.status(404).json({ erro: 'Arquivo não encontrado' });
+    }
+
+    res.json(arquivo);
+  } catch (error) {
+    console.error('Erro ao buscar arquivo:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Deletar arquivo (soft delete)
+exports.deletarArquivo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { id: usuarioId } = req.usuario;
+
+    const arquivo = await Arquivo.findByPk(id);
+    
+    if (!arquivo) {
+      return res.status(404).json({ erro: 'Arquivo não encontrado' });
+    }
+
+    // Verificar se o usuário é o dono do arquivo
+    if (arquivo.usuario_id !== usuarioId) {
+      return res.status(403).json({ erro: 'Sem permissão para deletar este arquivo' });
+    }
+
+    // Soft delete
+    arquivo.ativo = false;
+    await arquivo.save();
+
+    res.json({ mensagem: 'Arquivo deletado com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar arquivo:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Soft delete de arquivo (alias para compatibilidade)
+exports.softDeleteArquivo = exports.deletarArquivo;
+
+// Listar todos os arquivos ativos
+exports.listarArquivos = async (req, res) => {
+  try {
+    const arquivos = await Arquivo.findAll({
+      where: { ativo: true },
+      include: [{
+        model: Usuario,
+        as: 'usuario',
+        attributes: ['nome']
+      }],
+      order: [['criado_em', 'DESC']]
+    });
+
+    res.json(arquivos);
+  } catch (error) {
+    console.error('Erro ao listar arquivos:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Listar arquivos de um usuário
 exports.listarArquivosUsuario = async (req, res) => {
   try {
     const { usuario_id } = req.params;
+    
     const arquivos = await Arquivo.findAll({
-      where: { usuario_id, ativo: true },
-      include: [
-        { model: Processo, as: 'processo' },
-        { model: Usuario, as: 'usuario' }
-      ]
+      where: { 
+        usuario_id,
+        ativo: true 
+      },
+      include: [{
+        model: Processo,
+        as: 'processo',
+        attributes: ['numero', 'titulo']
+      }],
+      order: [['criado_em', 'DESC']]
     });
+
     res.json(arquivos);
   } catch (error) {
-    res.status(500).json({ erro: error.message });
+    console.error('Erro ao listar arquivos do usuário:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
 
-// Anexar arquivo já enviado a um processo
+// Anexar arquivo existente a um processo
 exports.anexarArquivoExistente = async (req, res) => {
   try {
-    let { processo_id, arquivo_id } = req.body;
-    
-    // Converter para números se necessário
-    processo_id = parseInt(processo_id);
-    arquivo_id = parseInt(arquivo_id);
-    
-    if (!processo_id || !arquivo_id || isNaN(processo_id) || isNaN(arquivo_id)) {
-      return res.status(400).json({ erro: 'processo_id e arquivo_id são obrigatórios e devem ser números válidos' });
+    const { arquivo_id, processo_id } = req.body;
+    const { id: usuarioId } = req.usuario;
+
+    const arquivo = await Arquivo.findOne({
+      where: { 
+        id: arquivo_id,
+        usuario_id: usuarioId,
+        ativo: true
+      }
+    });
+
+    if (!arquivo) {
+      return res.status(404).json({ erro: 'Arquivo não encontrado ou sem permissão' });
     }
-    
-    // Atualiza o processo_id do arquivo existente
-    const resultado = await Arquivo.anexarAProcesso(arquivo_id, processo_id);
-    
+
+    arquivo.processo_id = processo_id;
+    await arquivo.save();
+
     res.json({ mensagem: 'Arquivo anexado ao processo com sucesso' });
   } catch (error) {
-    res.status(500).json({ erro: error.message });
+    console.error('Erro ao anexar arquivo:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
 
@@ -110,57 +197,26 @@ exports.anexarArquivoExistente = async (req, res) => {
 exports.desvincularArquivo = async (req, res) => {
   try {
     const { id } = req.params;
-    const arquivo = await Arquivo.findByPk(id);
+    const { id: usuarioId } = req.usuario;
+
+    const arquivo = await Arquivo.findOne({
+      where: {
+        id,
+        usuario_id: usuarioId,
+        ativo: true
+      }
+    });
 
     if (!arquivo) {
-      return res.status(404).json({ erro: 'Arquivo não encontrado' });
+      return res.status(404).json({ erro: 'Arquivo não encontrado ou sem permissão' });
     }
 
-    // Remove o vínculo do arquivo com o processo
     arquivo.processo_id = null;
     await arquivo.save();
 
     res.json({ mensagem: 'Arquivo desvinculado do processo com sucesso' });
   } catch (error) {
-    res.status(500).json({ erro: error.message });
+    console.error('Erro ao desvincular arquivo:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
-
-// ROTAS
-const express = require('express');
-const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const arquivoController = require('../controllers/arquivoControllers');
-
-
-router.post('/upload', 
-  authMiddleware,
-  arquivoController.uploadArquivo
-);
-// Listar arquivos anexados a um processo
-router.get('/processo/:processo_id', 
-  authMiddleware,
-  arquivoController.listarArquivos
-);
-
-// Listar arquivos enviados por um usuário
-router.get('/usuario/:usuario_id', 
-  authMiddleware,
-  arquivoController.listarArquivosUsuario
-);
-
-// Anexar arquivo já enviado a um processo
-router.post('/anexar', 
-  authMiddleware,
-  arquivoController.anexarArquivoExistente
-);
-
-// Soft delete de arquivo
-router.delete('/:id', authMiddleware, arquivoController.softDeleteArquivo);
-
-// Rota para desvincular arquivo de um processo
-router.put('/desvincular/:id', authMiddleware, arquivoController.desvincularArquivo);
-
-
-
-module.exports = router;
