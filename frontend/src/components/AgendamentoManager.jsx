@@ -194,6 +194,7 @@ const AgendamentoManager = ({ processoId = null }) => {
           {processoId ? 'Agendamentos do Processo' : 'Meus Agendamentos'}
         </h2>
         <button
+          id="btn-add-appointment"
           onClick={() => {
             setShowForm(true);
             setEditando(null);
@@ -209,6 +210,7 @@ const AgendamentoManager = ({ processoId = null }) => {
       <div className="bg-white rounded-lg shadow p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <select
+            id="filter-event-type"
             value={filtros.tipo_evento}
             onChange={(e) => setFiltros({ ...filtros, tipo_evento: e.target.value })}
             className="border border-gray-300 rounded-lg px-3 py-2"
@@ -454,7 +456,30 @@ const AgendamentoManager = ({ processoId = null }) => {
           <p className="text-gray-500">Nenhum agendamento encontrado</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div id="appointments-list" className="space-y-4">
+          {/* Mini Calendário de Agendamentos */}
+          <div id="appointments-calendar" className="bg-white rounded-lg shadow p-4 mb-6">
+            <h3 className="text-lg font-semibold mb-4">📅 Visualização em Calendário</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {agendamentos
+                .sort((a, b) => new Date(a.data_evento) - new Date(b.data_evento))
+                .slice(0, 6) // Mostrar apenas os próximos 6
+                .map(agendamento => (
+                  <div key={`cal-${agendamento.id}`} className="border border-gray-200 rounded p-3 hover:bg-gray-50">
+                    <div className="text-sm font-semibold text-blue-600">
+                      {new Date(agendamento.data_evento).toLocaleDateString('pt-BR')}
+                    </div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      {tiposEvento.find(t => t.value === agendamento.tipo_evento)?.label || agendamento.tipo_evento}
+                    </div>
+                    <div className="text-sm font-medium truncate">
+                      {agendamento.titulo}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+          
           {agendamentos.map(agendamento => (
             <div key={agendamento.id} className="bg-white rounded-lg shadow p-6">
               {/* Indicador de tipo de agendamento */}

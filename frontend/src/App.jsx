@@ -4,12 +4,12 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AuthProvider } from "./contexts/AuthContext";
 import AppRouter from "@/routes/AppRouter";
 import { queryClient } from "./hooks/useQueryClient";
-import PerformanceMonitor from "./components/dev/PerformanceMonitor";
+// import PerformanceMonitor from "./components/dev/PerformanceMonitor";
 
 // Debug tools apenas em desenvolvimento
-if (import.meta.env.DEV) {
-  import('./debug/apiTester.js');
-}
+// if (import.meta.env.DEV) {
+//   import('./debug/apiTester.js');
+// }
 
 function App() {
   return (
@@ -19,7 +19,7 @@ function App() {
         {/* DevTools apenas em desenvolvimento */}
         {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
         {/* Monitor de Performance */}
-        <PerformanceMonitor />
+        {/* <PerformanceMonitor /> */}
       </AuthProvider>
     </QueryClientProvider>
   );

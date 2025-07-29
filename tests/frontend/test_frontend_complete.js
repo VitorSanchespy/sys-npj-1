@@ -179,7 +179,7 @@ async function testUsuarios(page) {
     const usuariosData = await page.evaluate(() => {
       const table = document.querySelector('table, .user-list, .usuarios-list');
       const rows = document.querySelectorAll('tr, .user-item, .usuario-item');
-      const addButton = document.querySelector('.add-user, .novo-usuario, button[data-action="add"]');
+      const addButton = document.querySelector('#btn-add-user, .add-user, .novo-usuario, button[data-action="add"]');
       
       return {
         hasTable: !!table,
@@ -226,8 +226,8 @@ async function testProcessos(page) {
     const processosData = await page.evaluate(() => {
       const table = document.querySelector('table, .process-list, .processos-list');
       const rows = document.querySelectorAll('tr, .process-item, .processo-item');
-      const addButton = document.querySelector('.add-process, .novo-processo, button[data-action="add"]');
-      const searchInput = document.querySelector('input[type="search"], .search-input, .busca');
+      const addButton = document.querySelector('#btn-add-process, .add-process, .novo-processo, button[data-action="add"]');
+      const searchInput = document.querySelector('#search-processes, input[type="search"], .search-input, .busca');
       
       return {
         hasTable: !!table,
@@ -274,9 +274,9 @@ async function testAgendamentos(page) {
 
     // Verificar calendário/lista de agendamentos
     const agendamentosData = await page.evaluate(() => {
-      const calendar = document.querySelector('.calendar, .agenda, .agendamentos');
-      const list = document.querySelector('table, .agenda-list, .agendamentos-list');
-      const addButton = document.querySelector('.add-event, .novo-agendamento, button[data-action="add"]');
+      const calendar = document.querySelector('#appointments-calendar, .calendar, .agenda, .agendamentos');
+      const list = document.querySelector('#appointments-list, table, .agenda-list, .agendamentos-list');
+      const addButton = document.querySelector('#btn-add-appointment, .add-event, .novo-agendamento, button[data-action="add"]');
       
       return {
         hasCalendar: !!calendar,
@@ -308,7 +308,7 @@ async function testNavigation(page) {
   try {
     // Verificar links de navegação
     const navData = await page.evaluate(() => {
-      const navLinks = document.querySelectorAll('nav a, .navbar a, .sidebar a, .menu a');
+      const navLinks = document.querySelectorAll('#navigation-menu a, nav a, .navbar a, .sidebar a, .menu a, [id^="nav-link-"]');
       const links = [];
       
       navLinks.forEach(link => {

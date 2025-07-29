@@ -122,7 +122,7 @@ exports.listarUsuariosPorRole = async (req, res) => {
       include: [{
         model: Role,
         as: 'role',
-        where: { nome_role: roleName }
+        where: { nome: roleName }
       }]
     });
     
@@ -200,11 +200,11 @@ exports.contarUsuarios = async (req, res) => {
     
     // Contar usuários por tipo
     const [porTipoResult] = await db.query(`
-      SELECT r.nome_role as tipo, COUNT(u.id) as quantidade
+      SELECT r.nome as tipo, COUNT(u.id) as quantidade
       FROM usuarios u 
       JOIN roles r ON u.role_id = r.id 
       WHERE u.ativo = true 
-      GROUP BY r.nome_role
+      GROUP BY r.nome
     `);
     
     const usuariosPorTipo = {};

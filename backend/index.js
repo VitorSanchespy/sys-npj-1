@@ -138,6 +138,7 @@ app.use('/auth', require('./routes/autorizacaoRoutes'));
 app.use('/api/usuarios', require('./routes/usuarioRoutes'));
 app.use('/api/processos', require('./routes/processoRoutes'));
 app.use('/api/agendamentos', require('./routes/agendamentoRoutes'));
+app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoutes'));
 app.use('/api/aux', require('./routes/tabelaAuxiliarRoutes'));
 // Tratamento de erros
 app.use((err, req, res, next) => {

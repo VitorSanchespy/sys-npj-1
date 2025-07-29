@@ -123,17 +123,12 @@ export function useDashboardData() {
         // Usar cache para requisições simultâneas
         const requests = [
           { key: 'processos', url: '/api/processos' },
-          { key: 'processosRecentes', url: '/api/processos/recentes' },
-          { key: 'atualizacoes', url: '/api/atualizacoes?limite=5' }
+          { key: 'agendamentos', url: '/api/agendamentos' }
         ];
 
         // Adicionar requisições específicas para Admin/Professor
-        if (userRole === "Admin") {
-          requests.push({ key: 'usuariosCount', url: '/api/usuarios/count' });
-        }
-        
         if (userRole === "Admin" || userRole === "Professor") {
-          requests.push({ key: 'processosStats', url: '/api/processos/stats' });
+          requests.push({ key: 'usuarios', url: '/api/usuarios' });
         }
 
         // Executar todas as requisições com cache
@@ -159,27 +154,25 @@ export function useDashboardData() {
         // Estruturar dados do dashboard
         const dashboardData = {
           processos: data.processos || [],
-          processosRecentes: data.processosRecentes || [],
-          atualizacoes: data.atualizacoes || [],
-          usuarios: []
+          processosRecentes: (data.processos || []).slice(0, 5), // Pegar os 5 primeiros como recentes
+          agendamentos: data.agendamentos || [],
+          usuarios: data.usuarios || []
         };
 
-        // Calcular estatísticas
-        const statusCounts = data.processosStats?.porStatus || 
-          dashboardData.processos.reduce((acc, proc) => {
-            const status = proc.status || 'Indefinido';
-            acc[status] = (acc[status] || 0) + 1;
-            return acc;
-          }, {});
+        // Calcular estatísticas baseadas nos dados disponíveis
+        const statusCounts = dashboardData.processos.reduce((acc, proc) => {
+          const status = proc.status || 'Indefinido';
+          acc[status] = (acc[status] || 0) + 1;
+          return acc;
+        }, {});
 
         dashboardData.statusCounts = statusCounts;
-        dashboardData.totalProcessos = data.processosStats?.total || dashboardData.processos.length;
-        dashboardData.processosAtivos = data.processosStats?.ativos || 
-          dashboardData.processos.filter(p => p.status !== 'arquivado').length;
+        dashboardData.totalProcessos = dashboardData.processos.length;
+        dashboardData.processosAtivos = dashboardData.processos.filter(p => p.status !== 'arquivado').length;
         
         dashboardData.processosPorStatus = {
+          ativo: statusCounts.ativo || 0,
           em_andamento: statusCounts.em_andamento || 0,
-          aguardando: statusCounts.aguardando || 0,
           finalizado: statusCounts.finalizado || 0,
           arquivado: statusCounts.arquivado || 0
         };
@@ -207,10 +200,8 @@ export function useDashboardData() {
 function getDefaultValue(key) {
   const defaults = {
     processos: [],
-    processosRecentes: [],
-    atualizacoes: [],
-    usuariosCount: { total: 0, porTipo: {} },
-    processosStats: { total: 0, porStatus: {}, ativos: 0 }
+    agendamentos: [],
+    usuarios: []
   };
   return defaults[key] || null;
 }

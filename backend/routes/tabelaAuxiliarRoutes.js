@@ -22,6 +22,9 @@ router.get('/fase', auxController.listarFases);
 // GET /api/aux/diligencias - Listar diligências
 router.get('/diligencias', auxController.listarDiligencias);
 
+// GET /api/aux/diligencia - Alias para diligências (compatibilidade com testes)
+router.get('/diligencia', auxController.listarDiligencias);
+
 // GET /api/aux/locais - Listar locais de tramitação
 router.get('/locais', auxController.listarLocais);
 
