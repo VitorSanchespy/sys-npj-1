@@ -36,7 +36,21 @@ exports.criarProcesso = async (req, res) => {
     console.log('📝 Dados recebidos para criar processo:', req.body);
     console.log('👤 Usuário autenticado:', req.usuario?.id, req.usuario?.nome);
     
-    const { numero_processo, descricao, assistido, contato_assistido } = req.body;
+    const { 
+      numero_processo, 
+      descricao, 
+      assistido, 
+      contato_assistido,
+      tipo_processo,
+      status,
+      sistema,
+      observacoes,
+      materia_assunto_id,
+      fase_id,
+      diligencia_id,
+      local_tramitacao_id,
+      num_processo_sei
+    } = req.body;
     
     // Criar processo com usuário autenticado como responsável
     const processo = await Processo.create({
@@ -44,8 +58,16 @@ exports.criarProcesso = async (req, res) => {
       descricao,
       assistido,
       contato_assistido,
-      idusuario_responsavel: req.usuario.id,
-      status: 'ativo'
+      tipo_processo,
+      status: status || 'ativo',
+      sistema: sistema || 'Fisico',
+      observacoes,
+      materia_assunto_id,
+      fase_id,
+      diligencia_id,
+      local_tramitacao_id,
+      num_processo_sei,
+      idusuario_responsavel: req.usuario.id
     });
     
     console.log('✅ Processo criado com sucesso:', processo.id);

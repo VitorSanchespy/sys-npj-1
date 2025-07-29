@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { apiRequest } from "@/api/apiRequest";
+import { api } from "@/api/apiRequest";
 import { useAuthContext } from "@/contexts/AuthContext";
 import Button from "@/components/common/Button";
 import StatusBadge from "@/components/common/StatusBadge";
@@ -23,7 +23,7 @@ export default function ProcessDetailPage() {
     const fetchProcesso = async () => {
       setLoading(true);
       try {
-        const response = await apiRequest.get(`/processos/${id}`);
+        const response = await api.get(`/processos/${id}`, user?.token);
         setProcesso(response.data);
       } catch (error) {
         console.error("Erro ao buscar processo:", error);
@@ -35,7 +35,7 @@ export default function ProcessDetailPage() {
     // Função para buscar todos os usuários vinculados ao processo
     const fetchAlunos = async () => {
       try {
-        const response = await apiRequest.get(`/processos/${id}/usuarios`);
+        const response = await api.get(`/processos/${id}/usuarios`, user?.token);
         setAlunos(response.data);
       } catch (error) {
         console.error("Erro ao buscar usuários vinculados:", error);

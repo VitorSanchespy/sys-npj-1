@@ -14,7 +14,8 @@ COPY . .
 # Build da aplicação
 RUN npm run build
 
+# Expor porta
 EXPOSE 5173
 
-# Usar preview para servir os arquivos buildados
-CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0"]
+# Usar dev server para desenvolvimento
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
