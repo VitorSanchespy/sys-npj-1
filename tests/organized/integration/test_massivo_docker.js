@@ -106,7 +106,8 @@ async function testeMassivo() {
       logTeste('✅', 'Login inválido (falha esperada)');
       updateStats(true);
     } else {
-      logTeste('❌', 'Login inválido (falha esperada)', false);
+      logTeste('❌', `Login inválido (falha esperada) - Status: ${loginInvalido.status}`, false);
+      console.log('Debug login inválido:', loginInvalido.data);
       updateStats(false);
     }
 
@@ -217,7 +218,8 @@ async function testeMassivo() {
       logTeste('✅', `Criar processo (ID: ${processoTesteId})`);
       updateStats(true);
     } else {
-      logTeste('❌', 'Criar processo', false);
+      logTeste('❌', `Criar processo - Status: ${novoProcesso.status}`, false);
+      console.log('Debug criar processo:', novoProcesso.data);
       updateStats(false);
     }
 

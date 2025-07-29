@@ -1,5 +1,5 @@
 const { DataTypes, Model } = require('sequelize');
-const sequelize = require('../config/sequelize');
+const sequelize = require('../utils/sequelize');
 
 class Processo extends Model {
   static associate(models) {
@@ -11,6 +11,7 @@ class Processo extends Model {
     Processo.belongsTo(models.faseModels, { foreignKey: 'fase_id', as: 'fase' });
     Processo.belongsTo(models.diligenciaModels, { foreignKey: 'diligencia_id', as: 'diligencia' });
     Processo.belongsTo(models.localTramitacaoModels, { foreignKey: 'local_tramitacao_id', as: 'localTramitacao' });
+    Processo.belongsTo(models.usuariosModels, { foreignKey: 'idusuario_responsavel', as: 'responsavel' });
   }
 }
 

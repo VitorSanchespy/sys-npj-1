@@ -1,5 +1,5 @@
 // Controlador de Agendamentos
-const { agendamentoModels: Agendamento } = require('../models/indexModels');
+const { agendamentoModels: Agendamento } = require('../db/indexModels');
 
 // Lista agendamentos
 // Lista agendamentos

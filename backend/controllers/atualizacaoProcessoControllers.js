@@ -1,4 +1,4 @@
-const { atualizacoesProcessoModels: AtualizacoesProcesso, usuariosModels: Usuario, processoModels: Processo, arquivoModels: Arquivo } = require('../models/indexModels');
+const { atualizacoesProcessoModels: AtualizacoesProcesso, usuariosModels: Usuario, processoModels: Processo, arquivoModels: Arquivo } = require('../db/indexModels');
 
 // Criação de uma nova atualização de processo
 exports.adicionarAtualizacaoProcessos = async (req, res) => {

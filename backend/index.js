@@ -16,6 +16,10 @@ module.exports = app; // Exporta o app para testes
 
 // Configuração básica de segurança
 app.use(helmet());
+
+// Middleware para correção de encoding UTF-8
+app.use(require('./middleware/encodingMiddleware'));
+
 // express.json() será movido para depois da rota de upload
 app.use(
   mongoSanitize({
@@ -132,12 +136,11 @@ app.use((req, res, next) => {
 app.use('/api/arquivos', require('./routes/arquivoRoutes'));
 
 // Demais rotas
-const ProcessoController = require('./controllers/processoControllers');
 app.use('/auth', require('./routes/autorizacaoRoutes'));
 app.use('/api/usuarios', require('./routes/usuarioRoutes'));
 app.use('/api/processos', require('./routes/processoRoutes'));
-app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoutes'));
 app.use('/api/agendamentos', require('./routes/agendamentoRoutes'));
+app.use('/api/aux', require('./routes/tabelaAuxiliarRoutes'));
 // Tratamento de erros
 app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erro interno do servidor' });

@@ -1,5 +1,5 @@
 // Controlador de Usuários
-const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
+const { usuariosModels: Usuario, rolesModels: Role } = require('../db/indexModels');
 const bcrypt = require('bcrypt');
 
 // Lista usuários ativos
