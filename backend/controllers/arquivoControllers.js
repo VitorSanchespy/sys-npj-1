@@ -1,22 +1,9 @@
-/**
- * @fileoverview Controladores para gerenciamento de arquivos dos processos
- * @description Upload, listagem e exclusão de arquivos vinculados aos processos
- * @version 1.0.0
- */
+
 
 const upload = require('../middleware/uploadMiddleware');
 const { arquivoModels: Arquivo, processoModels: Processo, usuariosModels: Usuario } = require('../models/indexModels');
 
-/**
- * Faz upload de arquivo para o sistema
- * @route POST /api/arquivos/upload
- * @access Private
- * @param {Object} req - Objeto de requisição Express com arquivo
- * @param {Object} req.body.processo_id - ID do processo (opcional)
- * @param {Object} req.usuario - Dados do usuário autenticado
- * @param {Object} res - Objeto de resposta Express
- * @returns {Object} Dados do arquivo criado
- */
+// Upload de arquivo
 exports.uploadArquivo = [
   upload.single('arquivo'), // 'arquivo' é o nome do campo no form
   async (req, res) => {
@@ -49,6 +36,7 @@ exports.uploadArquivo = [
 ];
 
 // Soft delete de arquivo
+// Desativa arquivo
 exports.softDeleteArquivo = async (req, res) => {
   try {
     const { id } = req.params;
@@ -62,6 +50,7 @@ exports.softDeleteArquivo = async (req, res) => {
   }
 };
 // Listar arquivos de um processo específico
+// Lista arquivos do processo
 exports.listarArquivos = async (req, res) => {
   try {
     const { processo_id } = req.params;
@@ -136,3 +125,42 @@ exports.desvincularArquivo = async (req, res) => {
     res.status(500).json({ erro: error.message });
   }
 };
+
+// ROTAS
+const express = require('express');
+const router = express.Router();
+const authMiddleware = require('../middleware/authMiddleware');
+const arquivoController = require('../controllers/arquivoControllers');
+
+
+router.post('/upload', 
+  authMiddleware,
+  arquivoController.uploadArquivo
+);
+// Listar arquivos anexados a um processo
+router.get('/processo/:processo_id', 
+  authMiddleware,
+  arquivoController.listarArquivos
+);
+
+// Listar arquivos enviados por um usuário
+router.get('/usuario/:usuario_id', 
+  authMiddleware,
+  arquivoController.listarArquivosUsuario
+);
+
+// Anexar arquivo já enviado a um processo
+router.post('/anexar', 
+  authMiddleware,
+  arquivoController.anexarArquivoExistente
+);
+
+// Soft delete de arquivo
+router.delete('/:id', authMiddleware, arquivoController.softDeleteArquivo);
+
+// Rota para desvincular arquivo de um processo
+router.put('/desvincular/:id', authMiddleware, arquivoController.desvincularArquivo);
+
+
+
+module.exports = router;

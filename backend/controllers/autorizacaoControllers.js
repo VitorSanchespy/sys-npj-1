@@ -1,23 +1,10 @@
-/**
- * @fileoverview Controladores de autorização para login, registro e refresh token
- * @description Sistema de autenticação JWT com bcrypt para senhas
- * @version 1.0.0
- */
-
+// Controlador de Autenticação
 const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-/**
- * Autentica usuário e gera token JWT
- * @route POST /api/auth/login
- * @access Public
- * @param {Object} req - Objeto de requisição Express
- * @param {string} req.body.email - Email do usuário
- * @param {string} req.body.senha - Senha do usuário
- * @param {Object} res - Objeto de resposta Express
- * @returns {Object} Token JWT e dados do usuário
- */
+// Login do usuário
+// Login do usuário
 exports.login = async (req, res) => {
   try {
     const { email, senha } = req.body;
@@ -64,17 +51,8 @@ exports.login = async (req, res) => {
   }
 };
 
-/**
- * Registra novo usuário no sistema
- * @route POST /api/auth/registro
- * @access Public
- * @param {Object} req - Objeto de requisição Express
- * @param {string} req.body.nome - Nome do usuário
- * @param {string} req.body.email - Email do usuário
- * @param {string} req.body.senha - Senha do usuário
- * @param {Object} res - Objeto de resposta Express
- * @returns {Object} Dados do usuário criado
- */
+// Registro de novo usuário
+// Registro de novo usuário
 exports.registro = async (req, res) => {
   try {
     const { nome, email, senha } = req.body;
@@ -107,14 +85,8 @@ exports.registro = async (req, res) => {
   }
 };
 
-/**
- * Atualiza token JWT (funcionalidade não implementada)
- * @route POST /api/auth/refresh
- * @access Private
- * @param {Object} req - Objeto de requisição Express
- * @param {Object} res - Objeto de resposta Express
- * @returns {Object} Mensagem de erro (não implementado)
- */
+// Refresh token (não implementado)
+// Refresh token (não implementado)
 exports.refreshToken = async (req, res) => {
   try {
     res.status(501).json({ erro: 'Não implementado - use login novamente' });
@@ -123,3 +95,37 @@ exports.refreshToken = async (req, res) => {
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
+
+
+// ROTAS
+const express = require('express');
+const router = express.Router();
+const authController = require('../controllers/autorizacaoControllers');
+const { validate,  handleValidation } = require('../middleware/validationMiddleware');
+const verificarToken = require('../middleware/authMiddleware');
+const verificarTokenReset = require('../middleware/resetPasswordMiddleware');
+
+// registrar novo usuário
+router.post('/registrar', [
+  validate('registrarUsuario'),
+  handleValidation
+], authController.registrar);
+
+// Login de usuário
+router.post('/login', [
+  validate('loginUsuario'),
+  handleValidation
+], authController.login);
+
+// Compatível com frontend: POST /auth/esqueci-senha
+router.post('/esqueci-senha', authController.solicitarRecuperacao);
+router.post('/solicitar-recuperacao', authController.solicitarRecuperacao);
+router.post('/redefinir-senha', verificarTokenReset, authController.redefinirSenha);
+
+// perfil do usuário autenticado 
+router.get('/perfil', verificarToken, authController.perfil);
+
+// Endpoint para refresh token
+router.post('/refresh', authController.refreshToken);
+
+module.exports = router;

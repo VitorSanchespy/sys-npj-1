@@ -1,20 +1,9 @@
-/**
- * @fileoverview Controladores para gerenciamento de usuários
- * @description CRUD completo para usuários com roles e autenticação
- * @version 1.0.0
- */
-
+// Controlador de Usuários
 const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
 const bcrypt = require('bcrypt');
 
-/**
- * Lista todos os usuários ativos do sistema
- * @route GET /api/usuarios
- * @access Private (Admin)
- * @param {Object} req - Objeto de requisição Express
- * @param {Object} res - Objeto de resposta Express
- * @returns {Array} Lista de usuários ativos com roles
- */
+// Lista usuários ativos
+// Lista usuários ativos
 exports.listarUsuarios = async (req, res) => {
   try {
     // Buscar apenas usuários ativos com suas roles
@@ -29,23 +18,12 @@ exports.listarUsuarios = async (req, res) => {
   }
 };
 
-/**
- * Cria novo usuário no sistema
- * @route POST /api/usuarios
- * @access Private (Admin)
- * @param {Object} req - Objeto de requisição Express
- * @param {string} req.body.nome - Nome do usuário
- * @param {string} req.body.email - Email do usuário
- * @param {string} req.body.senha - Senha do usuário
- * @param {number} req.body.role_id - ID da role do usuário
- * @param {Object} res - Objeto de resposta Express
- * @returns {Object} Dados do usuário criado
- */
+// Cria novo usuário
+// Cria novo usuário
 exports.criarUsuario = async (req, res) => {
   try {
     const { nome, email, senha, role_id } = req.body;
     
-    // Criptografar senha antes de salvar
     const senhaHash = await bcrypt.hash(senha, 10);
     
     const usuario = await Usuario.create({
@@ -63,19 +41,8 @@ exports.criarUsuario = async (req, res) => {
   }
 };
 
-/**
- * Atualiza dados de usuário existente
- * @route PUT /api/usuarios/:id
- * @access Private (Admin)
- * @param {Object} req - Objeto de requisição Express
- * @param {string} req.params.id - ID do usuário
- * @param {string} req.body.nome - Nome do usuário
- * @param {string} req.body.email - Email do usuário
- * @param {number} req.body.role_id - ID da role do usuário
- * @param {boolean} req.body.ativo - Status ativo do usuário
- * @param {Object} res - Objeto de resposta Express
- * @returns {Object} Mensagem de sucesso
- */
+// Atualiza usuário
+// Atualiza usuário
 exports.atualizarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
@@ -96,15 +63,8 @@ exports.atualizarUsuario = async (req, res) => {
   }
 };
 
-/**
- * Desativa usuário (exclusão lógica)
- * @route DELETE /api/usuarios/:id
- * @access Private (Admin)
- * @param {Object} req - Objeto de requisição Express
- * @param {string} req.params.id - ID do usuário
- * @param {Object} res - Objeto de resposta Express
- * @returns {Object} Mensagem de sucesso
- */
+// Desativa usuário
+// Desativa usuário
 exports.excluirUsuario = async (req, res) => {
   try {
     const { id } = req.params;
@@ -123,15 +83,8 @@ exports.excluirUsuario = async (req, res) => {
   }
 };
 
-/**
- * Busca usuário específico por ID
- * @route GET /api/usuarios/:id
- * @access Private (Admin)
- * @param {Object} req - Objeto de requisição Express
- * @param {string} req.params.id - ID do usuário
- * @param {Object} res - Objeto de resposta Express
- * @returns {Object} Dados do usuário com role
- */
+// Busca usuário por ID
+// Busca usuário por ID
 exports.buscarUsuarioPorId = async (req, res) => {
   try {
     // Buscar usuário por ID com role incluída
@@ -150,15 +103,8 @@ exports.buscarUsuarioPorId = async (req, res) => {
   }
 };
 
-/**
- * Obtém perfil do usuário autenticado
- * @route GET /api/usuarios/perfil
- * @access Private (qualquer usuário autenticado)
- * @param {Object} req - Objeto de requisição Express
- * @param {Object} req.usuario - Dados do usuário autenticado (do middleware)
- * @param {Object} res - Objeto de resposta Express
- * @returns {Object} Dados do perfil do usuário
- */
+// Obtém perfil do usuário logado
+// Obtém perfil do usuário logado
 exports.obterPerfil = async (req, res) => {
   try {
     // Buscar perfil do usuário autenticado
@@ -175,3 +121,133 @@ exports.obterPerfil = async (req, res) => {
 // Aliases para compatibilidade com código existente
 exports.listarUsuariosDebug = exports.listarUsuarios;
 exports.listarUsuariosParaVinculacao = exports.listarUsuarios;
+
+
+
+// ROTAS
+const express = require('express');
+const router = express.Router();
+const roleMiddleware = require('../middleware/roleMiddleware.js'); // Novo middleware para roles
+const authMiddleware = require('../middleware/authMiddleware');
+const { validate, handleValidation, } = require('../middleware/validationMiddleware'); // Middleware de validação
+// Importando os controladores de usuário
+const { listarUsuarios, criarUsuarios, listarUsuariosPorRole, buscarUsuariosPorId,
+atualizarUsuarios, reativarUsuarios, softDeleteUsuarios, 
+listarUsuariosDebug, listarUsuariosParaVinculacao, perfilUsuario,
+atualizarSenhaUsuarios, atualizarPerfilProprio} = require('../controllers/usuarioControllers.js');
+
+// Aplicar middleware de autenticação a todas as rotas
+router.use(authMiddleware);
+
+// Endpoint temporário para depuração
+router.get('/debug/all', listarUsuariosDebug);
+
+
+// Rotas de perfil do usuário autenticado (devem vir antes das rotas com :id)
+router.get('/me', perfilUsuario);
+router.put('/me', atualizarPerfilProprio);
+router.put('/me/senha', atualizarSenhaUsuarios);
+router.delete('/me', softDeleteUsuarios);
+
+// Soft delete usuário (padrão REST)
+router.delete('/:id', [
+  roleMiddleware(['Professor', 'Admin']),
+  softDeleteUsuarios
+]);
+
+// Reativar usuário
+router.put('/:id/reativar', [
+  roleMiddleware(['Admin', 'Professor']),
+  reativarUsuarios
+]);
+
+//listar paginação de usuários
+router.get('/pagina', roleMiddleware(['Admin']), listarUsuarios);
+
+// Contar total de usuários (para dashboard)
+router.get('/count', roleMiddleware(['Admin']), async (req, res) => {
+  try {
+    const db = require('../config/sequelize');
+    
+    // Contar usuários totais
+    const [totalResult] = await db.query('SELECT COUNT(*) as total FROM usuarios WHERE ativo = true');
+    
+    // Contar usuários por tipo
+    const [porTipoResult] = await db.query(`
+      SELECT r.nome_role as tipo, COUNT(u.id) as quantidade
+      FROM usuarios u 
+      JOIN roles r ON u.role_id = r.id 
+      WHERE u.ativo = true 
+      GROUP BY r.nome_role
+    `);
+    
+    const usuariosPorTipo = {};
+    porTipoResult.forEach(item => {
+      usuariosPorTipo[item.tipo.toLowerCase()] = parseInt(item.quantidade);
+    });
+    
+    res.json({ 
+      total: parseInt(totalResult[0].total),
+      porTipo: usuariosPorTipo
+    });
+  } catch (error) {
+    console.error('Erro ao contar usuários:', error);
+    res.status(500).json({ message: 'Erro interno do servidor' });
+  }
+});
+
+// Lista todos os usuários (para admin) ou apenas alunos (para professor)
+router.get('/', roleMiddleware(['Admin', 'Professor']), (req, res, next) => {
+  if (req.user && req.user.role_id === 3) { // Professor
+    req.params.roleName = 'Aluno';
+    return listarUsuariosPorRole(req, res, next);
+  }
+  return listarUsuarios(req, res, next);
+});
+
+// Lista apenas alunos (para professor)
+router.get('/alunos', roleMiddleware(['Professor', 'Admin']), (req, res) => {
+  req.params.roleName = 'Aluno';
+  return listarUsuariosPorRole(req, res);
+});
+
+// lista usuários para vinculação ao processo
+router.get('/vincular', roleMiddleware(['Professor', 'Admin']), listarUsuariosParaVinculacao);
+
+// listar usuários por role
+router.get('/role/:roleName', roleMiddleware(['Professor', 'Admin']), listarUsuariosPorRole);
+
+// buscar usuário por ID
+router.get(
+  '/:id',
+  validate('getUsuario'),
+  handleValidation,
+  buscarUsuariosPorId
+);
+
+// atualizar usuário
+router.put(
+  '/:id',
+  validate('updateUsuario'),
+  handleValidation,
+  atualizarUsuarios
+);
+
+// criar novo usuário
+router.post(
+  '/',
+  roleMiddleware(['Admin', 'Professor']),
+  validate('registrarUsuario'),
+  handleValidation,
+  criarUsuarios
+);
+
+// atualizar senha do usuário
+router.put('/:id/senha', [
+  validate('updateSenha'),
+  handleValidation,
+  atualizarSenhaUsuarios
+]);
+
+
+module.exports = router;
