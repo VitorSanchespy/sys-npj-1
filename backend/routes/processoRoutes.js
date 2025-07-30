@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const processController = require('../controllers/processoControllers');
-const verificarToken = require('../middleware/authMiddleware');
+const verificarToken = require('../utils/authMiddleware');
 
 // Aplicar middleware de autenticação em todas as rotas
 router.use(verificarToken);

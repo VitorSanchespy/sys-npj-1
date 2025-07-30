@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/usuarioControllers');
-const verificarToken = require('../middleware/authMiddleware');
+const verificarToken = require('../utils/authMiddleware');
 
 // Aplicar middleware de autenticação em todas as rotas
 router.use(verificarToken);
@@ -20,6 +20,6 @@ router.post('/', userController.criarUsuario);
 router.put('/:id', userController.atualizarUsuario);
 
 // DELETE /api/usuarios/:id - Deletar usuário
-router.delete('/:id', userController.deletarUsuario);
+router.delete('/:id', userController.excluirUsuario);
 
 module.exports = router;

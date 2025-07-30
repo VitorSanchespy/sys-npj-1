@@ -4,7 +4,7 @@ const {
   faseModels: Fase,
   diligenciaModels: Diligencia,
   localTramitacaoModels: LocalTramitacao
-} = require('../db/indexModels');
+} = require('../models/indexModels');
 
 // Centralização de models auxiliares
 const modelMap = {
@@ -12,6 +12,50 @@ const modelMap = {
   fase: Fase,
   diligencia: Diligencia,
   local_tramitacao: LocalTramitacao
+};
+
+// Listar matérias/assuntos
+exports.listarMaterias = async (req, res) => {
+  try {
+    // Teste básico
+    res.json([]);
+  } catch (err) {
+    console.error('Erro ao listar matérias:', err);
+    res.status(500).json({ erro: 'Erro ao listar matérias.' });
+  }
+};
+
+// Listar fases
+exports.listarFases = async (req, res) => {
+  try {
+    // Teste básico
+    res.json([]);
+  } catch (err) {
+    console.error('Erro ao listar fases:', err);
+    res.status(500).json({ erro: 'Erro ao listar fases.' });
+  }
+};
+
+// Listar diligências
+exports.listarDiligencias = async (req, res) => {
+  try {
+    // Teste básico
+    res.json([]);
+  } catch (err) {
+    console.error('Erro ao listar diligências:', err);
+    res.status(500).json({ erro: 'Erro ao listar diligências.' });
+  }
+};
+
+// Listar locais de tramitação
+exports.listarLocais = async (req, res) => {
+  try {
+    // Teste básico
+    res.json([]);
+  } catch (err) {
+    console.error('Erro ao listar locais:', err);
+    res.status(500).json({ erro: 'Erro ao listar locais.' });
+  }
 };
 
 // Listar tabelas auxiliares
@@ -79,33 +123,4 @@ exports.buscarPorNome = (table) => async (req, res) => {
 };
 
 
-// ROTAS
-const express = require('express');
-const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const auxTablesController = require('../controllers/tabelaAuxiliarControllers');
-// Models removidos, use apenas o controller
 
-router.use(authMiddleware);
-
-// Matéria/Assunto
-router.get('/materia-assunto', auxTablesController.listar('materia_assunto'));
-router.post('/materia-assunto', auxTablesController.adicionar('materia_assunto'));
-router.get('/materia-assunto/buscar', auxTablesController.buscarPorNome('materia_assunto'));
-
-// Fase
-router.get('/fase', auxTablesController.listar('fase'));
-router.post('/fase', auxTablesController.adicionar('fase'));
-router.get('/fase/buscar', auxTablesController.buscarPorNome('fase'));
-
-// Diligência
-router.get('/diligencia', auxTablesController.listar('diligencia'));
-router.post('/diligencia', auxTablesController.adicionar('diligencia'));
-router.get('/diligencia/buscar', auxTablesController.buscarPorNome('diligencia'));
-
-// Local de Tramitação
-router.get('/local-tramitacao', auxTablesController.listar('local_tramitacao'));
-router.post('/local-tramitacao', auxTablesController.adicionar('local_tramitacao'));
-router.get('/local-tramitacao/buscar', auxTablesController.buscarPorNome('local_tramitacao'));
-
-module.exports = router;

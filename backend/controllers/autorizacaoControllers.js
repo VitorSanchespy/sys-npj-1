@@ -1,5 +1,5 @@
 // Controlador de Autenticação
-const { usuariosModels: Usuario, rolesModels: Role } = require('../db/indexModels');
+const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 

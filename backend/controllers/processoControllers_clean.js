@@ -3,7 +3,7 @@ const {
   processoModels: Processo,
   usuariosModels: Usuario,
   usuariosProcessoModels: UsuariosProcesso
-} = require('../models/indexModels');
+} = require('../db/indexModels');
 
 // Lista processos
 exports.listarProcessos = async (req, res) => {

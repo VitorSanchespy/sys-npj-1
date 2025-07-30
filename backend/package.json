@@ -4,7 +4,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "node index.js"
+    "dev": "node index.js",
+    "migrate": "node migrate.js up",
+    "migrate:check": "node migrate.js check",
+    "migrate:rollback": "node migrate.js rollback"
   },
   "dependencies": {
     "express": "^4.21.2",
@@ -14,7 +17,16 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
     "cors": "^2.8.5",
-    "dotenv": "^17.0.1"
+    "dotenv": "^17.0.1",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0",
+    "express-rate-limit": "^7.1.5",
+    "express-mongo-sanitize": "^2.2.0",
+    "express-slow-down": "^2.0.1",
+    "express-validator": "^7.0.1",
+    "socket.io": "^4.7.4",
+    "nodemailer": "^6.9.8",
+    "node-cron": "^3.0.3"
   },
   "keywords": [],
   "author": "",
