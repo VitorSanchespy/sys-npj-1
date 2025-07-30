@@ -1,15 +1,17 @@
+const { DataTypes } = require('sequelize');
+
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.createTable('usuarios_processo', {
       usuario_id: {
-        type: Sequelize.INTEGER,
+        type: DataTypes.INTEGER,
         allowNull: false,
         references: { model: 'usuarios', key: 'id' },
         onDelete: 'CASCADE',
         primaryKey: true
       },
       processo_id: {
-        type: Sequelize.INTEGER,
+        type: DataTypes.INTEGER,
         allowNull: false,
         references: { model: 'processos', key: 'id' },
         onDelete: 'CASCADE',

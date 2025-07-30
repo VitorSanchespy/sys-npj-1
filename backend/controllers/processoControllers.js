@@ -77,7 +77,10 @@ exports.criarProcesso = async (req, res) => {
       fase_id,
       local_tramitacao_id,
       observacoes,
-      usuario_responsavel_id
+      usuario_responsavel_id,
+      contato_assistido,
+      sistema,
+      descricao
     } = req.body;
 
     const novoProcesso = await Processo.create({
@@ -92,7 +95,9 @@ exports.criarProcesso = async (req, res) => {
       local_tramitacao_id,
       observacoes,
       idusuario_responsavel: usuario_responsavel_id || req.usuario.id,
-      data_atualizacao: new Date()
+      contato_assistido,
+      sistema,
+      descricao
     });
 
     res.status(201).json({
@@ -100,7 +105,7 @@ exports.criarProcesso = async (req, res) => {
       processo: novoProcesso
     });
   } catch (error) {
-    console.error('Erro ao criar processo:', error);
+    console.error('Erro ao criar processo:', error.message);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };

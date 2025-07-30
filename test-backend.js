@@ -56,7 +56,7 @@ async function runTests() {
         nome: 'Usuario Teste',
         email: 'teste@teste.com',
         senha: '123456',
-        role_id: 5
+        role_id: 1  // Professor
     });
     
     if (registerResult.success) {
@@ -122,7 +122,8 @@ async function runTests() {
         numero_processo: '1234567-89.2025.1.00.0001',
         descricao: 'Processo de teste criado automaticamente',
         assistido: 'João da Silva',
-        contato_assistido: 'joao@email.com'
+        contato_assistido: 'joao@email.com',
+        sistema: 'PEA'
     };
     
     const criarProcessoResult = await testEndpoint('POST', '/api/processos/novo', novoProcesso, {

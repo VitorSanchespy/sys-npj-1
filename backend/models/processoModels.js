@@ -26,7 +26,7 @@ Processo.init(
     idusuario_responsavel: { type: DataTypes.INTEGER },
     data_encerramento: { type: DataTypes.DATE },
     observacoes: { type: DataTypes.TEXT },
-    sistema: { type: DataTypes.ENUM('Fisico','PEA','PJE'), defaultValue: 'Fisico' },
+    sistema: { type: DataTypes.ENUM('Físico','PEA','PJE'), defaultValue: 'Físico' },
     materia_assunto_id: { type: DataTypes.INTEGER },
     fase_id: { type: DataTypes.INTEGER },
     diligencia_id: { type: DataTypes.INTEGER },
