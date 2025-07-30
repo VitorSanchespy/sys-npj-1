@@ -1,9 +1,4 @@
-/* index.css - Estilos globais do seu projeto React/Vite + Tailwind */
-
-/* Tailwind base layer import (mantém se usar Tailwind) */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* index.css - Estilos globais do seu projeto React/Vite */
 
 /* Reset básico para garantir aparência uniforme */
 body {

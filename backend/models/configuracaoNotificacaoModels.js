@@ -1,5 +1,5 @@
 const { DataTypes, Model } = require('sequelize');
-const sequelize = require('../config/sequelize');
+const sequelize = require('../utils/sequelize');
 
 class ConfiguracaoNotificacao extends Model {
   static associate(models) {

@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/sequelize');
+const sequelize = require('../utils/sequelize');
 
 const RefreshToken = sequelize.define('RefreshToken', {
   id: {

@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize');
-const sequelize = require('../config/sequelize');
+const sequelize = require('../utils/sequelize');
 
 const rolesModels = require('./rolesModels');
 const usuariosModels = require('./usuariosModels');

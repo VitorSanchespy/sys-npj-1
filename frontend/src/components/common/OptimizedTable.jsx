@@ -1,7 +1,7 @@
 import React, { memo, useMemo, useState, useCallback } from "react";
 import { usePagination, useFilters } from "../../hooks/useOptimizedHooks";
 
-// Componente otimizado para exibição de tabelas
+// Tabela otimizada
 const OptimizedTable = memo(({ 
   data = [], 
   columns = [], 
@@ -15,7 +15,7 @@ const OptimizedTable = memo(({
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
-  // Filtrar dados baseado na busca
+  // Filtrar dados
   const filteredData = useMemo(() => {
     if (!searchTerm) return data;
     

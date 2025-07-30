@@ -12,7 +12,6 @@ class RequestCache {
       '/api/usuarios': { ttl: 3 * 60 * 1000, priority: 'medium' }, // 3 min - usuários
       '/api/aux/': { ttl: 30 * 60 * 1000, priority: 'low' }, // 30 min - tabelas auxiliares
       '/api/agendamentos': { ttl: 1 * 60 * 1000, priority: 'high' }, // 1 min - agendamentos
-      '/api/processos/stats': { ttl: 10 * 60 * 1000, priority: 'low' }, // 10 min - estatísticas
       '/api/atualizacoes': { ttl: 30 * 1000, priority: 'high' } // 30 seg - atualizações
     };
     

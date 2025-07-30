@@ -1,16 +1,7 @@
-/**
- * @fileoverview Teste Completo e Massivo do Sistema NPJ Docker
- * @description Executa todos os testes de integração do sistema NPJ
- * @author Sistema NPJ
- * @version 2.0.0
- * @since 2025-07-28
- */
-
+// Teste Massivo do Sistema NPJ
 const http = require('http');
 
-/**
- * Configurações principais do sistema
- */
+// Configurações
 const CONFIG = {
   API_URL: 'http://localhost:3001',
   TIMEOUT: 10000,
@@ -20,38 +11,28 @@ const CONFIG = {
   }
 };
 
-/**
- * Utilitário para fazer requisições HTTP simples
- * @param {Object} options - Opções da requisição (hostname, port, path, method, headers)
- * @param {Object|null} data - Dados para enviar no body (POST/PUT)
- * @returns {Promise<Object>} Resposta da requisição com status e data
- */
+// Faz requisição HTTP
 function makeRequest(options, data = null) {
   return new Promise((resolve, reject) => {
     const req = http.request(options, (res) => {
       let body = '';
-      res.on('data', (chunk) => body += chunk);
+      res.on('data', chunk => body += chunk);
       res.on('end', () => {
         try {
-          resolve({
-            status: res.statusCode,
-            data: JSON.parse(body)
-          });
+          const responseData = body ? JSON.parse(body) : {};
+          resolve({ status: res.statusCode, data: responseData });
         } catch (e) {
-          resolve({
-            status: res.statusCode,
-            data: body
-          });
+          resolve({ status: res.statusCode, data: body });
         }
       });
     });
-    
+
     req.on('error', reject);
     req.setTimeout(CONFIG.TIMEOUT, () => {
       req.destroy();
-      reject(new Error('Request timeout'));
+      reject(new Error('Timeout'));
     });
-    
+
     if (data) {
       req.write(JSON.stringify(data));
     }
@@ -59,53 +40,42 @@ function makeRequest(options, data = null) {
   });
 }
 
-/**
- * Registra resultado de um teste individual
- * @param {string} nome - Nome do teste
- * @param {boolean} sucesso - Se o teste passou ou falhou
- * @param {string} detalhes - Detalhes adicionais do resultado
- */
-function logTeste(nome, sucesso, detalhes = '') {
-  testStats.total++;
-  if (sucesso) {
-    testStats.passed++;
-    console.log(`✅ ${nome} ${detalhes}`);
-  } else {
-    testStats.failed++;
-    console.log(`❌ ${nome} ${detalhes}`);
-  }
+// Log de teste
+function logTeste(emoji, mensagem, sucesso = true) {
+  console.log(`${emoji} ${mensagem} ${sucesso ? '' : '❌'}`);
 }
 
-/**
- * Estatísticas dos testes
- */
-const testStats = {
+// Estatísticas de teste
+let testStats = {
   total: 0,
   passed: 0,
   failed: 0
 };
 
-/**
- * Executa todos os testes do sistema NPJ
- * @returns {Promise<void>}
- */
+// Incrementa estatísticas
+function updateStats(success) {
+  testStats.total++;
+  if (success) {
+    testStats.passed++;
+  } else {
+    testStats.failed++;
+  }
+}
+
+// Teste massivo principal
 async function testeMassivo() {
   console.log('🚀 TESTE MASSIVO - SISTEMA NPJ DOCKER v2.0');
   console.log('==========================================');
   console.log(`API: ${CONFIG.API_URL}`);
   console.log(`Timeout: ${CONFIG.TIMEOUT}ms`);
-  console.log('');
 
   let token = null;
 
   try {
-    // ============================================================================
-    // SEÇÃO 1: TESTES DE AUTENTICAÇÃO
-    // ============================================================================
+    // 1. Teste de Login
     console.log('🔐 TESTES DE AUTENTICAÇÃO');
     console.log('------------------------');
     
-    // Teste 1.1: Login válido
     const loginResponse = await makeRequest({
       hostname: 'localhost',
       port: 3001,
@@ -113,269 +83,293 @@ async function testeMassivo() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     }, CONFIG.USER_TEST);
-    
-    const loginSuccess = loginResponse.status === 200 && loginResponse.data.success;
-    logTeste('Login válido', loginSuccess);
-    
-    if (loginSuccess) {
+
+    if (loginResponse.status === 200 && loginResponse.data.token) {
       token = loginResponse.data.token;
+      logTeste('✅', 'Login válido');
+      updateStats(true);
     } else {
-      console.log('❌ Não foi possível obter token. Encerrando testes.');
-      return;
+      logTeste('❌', 'Login válido', false);
+      updateStats(false);
     }
-    
-    // Teste 1.2: Login inválido (deve falhar)
+
+    // Teste login inválido
     const loginInvalido = await makeRequest({
       hostname: 'localhost',
       port: 3001,
       path: '/auth/login',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
-    }, {
-      email: CONFIG.USER_TEST.email,
-      senha: 'senhaErrada'
-    });
-    
-    logTeste('Login inválido (falha esperada)', 
-      loginInvalido.status === 401 || !loginInvalido.data.success);
-    // ============================================================================
-    // SEÇÃO 2: TESTES DE USUÁRIOS
-    // ============================================================================
-    console.log('\n👥 TESTES DE USUÁRIOS');
+    }, { email: 'invalido@test.com', senha: 'senha_errada' });
+
+    if (loginInvalido.status === 401) {
+      logTeste('✅', 'Login inválido (falha esperada)');
+      updateStats(true);
+    } else {
+      logTeste('❌', `Login inválido (falha esperada) - Status: ${loginInvalido.status}`, false);
+      console.log('Debug login inválido:', loginInvalido.data);
+      updateStats(false);
+    }
+
+    if (!token) {
+      console.log('❌ Não foi possível obter token. Abortando testes.');
+      return;
+    }
+
+    // Headers com token
+    const authHeaders = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+
+    // 2. Testes de Usuários
+    console.log('👥 TESTES DE USUÁRIOS');
     console.log('--------------------');
     
-    // Teste 2.1: Listar usuários
     const usuarios = await makeRequest({
       hostname: 'localhost',
       port: 3001,
       path: '/api/usuarios',
       method: 'GET',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: authHeaders
     });
-    
-    logTeste('Listar usuários', usuarios.status === 200, 
-      `(${Array.isArray(usuarios.data) ? usuarios.data.length : 0} usuários)`);
-    
-    // Teste 2.2: Obter perfil do usuário logado
+
+    if (usuarios.status === 200) {
+      logTeste('✅', `Listar usuários (${usuarios.data.length} usuários)`);
+      updateStats(true);
+    } else {
+      logTeste('❌', 'Listar usuários', false);
+      updateStats(false);
+    }
+
     const perfil = await makeRequest({
       hostname: 'localhost',
       port: 3001,
-      path: '/api/usuarios/me',
+      path: '/auth/perfil',
       method: 'GET',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: authHeaders
     });
-    
-    logTeste('Obter perfil', perfil.status === 200);
-    // ============================================================================
-    // SEÇÃO 3: TESTES DE PROCESSOS
-    // ============================================================================
-    console.log('\n📁 TESTES DE PROCESSOS');
+
+    if (perfil.status === 200) {
+      logTeste('✅', 'Obter perfil');
+      updateStats(true);
+    } else {
+      logTeste('❌', 'Obter perfil', false);
+      updateStats(false);
+    }
+
+    // 3. Testes de Processos
+    console.log('📁 TESTES DE PROCESSOS');
     console.log('---------------------');
     
-    // Teste 3.1: Listar processos
     const processos = await makeRequest({
       hostname: 'localhost',
       port: 3001,
       path: '/api/processos',
       method: 'GET',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: authHeaders
     });
-    
-    logTeste('Listar processos', processos.status === 200, 
-      `(${Array.isArray(processos.data) ? processos.data.length : 0} processos)`);
-    
-    // Teste 3.2: Detalhes de processo (se houver processos)
-    if (processos.data && processos.data.length > 0) {
-      const processoId = processos.data[0].id;
-      const detalhesProcesso = await makeRequest({
+
+    if (processos.status === 200) {
+      logTeste('✅', `Listar processos (${processos.data.length} processos)`);
+      updateStats(true);
+    } else {
+      logTeste('❌', 'Listar processos', false);
+      updateStats(false);
+    }
+
+    // Detalhe processo
+    if (processos.data.length > 0) {
+      const primeiroProcesso = processos.data[0];
+      const detalhes = await makeRequest({
         hostname: 'localhost',
         port: 3001,
-        path: `/api/processos/${processoId}/detalhes`,
+        path: `/api/processos/${primeiroProcesso.id}/detalhes`,
         method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: authHeaders
       });
-      
-      logTeste('Detalhes do processo', detalhesProcesso.status === 200);
+
+      if (detalhes.status === 200) {
+        logTeste('✅', 'Detalhes do processo');
+        updateStats(true);
+      } else {
+        logTeste('❌', 'Detalhes do processo', false);
+        updateStats(false);
+      }
     }
-    
-    // Teste 3.3: Criar novo processo
+
+    // Criar processo teste
     const novoProcesso = await makeRequest({
       hostname: 'localhost',
       port: 3001,
-      path: '/api/processos/novo',
+      path: '/api/processos',
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` 
-      }
+      headers: authHeaders
     }, {
       numero_processo: `TESTE-${Date.now()}`,
-      descricao: 'Processo de Teste Automatizado',
-      status: 'ativo',
-      sistema: 'PEA',
-      materia_assunto_id: 66,
-      fase_id: 59,
-      diligencia_id: 40,
-      local_tramitacao_id: 2,
-      idusuario_responsavel: 350,
-      assistido: 'Cliente Teste Automatizado',
-      contato_assistido: 'teste.automatizado@email.com',
-      observacoes: 'Processo criado durante teste automatizado'
+      descricao: 'Processo de teste automatizado',
+      assistido: 'Teste Automatizado',
+      contato_assistido: '(65) 99999-9999'
     });
-    
-    let processoTestId = null;
+
+    let processoTesteId = null;
     if (novoProcesso.status === 201) {
-      processoTestId = novoProcesso.data.id;
-      logTeste('Criar processo', true, `(ID: ${processoTestId})`);
+      processoTesteId = novoProcesso.data.id;
+      logTeste('✅', `Criar processo (ID: ${processoTesteId})`);
+      updateStats(true);
     } else {
-      logTeste('Criar processo', false, `Status: ${novoProcesso.status}`);
+      logTeste('❌', `Criar processo - Status: ${novoProcesso.status}`, false);
+      console.log('Debug criar processo:', novoProcesso.data);
+      updateStats(false);
     }
-    // ============================================================================
-    // SEÇÃO 4: TESTES DE AGENDAMENTOS
-    // ============================================================================
-    console.log('\n📅 TESTES DE AGENDAMENTOS');
+
+    // 4. Testes de Agendamentos
+    console.log('📅 TESTES DE AGENDAMENTOS');
     console.log('------------------------');
     
-    // Teste 4.1: Listar agendamentos
     const agendamentos = await makeRequest({
       hostname: 'localhost',
       port: 3001,
       path: '/api/agendamentos',
       method: 'GET',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: authHeaders
     });
-    
-    logTeste('Listar agendamentos', agendamentos.status === 200, 
-      `(${Array.isArray(agendamentos.data) ? agendamentos.data.length : 0} agendamentos)`);
-    
-    // Teste 4.2: Criar novo agendamento
-    const processoParaAgendamento = processoTestId || 20;
+
+    if (agendamentos.status === 200) {
+      logTeste('✅', `Listar agendamentos (${agendamentos.data.length} agendamentos)`);
+      updateStats(true);
+    } else {
+      logTeste('❌', 'Listar agendamentos', false);
+      updateStats(false);
+    }
+
+    // Criar agendamento teste
     const novoAgendamento = await makeRequest({
       hostname: 'localhost',
       port: 3001,
       path: '/api/agendamentos',
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` 
-      }
+      headers: authHeaders
     }, {
-      processo_id: processoParaAgendamento,
-      tipo_evento: 'audiencia',
-      titulo: 'Teste Automatizado - Audiência',
-      descricao: 'Agendamento criado durante teste automatizado do sistema',
-      data_evento: '2025-09-15 14:30:00',
-      local: 'NPJ - Sala de Audiências - Teste'
+      tipo_evento: 'outro',
+      titulo: 'Teste Automatizado',
+      descricao: 'Agendamento de teste',
+      data_evento: new Date(Date.now() + 24*60*60*1000).toISOString(),
+      local: 'Teste'
     });
-    
-    let agendamentoTestId = null;
+
+    let agendamentoTesteId = null;
     if (novoAgendamento.status === 201) {
-      agendamentoTestId = novoAgendamento.data.id;
-      logTeste('Criar agendamento', true, `(ID: ${agendamentoTestId})`);
+      agendamentoTesteId = novoAgendamento.data.id;
+      logTeste('✅', `Criar agendamento (ID: ${agendamentoTesteId})`);
+      updateStats(true);
     } else {
-      logTeste('Criar agendamento', false, `Status: ${novoAgendamento.status}`);
+      logTeste('❌', 'Criar agendamento', false);
+      updateStats(false);
     }
 
-    // ============================================================================
-    // SEÇÃO 5: TESTES DE TABELAS AUXILIARES
-    // ============================================================================
-    console.log('\n📊 TESTES DE TABELAS AUXILIARES');
+    // 5. Testes de Tabelas Auxiliares
+    console.log('📊 TESTES DE TABELAS AUXILIARES');
     console.log('-------------------------------');
     
-    // Teste 5.1: Listar fases
     const fases = await makeRequest({
       hostname: 'localhost',
       port: 3001,
       path: '/api/aux/fase',
       method: 'GET',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: authHeaders
     });
-    
-    logTeste('Listar fases', fases.status === 200, 
-      `(${Array.isArray(fases.data) ? fases.data.length : 0} fases)`);
-    
-    // Teste 5.2: Listar matérias/assuntos
+
+    if (fases.status === 200) {
+      logTeste('✅', `Listar fases (${fases.data.length} fases)`);
+      updateStats(true);
+    } else {
+      logTeste('❌', 'Listar fases', false);
+      updateStats(false);
+    }
+
     const materias = await makeRequest({
       hostname: 'localhost',
       port: 3001,
       path: '/api/aux/materia-assunto',
       method: 'GET',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: authHeaders
     });
-    
-    logTeste('Listar matérias/assuntos', materias.status === 200, 
-      `(${Array.isArray(materias.data) ? materias.data.length : 0} matérias)`);
-    
-    // Teste 5.3: Listar locais de tramitação
+
+    if (materias.status === 200) {
+      logTeste('✅', `Listar matérias/assuntos (${materias.data.length} matérias)`);
+      updateStats(true);
+    } else {
+      logTeste('❌', 'Listar matérias/assuntos', false);
+      updateStats(false);
+    }
+
     const locais = await makeRequest({
       hostname: 'localhost',
       port: 3001,
       path: '/api/aux/local-tramitacao',
       method: 'GET',
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: authHeaders
     });
-    
-    logTeste('Listar locais de tramitação', locais.status === 200, 
-      `(${Array.isArray(locais.data) ? locais.data.length : 0} locais)`);
-    // ============================================================================
-    // SEÇÃO 6: LIMPEZA DOS DADOS DE TESTE
-    // ============================================================================
-    console.log('\n🧹 LIMPEZA DOS DADOS DE TESTE');
+
+    if (locais.status === 200) {
+      logTeste('✅', `Listar locais de tramitação (${locais.data.length} locais)`);
+      updateStats(true);
+    } else {
+      logTeste('❌', 'Listar locais de tramitação', false);
+      updateStats(false);
+    }
+
+    // 6. Limpeza dos dados de teste
+    console.log('🧹 LIMPEZA DOS DADOS DE TESTE');
     console.log('-----------------------------');
     
-    // Limpeza 6.1: Deletar agendamento criado
-    if (agendamentoTestId) {
+    if (agendamentoTesteId) {
       const deleteAgendamento = await makeRequest({
         hostname: 'localhost',
         port: 3001,
-        path: `/api/agendamentos/${agendamentoTestId}`,
+        path: `/api/agendamentos/${agendamentoTesteId}`,
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: authHeaders
       });
-      
-      logTeste('Deletar agendamento de teste', deleteAgendamento.status === 200);
+
+      if (deleteAgendamento.status === 200) {
+        logTeste('✅', 'Deletar agendamento de teste');
+        updateStats(true);
+      } else {
+        logTeste('❌', 'Deletar agendamento de teste', false);
+        updateStats(false);
+      }
     }
-    
-    // Limpeza 6.2: Processo criado (só referência - sem endpoint de exclusão)
-    if (processoTestId) {
-      console.log(`📝 Processo de teste criado com ID ${processoTestId} (limpeza manual necessária)`);
-      logTeste('Processo de teste criado (sem exclusão automática)', true, `ID: ${processoTestId}`);
+
+    if (processoTesteId) {
+      console.log(`📝 Processo de teste criado com ID ${processoTesteId} (limpeza manual necessária)`);
+      logTeste('✅', `Processo de teste criado (sem exclusão automática) ID: ${processoTesteId}`);
+      updateStats(true);
     }
-    
+
   } catch (error) {
-    console.log('❌ Erro crítico durante os testes:', error.message);
-    testStats.failed++;
+    console.error('❌ Erro no teste:', error.message);
+    updateStats(false);
   }
 
-  // ============================================================================
-  // RESULTADO FINAL
-  // ============================================================================
-  console.log('\n🎯 RESULTADO FINAL DO TESTE MASSIVO');
+  // Resultado final
+  console.log('🎯 RESULTADO FINAL DO TESTE MASSIVO');
   console.log('===================================');
   console.log(`✅ Testes que passaram: ${testStats.passed}`);
   console.log(`❌ Testes que falharam: ${testStats.failed}`);
   console.log(`📊 Taxa de sucesso: ${Math.round((testStats.passed / testStats.total) * 100)}%`);
   console.log(`🎲 Total de testes: ${testStats.total}`);
   
-  // Mensagem final baseada na taxa de sucesso
-  const successRate = testStats.passed / testStats.total;
-  if (testStats.passed === testStats.total) {
-    console.log('\n🎉 TODOS OS TESTES PASSARAM! SISTEMA 100% FUNCIONAL! 🎉');
-  } else if (successRate > 0.9) {
-    console.log('\n🟢 SISTEMA PRATICAMENTE COMPLETO! Apenas pequenos ajustes necessários.');
-  } else if (successRate > 0.7) {
-    console.log('\n🟡 SISTEMA FUNCIONAL, mas precisa de algumas correções.');
+  if (testStats.failed === 0) {
+    console.log('🎉 TODOS OS TESTES PASSARAM! SISTEMA 100% FUNCIONAL! 🎉');
   } else {
-    console.log('\n🔴 SISTEMA PRECISA DE CORREÇÕES SIGNIFICATIVAS.');
+    console.log('⚠️ ALGUNS TESTES FALHARAM. VERIFICAR LOGS ACIMA.');
   }
   
-  console.log(`\n📅 Teste executado em: ${new Date().toLocaleString('pt-BR')}`);
+  console.log(`📅 Teste executado em: ${new Date().toLocaleString('pt-BR')}`);
   console.log('📍 Localização: tests/organized/integration/test_massivo_docker.js');
 }
 
-// Executar o teste se for chamado diretamente
-if (require.main === module) {
-  testeMassivo().catch(console.error);
-}
-
-module.exports = { testeMassivo, makeRequest, CONFIG };
+// Executar teste
+testeMassivo().catch(console.error);

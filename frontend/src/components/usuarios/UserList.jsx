@@ -180,6 +180,7 @@ export default function UserList() {
       {hasRole(user, ['Admin', 'Professor']) && (
         <div style={{ marginBottom: '25px' }}>
           <Button
+            id="btn-add-user"
             variant={showCreate ? "danger" : "success"}
             onClick={() => setShowCreate(!showCreate)}
             style={{

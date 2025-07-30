@@ -1,26 +1,67 @@
-/**
- * @fileoverview Controller de Agendamentos do Sistema NPJ
- * @description Gerencia operações CRUD para agendamentos e eventos
- * @author Sistema NPJ
- * @version 2.0.0
- * @since 2025-07-28
- */
-
+// Controlador de Agendamentos
+<<<<<<< HEAD
 const { agendamentoModels: Agendamento } = require('../models/indexModels');
+=======
+const { agendamentoModels: Agendamento, usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
+const { Op } = require('sequelize');
+>>>>>>> 631e91f783120f46177e0e5e9cc8462e2edf0526
 
-/**
- * Lista todos os agendamentos ordenados por data do evento
- * @route GET /api/agendamentos
- * @access Private (requer autenticação)
- * @param {Object} req - Objeto de requisição Express
- * @param {Object} res - Objeto de resposta Express
- * @returns {Array} Lista de agendamentos
- */
+// Lista agendamentos baseado no role do usuário
 exports.listarAgendamentos = async (req, res) => {
   try {
-    const agendamentos = await Agendamento.findAll({
-      order: [['data_evento', 'ASC']]
-    });
+    const usuarioLogado = req.usuario;
+    let whereCondition = {};
+
+    // Regras de visibilidade por role
+    if (usuarioLogado.role === 'Aluno') {
+      // Aluno vê agendamentos criados para ele ou por ele
+      whereCondition = {
+        [Op.or]: [
+          { usuario_id: usuarioLogado.id },
+          { criado_por: usuarioLogado.id }
+        ]
+      };
+    } else {
+      // Admin e Professor veem apenas os que criaram
+      whereCondition = { criado_por: usuarioLogado.id };
+    }
+
+    let agendamentos;
+    try {
+      agendamentos = await Agendamento.findAll({
+        where: whereCondition,
+        include: [
+          {
+            model: Usuario,
+            as: 'criador',
+            attributes: ['id', 'nome'],
+            include: [{
+              model: Role,
+              as: 'role',
+              attributes: ['nome']
+            }]
+          },
+          {
+            model: Usuario,
+            as: 'destinatario',
+            attributes: ['id', 'nome'],
+            include: [{
+              model: Role,
+              as: 'role',
+              attributes: ['nome']
+            }]
+          }
+        ],
+        order: [['data_evento', 'ASC']]
+      });
+    } catch (includeError) {
+      console.log('Aviso: Erro ao buscar com includes, buscando sem includes:', includeError.message);
+      agendamentos = await Agendamento.findAll({
+        where: whereCondition,
+        order: [['data_evento', 'ASC']]
+      });
+    }
+    
     res.json(agendamentos);
   } catch (error) {
     console.error('Erro ao listar agendamentos:', error);
@@ -28,28 +69,12 @@ exports.listarAgendamentos = async (req, res) => {
   }
 };
 
-/**
- * Cria um novo agendamento no sistema
- * @route POST /api/agendamentos
- * @access Private (requer autenticação)
- * @param {Object} req - Objeto de requisição Express
- * @param {Object} req.body - Dados do agendamento
- * @param {number} req.body.processo_id - ID do processo relacionado (opcional)
- * @param {string} req.body.tipo_evento - Tipo do evento (audiencia, reuniao, etc)
- * @param {string} req.body.titulo - Título do agendamento
- * @param {string} req.body.descricao - Descrição detalhada (opcional)
- * @param {string} req.body.data_evento - Data e hora do evento
- * @param {string} req.body.local - Local do evento (opcional)
- * @param {boolean} req.body.lembrete_1_dia - Ativar lembrete 1 dia antes
- * @param {boolean} req.body.lembrete_2_dias - Ativar lembrete 2 dias antes
- * @param {boolean} req.body.lembrete_1_semana - Ativar lembrete 1 semana antes
- * @param {Object} res - Objeto de resposta Express
- * @returns {Object} Agendamento criado
- */
+// Cria novo agendamento
 exports.criarAgendamento = async (req, res) => {
   try {
     const {
       processo_id,
+      usuario_id, // Para quem é o agendamento
       tipo_evento,
       titulo,
       descricao,
@@ -60,49 +85,106 @@ exports.criarAgendamento = async (req, res) => {
       lembrete_1_semana
     } = req.body;
     
-    // Criar agendamento com dados padronizados
-    const agendamento = await Agendamento.create({
+    const usuarioLogado = req.usuario;
+    
+    // Log para debug
+    console.log('🔍 DEBUG - Criação de agendamento:');
+    console.log('👤 Usuario logado:', usuarioLogado);
+    console.log('📅 Dados do agendamento:', { processo_id, usuario_id, tipo_evento, titulo });
+    
+    // Validação de permissões por role
+    if (usuario_id && usuario_id !== usuarioLogado.id) {
+      // Só Admin e Professor podem criar agendamentos para outros
+      if (usuarioLogado.role === 'Aluno') {
+        return res.status(403).json({ 
+          erro: 'Alunos só podem criar agendamentos para si mesmos' 
+        });
+      }
+    }
+    
+    // Validação para garantir que usuarioLogado.id existe
+    if (!usuarioLogado || !usuarioLogado.id) {
+      console.error('❌ ERRO: Usuario logado sem ID válido:', usuarioLogado);
+      return res.status(401).json({ erro: 'Usuario não autenticado corretamente' });
+    }
+    
+    const agendamentoData = {
       processo_id: processo_id || null,
-      usuario_id: req.usuario.id,
+      criado_por: usuarioLogado.id, // Quem criou
+      usuario_id: usuario_id || usuarioLogado.id, // Para quem é
       tipo_evento,
       titulo,
-      descricao: descricao || null,
-      data_evento: new Date(data_evento),
-      local: local || null,
+      descricao,
+      data_evento,
+      local,
       status: 'agendado',
-      lembrete_1_dia: lembrete_1_dia !== undefined ? lembrete_1_dia : true,
-      lembrete_2_dias: lembrete_2_dias !== undefined ? lembrete_2_dias : true,
-      lembrete_1_semana: lembrete_1_semana !== undefined ? lembrete_1_semana : false
-    });
-
-    res.status(201).json(agendamento);
+      lembrete_1_dia: lembrete_1_dia || false,
+      lembrete_2_dias: lembrete_2_dias || false,
+      lembrete_1_semana: lembrete_1_semana || false
+    };
+    
+    console.log('📝 Dados para criar agendamento:', agendamentoData);
+    
+    const agendamento = await Agendamento.create(agendamentoData);
+    
+    // Buscar o agendamento criado com includes se possível
+    let agendamentoCompleto;
+    try {
+      agendamentoCompleto = await Agendamento.findByPk(agendamento.id, {
+        include: [
+          {
+            model: Usuario,
+            as: 'criador',
+            attributes: ['id', 'nome'],
+            include: [{
+              model: Role,
+              as: 'role',
+              attributes: ['nome']
+            }]
+          },
+          {
+            model: Usuario,
+            as: 'destinatario',
+            attributes: ['id', 'nome'],
+            include: [{
+              model: Role,
+              as: 'role',
+              attributes: ['nome']
+            }]
+          }
+        ]
+      });
+    } catch (includeError) {
+      console.log('Aviso: Erro ao buscar includes, retornando agendamento básico:', includeError.message);
+      agendamentoCompleto = agendamento;
+    }
+    
+    res.status(201).json(agendamentoCompleto);
   } catch (error) {
     console.error('Erro ao criar agendamento:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
 
-/**
- * Atualiza um agendamento existente
- * @route PUT /api/agendamentos/:id
- * @access Private (requer autenticação)
- * @param {Object} req - Objeto de requisição Express
- * @param {string} req.params.id - ID do agendamento a ser atualizado
- * @param {Object} req.body - Novos dados do agendamento
- * @param {Object} res - Objeto de resposta Express
- * @returns {Object} Agendamento atualizado
- */
+// Atualiza agendamento
 exports.atualizarAgendamento = async (req, res) => {
   try {
     const { id } = req.params;
+    const usuarioLogado = req.usuario;
     
-    // Buscar agendamento existente
     const agendamento = await Agendamento.findByPk(id);
+    
     if (!agendamento) {
       return res.status(404).json({ erro: 'Agendamento não encontrado' });
     }
     
-    // Atualizar com novos dados
+    // Só quem criou pode atualizar
+    if (agendamento.criado_por !== usuarioLogado.id) {
+      return res.status(403).json({ 
+        erro: 'Apenas quem criou o agendamento pode atualizá-lo' 
+      });
+    }
+    
     await agendamento.update(req.body);
     res.json(agendamento);
   } catch (error) {
@@ -111,22 +193,23 @@ exports.atualizarAgendamento = async (req, res) => {
   }
 };
 
-/**
- * Remove um agendamento do sistema
- * @route DELETE /api/agendamentos/:id
- * @access Private (requer autenticação)
- * @param {Object} req - Objeto de requisição Express
- * @param {string} req.params.id - ID do agendamento a ser removido
- * @param {Object} res - Objeto de resposta Express
- * @returns {Object} Confirmação de remoção
- */
+// Exclui agendamento
 exports.excluirAgendamento = async (req, res) => {
   try {
     const { id } = req.params;
+    const usuarioLogado = req.usuario;
+    
     const agendamento = await Agendamento.findByPk(id);
     
     if (!agendamento) {
       return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    }
+    
+    // Só quem criou pode excluir
+    if (agendamento.criado_por !== usuarioLogado.id) {
+      return res.status(403).json({ 
+        erro: 'Apenas quem criou o agendamento pode excluí-lo' 
+      });
     }
     
     await agendamento.destroy();
@@ -137,22 +220,50 @@ exports.excluirAgendamento = async (req, res) => {
   }
 };
 
-/**
- * Busca agendamento específico por ID
- * @route GET /api/agendamentos/:id
- * @access Private (requer autenticação)
- * @param {Object} req - Objeto de requisição Express
- * @param {string} req.params.id - ID do agendamento
- * @param {Object} res - Objeto de resposta Express
- * @returns {Object} Dados do agendamento encontrado
- */
+// Busca agendamento por ID
 exports.buscarAgendamentoPorId = async (req, res) => {
   try {
-    // Buscar agendamento por ID primário
-    const agendamento = await Agendamento.findByPk(req.params.id);
+    const usuarioLogado = req.usuario;
+    
+    const agendamento = await Agendamento.findByPk(req.params.id, {
+      include: [
+        {
+          model: Usuario,
+          as: 'criador',
+          attributes: ['id', 'nome'],
+          include: [{
+            model: Role,
+            as: 'role',
+            attributes: ['nome']
+          }]
+        },
+        {
+          model: Usuario,
+          as: 'destinatario',
+          attributes: ['id', 'nome'],
+          include: [{
+            model: Role,
+            as: 'role',
+            attributes: ['nome']
+          }]
+        }
+      ]
+    });
     
     if (!agendamento) {
       return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    }
+    
+    // Verificar se o usuário tem acesso ao agendamento
+    const temAcesso = (
+      agendamento.criado_por === usuarioLogado.id || // Criou o agendamento
+      agendamento.usuario_id === usuarioLogado.id    // É destinatário
+    );
+    
+    if (!temAcesso) {
+      return res.status(403).json({ 
+        erro: 'Você não tem permissão para visualizar este agendamento' 
+      });
     }
     
     res.json(agendamento);

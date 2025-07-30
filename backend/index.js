@@ -16,6 +16,14 @@ module.exports = app; // Exporta o app para testes
 
 // Configuração básica de segurança
 app.use(helmet());
+
+// Middleware para correção de encoding UTF-8
+<<<<<<< HEAD
+// app.use(require('./middleware/encodingMiddleware'));
+=======
+// app.use(require('./middleware/encodingMiddleware')); // Desabilitado temporariamente
+>>>>>>> 631e91f783120f46177e0e5e9cc8462e2edf0526
+
 // express.json() será movido para depois da rota de upload
 app.use(
   mongoSanitize({
@@ -106,8 +114,11 @@ const speedLimiter = slowDown({
 });
 app.use(speedLimiter);
 
+<<<<<<< HEAD
 // Conexão com o banco de dados
-require('./config/config');
+require('./utils/config');
+=======
+>>>>>>> 631e91f783120f46177e0e5e9cc8462e2edf0526
 
 
 // Cria a pasta 'uploads' se não existir
@@ -129,15 +140,19 @@ app.use((req, res, next) => {
 });
 
 // Rota de arquivos
-app.use('/api/arquivos', require('./routes/arquivoRoutes'));
+// app.use('/api/arquivos', require('./routes/arquivoRoutes'));
 
 // Demais rotas
-const ProcessoController = require('./controllers/processoControllers');
 app.use('/auth', require('./routes/autorizacaoRoutes'));
 app.use('/api/usuarios', require('./routes/usuarioRoutes'));
 app.use('/api/processos', require('./routes/processoRoutes'));
-app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoutes'));
 app.use('/api/agendamentos', require('./routes/agendamentoRoutes'));
+<<<<<<< HEAD
+// app.use('/api/aux', require('./routes/tabelaAuxiliarRoutes')); // duplicated line
+=======
+app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoutes'));
+app.use('/api/aux', require('./routes/tabelaAuxiliarRoutes'));
+>>>>>>> 631e91f783120f46177e0e5e9cc8462e2edf0526
 // Tratamento de erros
 app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erro interno do servidor' });
@@ -148,19 +163,36 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Rota não encontrada' });
 });
 
-const errorHandler = require('./middleware/errorHandlerMiddleware');
+const errorHandler = require('./utils/errorHandlerMiddleware');
 app.use(errorHandler);
 
 if (require.main === module) {
   const PORT = process.env.PORT || 3001;
   
-  // Inicializar sistema de notificações
-  const { inicializarCronJobs } = require('./services/notificationScheduler');
-  inicializarCronJobs();
+  // Executar migrations automaticamente
+  const MigrationRunner = require('./utils/migrationRunner');
   
-  server.listen(PORT, () => {
-    // Server started
-  });
+  async function initializeServer() {
+    try {
+      console.log('🔄 Verificando e executando migrations...');
+      const runner = new MigrationRunner();
+      await runner.runMigrations();
+      
+      // Inicializar sistema de notificações
+      const { inicializarCronJobs } = require('./services/notificationScheduler');
+      inicializarCronJobs();
+      
+      server.listen(PORT, () => {
+        console.log(`🚀 Servidor rodando na porta ${PORT}`);
+        console.log('✅ Sistema NPJ inicializado com sucesso!');
+      });
+    } catch (error) {
+      console.error('❌ Erro ao inicializar servidor:', error);
+      process.exit(1);
+    }
+  }
+  
+  initializeServer();
 }
 
 // Função para criar um novo processo

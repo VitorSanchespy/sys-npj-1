@@ -1,5 +1,5 @@
 const { DataTypes, Model } = require('sequelize');
-const sequelize = require('../config/sequelize');
+const sequelize = require('../utils/sequelize');
 
 class Usuario extends Model {
   static associate(models) {
@@ -7,6 +7,7 @@ class Usuario extends Model {
     Usuario.hasMany(models.atualizacoesProcessoModels, { foreignKey: 'usuario_id', as: 'atualizacoes' });
     Usuario.hasMany(models.arquivoModels, { foreignKey: 'usuario_id', as: 'arquivos' });
     Usuario.hasMany(models.usuariosProcessoModels, { foreignKey: 'usuario_id', as: 'usuariosProcesso' });
+    Usuario.hasMany(models.processoModels, { foreignKey: 'idusuario_responsavel', as: 'processosResponsavel' });
   }
 
   static async usuarioCompleto(id) {

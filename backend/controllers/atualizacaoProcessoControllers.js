@@ -82,5 +82,10 @@ exports.removerAtualizacaoProcessos = async (req, res) => {
         } catch (error) {
             res.status(500).json({ erro: error.message });
         }
+<<<<<<< HEAD
+};
+=======
 }
 
+
+>>>>>>> 631e91f783120f46177e0e5e9cc8462e2edf0526

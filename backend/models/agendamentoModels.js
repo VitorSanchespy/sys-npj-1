@@ -1,5 +1,5 @@
 const { DataTypes, Model } = require('sequelize');
-const sequelize = require('../config/sequelize');
+const sequelize = require('../utils/sequelize');
 
 class Agendamento extends Model {
   static associate(models) {
@@ -8,9 +8,17 @@ class Agendamento extends Model {
       foreignKey: 'processo_id',
       as: 'processo'
     });
+    
+    // Usuario destinatário (para quem é o agendamento)
     Agendamento.belongsTo(models.usuariosModels, {
       foreignKey: 'usuario_id',
-      as: 'usuario'
+      as: 'destinatario'
+    });
+    
+    // Usuario criador (quem criou o agendamento)
+    Agendamento.belongsTo(models.usuariosModels, {
+      foreignKey: 'criado_por',
+      as: 'criador'
     });
   }
 }
@@ -26,6 +34,10 @@ Agendamento.init({
     allowNull: true
   },
   usuario_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  criado_por: {
     type: DataTypes.INTEGER,
     allowNull: false
   },
