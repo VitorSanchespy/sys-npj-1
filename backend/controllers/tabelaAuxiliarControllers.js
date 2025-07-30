@@ -133,9 +133,6 @@ exports.listarMaterias = async (req, res) => {
   }
 };
 
-<<<<<<< HEAD
-
-=======
 exports.listarFases = async (req, res) => {
   try {
     const Model = modelMap['fase'];
@@ -168,4 +165,3 @@ exports.listarLocais = async (req, res) => {
     res.status(500).json({ erro: 'Erro ao listar locais.' });
   }
 };
->>>>>>> 631e91f783120f46177e0e5e9cc8462e2edf0526

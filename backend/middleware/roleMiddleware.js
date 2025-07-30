@@ -4,12 +4,17 @@ const jwt = require('jsonwebtoken');
 // Middleware para verificar roles específicas
 const roleMiddleware = (allowedRoles = []) => {
   return (req, res, next) => {
+    console.log('🔍 ROLE MIDDLEWARE EXECUTADO!');
+    console.log('🔐 Allowed roles:', allowedRoles);
+    
     try {
       // Verificar se o usuário está autenticado
       if (!req.usuario) {
+        console.log('❌ req.usuario não existe');
         return res.status(401).json({ erro: 'Token de autenticação necessário' });
       }
 
+      console.log('👤 req.usuario:', req.usuario);
       const { role } = req.usuario;
 
       // Se não há roles especificadas, permite qualquer role autenticada
@@ -17,33 +22,23 @@ const roleMiddleware = (allowedRoles = []) => {
         return next();
       }
 
-      // Verificar se a role do usuário está nas roles permitidas
-      // Aceita tanto string quanto number para compatibilidade
-      const userRole = typeof role === 'number' ? role.toString() : role;
+      // Normalizar roles para comparação case-insensitive
+      const userRole = (role || '').toLowerCase();
+      const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase());
       
-      // Mapeamento de roles para compatibilidade
-      const roleMap = {
-        '0': 'Admin',
-        '1': 'Professor', 
-        '2': 'Aluno',
-        'Admin': '0',
-        'Professor': '1',
-        'Aluno': '2'
-      };
-
-      // Verificar se a role do usuário (original ou mapeada) está permitida
-      const hasPermission = allowedRoles.some(allowedRole => {
-        const allowedRoleStr = typeof allowedRole === 'number' ? allowedRole.toString() : allowedRole;
-        return userRole === allowedRoleStr || 
-               userRole === roleMap[allowedRoleStr] || 
-               roleMap[userRole] === allowedRoleStr;
-      });
+      console.log('DEBUG ROLE:', { userRole, normalizedAllowedRoles });
+      
+      // Verificar se a role do usuário está nas roles permitidas
+      const hasPermission = normalizedAllowedRoles.includes(userRole);
 
       if (!hasPermission) {
+        console.log('Role Access Debug:', {
+          userRole: role,
+          allowedRoles,
+          hasPermission
+        });
         return res.status(403).json({ 
-          erro: 'Acesso negado. Permissão insuficiente.',
-          roleAtual: role,
-          rolesPermitidas: allowedRoles
+          message: 'Acesso negado'
         });
       }
 

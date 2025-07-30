@@ -25,7 +25,7 @@ const verificarToken = async (req, res, next) => {
             id: usuario.id,
             nome: usuario.nome,
             email: usuario.email,
-            role: usuario.role || { nome: 'user' }
+            role: usuario.role?.nome || 'user' // Extrair apenas o nome da role
         };
         next();
     } catch (error) {

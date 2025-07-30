@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { verificarToken } = require('../middleware/authMiddleware');
-const roleMiddleware = require('../middleware/roleMiddleware.js');
+const { roleMiddleware } = require('../middleware/roleMiddleware.js');
 const { validate, handleValidation } = require('../middleware/validationMiddleware');
 // Importando os controladores de processo
 const {
@@ -14,6 +14,17 @@ const {
 
 // Aplicar middleware de autenticação a todas as rotas
 router.use(verificarToken);
+router.use(interceptor403);
+
+// TESTE DIRETO SEM ROLE MIDDLEWARE
+router.get('/teste-direto', (req, res) => {
+    console.log('🎯 TESTE DIRETO EXECUTADO!');
+    console.log('👤 req.usuario:', req.usuario);
+    res.json({ 
+        message: 'Teste direto funcionou!', 
+        usuario: req.usuario 
+    });
+});
 
 // criar novo processo
 router.post('/novo',
@@ -38,11 +49,12 @@ router.get('/:processo_id/detalhes',
 
 // listar processos
 router.get('/', 
+    debugMiddleware,
     roleMiddleware(['Professor', 'Admin', 'Aluno']),
     async (req, res) => {
         try {
             const { id: userId, role } = req.usuario;
-            const db = require('../config/sequelize');
+            const db = require('../utils/sequelize');
             let query = `
                 SELECT p.*, u.nome as usuario_responsavel
                 FROM processos p

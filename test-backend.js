@@ -56,7 +56,7 @@ async function runTests() {
         nome: 'Usuario Teste',
         email: 'teste@teste.com',
         senha: '123456',
-        role_id: 1
+        role_id: 5
     });
     
     if (registerResult.success) {
@@ -65,9 +65,9 @@ async function runTests() {
         log.warning('Registro falhou (usuário pode já existir): ' + JSON.stringify(registerResult.error));
     }
     
-    // Tentar fazer login
-    const loginResult = await testEndpoint('POST', '/auth/login', {
-        email: 'teste@teste.com',
+    // Tentar fazer login com o usuário existente primeiro
+    let loginResult = await testEndpoint('POST', '/auth/login', {
+        email: 'admin@teste.com',
         senha: '123456'
     });
     

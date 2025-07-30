@@ -136,11 +136,19 @@ app.use((req, res, next) => {
 // app.use('/api/arquivos', require('./routes/arquivoRoutes'));
 
 // Demais rotas
+console.log('🔧 Registrando rotas...');
 app.use('/auth', require('./routes/autorizacaoRoutes'));
+console.log('✅ /auth registrado');
 app.use('/api/usuarios', require('./routes/usuarioRoutes'));
+console.log('✅ /api/usuarios registrado');
 app.use('/api/processos', require('./routes/processoRoutes'));
+console.log('✅ /api/processos registrado');
 app.use('/api/agendamentos', require('./routes/agendamentoRoutes'));
-// app.use('/api/aux', require('./routes/tabelaAuxiliarRoutes')); // duplicated line
+console.log('✅ /api/agendamentos registrado');
+app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoutes'));
+console.log('✅ /api/atualizacoes registrado');
+app.use('/api/aux', require('./routes/tabelaAuxiliarRoutes'));
+console.log('✅ /api/aux registrado');
 // Tratamento de erros
 app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erro interno do servidor' });
@@ -151,7 +159,7 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Rota não encontrada' });
 });
 
-const errorHandler = require('./utils/errorHandlerMiddleware');
+const errorHandler = require('./middleware/errorHandlerMiddleware');
 app.use(errorHandler);
 
 if (require.main === module) {
@@ -162,9 +170,9 @@ if (require.main === module) {
   
   async function initializeServer() {
     try {
-      console.log('🔄 Verificando e executando migrations...');
-      const runner = new MigrationRunner();
-      await runner.runMigrations();
+      console.log('🔄 Pulando migrations temporariamente...');
+      // const runner = new MigrationRunner();
+      // await runner.runMigrations();
       
       // Inicializar sistema de notificações
       const { inicializarCronJobs } = require('./services/notificationScheduler');

@@ -3,12 +3,7 @@ const {
   processoModels: Processo,
   usuariosModels: Usuario,
   usuariosProcessoModels: UsuariosProcesso
-<<<<<<< HEAD
 } = require('../models/indexModels');
-=======
-} = require('../models/indexModels.js');
-const { Op } = require('sequelize');
->>>>>>> 631e91f783120f46177e0e5e9cc8462e2edf0526
 
 // Lista processos
 exports.listarProcessos = async (req, res) => {
@@ -23,335 +18,423 @@ exports.listarProcessos = async (req, res) => {
     `;
     // Se for Aluno, retorna apenas os processos vinculados ao aluno
     if (role === 'Aluno' || role === 2 || role === '2') {
-        query += ` AND p.idusuario_responsavel = ${userId}`;
+      query += ` AND p.id IN (
+        SELECT processo_id FROM usuarios_processo 
+        WHERE usuario_id = ${userId}
+      )`;
     }
-    query += ` ORDER BY p.criado_em DESC`;
-    const [processos] = await db.query(query);
+    
+    query += ' ORDER BY p.data_atualizacao DESC';
+    
+    const processos = await db.query(query, { type: db.QueryTypes.SELECT });
     res.json(processos);
   } catch (error) {
     console.error('Erro ao listar processos:', error);
-    res.status(500).json({ message: 'Erro interno do servidor' });
-  }
-};
-
-// Cria novo processo
-exports.criarProcesso = async (req, res) => {
-  try {
-    console.log('📝 Dados recebidos para criar processo:', req.body);
-    console.log('👤 Usuário autenticado:', req.usuario?.id, req.usuario?.nome);
-    
-    const { 
-      numero_processo, 
-      descricao, 
-      assistido, 
-      contato_assistido,
-      tipo_processo,
-      status,
-      sistema,
-      observacoes,
-      materia_assunto_id,
-      fase_id,
-      diligencia_id,
-      local_tramitacao_id,
-      num_processo_sei
-    } = req.body;
-    
-    // Criar processo com usuário autenticado como responsável
-    const processo = await Processo.create({
-      numero_processo,
-      descricao,
-      assistido,
-      contato_assistido,
-      tipo_processo,
-      status: status || 'ativo',
-      sistema: sistema || 'Fisico',
-      observacoes,
-      materia_assunto_id,
-      fase_id,
-      diligencia_id,
-      local_tramitacao_id,
-      num_processo_sei,
-      idusuario_responsavel: req.usuario.id
-    });
-    
-    console.log('✅ Processo criado com sucesso:', processo.id);
-    res.status(201).json(processo);
-  } catch (error) {
-    console.error('❌ Erro ao criar processo:', error.message);
-    console.error('Stack:', error.stack);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
 
-// Atualiza processo
+// Buscar processo por ID
+exports.buscarProcessoPorId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { id: userId, role } = req.usuario;
+    
+    // Se for Aluno, verificar se tem acesso ao processo
+    if (role === 'Aluno' || role === 2 || role === '2') {
+      const acesso = await UsuariosProcesso.findOne({
+        where: { usuario_id: userId, processo_id: id }
+      });
+      
+      if (!acesso) {
+        return res.status(403).json({ erro: 'Acesso negado ao processo' });
+      }
+    }
+    
+    const processo = await Processo.findByPk(id);
+    if (!processo) {
+      return res.status(404).json({ erro: 'Processo não encontrado' });
+    }
+    
+    res.json(processo);
+  } catch (error) {
+    console.error('Erro ao buscar processo:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Criar novo processo
+exports.criarProcesso = async (req, res) => {
+  try {
+    const {
+      numero_processo,
+      parte_contraria,
+      comarca,
+      vara,
+      valor_causa,
+      tipo_acao,
+      materia_assunto_id,
+      fase_id,
+      local_tramitacao_id,
+      observacoes,
+      usuario_responsavel_id
+    } = req.body;
+
+    const novoProcesso = await Processo.create({
+      numero_processo,
+      parte_contraria,
+      comarca,
+      vara,
+      valor_causa,
+      tipo_acao,
+      materia_assunto_id,
+      fase_id,
+      local_tramitacao_id,
+      observacoes,
+      idusuario_responsavel: usuario_responsavel_id || req.usuario.id,
+      data_atualizacao: new Date()
+    });
+
+    res.status(201).json({
+      message: 'Processo criado com sucesso',
+      processo: novoProcesso
+    });
+  } catch (error) {
+    console.error('Erro ao criar processo:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Atualizar processo
 exports.atualizarProcessos = async (req, res) => {
   try {
     const { processo_id } = req.params;
+    const { role } = req.usuario;
+    
+    // Verificar se o processo existe
     const processo = await Processo.findByPk(processo_id);
-    
     if (!processo) {
       return res.status(404).json({ erro: 'Processo não encontrado' });
     }
-    
-    // Atualizar processo com dados fornecidos
-    await processo.update(req.body);
-    res.json(processo);
-  } catch (error) {
-    console.error('Erro:', error);
-    res.status(500).json({ erro: 'Erro interno do servidor' });
-  }
-};
 
-// Busca processo por ID
-exports.buscarProcessoPorId = async (req, res) => {
-  try {
-    // Buscar processo por ID com usuário responsável
-    const processo = await Processo.findByPk(req.params.id, {
-      include: [{ model: Usuario, as: 'responsavel' }]
+    // Se for Aluno, verificar se tem acesso ao processo
+    if (role === 'Aluno' || role === 2 || role === '2') {
+      const acesso = await UsuariosProcesso.findOne({
+        where: { usuario_id: req.usuario.id, processo_id: processo_id }
+      });
+      
+      if (!acesso) {
+        return res.status(403).json({ erro: 'Acesso negado ao processo' });
+      }
+    }
+
+    // Atualizar o processo
+    await processo.update({
+      ...req.body,
+      data_atualizacao: new Date()
     });
-    
-    if (!processo) {
-      return res.status(404).json({ erro: 'Processo não encontrado' });
-    }
-    
-    res.json(processo);
-  } catch (error) {
-    console.error('Erro:', error);
-    res.status(500).json({ erro: 'Erro interno do servidor' });
-  }
-};
 
-// Detalhar processo completo
-exports.detalharProcessos = async (req, res) => {
-  try {
-    const { processo_id } = req.params;
-    const processo = await Processo.findByPk(processo_id, {
-      include: [{ model: Usuario, as: 'responsavel' }]
+    res.json({
+      message: 'Processo atualizado com sucesso',
+      processo
     });
-    
-    if (!processo) {
-      return res.status(404).json({ erro: 'Processo não encontrado' });
-    }
-    
-    res.json(processo);
   } catch (error) {
-    console.error('Erro:', error);
+    console.error('Erro ao atualizar processo:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
 
-// Vincula usuário ao processo
+// Excluir processo
+exports.excluirProcesso = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.usuario;
+
+    // Apenas Admin e Professor podem excluir processos
+    if (role !== 'Admin' && role !== 'Professor') {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
+
+    const processo = await Processo.findByPk(id);
+    if (!processo) {
+      return res.status(404).json({ erro: 'Processo não encontrado' });
+    }
+
+    await processo.destroy();
+    res.json({ message: 'Processo excluído com sucesso' });
+  } catch (error) {
+    console.error('Erro ao excluir processo:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Vincular usuário ao processo
 exports.vincularUsuario = async (req, res) => {
   try {
     const { processo_id, usuario_id } = req.body;
-    
-    // Criar vínculo entre usuário e processo
-    const vinculo = await UsuariosProcesso.create({
-      processo_id,
-      usuario_id
+
+    // Verificar se o processo existe
+    const processo = await Processo.findByPk(processo_id);
+    if (!processo) {
+      return res.status(404).json({ erro: 'Processo não encontrado' });
+    }
+
+    // Verificar se o usuário existe
+    const usuario = await Usuario.findByPk(usuario_id);
+    if (!usuario) {
+      return res.status(404).json({ erro: 'Usuário não encontrado' });
+    }
+
+    // Verificar se já não está vinculado
+    const vinculoExistente = await UsuariosProcesso.findOne({
+      where: { usuario_id, processo_id }
     });
-    
-    res.status(201).json(vinculo);
+
+    if (vinculoExistente) {
+      return res.status(400).json({ erro: 'Usuário já está vinculado ao processo' });
+    }
+
+    // Criar vínculo
+    await UsuariosProcesso.create({ usuario_id, processo_id });
+
+    res.json({ message: 'Usuário vinculado ao processo com sucesso' });
   } catch (error) {
-    console.error('Erro:', error);
+    console.error('Erro ao vincular usuário:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
 
-// Vincula usuário ao processo (alias)
-exports.vincularUsuarioProcessos = exports.vincularUsuario;
-
-// Remove usuário do processo
+// Remover usuário do processo
 exports.removerUsuarioProcessos = async (req, res) => {
   try {
     const { processo_id, usuario_id } = req.body;
-    
+
     const vinculo = await UsuariosProcesso.findOne({
-      where: { processo_id, usuario_id }
+      where: { usuario_id, processo_id }
     });
-    
+
     if (!vinculo) {
       return res.status(404).json({ erro: 'Vínculo não encontrado' });
     }
-    
+
     await vinculo.destroy();
-    res.json({ mensagem: 'Usuário removido do processo' });
+    res.json({ message: 'Usuário removido do processo com sucesso' });
   } catch (error) {
-    console.error('Erro:', error);
+    console.error('Erro ao remover usuário do processo:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
 
-// Lista usuários vinculados a um processo
+// Listar usuários por processo
 exports.listarUsuariosPorProcessos = async (req, res) => {
   try {
     const { processo_id } = req.params;
-    
-    const usuarios = await UsuariosProcesso.findAll({
-      where: { processo_id },
-      include: [{ model: Usuario, as: 'usuario' }]
+    const { role } = req.usuario;
+
+    // Se for Aluno, verificar se tem acesso ao processo
+    if (role === 'Aluno' || role === 2 || role === '2') {
+      const acesso = await UsuariosProcesso.findOne({
+        where: { usuario_id: req.usuario.id, processo_id }
+      });
+      
+      if (!acesso) {
+        return res.status(403).json({ erro: 'Acesso negado ao processo' });
+      }
+    }
+
+    const db = require('../utils/sequelize');
+    const usuarios = await db.query(`
+      SELECT u.id, u.nome, u.email, r.nome as role
+      FROM usuarios u
+      INNER JOIN usuarios_processo up ON u.id = up.usuario_id
+      INNER JOIN roles r ON u.role_id = r.id
+      WHERE up.processo_id = ?
+    `, {
+      replacements: [processo_id],
+      type: db.QueryTypes.SELECT
     });
-    
+
     res.json(usuarios);
   } catch (error) {
-    console.error('Erro:', error);
+    console.error('Erro ao listar usuários do processo:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
 
-// Lista meus processos
+// Listar processos do usuário logado
 exports.listarMeusProcessos = async (req, res) => {
   try {
-    const { id: userId, role } = req.usuario;
+    const { id: userId } = req.usuario;
+    const db = require('../utils/sequelize');
     
-    let processos;
-    if (role === 'Aluno' || role === 2 || role === '2') {
-      // Para alunos, buscar processos onde está vinculado
-      processos = await UsuariosProcesso.findAll({
-        where: { usuario_id: userId },
-        include: [{ model: Processo, as: 'processo' }]
-      });
-    } else {
-      // Para professores/admin, buscar processos criados por eles
-      processos = await Processo.findAll({
-        where: { idusuario_responsavel: userId },
-        include: [{ model: Usuario, as: 'responsavel' }]
-      });
-    }
-    
+    const processos = await db.query(`
+      SELECT p.*, u.nome as usuario_responsavel
+      FROM processos p
+      LEFT JOIN usuarios u ON p.idusuario_responsavel = u.id
+      INNER JOIN usuarios_processo up ON p.id = up.processo_id
+      WHERE up.usuario_id = ?
+      ORDER BY p.data_atualizacao DESC
+    `, {
+      replacements: [userId],
+      type: db.QueryTypes.SELECT
+    });
+
     res.json(processos);
   } catch (error) {
-    console.error('Erro:', error);
+    console.error('Erro ao listar meus processos:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
 
-// Lista processos recentes
+// Buscar processos
+exports.buscarProcessos = async (req, res) => {
+  try {
+    const { termo } = req.query;
+    const { id: userId, role } = req.usuario;
+    
+    if (!termo) {
+      return res.status(400).json({ erro: 'Termo de busca é obrigatório' });
+    }
+
+    const db = require('../utils/sequelize');
+    let query = `
+      SELECT p.*, u.nome as usuario_responsavel
+      FROM processos p
+      LEFT JOIN usuarios u ON p.idusuario_responsavel = u.id
+      WHERE (p.numero_processo LIKE ? OR p.parte_contraria LIKE ?)
+    `;
+
+    const termoBusca = `%${termo}%`;
+    let replacements = [termoBusca, termoBusca];
+
+    // Se for Aluno, filtrar apenas processos vinculados
+    if (role === 'Aluno' || role === 2 || role === '2') {
+      query += ` AND p.id IN (
+        SELECT processo_id FROM usuarios_processo 
+        WHERE usuario_id = ?
+      )`;
+      replacements.push(userId);
+    }
+
+    query += ' ORDER BY p.data_atualizacao DESC';
+
+    const processos = await db.query(query, {
+      replacements,
+      type: db.QueryTypes.SELECT
+    });
+
+    res.json(processos);
+  } catch (error) {
+    console.error('Erro ao buscar processos:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Processos recentes
 exports.listarProcessosRecentes = async (req, res) => {
   try {
     const { id: userId, role } = req.usuario;
     const db = require('../utils/sequelize');
     
     let query = `
-        SELECT p.*, u.nome as usuario_responsavel
-        FROM processos p
-        LEFT JOIN usuarios u ON p.idusuario_responsavel = u.id
-        WHERE 1=1
+      SELECT p.*, u.nome as usuario_responsavel
+      FROM processos p
+      LEFT JOIN usuarios u ON p.idusuario_responsavel = u.id
+      WHERE 1=1
     `;
-    
-    // Filtrar baseado no papel do usuário
-    if (role === 'Aluno' || role === 2 || role === '2') { // Aluno
-        query += ` AND p.idusuario_responsavel = ${userId}`;
-    }
-    
-    query += ` ORDER BY p.criado_em DESC LIMIT 5`;
-    
-    const [processos] = await db.query(query);
-    
-    res.json(processos);
-  } catch (error) {
-    res.status(500).json({ message: 'Erro interno do servidor' });
-  }
-};
 
-// Estatísticas dos processos
-exports.estatisticasProcessos = async (req, res) => {
-  try {
-    const { id: userId, role } = req.usuario;
-    const db = require('../utils/sequelize');
-    
-    let whereClause = '';
-    if (role === 'Professor') {
-        whereClause = `WHERE idusuario_responsavel = ${userId}`;
-    }
-    
-    // Contar processos por status
-    const [statusResult] = await db.query(`
-        SELECT status, COUNT(*) as quantidade 
-        FROM processos 
-        ${whereClause}
-        GROUP BY status
-    `);
-    
-    // Total de processos
-    const [totalResult] = await db.query(`
-        SELECT COUNT(*) as total 
-        FROM processos 
-        ${whereClause}
-    `);
-    
-    const stats = {
-        total: parseInt(totalResult[0].total),
-        porStatus: {},
-        ativos: 0
-    };
-    
-    statusResult.forEach(item => {
-        const status = item.status || 'indefinido';
-        const quantidade = parseInt(item.quantidade);
-        stats.porStatus[status] = quantidade;
-        
-        if (status !== 'arquivado') {
-            stats.ativos += quantidade;
-        }
-    });
-    
-    res.json(stats);
-  } catch (error) {
-    res.status(500).json({ message: 'Erro interno do servidor' });
-  }
-};
-
-// Busca processos
-exports.buscarProcessos = async (req, res) => {
-  try {
-    const { numero, descricao, assistido } = req.query;
-    const { id: userId, role } = req.usuario;
-    
-    let whereClause = {};
-    
-    if (numero) {
-      whereClause.numero_processo = { [Op.like]: `%${numero}%` };
-    }
-    
-    if (descricao) {
-      whereClause.descricao = { [Op.like]: `%${descricao}%` };
-    }
-    
-    if (assistido) {
-      whereClause.assistido = { [Op.like]: `%${assistido}%` };
-    }
-    
-    // Filtrar por usuário se for aluno
+    // Se for Aluno, filtrar apenas processos vinculados
     if (role === 'Aluno' || role === 2 || role === '2') {
-      whereClause.idusuario_responsavel = userId;
+      query += ` AND p.id IN (
+        SELECT processo_id FROM usuarios_processo 
+        WHERE usuario_id = ${userId}
+      )`;
     }
-    
-    const processos = await Processo.findAll({
-      where: whereClause,
-      include: [{ model: Usuario, as: 'responsavel' }]
-    });
-    
+
+    query += ' ORDER BY p.data_atualizacao DESC LIMIT 10';
+
+    const processos = await db.query(query, { type: db.QueryTypes.SELECT });
     res.json(processos);
   } catch (error) {
-    console.error('Erro:', error);
+    console.error('Erro ao listar processos recentes:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
 
-// Exclui processo
-exports.excluirProcesso = async (req, res) => {
+// Estatísticas de processos
+exports.estatisticasProcessos = async (req, res) => {
   try {
-    const processo = await Processo.findByPk(req.params.id);
-    if (!processo) {
+    const { id: userId, role } = req.usuario;
+    const db = require('../utils/sequelize');
+
+    let baseQuery = '';
+    // Se for Aluno, filtrar apenas processos vinculados
+    if (role === 'Aluno' || role === 2 || role === '2') {
+      baseQuery = ` AND p.id IN (
+        SELECT processo_id FROM usuarios_processo 
+        WHERE usuario_id = ${userId}
+      )`;
+    }
+
+    const estatisticas = await db.query(`
+      SELECT 
+        COUNT(*) as total_processos,
+        COUNT(CASE WHEN p.data_atualizacao >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as processos_recentes,
+        COUNT(DISTINCT p.idusuario_responsavel) as usuarios_responsaveis
+      FROM processos p
+      WHERE 1=1 ${baseQuery}
+    `, { type: db.QueryTypes.SELECT });
+
+    res.json(estatisticas[0]);
+  } catch (error) {
+    console.error('Erro ao obter estatísticas:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Detalhar processos
+exports.detalharProcessos = async (req, res) => {
+  try {
+    const { processo_id } = req.params;
+    const { id: userId, role } = req.usuario;
+
+    // Se for Aluno, verificar se tem acesso ao processo
+    if (role === 'Aluno' || role === 2 || role === '2') {
+      const acesso = await UsuariosProcesso.findOne({
+        where: { usuario_id: userId, processo_id }
+      });
+      
+      if (!acesso) {
+        return res.status(403).json({ erro: 'Acesso negado ao processo' });
+      }
+    }
+
+    const db = require('../utils/sequelize');
+    const detalhes = await db.query(`
+      SELECT 
+        p.*,
+        u.nome as usuario_responsavel,
+        ma.descricao as materia_assunto,
+        f.descricao as fase,
+        lt.descricao as local_tramitacao
+      FROM processos p
+      LEFT JOIN usuarios u ON p.idusuario_responsavel = u.id
+      LEFT JOIN materia_assunto ma ON p.materia_assunto_id = ma.id
+      LEFT JOIN fases f ON p.fase_id = f.id
+      LEFT JOIN local_tramitacao lt ON p.local_tramitacao_id = lt.id
+      WHERE p.id = ?
+    `, {
+      replacements: [processo_id],
+      type: db.QueryTypes.SELECT
+    });
+
+    if (detalhes.length === 0) {
       return res.status(404).json({ erro: 'Processo não encontrado' });
     }
-    
-    // Remover processo definitivamente
-    await processo.destroy();
-    res.json({ mensagem: 'Processo excluído' });
+
+    res.json(detalhes[0]);
   } catch (error) {
-    console.error('Erro:', error);
+    console.error('Erro ao detalhar processo:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
