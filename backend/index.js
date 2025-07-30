@@ -89,6 +89,16 @@ io.on('connection', (socket) => {
   });
 });
 
+// Inicializar serviço de notificações
+const NotificacaoService = require('./services/notificacaoService');
+const notificacaoService = new NotificacaoService(io);
+
+// Configurar o serviço de notificação nos controllers
+const agendamentoController = require('./controllers/agendamentoControllers');
+agendamentoController.setNotificacaoService(notificacaoService);
+
+console.log('✅ Serviço de notificações inicializado');
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -145,6 +155,8 @@ app.use('/api/processos', require('./routes/processoRoutes'));
 console.log('✅ /api/processos registrado');
 app.use('/api/agendamentos', require('./routes/agendamentoRoutes'));
 console.log('✅ /api/agendamentos registrado');
+app.use('/api/notificacoes', require('./routes/notificacaoRoutes'));
+console.log('✅ /api/notificacoes registrado');
 app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoutes'));
 console.log('✅ /api/atualizacoes registrado');
 app.use('/api/aux', require('./routes/tabelaAuxiliarRoutes'));

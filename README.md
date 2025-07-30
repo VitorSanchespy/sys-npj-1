@@ -141,8 +141,9 @@ fazer:
 
 - implementar sistema de auditoria para rastrear alterações em processos e agendamentos.
 
+- organizar os testes de forma que sejam executados automaticamente ao iniciar o servidor, garantindo que todas as funcionalidades estejam funcionando corretamente.
 
-- implementar uma regra lógica que evite a criação de agendamentos duplicados, processos duplicados, usuarios duplicados, etc. (em andamento)
+- implementar uma regra lógica que evite a criação de agendamentos duplicados, processos duplicados, usuarios duplicados, etc. (OK)
 
 - garantir que um numero de tentativas de login seja limitado sendo 5 tentativas na 5 só seja permintido tentativa depois de 1 hora.
 
@@ -155,3 +156,7 @@ fazer:
 - implementar medidas para tratar dados com caracteres especiais, como acentos e caracteres não alfanuméricos, garantindo que o sistema funcione corretamente com diferentes idiomas e formatos de entrada.
 
 - implementar um sistema de cache para melhorar a performance do sistema, especialmente em consultas frequentes ao banco de dados.
+
+- limpar arquivos desnecessários e garantir que o repositório esteja organizado e fácil de navegar.
+
+- limpar arquivos orfãos e garantir que o repositório esteja livre de arquivos temporários ou desnecessários.

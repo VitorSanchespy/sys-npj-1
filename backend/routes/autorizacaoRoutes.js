@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const autorizacaoController = require('../controllers/autorizacaoControllers');
 const authMiddleware = require('../middleware/authMiddleware');
+const { validarUsuarioDuplicado } = require('../middleware/antiDuplicacaoMiddleware');
 
 /**
  * @route POST /api/auth/login
@@ -15,7 +16,7 @@ router.post('/login', autorizacaoController.login);
  * @desc Registro de novo usuário
  * @access Público
  */
-router.post('/registro', autorizacaoController.registro);
+router.post('/registro', validarUsuarioDuplicado, autorizacaoController.registro);
 
 /**
  * @route POST /api/auth/refresh-token

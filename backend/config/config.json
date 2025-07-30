@@ -1,0 +1,26 @@
+{
+  "development": {
+    "username": "root",
+    "password": "password123",
+    "database": "npjdatabase",
+    "host": "localhost",
+    "port": 3306,
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "root",
+    "password": "password123",
+    "database": "npjdatabase_test",
+    "host": "localhost",
+    "port": 3306,
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "root",
+    "password": "password123",
+    "database": "npjdatabase",
+    "host": "localhost",
+    "port": 3306,
+    "dialect": "mysql"
+  }
+}

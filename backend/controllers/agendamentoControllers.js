@@ -1,5 +1,16 @@
 // Controlador de Agendamentos
 const { agendamentoModels: Agendamento } = require('../models/indexModels');
+const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
+const { Op } = require('sequelize');
+const NotificacaoService = require('../services/notificacaoService');
+
+// Instância do serviço de notificação (será inicializada no index.js)
+let notificacaoService = null;
+
+// Função para inicializar o serviço de notificação
+const setNotificacaoService = (service) => {
+  notificacaoService = service;
+};
 
 // Lista agendamentos baseado no role do usuário
 exports.listarAgendamentos = async (req, res) => {
@@ -130,7 +141,7 @@ exports.criarAgendamento = async (req, res) => {
           {
             model: Usuario,
             as: 'criador',
-            attributes: ['id', 'nome'],
+            attributes: ['id', 'nome', 'email'],
             include: [{
               model: Role,
               as: 'role',
@@ -140,7 +151,7 @@ exports.criarAgendamento = async (req, res) => {
           {
             model: Usuario,
             as: 'destinatario',
-            attributes: ['id', 'nome'],
+            attributes: ['id', 'nome', 'email'],
             include: [{
               model: Role,
               as: 'role',
@@ -152,6 +163,36 @@ exports.criarAgendamento = async (req, res) => {
     } catch (includeError) {
       console.log('Aviso: Erro ao buscar includes, retornando agendamento básico:', includeError.message);
       agendamentoCompleto = agendamento;
+    }
+
+    // Enviar notificações após criação bem-sucedida
+    try {
+      if (notificacaoService && agendamentoCompleto.criador && agendamentoCompleto.destinatario) {
+        console.log('📧 Enviando notificações para agendamento criado...');
+        await notificacaoService.notificarAgendamentoCriado(
+          agendamentoCompleto,
+          agendamentoCompleto.criador,
+          agendamentoCompleto.destinatario
+        );
+      } else {
+        // Fallback: buscar usuários manualmente se não conseguiu via include
+        const criador = await Usuario.findByPk(usuarioLogado.id, {
+          attributes: ['id', 'nome', 'email']
+        });
+        const destinatario = await Usuario.findByPk(agendamentoData.usuario_id, {
+          attributes: ['id', 'nome', 'email']
+        });
+
+        if (notificacaoService && criador && destinatario) {
+          await notificacaoService.notificarAgendamentoCriado(
+            agendamento,
+            criador,
+            destinatario
+          );
+        }
+      }
+    } catch (notificacaoError) {
+      console.error('⚠️ Erro ao enviar notificações (agendamento criado com sucesso):', notificacaoError);
     }
     
     res.status(201).json(agendamentoCompleto);
@@ -167,7 +208,15 @@ exports.atualizarAgendamento = async (req, res) => {
     const { id } = req.params;
     const usuarioLogado = req.usuario;
     
-    const agendamento = await Agendamento.findByPk(id);
+    const agendamento = await Agendamento.findByPk(id, {
+      include: [
+        {
+          model: Usuario,
+          as: 'destinatario',
+          attributes: ['id', 'nome', 'email']
+        }
+      ]
+    });
     
     if (!agendamento) {
       return res.status(404).json({ erro: 'Agendamento não encontrado' });
@@ -181,6 +230,24 @@ exports.atualizarAgendamento = async (req, res) => {
     }
     
     await agendamento.update(req.body);
+
+    // Enviar notificações de atualização
+    try {
+      if (notificacaoService && agendamento.destinatario) {
+        const criador = await Usuario.findByPk(usuarioLogado.id, {
+          attributes: ['id', 'nome', 'email']
+        });
+
+        await notificacaoService.notificarAgendamentoAtualizado(
+          agendamento,
+          criador,
+          agendamento.destinatario
+        );
+      }
+    } catch (notificacaoError) {
+      console.error('⚠️ Erro ao enviar notificações de atualização:', notificacaoError);
+    }
+    
     res.json(agendamento);
   } catch (error) {
     console.error('Erro ao atualizar agendamento:', error);
@@ -192,9 +259,18 @@ exports.atualizarAgendamento = async (req, res) => {
 exports.excluirAgendamento = async (req, res) => {
   try {
     const { id } = req.params;
+    const { motivo } = req.body; // Motivo opcional do cancelamento
     const usuarioLogado = req.usuario;
     
-    const agendamento = await Agendamento.findByPk(id);
+    const agendamento = await Agendamento.findByPk(id, {
+      include: [
+        {
+          model: Usuario,
+          as: 'destinatario',
+          attributes: ['id', 'nome', 'email']
+        }
+      ]
+    });
     
     if (!agendamento) {
       return res.status(404).json({ erro: 'Agendamento não encontrado' });
@@ -205,6 +281,24 @@ exports.excluirAgendamento = async (req, res) => {
       return res.status(403).json({ 
         erro: 'Apenas quem criou o agendamento pode excluí-lo' 
       });
+    }
+
+    // Enviar notificações antes de excluir
+    try {
+      if (notificacaoService && agendamento.destinatario) {
+        const criador = await Usuario.findByPk(usuarioLogado.id, {
+          attributes: ['id', 'nome', 'email']
+        });
+
+        await notificacaoService.notificarAgendamentoCancelado(
+          agendamento,
+          criador,
+          agendamento.destinatario,
+          motivo
+        );
+      }
+    } catch (notificacaoError) {
+      console.error('⚠️ Erro ao enviar notificações de cancelamento:', notificacaoError);
     }
     
     await agendamento.destroy();
@@ -267,3 +361,6 @@ exports.buscarAgendamentoPorId = async (req, res) => {
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
+
+// Exportar função para configurar o serviço de notificação
+module.exports.setNotificacaoService = setNotificacaoService;
