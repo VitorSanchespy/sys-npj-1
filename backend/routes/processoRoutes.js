@@ -6,7 +6,10 @@ const { validate, handleValidation } = require('../middleware/validationMiddlewa
 // Importando os controladores de processo
 const {
     criarProcesso, vincularUsuario, atualizarProcessos,
-    listarProcessos, buscarProcessoPorId, excluirProcesso
+    listarProcessos, buscarProcessoPorId, excluirProcesso,
+    detalharProcessos, removerUsuarioProcessos, 
+    listarUsuariosPorProcessos, listarMeusProcessos,
+    buscarProcessos, listarProcessosRecentes, estatisticasProcessos
 } = require('../controllers/processoControllers.js');
 
 // Aplicar middleware de autenticação a todas as rotas
@@ -30,7 +33,7 @@ router.patch('/:processo_id',
 // Detalhar processo completo
 router.get('/:processo_id/detalhes',
     roleMiddleware(['Professor', 'Admin', 'Aluno']),
-    buscarProcessoPorId
+    detalharProcessos
 );
 
 // listar processos
@@ -64,126 +67,32 @@ router.get('/',
 router.delete('/remover-usuario',
     roleMiddleware(['Professor', 'Admin']),
     validate('removerUsuario'),
-    async (req, res) => {
-        try {
-            res.status(501).json({ message: 'Funcionalidade não implementada' });
-        } catch (error) {
-            res.status(500).json({ message: 'Erro interno do servidor' });
-        }
-    }
+    removerUsuarioProcessos
 );
 
 // Listar usuários vinculados a um processo
 router.get('/:processo_id/usuarios',
     roleMiddleware(['Professor', 'Admin', 'Aluno']),
-    async (req, res) => {
-        try {
-            res.status(501).json({ message: 'Funcionalidade não implementada' });
-        } catch (error) {
-            res.status(500).json({ message: 'Erro interno do servidor' });
-        }
-    }
+    listarUsuariosPorProcessos
 );
 
 // Listar meus processos (Alunos e Professores)
-router.get('/meus-processos', async (req, res) => {
-    try {
-        res.status(501).json({ message: 'Funcionalidade não implementada' });
-    } catch (error) {
-        res.status(500).json({ message: 'Erro interno do servidor' });
-    }
-});
+router.get('/meus-processos', listarMeusProcessos);
 
 // Listar processos recentes (últimos 5 atualizados)
 router.get('/recentes', 
     roleMiddleware(['Professor', 'Admin', 'Aluno']),
-    async (req, res) => {
-        try {
-            const { id: userId, role } = req.usuario;
-            
-            let query = `
-                SELECT p.*, u.nome as usuario_responsavel
-                FROM processos p
-                LEFT JOIN usuarios u ON p.idusuario_responsavel = u.id
-                WHERE 1=1
-            `;
-            
-            // Filtrar baseado no papel do usuário
-            if (role === 'Aluno' || role === 2 || role === '2') { // Aluno
-                query += ` AND p.idusuario_responsavel = ${userId}`;
-            }
-            
-            query += ` ORDER BY p.criado_em DESC LIMIT 5`;
-            
-            const db = require('../config/sequelize');
-            const [processos] = await db.query(query);
-            
-            res.json(processos);
-        } catch (error) {
-            res.status(500).json({ message: 'Erro interno do servidor' });
-        }
-    }
+    listarProcessosRecentes
 );
 
 // Estatísticas dos processos (para dashboard)
 router.get('/stats', 
     roleMiddleware(['Professor', 'Admin']),
-    async (req, res) => {
-        try {
-            const { id: userId, role } = req.usuario;
-            const db = require('../config/sequelize');
-            
-            let whereClause = '';
-            if (role === 'Professor') {
-                whereClause = `WHERE idusuario_responsavel = ${userId}`;
-            }
-            
-            // Contar processos por status
-            const [statusResult] = await db.query(`
-                SELECT status, COUNT(*) as quantidade 
-                FROM processos 
-                ${whereClause}
-                GROUP BY status
-            `);
-            
-            // Total de processos
-            const [totalResult] = await db.query(`
-                SELECT COUNT(*) as total 
-                FROM processos 
-                ${whereClause}
-            `);
-            
-            const stats = {
-                total: parseInt(totalResult[0].total),
-                porStatus: {},
-                ativos: 0
-            };
-            
-            statusResult.forEach(item => {
-                const status = item.status || 'indefinido';
-                const quantidade = parseInt(item.quantidade);
-                stats.porStatus[status] = quantidade;
-                
-                if (status !== 'arquivado') {
-                    stats.ativos += quantidade;
-                }
-            });
-            
-            res.json(stats);
-        } catch (error) {
-            res.status(500).json({ message: 'Erro interno do servidor' });
-        }
-    }
+    estatisticasProcessos
 );
 
 // Buscar processos por numero
-router.get('/buscar', async (req, res) => {
-    try {
-        res.status(501).json({ message: 'Funcionalidade não implementada' });
-    } catch (error) {
-        res.status(500).json({ message: 'Erro interno do servidor' });
-    }
-});
+router.get('/buscar', buscarProcessos);
 
 // Vincular usuário a processo
 router.post('/vincular-usuario',

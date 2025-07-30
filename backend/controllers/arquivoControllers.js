@@ -1,11 +1,4 @@
-<<<<<<< HEAD
-
-
 const upload = require('../utils/uploadMiddleware');
-=======
-// Controlador para Arquivos
-const upload = require('../middleware/uploadMiddleware');
->>>>>>> 631e91f783120f46177e0e5e9cc8462e2edf0526
 const { arquivoModels: Arquivo, processoModels: Processo, usuariosModels: Usuario } = require('../models/indexModels');
 
 // Upload de arquivo

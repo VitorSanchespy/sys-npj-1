@@ -1,10 +1,5 @@
 // Controlador de Agendamentos
-<<<<<<< HEAD
 const { agendamentoModels: Agendamento } = require('../models/indexModels');
-=======
-const { agendamentoModels: Agendamento, usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
-const { Op } = require('sequelize');
->>>>>>> 631e91f783120f46177e0e5e9cc8462e2edf0526
 
 // Lista agendamentos baseado no role do usuário
 exports.listarAgendamentos = async (req, res) => {

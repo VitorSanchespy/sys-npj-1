@@ -1,9 +1,5 @@
 // Controlador de Usuários
-<<<<<<< HEAD
 const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
-=======
-const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels.js');
->>>>>>> 631e91f783120f46177e0e5e9cc8462e2edf0526
 const bcrypt = require('bcrypt');
 
 // Lista usuários ativos
@@ -65,7 +61,7 @@ exports.atualizarUsuario = async (req, res) => {
 };
 
 // Desativa usuário (soft delete)
-exports.deletarUsuario = async (req, res) => {
+exports.excluirUsuario = async (req, res) => {
   try {
     const { id } = req.params;
     const usuario = await Usuario.findByPk(id);
@@ -116,120 +112,8 @@ exports.obterPerfil = async (req, res) => {
   }
 };
 
-<<<<<<< HEAD
 // Aliases para compatibilidade com código existente
 exports.listarUsuariosDebug = exports.listarUsuarios;
 exports.listarUsuariosParaVinculacao = exports.listarUsuarios;
 
 
-=======
-// Lista usuários por role
-exports.listarUsuariosPorRole = async (req, res) => {
-  try {
-    const { roleName } = req.params;
-    
-    const usuarios = await Usuario.findAll({
-      where: { ativo: true },
-      include: [{
-        model: Role,
-        as: 'role',
-        where: { nome: roleName }
-      }]
-    });
-    
-    res.json(usuarios);
-  } catch (error) {
-    console.error('Erro:', error);
-    res.status(500).json({ erro: 'Erro interno do servidor' });
-  }
-};
-
-// Reativar usuário
-exports.reativarUsuario = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const usuario = await Usuario.findByPk(id);
-    
-    if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado' });
-    }
-    
-    await usuario.update({ ativo: true });
-    res.json({ mensagem: 'Usuário reativado' });
-  } catch (error) {
-    console.error('Erro:', error);
-    res.status(500).json({ erro: 'Erro interno do servidor' });
-  }
-};
-
-// Atualizar perfil próprio
-exports.atualizarPerfilProprio = async (req, res) => {
-  try {
-    const { nome, email } = req.body;
-    const usuario = await Usuario.findByPk(req.usuario.id);
-    
-    if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado' });
-    }
-    
-    await usuario.update({ nome, email });
-    res.json({ mensagem: 'Perfil atualizado' });
-  } catch (error) {
-    console.error('Erro:', error);
-    res.status(500).json({ erro: 'Erro interno do servidor' });
-  }
-};
-
-// Atualizar senha
-exports.atualizarSenha = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { senha } = req.body;
-    
-    const usuario = await Usuario.findByPk(id);
-    if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado' });
-    }
-    
-    const senhaHash = await bcrypt.hash(senha, 10);
-    await usuario.update({ senha: senhaHash });
-    
-    res.json({ mensagem: 'Senha atualizada' });
-  } catch (error) {
-    console.error('Erro:', error);
-    res.status(500).json({ erro: 'Erro interno do servidor' });
-  }
-};
-
-// Contar usuários
-exports.contarUsuarios = async (req, res) => {
-  try {
-    const db = require('../utils/sequelize');
-    
-    // Contar usuários totais
-    const [totalResult] = await db.query('SELECT COUNT(*) as total FROM usuarios WHERE ativo = true');
-    
-    // Contar usuários por tipo
-    const [porTipoResult] = await db.query(`
-      SELECT r.nome as tipo, COUNT(u.id) as quantidade
-      FROM usuarios u 
-      JOIN roles r ON u.role_id = r.id 
-      WHERE u.ativo = true 
-      GROUP BY r.nome
-    `);
-    
-    const usuariosPorTipo = {};
-    porTipoResult.forEach(item => {
-      usuariosPorTipo[item.tipo.toLowerCase()] = parseInt(item.quantidade);
-    });
-    
-    res.json({ 
-      total: parseInt(totalResult[0].total),
-      porTipo: usuariosPorTipo
-    });
-  } catch (error) {
-    console.error('Erro ao contar usuários:', error);
-    res.status(500).json({ message: 'Erro interno do servidor' });
-  }
-};
->>>>>>> 631e91f783120f46177e0e5e9cc8462e2edf0526
