@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   sistema-npj-db-1:
     image: mysql:8.0
@@ -10,7 +8,7 @@ services:
       MYSQL_USER: appuser
       MYSQL_PASSWORD: app123
     ports:
-      - "3307:3306"
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./db:/docker-entrypoint-initdb.d
@@ -32,6 +30,16 @@ services:
       DB_USER: root
       DB_PASSWORD: 12345678@
       DB_NAME: npjdatabase
+      DB_PORT: 3306
+      JWT_SECRET: seuSegredoSuperSecreto4321
+      PORT: 3001
+      FRONTEND_URL: http://localhost:5173
+      TOKEN_EXPIRATION: 24h
+      REFRESH_TOKEN_EXPIRATION: 7d
+      SMTP_HOST: sandbox.smtp.mailtrap.io
+      SMTP_PORT: 2525
+      SMTP_USER: 1de9dd2885142d
+      SMTP_PASS: 4cbb67d109aa27
     depends_on:
       sistema-npj-db-1:
         condition: service_healthy

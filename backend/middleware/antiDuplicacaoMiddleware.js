@@ -19,6 +19,17 @@ const validarUsuarioDuplicado = async (req, res, next) => {
     const { email, nome, telefone } = req.body;
     const { id } = req.params; // Para atualizações
 
+    // Verificar se email foi fornecido
+    if (!email) {
+      return res.status(400).json({
+        erro: 'Dados inválidos',
+        detalhes: {
+          campo: 'email',
+          mensagem: 'Email é obrigatório'
+        }
+      });
+    }
+
     // Validação de email único
     const emailQuery = { email: email.toLowerCase().trim() };
     if (id) {
@@ -41,7 +52,7 @@ const validarUsuarioDuplicado = async (req, res, next) => {
     }
 
     // Validação adicional: telefone único (se fornecido)
-    if (telefone) {
+    if (telefone && telefone.trim()) {
       const telefonequery = { 
         telefone: telefone.trim(),
         telefone: { [Op.ne]: null } 
@@ -186,7 +197,7 @@ const validarAgendamentoDuplicado = async (req, res, next) => {
     }
 
     // Verificar duplicação exata (mesmo título, data e usuário)
-    if (titulo) {
+    if (titulo && titulo.trim()) {
       const queryDuplicacao = {
         usuario_id,
         titulo: titulo.trim(),

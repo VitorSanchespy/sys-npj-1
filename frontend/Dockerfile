@@ -17,5 +17,5 @@ RUN npm run build
 # Expor porta
 EXPOSE 5173
 
-# Usar dev server para desenvolvimento
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# Usar dev server para desenvolvimento com host correto
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]

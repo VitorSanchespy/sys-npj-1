@@ -18,7 +18,9 @@ const Navigation = () => {
     { path: '/processos', label: 'Processos', icon: '📋', roles: ['Admin', 'Professor', 'Aluno'] },
     { path: '/agendamentos', label: 'Agendamentos', icon: '📅', roles: ['Admin', 'Professor', 'Aluno'] },
     { path: '/arquivos', label: 'Arquivos', icon: '📁', roles: ['Admin', 'Professor', 'Aluno'] },
+    { path: '/notificacoes', label: 'Notificações', icon: '🔔', roles: ['Admin', 'Professor', 'Aluno'] },
     { path: '/usuarios', label: 'Usuários', icon: '👥', roles: ['Admin', 'Professor'] },
+    { path: '/notificacoes/configuracoes', label: 'Config. Notificações', icon: '⚙️', roles: ['Admin', 'Professor', 'Aluno'] },
     { path: '/profile', label: 'Perfil', icon: '👤', roles: ['Admin', 'Professor', 'Aluno'] },
     
   ];

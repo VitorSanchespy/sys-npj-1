@@ -21,6 +21,8 @@ import UserDetailPage from "@/pages/dashboard/UserDetailPage";
 import UserEditPage from "@/pages/dashboard/UserEditPage";
 import ArquivosPage from "@/pages/dashboard/ArquivosPage";
 import AgendamentosPage from "@/pages/AgendamentosPage";
+import NotificationPage from "@/pages/dashboard/NotificationPage";
+import NotificationSettingsPage from "@/pages/dashboard/NotificationSettingsPage";
 import { hasRole } from "@/utils/permissions";
 
 function PrivateRoute({ children, roles }) {
@@ -68,6 +70,11 @@ export default function AppRouter() {
           <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} /> 
           <Route path="/arquivos" element={<PrivateRoute><ArquivosPage /></PrivateRoute>} /> 
           <Route path="/agendamentos" element={<PrivateRoute><AgendamentosPage /></PrivateRoute>} /> 
+          
+          {/* Notificações */}
+          <Route path="/notificacoes" element={<PrivateRoute><NotificationPage /></PrivateRoute>} />
+          <Route path="/notificacoes/configuracoes" element={<PrivateRoute><NotificationSettingsPage /></PrivateRoute>} />
+          
           {/* Protegido: Admin */}
           {/* Usuários (admin/professor) */}
           <Route path="/usuarios" element={<PrivateRoute roles={["Professor", "Admin"]}><UserListPage /></PrivateRoute>} />
