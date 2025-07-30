@@ -18,7 +18,11 @@ module.exports = app; // Exporta o app para testes
 app.use(helmet());
 
 // Middleware para correção de encoding UTF-8
+<<<<<<< HEAD
 // app.use(require('./middleware/encodingMiddleware'));
+=======
+// app.use(require('./middleware/encodingMiddleware')); // Desabilitado temporariamente
+>>>>>>> 631e91f783120f46177e0e5e9cc8462e2edf0526
 
 // express.json() será movido para depois da rota de upload
 app.use(
@@ -110,8 +114,11 @@ const speedLimiter = slowDown({
 });
 app.use(speedLimiter);
 
+<<<<<<< HEAD
 // Conexão com o banco de dados
 require('./utils/config');
+=======
+>>>>>>> 631e91f783120f46177e0e5e9cc8462e2edf0526
 
 
 // Cria a pasta 'uploads' se não existir
@@ -140,7 +147,12 @@ app.use('/auth', require('./routes/autorizacaoRoutes'));
 app.use('/api/usuarios', require('./routes/usuarioRoutes'));
 app.use('/api/processos', require('./routes/processoRoutes'));
 app.use('/api/agendamentos', require('./routes/agendamentoRoutes'));
+<<<<<<< HEAD
 // app.use('/api/aux', require('./routes/tabelaAuxiliarRoutes')); // duplicated line
+=======
+app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoutes'));
+app.use('/api/aux', require('./routes/tabelaAuxiliarRoutes'));
+>>>>>>> 631e91f783120f46177e0e5e9cc8462e2edf0526
 // Tratamento de erros
 app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Erro interno do servidor' });

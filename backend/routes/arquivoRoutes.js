@@ -8,7 +8,7 @@ const verificarToken = require('../utils/authMiddleware');
 router.use(verificarToken);
 
 // POST /api/arquivos/upload - Upload de arquivo
-router.post('/upload', fileController.uploadArquivo);
+router.post('/upload', ...fileController.uploadArquivo);
 
 // GET /api/arquivos/processo/:processo_id - Listar arquivos de um processo
 router.get('/processo/:processo_id', fileController.listarArquivosPorProcesso);

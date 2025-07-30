@@ -21,12 +21,15 @@ const AgendamentoManager = ({ processoId = null }) => {
     data_evento: '',
     tipo_evento: 'audiencia',
     processo_id: processoId || '',
+    usuario_id: '', // Para quem é o agendamento
     local: '',
     lembrete_1_dia: true,
     lembrete_2_dias: true,
     lembrete_1_semana: false,
     status: 'agendado'
   });
+
+  const [usuarios, setUsuarios] = useState([]);
 
   const tiposEvento = [
     { value: 'audiencia', label: 'Audiência' },
@@ -45,7 +48,24 @@ const AgendamentoManager = ({ processoId = null }) => {
 
   useEffect(() => {
     carregarAgendamentos();
+    carregarUsuarios();
   }, [processoId, filtros]);
+
+  const carregarUsuarios = async () => {
+    if (!userData || !userData.token) return;
+    // Só carregar usuários se for Admin ou Professor
+    if (userData.role === 'Aluno') return;
+    
+    try {
+      const response = await apiRequest('/api/usuarios', {
+        method: 'GET',
+        token: userData.token
+      });
+      setUsuarios(response.data || []);
+    } catch (error) {
+      console.error('Erro ao carregar usuários:', error);
+    }
+  };
 
   const carregarAgendamentos = async () => {
     if (!userData || !userData.token) return;
@@ -126,6 +146,7 @@ const AgendamentoManager = ({ processoId = null }) => {
       data_evento: '',
       tipo_evento: 'audiencia',
       processo_id: processoId || '',
+      usuario_id: '',
       local: '',
       lembrete_1_dia: true,
       lembrete_2_dias: true,
@@ -173,6 +194,7 @@ const AgendamentoManager = ({ processoId = null }) => {
           {processoId ? 'Agendamentos do Processo' : 'Meus Agendamentos'}
         </h2>
         <button
+          id="btn-add-appointment"
           onClick={() => {
             setShowForm(true);
             setEditando(null);
@@ -188,6 +210,7 @@ const AgendamentoManager = ({ processoId = null }) => {
       <div className="bg-white rounded-lg shadow p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <select
+            id="filter-event-type"
             value={filtros.tipo_evento}
             onChange={(e) => setFiltros({ ...filtros, tipo_evento: e.target.value })}
             className="border border-gray-300 rounded-lg px-3 py-2"
@@ -294,6 +317,27 @@ const AgendamentoManager = ({ processoId = null }) => {
                   </select>
                 </div>
               </div>
+
+              {/* Campo para selecionar usuário (apenas para Admin e Professor) */}
+              {userData && userData.role !== 'Aluno' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Destinatário
+                  </label>
+                  <select
+                    value={formData.usuario_id}
+                    onChange={(e) => setFormData({ ...formData, usuario_id: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  >
+                    <option value="">Selecione um usuário (deixe vazio para você mesmo)</option>
+                    {usuarios.map(usuario => (
+                      <option key={usuario.id} value={usuario.id}>
+                        {usuario.nome} ({usuario.role})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -412,9 +456,51 @@ const AgendamentoManager = ({ processoId = null }) => {
           <p className="text-gray-500">Nenhum agendamento encontrado</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div id="appointments-list" className="space-y-4">
+          {/* Mini Calendário de Agendamentos */}
+          <div id="appointments-calendar" className="bg-white rounded-lg shadow p-4 mb-6">
+            <h3 className="text-lg font-semibold mb-4">📅 Visualização em Calendário</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {agendamentos
+                .sort((a, b) => new Date(a.data_evento) - new Date(b.data_evento))
+                .slice(0, 6) // Mostrar apenas os próximos 6
+                .map(agendamento => (
+                  <div key={`cal-${agendamento.id}`} className="border border-gray-200 rounded p-3 hover:bg-gray-50">
+                    <div className="text-sm font-semibold text-blue-600">
+                      {new Date(agendamento.data_evento).toLocaleDateString('pt-BR')}
+                    </div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      {tiposEvento.find(t => t.value === agendamento.tipo_evento)?.label || agendamento.tipo_evento}
+                    </div>
+                    <div className="text-sm font-medium truncate">
+                      {agendamento.titulo}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+          
           {agendamentos.map(agendamento => (
             <div key={agendamento.id} className="bg-white rounded-lg shadow p-6">
+              {/* Indicador de tipo de agendamento */}
+              <div className="flex items-center space-x-2 mb-3">
+                {userData && agendamento.criado_por === userData.id && agendamento.usuario_id === userData.id && (
+                  <span className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                    📝 Seu agendamento
+                  </span>
+                )}
+                {userData && agendamento.criado_por === userData.id && agendamento.usuario_id !== userData.id && (
+                  <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                    👥 Agendamento criado por você
+                  </span>
+                )}
+                {userData && agendamento.criado_por !== userData.id && agendamento.usuario_id === userData.id && (
+                  <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                    🎯 Agendamento para você
+                  </span>
+                )}
+              </div>
+
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
@@ -432,6 +518,12 @@ const AgendamentoManager = ({ processoId = null }) => {
                     {agendamento.local && <p>📍 {agendamento.local}</p>}
                     {agendamento.processo && (
                       <p>📋 Processo: {agendamento.processo.numero_processo}</p>
+                    )}
+                    {agendamento.criador && (
+                      <p>👤 Criado por: {agendamento.criador.nome} ({agendamento.criador.role})</p>
+                    )}
+                    {agendamento.destinatario && agendamento.destinatario.id !== agendamento.criado_por && (
+                      <p>🎯 Para: {agendamento.destinatario.nome} ({agendamento.destinatario.role})</p>
                     )}
                     {agendamento.descricao && (
                       <p className="mt-2">{agendamento.descricao}</p>
@@ -462,22 +554,25 @@ const AgendamentoManager = ({ processoId = null }) => {
                   </div>
                 </div>
 
-                <div className="flex space-x-2 ml-4">
-                  <button
-                    onClick={() => handleEdit(agendamento)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded"
-                    title="Editar"
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    onClick={() => handleDelete(agendamento.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded"
-                    title="Excluir"
-                  >
-                    🗑️
-                  </button>
-                </div>
+                {/* Botões de ação - apenas para quem criou */}
+                {userData && agendamento.criado_por === userData.id && (
+                  <div className="flex space-x-2 ml-4">
+                    <button
+                      onClick={() => handleEdit(agendamento)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                      title="Editar"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => handleDelete(agendamento.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded"
+                      title="Excluir"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}

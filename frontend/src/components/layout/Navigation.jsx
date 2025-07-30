@@ -82,12 +82,14 @@ const Navigation = () => {
 
       {/* Menu Items */}
       <div 
+        id="navigation-menu"
         data-testid="menu-items-section"
         style={{ flex: 1, padding: '16px 0' }}>
         {filteredMenuItems.map((item) => (
           <Link
             key={item.path}
             to={item.path}
+            id={`nav-link-${item.path.replace('/', '')}`}
             data-testid={`menu-item-${item.path.replace('/', '')}`}
             style={{
               display: 'flex',

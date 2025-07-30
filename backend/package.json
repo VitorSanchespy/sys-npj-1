@@ -23,10 +23,17 @@
     "express-rate-limit": "^7.1.5",
     "express-mongo-sanitize": "^2.2.0",
     "express-slow-down": "^2.0.1",
+<<<<<<< HEAD
     "express-validator": "^7.0.1",
     "socket.io": "^4.7.4",
     "nodemailer": "^6.9.8",
     "node-cron": "^3.0.3"
+=======
+    "socket.io": "^4.7.5",
+    "express-validator": "^7.2.0",
+    "nodemailer": "^6.9.1",
+    "node-cron": "^3.0.2"
+>>>>>>> 631e91f783120f46177e0e5e9cc8462e2edf0526
   },
   "keywords": [],
   "author": "",

@@ -119,6 +119,25 @@ export default function ProcessListPage() {
         Gerencie todos os processos do sistema
       </p>
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center', margin: '20px 0' }}>
+        {/* Campo de busca */}
+        <div style={{ flex: 1, maxWidth: '400px' }}>
+          <input
+            id="search-processes"
+            type="text"
+            placeholder="🔍 Buscar por número, descrição ou assistido..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '14px',
+              backgroundColor: '#fff'
+            }}
+          />
+        </div>
+        
         {/* Toggle meus processos */}
         {getUserRole(user) !== "Aluno" && (
           <label style={{ 
@@ -137,9 +156,11 @@ export default function ProcessListPage() {
             Apenas meus processos
           </label>
         )}
+        
         {/* Botão novo processo */}
         {canCreateProcess(user) && (
           <Button
+            id="btn-add-process"
             variant="success"
             onClick={() => navigate('/processos/novo')}
             style={{

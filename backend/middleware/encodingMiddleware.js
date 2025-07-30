@@ -10,7 +10,12 @@ const encodingMiddleware = (req, res, next) => {
     'Ã¹': 'ù', 'Ã…': 'Å', 'Ã‡': 'Ç'
   };
   
-  function fixEncoding(obj) {
+  function fixEncoding(obj, visited = new WeakSet()) {
+    // Evitar recursão infinita
+    if (obj && typeof obj === 'object' && visited.has(obj)) {
+      return obj;
+    }
+    
     if (typeof obj === 'string') {
       let fixed = obj;
       for (const [wrong, correct] of Object.entries(charFixMap)) {
@@ -20,13 +25,20 @@ const encodingMiddleware = (req, res, next) => {
     }
     
     if (Array.isArray(obj)) {
-      return obj.map(fixEncoding);
+      visited.add(obj);
+      return obj.map(item => fixEncoding(item, visited));
     }
     
     if (obj && typeof obj === 'object') {
+      visited.add(obj);
       const fixed = {};
       for (const [key, value] of Object.entries(obj)) {
-        fixed[key] = fixEncoding(value);
+        try {
+          fixed[key] = fixEncoding(value, visited);
+        } catch (error) {
+          // Se houver erro, manter valor original
+          fixed[key] = value;
+        }
       }
       return fixed;
     }
