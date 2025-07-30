@@ -146,6 +146,7 @@ async function testarCriacaoNotificacao(token) {
     console.log('\n👤 TESTANDO CRIAÇÃO DE NOTIFICAÇÃO (VIA NOVO USUÁRIO)...');
     try {
         const timestamp = Date.now();
+        const randomId = Math.floor(Math.random() * 10000);
         const result = await makeRequest(`${api}/api/usuarios`, {
             method: 'POST',
             headers: {
@@ -153,9 +154,9 @@ async function testarCriacaoNotificacao(token) {
             },
             body: JSON.stringify({
                 nome: 'Teste Notificações Frontend',
-                email: `teste.frontend.${timestamp}@teste.com`,
+                email: `teste.frontend.${timestamp}.${randomId}@teste.com`,
                 senha: '123456',
-                telefone: '(11) 99999-9999',
+                telefone: `(11) 9999${randomId.toString().padStart(4, '0')}`,
                 role_id: 1
             })
         });
