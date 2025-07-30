@@ -1,36 +1,36 @@
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
+const { verificarToken } = require('../middleware/authMiddleware');
 const arquivoController = require('../controllers/arquivoControllers');
 
 
 router.post('/upload', 
-  authMiddleware,
+  verificarToken,
   arquivoController.uploadArquivo
 );
 // Listar arquivos anexados a um processo
 router.get('/processo/:processo_id', 
-  authMiddleware,
+  verificarToken,
   arquivoController.listarArquivos
 );
 
 // Listar arquivos enviados por um usuário
 router.get('/usuario/:usuario_id', 
-  authMiddleware,
+  verificarToken,
   arquivoController.listarArquivosUsuario
 );
 
 // Anexar arquivo já enviado a um processo
 router.post('/anexar', 
-  authMiddleware,
+  verificarToken,
   arquivoController.anexarArquivoExistente
 );
 
 // Soft delete de arquivo
-router.delete('/:id', authMiddleware, arquivoController.softDeleteArquivo);
+router.delete('/:id', verificarToken, arquivoController.softDeleteArquivo);
 
 // Rota para desvincular arquivo de um processo
-router.put('/desvincular/:id', authMiddleware, arquivoController.desvincularArquivo);
+router.put('/desvincular/:id', verificarToken, arquivoController.desvincularArquivo);
 
 
 

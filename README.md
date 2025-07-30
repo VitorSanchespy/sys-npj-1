@@ -97,3 +97,37 @@ cd frontend
 npm install
 npm run dev  # Porta 5173
 ```
+
+## 🗃️ Migrations
+
+### Criar uma nova migration
+```bash
+npx sequelize-cli migration:generate --name nome_da_migration
+```
+
+### Executar migrations
+```bash
+npx sequelize-cli db:migrate
+```
+
+### Reverter a última migration
+```bash
+npx sequelize-cli db:migrate:undo
+```
+
+### Verificar status das migrations
+```bash
+npx sequelize-cli db:migrate:status
+``` 
+
+fazer:
+- criar todas as migrations necessárias para o sistema, garantindo que todas as tabelas estejam criadas e atualizadas.
+
+- garantir que os agendamentos sejam feitos corretamente. exemplo (Aluno cria um agendamento, o professor recebe a notificação, o aluno recebe a confirmação, etc). 
+
+- implementar a logica de agendamento exemplo: professor tem acesso aos agendamentos, aluno tem acesso aos agendamentos, professor pode confirmar ou cancelar agendamento, aluno pode cancelar agendamento, etc.
+
+- implementar sistema de notificações para os usuários (ex: email, push notifications) quando um agendamento é criado, confirmado ou cancelado.
+
+- implementar comentarios de uma linha simples e objetivo
+

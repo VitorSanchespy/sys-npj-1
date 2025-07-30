@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NPJ_CONFIG } from '../config/npjConfig';
+import { NPJ_CONFIG } from '../../config/npjConfig';
 
 // Componente de monitoramento de performance (apenas desenvolvimento)
 export function PerformanceMonitor() {

@@ -1,20 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const processUpdatesController = require('../controllers/atualizacaoProcessoControllers');
-const authMiddleware = require('../middleware/authMiddleware');
+const { verificarToken } = require('../middleware/authMiddleware');
 const { listar } = require('../controllers/tabelaAuxiliarControllers');
 const { adicionarAtualizacaoProcessos, 
     removerAtualizacaoProcessos, listarAtualizacaoProcesso, listarTodasAtualizacoes} = require
     ('../controllers/atualizacaoProcessoControllers');
 
 // Listar todas as atualizações (para dashboard)
-router.get('/', authMiddleware, listarTodasAtualizacoes);
+router.get('/', verificarToken, listarTodasAtualizacoes);
 // Listar atualizações de um processo
-router.get('/:processo_id', authMiddleware, listarAtualizacaoProcesso);
+router.get('/:processo_id', verificarToken, listarAtualizacaoProcesso);
 // Criar atualização
-router.post('/', authMiddleware, adicionarAtualizacaoProcessos);
+router.post('/', verificarToken, adicionarAtualizacaoProcessos);
 // Remover atualização
 router.delete('/:processo_id/atualizacoes/:atualizacao_id', 
-    authMiddleware, removerAtualizacaoProcessos);
+    verificarToken, removerAtualizacaoProcessos);
 
 module.exports = router;

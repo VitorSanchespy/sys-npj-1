@@ -25,7 +25,7 @@ const verificarToken = async (req, res, next) => {
             id: usuario.id,
             nome: usuario.nome,
             email: usuario.email,
-            role: usuario.role?.nome || usuario.role_id
+            role: usuario.role || { nome: 'user' }
         };
         next();
     } catch (error) {
@@ -36,4 +36,4 @@ const verificarToken = async (req, res, next) => {
     }
 };
 
-module.exports = verificarToken;
+module.exports = { verificarToken };

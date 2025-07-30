@@ -1,24 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
+const { verificarToken } = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware.js');
 const { validate, handleValidation } = require('../middleware/validationMiddleware');
 // Importando os controladores de processo
 const {
-    criarProcessos,  vincularUsuarioProcessos, atualizarProcessos,
-    listarProcessos, removerUsuarioProcessos,
-    listarUsuariosPorProcessos, listarMeusProcessos,
-    buscarProcessos, detalharProcessos
+    criarProcesso, vincularUsuario, atualizarProcessos,
+    listarProcessos, buscarProcessoPorId, excluirProcesso
 } = require('../controllers/processoControllers.js');
 
 // Aplicar middleware de autenticação a todas as rotas
-router.use(authMiddleware);
+router.use(verificarToken);
 
 // criar novo processo
 router.post('/novo',
     roleMiddleware(['Professor', 'Admin']),
     validate('criarProcesso'),
-    criarProcessos
+    criarProcesso
 );
 
 // Atualizar processo existente
@@ -32,7 +30,7 @@ router.patch('/:processo_id',
 // Detalhar processo completo
 router.get('/:processo_id/detalhes',
     roleMiddleware(['Professor', 'Admin', 'Aluno']),
-    detalharProcessos
+    buscarProcessoPorId
 );
 
 // listar processos
@@ -66,17 +64,35 @@ router.get('/',
 router.delete('/remover-usuario',
     roleMiddleware(['Professor', 'Admin']),
     validate('removerUsuario'),
-    removerUsuarioProcessos
+    async (req, res) => {
+        try {
+            res.status(501).json({ message: 'Funcionalidade não implementada' });
+        } catch (error) {
+            res.status(500).json({ message: 'Erro interno do servidor' });
+        }
+    }
 );
 
 // Listar usuários vinculados a um processo
 router.get('/:processo_id/usuarios',
     roleMiddleware(['Professor', 'Admin', 'Aluno']),
-    listarUsuariosPorProcessos
+    async (req, res) => {
+        try {
+            res.status(501).json({ message: 'Funcionalidade não implementada' });
+        } catch (error) {
+            res.status(500).json({ message: 'Erro interno do servidor' });
+        }
+    }
 );
 
 // Listar meus processos (Alunos e Professores)
-router.get('/meus-processos', listarMeusProcessos);
+router.get('/meus-processos', async (req, res) => {
+    try {
+        res.status(501).json({ message: 'Funcionalidade não implementada' });
+    } catch (error) {
+        res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+});
 
 // Listar processos recentes (últimos 5 atualizados)
 router.get('/recentes', 
@@ -161,13 +177,19 @@ router.get('/stats',
 );
 
 // Buscar processos por numero
-router.get('/buscar', buscarProcessos);
+router.get('/buscar', async (req, res) => {
+    try {
+        res.status(501).json({ message: 'Funcionalidade não implementada' });
+    } catch (error) {
+        res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+});
 
 // Vincular usuário a processo
 router.post('/vincular-usuario',
     roleMiddleware(['Professor', 'Admin']),
     validate('vincularUsuario'),
-    vincularUsuarioProcessos
+    vincularUsuario
 );
 
 module.exports = router;
