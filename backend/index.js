@@ -145,8 +145,9 @@ app.use((req, res, next) => {
   express.json()(req, res, next);
 });
 
-// Rota de arquivos
+// Rota de arquivos (temporariamente comentada)
 // app.use('/api/arquivos', require('./routes/arquivoRoutes'));
+// console.log('✅ /api/arquivos registrado');
 
 // Demais rotas
 console.log('🔧 Registrando rotas...');
@@ -156,10 +157,16 @@ app.use('/api/usuarios', require('./routes/usuarioRoutes'));
 console.log('✅ /api/usuarios registrado');
 app.use('/api/processos', require('./routes/processoRoutes'));
 console.log('✅ /api/processos registrado');
+// Compatibilidade: rotas sem prefixo /api para processos
+app.use('/processos', require('./routes/processoRoutes'));
+console.log('✅ /processos registrado (compatibilidade)');
 app.use('/api/agendamentos', require('./routes/agendamentoRoutes'));
 console.log('✅ /api/agendamentos registrado');
 app.use('/api/notificacoes', require('./routes/notificacaoRoutes'));
 console.log('✅ /api/notificacoes registrado');
+// Compatibilidade: rotas sem prefixo /api
+app.use('/notificacoes', require('./routes/notificacaoRoutes'));
+console.log('✅ /notificacoes registrado (compatibilidade)');
 app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoutes'));
 console.log('✅ /api/atualizacoes registrado');
 app.use('/api/aux', require('./routes/tabelaAuxiliarRoutes'));

@@ -1,4 +1,4 @@
-const upload = require('../utils/uploadMiddleware');
+const upload = require('../middleware/uploadMiddleware');
 const { arquivoModels: Arquivo, processoModels: Processo, usuariosModels: Usuario } = require('../models/indexModels');
 
 // Upload de arquivo

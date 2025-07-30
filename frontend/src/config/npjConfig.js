@@ -87,6 +87,15 @@ export const ROUTE_CONFIG = {
 
 // Helper para obter configuração de uma rota
 export function getRouteConfig(url) {
+  // Verificar se url é uma string válida
+  if (typeof url !== 'string') {
+    console.warn('⚠️ getRouteConfig: URL inválida:', url);
+    return {
+      cache: { ttl: NPJ_CONFIG.CACHE.DEFAULT_TTL, priority: 'medium' },
+      retry: { attempts: NPJ_CONFIG.API.RETRY_ATTEMPTS, delay: NPJ_CONFIG.API.RETRY_DELAY }
+    };
+  }
+  
   for (const [pattern, config] of Object.entries(ROUTE_CONFIG)) {
     if (url.includes(pattern)) {
       return config;

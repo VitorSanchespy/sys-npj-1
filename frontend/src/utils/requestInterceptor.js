@@ -182,6 +182,12 @@ export async function interceptedRequest(url, options = {}) {
 
   // Executar requisição com interceptação
   const response = await requestInterceptor.interceptRequest(url, options);
+  
+  // Verificar se a resposta é válida
+  if (!response) {
+    throw new Error('Resposta inválida do servidor');
+  }
+  
   const data = await response.json();
 
   // Cachear resposta para requisições GET bem-sucedidas
