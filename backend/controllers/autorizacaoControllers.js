@@ -3,10 +3,19 @@ const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexM
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+// Função para obter detalhes da requisição
+function obterDetalhesRequisicao(req) {
+  return {
+    ip: req.ip || req.connection.remoteAddress || 'N/A',
+    userAgent: req.get('User-Agent') || 'N/A'
+  };
+}
+
 // Login do usuário
 exports.login = async (req, res) => {
   try {
     const { email, senha } = req.body;
+    const detalhesLogin = obterDetalhesRequisicao(req);
     
     // Buscar usuário ativo por email com role
     const usuario = await Usuario.findOne({
@@ -15,12 +24,28 @@ exports.login = async (req, res) => {
     });
     
     if (!usuario) {
+      // Notificar tentativa com email incorreto
+      console.log('🔍 DEBUG AUTH - Email incorreto:', email);
+      if (global.notificacaoService) {
+        await global.notificacaoService.notificarEmailIncorreto(email, detalhesLogin);
+        console.log('✅ Notificação email incorreto enviada');
+      } else {
+        console.log('❌ Serviço de notificação não disponível');
+      }
       return res.status(401).json({ erro: 'Credenciais inválidas' });
     }
     
     // Verificar senha com bcrypt
     const senhaValida = await bcrypt.compare(senha, usuario.senha);
     if (!senhaValida) {
+      // Notificar tentativa com senha incorreta
+      console.log('🔍 DEBUG AUTH - Senha incorreta para:', email);
+      if (global.notificacaoService) {
+        await global.notificacaoService.notificarSenhaIncorreta(email, detalhesLogin);
+        console.log('✅ Notificação senha incorreta enviada');
+      } else {
+        console.log('❌ Serviço de notificação não disponível');
+      }
       return res.status(401).json({ erro: 'Credenciais inválidas' });
     }
     
@@ -33,6 +58,15 @@ exports.login = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: process.env.TOKEN_EXPIRATION || '24h' }
     );
+    
+    // Notificar login bem-sucedido
+    console.log('🔍 DEBUG AUTH - Login bem-sucedido para:', usuario.nome);
+    if (global.notificacaoService) {
+      await global.notificacaoService.notificarLoginSucesso(usuario, detalhesLogin);
+      console.log('✅ Notificação login sucesso enviada');
+    } else {
+      console.log('❌ Serviço de notificação não disponível');
+    }
     
     res.json({
       success: true,

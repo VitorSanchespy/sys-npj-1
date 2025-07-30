@@ -12,6 +12,7 @@ exports.uploadArquivo = [
 
       const { processo_id } = req.body;
       const { id: usuarioId } = req.usuario;
+      const usuarioLogado = req.usuario;
 
       const novoArquivo = await Arquivo.create({
         nome_original: req.file.originalname,
@@ -23,6 +24,20 @@ exports.uploadArquivo = [
         processo_id: processo_id || null,
         ativo: true
       });
+
+      // Notificar upload de arquivo
+      if (global.notificacaoService) {
+        let processo = null;
+        if (processo_id) {
+          processo = await Processo.findByPk(processo_id);
+        }
+        
+        await global.notificacaoService.notificarArquivoUpload(
+          novoArquivo,
+          usuarioLogado,
+          processo
+        );
+      }
 
       res.status(201).json({
         mensagem: 'Arquivo enviado com sucesso',

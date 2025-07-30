@@ -21,6 +21,7 @@ exports.listarUsuarios = async (req, res) => {
 exports.criarUsuario = async (req, res) => {
   try {
     const { nome, email, senha, role_id } = req.body;
+    const usuarioLogado = req.usuario;
     
     const senhaHash = await bcrypt.hash(senha, 10);
     
@@ -31,6 +32,11 @@ exports.criarUsuario = async (req, res) => {
       role_id,
       ativo: true
     });
+    
+    // Notificar usuário criado
+    if (global.notificacaoService) {
+      await global.notificacaoService.notificarUsuarioCriado(usuario, usuarioLogado);
+    }
     
     res.status(201).json({ id: usuario.id, nome, email, role_id });
   } catch (error) {

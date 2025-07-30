@@ -93,6 +93,9 @@ io.on('connection', (socket) => {
 const NotificacaoService = require('./services/notificacaoService');
 const notificacaoService = new NotificacaoService(io);
 
+// Configurar o serviço de notificação globalmente
+global.notificacaoService = notificacaoService;
+
 // Configurar o serviço de notificação nos controllers
 const agendamentoController = require('./controllers/agendamentoControllers');
 agendamentoController.setNotificacaoService(notificacaoService);

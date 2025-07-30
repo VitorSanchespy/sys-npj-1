@@ -83,6 +83,8 @@ exports.criarProcesso = async (req, res) => {
       descricao
     } = req.body;
 
+    const usuarioLogado = req.usuario;
+
     const novoProcesso = await Processo.create({
       numero_processo,
       parte_contraria,
@@ -99,6 +101,26 @@ exports.criarProcesso = async (req, res) => {
       sistema,
       descricao
     });
+
+    // Notificar criação de processo
+    if (global.notificacaoService) {
+      // Buscar usuários relacionados para notificar
+      const destinatarios = [];
+      
+      // Se tem usuário responsável diferente do criador, adicionar
+      if (usuario_responsavel_id && usuario_responsavel_id !== usuarioLogado.id) {
+        const usuarioResponsavel = await Usuario.findByPk(usuario_responsavel_id);
+        if (usuarioResponsavel) {
+          destinatarios.push(usuarioResponsavel);
+        }
+      }
+      
+      await global.notificacaoService.notificarProcessoCriado(
+        novoProcesso, 
+        usuarioLogado, 
+        destinatarios
+      );
+    }
 
     res.status(201).json({
       message: 'Processo criado com sucesso',

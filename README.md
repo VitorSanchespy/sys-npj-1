@@ -129,11 +129,11 @@ npx sequelize-cli db:migrate:status
 fazer:
 - criar todas as migrations necessárias para o sistema, garantindo que todas as tabelas estejam criadas e atualizadas.
 
-- garantir que os agendamentos sejam feitos corretamente. exemplo (Aluno cria um agendamento, o professor recebe a notificação, o aluno recebe a confirmação, etc). 
+- garantir que os agendamentos sejam feitos corretamente. exemplo (Aluno cria um agendamento, o professor recebe a notificação, o aluno recebe a confirmação, etc). (OK)
 
-- implementar a logica de agendamento exemplo: professor tem acesso aos agendamentos, aluno tem acesso aos agendamentos, professor pode confirmar ou cancelar agendamento, aluno pode cancelar agendamento, etc.
+- implementar sistema de notificações para os usuários (ex: email, push notifications) ou usar um frame work que ajude, quando um agendamento é criado, confirmado ou cancelado, tentativas de login, quando a senha for errada, quando o e-mail for errado, se já houver a notificação apenas reutilizar a função ou adaptar. Ou seja em todo o sistema e em toda função. Mas use (c499aca42967   mysql:8.0            "docker-entrypoint.s…"   3 hours ago          Up 14 minutos (healthy)   0.0.0.0:3307->3306/tcp, [::]:3307->3306/tcp   sistema-npj-db-1) o db no docker e o servirdor de backend na maquina localmente e o de frontend tambem pratindo da raiz do projeto entra na pasta backend e execulta npm start e partindo da raiz entra na pasta frontend e execulta npm run dev
 
-- implementar sistema de notificações para os usuários (ex: email, push notifications) quando um agendamento é criado, confirmado ou cancelado, tentantivas de login, quando o a senha for errada, quando o e-mail for errado, ou seja em todos sistema e em toda função.
+- implementar sistema de notificações para os usuários (ex: email, push notifications) quando um agendamento é criado, confirmado ou cancelado, tentativas de login, quando a senha for errada, quando o e-mail for errado, ou seja em todo o sistema e em toda função.
 
 - implementar comentarios de uma linha simples e objetivo
 
