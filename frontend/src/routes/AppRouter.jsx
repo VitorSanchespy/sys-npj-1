@@ -23,6 +23,7 @@ import ArquivosPage from "@/pages/dashboard/ArquivosPage";
 import AgendamentosPage from "@/pages/AgendamentosPage";
 import NotificationPage from "@/pages/dashboard/NotificationPage";
 import NotificationSettingsPage from "@/pages/dashboard/NotificationSettingsPage";
+import NotFoundPage from "@/pages/NotFoundPage";
 import { hasRole } from "@/utils/permissions";
 
 function PrivateRoute({ children, roles }) {
@@ -96,7 +97,7 @@ export default function AppRouter() {
           <Route path="/processos/novo" element={<PrivateRoute roles={["Professor", "admin"]}><ProcessFormPage /></PrivateRoute>} />
           <Route path="/processos/:id/atribuir" element={<PrivateRoute roles={["Professor", "Admin"]}><ProcessAssignStudentPage /></PrivateRoute>} />
           {/* 404 */}
-        <Route path="*" element={<div>Página não encontrada</div>} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>
   );

@@ -59,6 +59,15 @@ exports.login = async (req, res) => {
       { expiresIn: process.env.TOKEN_EXPIRATION || '24h' }
     );
     
+    // Debug para verificar os dados do usuário
+    console.log('🔍 DEBUG AUTH - Dados do usuário:', {
+      id: usuario.id,
+      nome: usuario.nome,
+      email: usuario.email,
+      role_id: usuario.role_id,
+      role: usuario.role?.nome
+    });
+    
     // Notificar login bem-sucedido
     console.log('🔍 DEBUG AUTH - Login bem-sucedido para:', usuario.nome);
     if (global.notificacaoService) {
@@ -75,7 +84,8 @@ exports.login = async (req, res) => {
         id: usuario.id,
         nome: usuario.nome,
         email: usuario.email,
-        role: usuario.role?.nome || 'Admin'
+        role: usuario.role?.nome || 'Admin',
+        role_id: usuario.role_id
       }
     });
   } catch (error) {
