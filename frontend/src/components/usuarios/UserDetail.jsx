@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { apiRequest } from "../../api/apiRequest";
-import { useAuthContext } from "../../contexts/AuthContext";
+import { apiRequest } from "@/api/apiRequest";
+import { useAuthContext } from "@/contexts/AuthContext";
+
+// Helper function to safely get role name
+const getRoleName = (role) => {
+  if (!role) return 'Usuário';
+  if (typeof role === 'string') return role;
+  if (typeof role === 'object' && role.nome) return role.nome;
+  if (typeof role === 'object' && role.name) return role.name;
+  return 'Usuário';
+};
 
 export default function UserDetail() {
   const { id } = useParams();
@@ -30,7 +39,7 @@ export default function UserDetail() {
       <h2>Detalhes do Usuário</h2>
       <div><b>Nome:</b> {usuario.nome}</div>
       <div><b>Email:</b> {usuario.email}</div>
-      <div><b>Papel:</b> {usuario.role}</div>
+      <div><b>Papel:</b> {getRoleName(usuario.role)}</div>
       <div><b>Status:</b> {usuario.ativo ? "Ativo" : "Inativo"}</div>
       <div style={{ marginTop: 16 }}>
         <Link to="/usuarios">Voltar</Link>

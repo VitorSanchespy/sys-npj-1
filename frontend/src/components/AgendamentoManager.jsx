@@ -16,6 +16,15 @@ const AgendamentoManager = ({ processoId = null }) => {
     data_fim: ''
   });
 
+  // Helper function to safely get role name
+  const getRoleName = (role) => {
+    if (!role) return 'Usuário';
+    if (typeof role === 'string') return role;
+    if (typeof role === 'object' && role.nome) return role.nome;
+    if (typeof role === 'object' && role.name) return role.name;
+    return 'Usuário';
+  };
+
   const [formData, setFormData] = useState({
     titulo: '',
     descricao: '',
@@ -362,7 +371,7 @@ const AgendamentoManager = ({ processoId = null }) => {
                     <option value="">Selecione um usuário (deixe vazio para você mesmo)</option>
                     {usuarios.map(usuario => (
                       <option key={usuario.id} value={usuario.id}>
-                        {usuario.nome} ({usuario.role})
+                        {usuario.nome} ({getRoleName(usuario.role)})
                       </option>
                     ))}
                   </select>
@@ -550,10 +559,10 @@ const AgendamentoManager = ({ processoId = null }) => {
                       <p>📋 Processo: {agendamento.processo.numero_processo}</p>
                     )}
                     {agendamento.criador && (
-                      <p>👤 Criado por: {agendamento.criador.nome} ({agendamento.criador.role})</p>
+                      <p>👤 Criado por: {agendamento.criador.nome} ({getRoleName(agendamento.criador.role)})</p>
                     )}
                     {agendamento.destinatario && agendamento.destinatario.id !== agendamento.criado_por && (
-                      <p>🎯 Para: {agendamento.destinatario.nome} ({agendamento.destinatario.role})</p>
+                      <p>🎯 Para: {agendamento.destinatario.nome} ({getRoleName(agendamento.destinatario.role)})</p>
                     )}
                     {agendamento.descricao && (
                       <p className="mt-2">{agendamento.descricao}</p>

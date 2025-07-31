@@ -2,6 +2,15 @@ import React, { useState } from 'react';
 import { userService } from '../api/services';
 import { useAuthContext } from '../contexts/AuthContext';
 
+// Helper function to safely get role name
+const getRoleName = (role) => {
+  if (!role) return 'Usuário';
+  if (typeof role === 'string') return role;
+  if (typeof role === 'object' && role.nome) return role.nome;
+  if (typeof role === 'object' && role.name) return role.name;
+  return 'Usuário';
+};
+
 // Adicionar campo de pesquisa e exibir resultados
 const AssignUser = () => {
   const { token } = useAuthContext();
@@ -30,7 +39,7 @@ const AssignUser = () => {
 
           <ul>
               {usuarios.map(usuario => (
-                  <li key={usuario.id}>{usuario.role}: {usuario.nome}</li>
+                  <li key={usuario.id}>{getRoleName(usuario.role)}: {usuario.nome}</li>
               ))}
           </ul>
       </div>

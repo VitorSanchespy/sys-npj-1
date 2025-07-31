@@ -371,7 +371,7 @@ function ProfessoresDashboard({ dashboardData, user }) {
                   {processo.numero || `Processo ${index + 1}`}
                 </div>
                 <div style={{ fontSize: 12, color: "#666", marginBottom: 6 }}>
-                  Aluno: {processo.aluno_nome || "N/A"}
+                  Aluno: {(processo.aluno_nome && typeof processo.aluno_nome === 'object' ? processo.aluno_nome.nome : processo.aluno_nome) || "N/A"}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <StatusBadge status={processo.status} />

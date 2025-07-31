@@ -40,13 +40,7 @@ app.use(
 app.use(morgan('dev'));
 
 // Configuração do CORS
-const corsOptions = {
-  origin: 'http://localhost:5173',
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true // Se usar cookies
-};
-app.use(cors(corsOptions));
+app.use(cors());
 
 const auxTablesRoutes = require('./routes/tabelaAuxiliarRoutes');
 app.use('/api/aux', auxTablesRoutes);

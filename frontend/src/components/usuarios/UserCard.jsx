@@ -1,6 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+// Helper function to safely get role name
+const getRoleName = (role) => {
+  if (!role) return 'Usuário';
+  if (typeof role === 'string') return role;
+  if (typeof role === 'object' && role.nome) return role.nome;
+  if (typeof role === 'object' && role.name) return role.name;
+  return 'Usuário';
+};
+
 export default function UserCard({ user, onDetails, onEdit, onManage }) {
   return (
     <div style={{
@@ -18,7 +27,7 @@ export default function UserCard({ user, onDetails, onEdit, onManage }) {
     }}>
       <div style={{ fontWeight: 'bold', fontSize: 18 }}>{user.nome}</div>
       <div style={{ color: '#555', fontSize: 14 }}>{user.email}</div>
-      <div style={{ margin: '8px 0', fontSize: 13 }}><b>Papel:</b> {user.role}</div>
+      <div style={{ margin: '8px 0', fontSize: 13 }}><b>Papel:</b> {getRoleName(user.role)}</div>
       <div style={{ fontSize: 13 }}><b>Status:</b> {user.ativo === false ? 'Inativo' : 'Ativo'}</div>
       <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
         <button onClick={onDetails} style={{ color: '#007bff', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Detalhes</button>

@@ -3,6 +3,15 @@ import { useAuthContext } from "../../contexts/AuthContext";
 import { apiRequest } from "../../api/apiRequest";
 import { getFileUrl } from '../../utils/fileUrl';
 
+// Helper function to safely get role name
+const getRoleName = (role) => {
+  if (!role) return 'Usuário';
+  if (typeof role === 'string') return role;
+  if (typeof role === 'object' && role.nome) return role.nome;
+  if (typeof role === 'object' && role.name) return role.name;
+  return 'Usuário';
+};
+
 export default function ProfileView() {
   const { user, token, setUser } = useAuthContext();
   const [perfil, setPerfil] = useState(null);
@@ -250,7 +259,7 @@ export default function ProfileView() {
                 borderLeft: '4px solid #6f42c1'
               }}>
                 <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '5px' }}>🎓 Tipo</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#333' }}>{perfil.role?.nome || perfil.role || '-'}</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#333' }}>{getRoleName(perfil.role)}</div>
               </div>
             </div>
             
