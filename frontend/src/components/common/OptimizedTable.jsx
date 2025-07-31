@@ -184,7 +184,9 @@ const OptimizedTable = memo(({
                       >
                         {column.render 
                           ? column.render(item[column.key], item) 
-                          : item[column.key]
+                          : (typeof item[column.key] === 'object' && item[column.key] !== null 
+                              ? (item[column.key].nome || item[column.key].name || JSON.stringify(item[column.key]))
+                              : (item[column.key] || "-"))
                         }
                       </td>
                     ))}

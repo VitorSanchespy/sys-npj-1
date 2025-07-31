@@ -63,10 +63,28 @@ export const formatDateTime = (date) => {
 
 // Verificar se valor é objeto e renderizar adequadamente
 export const renderValue = (value) => {
-  if (typeof value === 'object' && value !== null) {
-    return value.nome || value.name || JSON.stringify(value);
+  if (value === null || value === undefined) {
+    return "-";
   }
-  return value || "-";
+  if (typeof value === 'object') {
+    // Tenta encontrar propriedades comuns de nome
+    if (value.nome) return value.nome;
+    if (value.name) return value.name;
+    if (value.titulo) return value.titulo;
+    if (value.title) return value.title;
+    if (value.descricao) return value.descricao;
+    if (value.description) return value.description;
+    
+    // Se é um objeto com id e nome, é provável que seja um erro de renderização
+    if (value.id && (value.nome || value.name)) {
+      console.warn('Tentativa de renderizar objeto com id e nome diretamente:', value);
+      return value.nome || value.name;
+    }
+    
+    // Como último recurso, stringifica o objeto
+    return JSON.stringify(value);
+  }
+  return String(value) || "-";
 };
 
 // Estilos comuns para botões

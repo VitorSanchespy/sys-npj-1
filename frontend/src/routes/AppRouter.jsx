@@ -28,9 +28,30 @@ import { hasRole } from "@/utils/permissions";
 
 function PrivateRoute({ children, roles }) {
   const { isAuthenticated, user, loading } = useAuthContext();
+  
   if (loading) return <div>Carregando...</div>;
-  if (!isAuthenticated) return <Navigate to="/" replace />;
-  if (roles && !hasRole(user, roles)) return <Navigate to="/" replace />;
+  
+  if (!isAuthenticated) {
+    console.log('Usuário não autenticado, redirecionando para home');
+    return <Navigate to="/" replace />;
+  }
+  
+  if (roles) {
+    const hasPermission = hasRole(user, roles);
+    console.log('Verificando permissões:', {
+      user: user,
+      requiredRoles: roles,
+      hasPermission: hasPermission,
+      userRole: user?.role,
+      userRoleId: user?.role_id
+    });
+    
+    if (!hasPermission) {
+      console.log('Usuário sem permissão, redirecionando para home');
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
+  
   return <MainLayout>{children}</MainLayout>;
 }
 

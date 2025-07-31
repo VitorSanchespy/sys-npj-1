@@ -162,5 +162,6 @@ fazer:
 - limpar arquivos orfãos e garantir que o repositório esteja livre de arquivos temporários ou desnecessários.
 
 
-os erros vc vai arrumando lembrando de usar o servirdor na maquina local backend (C:\Users\VTR\Documents\GitHub\sys-npj-1\backend) execulta npm start o do frontend (C:\Users\VTR\Documents\GitHub\sys-npj-1\frontend) execulta npm run dev e o servidor do banco de dados esta no conteiner (sistema-npj-db-1) veja oque esta causando o erro, faça uma analise e mapeamento para indentificar o erro e solucione o problema.
+os erros vc vai arrumando lembrando de usar o servirdor na maquina local backend (C:\Users\VTR\Documents\GitHub\sys-npj-1\backend) execulta npm start o do frontend (C:\Users\VTR\Documents\GitHub\sys-npj-1\frontend) execulta npm run dev e o servidor do banco de dados esta no conteiner (sistema-npj-db-1)  faça teste ou um debug para ver oque esta acontecendo analise o problema crie alternativas relacionadas e implemente a solução para resolver o problema logicamente e visualmente deixando funcional e perfeito.
 
+- Arrumar formulario de criação de processos.

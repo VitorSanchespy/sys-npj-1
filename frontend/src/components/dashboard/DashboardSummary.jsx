@@ -2,6 +2,15 @@ import React from "react";
 import useApi from '../../hooks/useApi.jsx';
 const { getUserRole } = useApi();
 
+// Helper function to safely render values that might be objects
+const renderSafeValue = (value, fallback = "N/A") => {
+  if (!value) return fallback;
+  if (typeof value === 'object' && value.nome) return value.nome;
+  if (typeof value === 'object' && value.name) return value.name;
+  if (typeof value === 'object') return JSON.stringify(value);
+  return value;
+};
+
 // Componentes auxiliares para o dashboard
 function StatItem({ label, value, color = "#333", icon = "" }) {
   return (
@@ -273,10 +282,10 @@ function AlunosDashboard({ dashboardData, user }) {
                 borderLeft: `4px solid #ffc107`
               }}>
                 <div style={{ fontWeight: "bold", marginBottom: 4 }}>
-                  {processo.numero || `Processo ${index + 1}`}
+                  {renderSafeValue(processo.numero_processo || processo.numero, `Processo ${index + 1}`)}
                 </div>
                 <div style={{ fontSize: 12, color: "#666", marginBottom: 6 }}>
-                  {processo.descricao || "Sem descrição"}
+                  {renderSafeValue(processo.descricao, "Sem descrição")}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <StatusBadge status={processo.status} />
@@ -368,10 +377,10 @@ function ProfessoresDashboard({ dashboardData, user }) {
                 borderLeft: `4px solid #dc3545`
               }}>
                 <div style={{ fontWeight: "bold", marginBottom: 4 }}>
-                  {processo.numero || `Processo ${index + 1}`}
+                  {renderSafeValue(processo.numero_processo || processo.numero, `Processo ${index + 1}`)}
                 </div>
                 <div style={{ fontSize: 12, color: "#666", marginBottom: 6 }}>
-                  Aluno: {(processo.aluno_nome && typeof processo.aluno_nome === 'object' ? processo.aluno_nome.nome : processo.aluno_nome) || "N/A"}
+                  Aluno: {renderSafeValue(processo.aluno_nome, "N/A")}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <StatusBadge status={processo.status} />

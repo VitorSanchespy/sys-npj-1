@@ -2,7 +2,10 @@
 const {
   processoModels: Processo,
   usuariosModels: Usuario,
-  usuariosProcessoModels: UsuariosProcesso
+  usuariosProcessoModels: UsuariosProcesso,
+  materiaAssuntoModels: MateriaAssunto,
+  faseModels: Fase,
+  localTramitacaoModels: LocalTramitacao
 } = require('../models/indexModels');
 
 // Lista processos
@@ -40,42 +43,12 @@ exports.buscarProcessoPorId = async (req, res) => {
     const { processo_id } = req.params;
     const { id: userId, role } = req.usuario;
     
-    // Se for Aluno, verificar se tem acesso ao processo
-    if (role === 'Aluno' || role === 2 || role === '2') {
-      const acesso = await UsuariosProcesso.findOne({
-        where: { usuario_id: userId, processo_id: processo_id }
-      });
-      
-      if (!acesso) {
-        return res.status(403).json({ erro: 'Acesso negado ao processo' });
-      }
-    }
-    
     console.log('Buscando processo:', processo_id);
+    console.log('Usuário:', userId, 'Role:', role);
+    
+    // Buscar processo básico primeiro
     const processo = await Processo.findOne({
-      where: { id: processo_id },
-      include: [
-        {
-          model: Usuario,
-          as: 'responsavel', // Corrigido o alias para match com o modelo
-          attributes: ['id', 'nome', 'email', 'role_id']
-        },
-        {
-          model: models.materiaAssuntoModels,
-          as: 'materiaAssunto',
-          attributes: ['id', 'nome']
-        },
-        {
-          model: models.faseModels,
-          as: 'fase',
-          attributes: ['id', 'nome']
-        },
-        {
-          model: models.localTramitacaoModels,
-          as: 'localTramitacao',
-          attributes: ['id', 'nome']
-        }
-      ]
+      where: { id: processo_id }
     });
     
     console.log('Processo encontrado:', processo ? 'Sim' : 'Não');
@@ -84,7 +57,33 @@ exports.buscarProcessoPorId = async (req, res) => {
       return res.status(404).json({ erro: 'Processo não encontrado' });
     }
     
-    res.json(processo);
+    // Se for Aluno, verificar se tem acesso ao processo
+    if (role === 'Aluno' || role === 2 || role === '2') {
+      const acesso = await UsuariosProcesso.findOne({
+        where: { usuario_id: userId, processo_id: processo_id }
+      });
+      
+      if (!acesso && processo.idusuario_responsavel !== userId) {
+        return res.status(403).json({ erro: 'Acesso negado ao processo' });
+      }
+    }
+    
+    // Buscar responsável separadamente se necessário
+    let responsavel = null;
+    if (processo.idusuario_responsavel) {
+      responsavel = await Usuario.findOne({
+        where: { id: processo.idusuario_responsavel },
+        attributes: ['id', 'nome', 'email']
+      });
+    }
+    
+    // Retornar processo com responsável
+    const resultado = {
+      ...processo.toJSON(),
+      responsavel: responsavel
+    };
+    
+    res.json(resultado);
   } catch (error) {
     console.error('Erro ao buscar processo:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
@@ -468,13 +467,13 @@ exports.detalharProcessos = async (req, res) => {
       SELECT 
         p.*,
         u.nome as usuario_responsavel,
-        ma.descricao as materia_assunto,
-        f.descricao as fase,
-        lt.descricao as local_tramitacao
+        ma.nome as materia_assunto,
+        f.nome as fase,
+        lt.nome as local_tramitacao
       FROM processos p
       LEFT JOIN usuarios u ON p.idusuario_responsavel = u.id
       LEFT JOIN materia_assunto ma ON p.materia_assunto_id = ma.id
-      LEFT JOIN fases f ON p.fase_id = f.id
+      LEFT JOIN fase f ON p.fase_id = f.id
       LEFT JOIN local_tramitacao lt ON p.local_tramitacao_id = lt.id
       WHERE p.id = ?
     `, {

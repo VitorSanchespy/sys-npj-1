@@ -62,12 +62,13 @@ export default function ArquivosPage() {
             </thead>
             <tbody>
               {arquivos.map(arquivo => {
-                const nomeCurto = arquivo.nome && arquivo.nome.length > 30
-                  ? arquivo.nome.slice(0, 15) + '...' + arquivo.nome.slice(-10)
-                  : arquivo.nome;
+                const nomeArquivo = typeof arquivo.nome === 'object' ? arquivo.nome?.nome || JSON.stringify(arquivo.nome) : arquivo.nome;
+                const nomeCurto = nomeArquivo && nomeArquivo.length > 30
+                  ? nomeArquivo.slice(0, 15) + '...' + nomeArquivo.slice(-10)
+                  : nomeArquivo;
                 return (
                   <tr key={arquivo.id}>
-                    <td title={arquivo.nome}>{nomeCurto}</td>
+                    <td title={nomeArquivo}>{nomeCurto}</td>
                     <td>{arquivo.criado_em ? new Date(arquivo.criado_em).toLocaleString() : "-"}</td>
                     <td>{arquivo.tamanho ? `${Math.round(arquivo.tamanho / 1024)} KB` : "-"}</td>
                     <td>

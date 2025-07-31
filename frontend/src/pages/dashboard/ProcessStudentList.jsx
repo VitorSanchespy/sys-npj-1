@@ -34,7 +34,7 @@ export default function ProcessoAlunosList() {
         <ul>
           {alunos.map(aluno => (
             <li key={aluno.id || aluno._id}>
-              {aluno.nome} ({aluno.email})
+              {(typeof aluno.nome === 'object' ? aluno.nome?.nome || JSON.stringify(aluno.nome) : aluno.nome)} ({aluno.email})
             </li>
           ))}
         </ul>

@@ -1,33 +1,40 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { auxTablesService, processService } from '../api/services';
 import { useAuthContext } from '../contexts/AuthContext';
-import Button from './common/Button';
-import { getUserRole, hasRole, renderValue } from '../utils/commonUtils';
+import SelectWithAdd from './common/SelectWithAdd'; // Importando o novo componente
 
 const FullProcessCreateForm = () => {
   const { token, user } = useAuthContext();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     numero_processo: '',
     num_processo_sei: '',
     assistido: '',
     descricao: '',
-    status: '',
+    status: 'Em andamento',
     materia_assunto_id: '',
     local_tramitacao_id: '',
-    sistema: '',
+    sistema: 'Físico',
     fase_id: '',
     diligencia_id: '',
   });
+
   const [materias, setMaterias] = useState([]);
   const [fases, setFases] = useState([]);
   const [diligencias, setDiligencias] = useState([]);
   const [localTramitacoes, setLocalTramitacoes] = useState([]);
   const [contatoAssistido, setContatoAssistido] = useState('');
-  const [newMateriaAssunto, setNewMateriaAssunto] = useState('');
-  const [newLocalTramitacao, setNewLocalTramitacao] = useState('');
-  const [newFase, setNewFase] = useState('');
-  const [newDiligencia, setNewDiligencia] = useState('');
-  const [showNewValueField, setShowNewValueField] = useState({
+
+  const [newValues, setNewValues] = useState({
+    materiaAssunto: '',
+    localTramitacao: '',
+    fase: '',
+    diligencia: '',
+  });
+
+  const [showAddForms, setShowAddForms] = useState({
     materiaAssunto: false,
     localTramitacao: false,
     fase: false,
@@ -37,24 +44,14 @@ const FullProcessCreateForm = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('Iniciando chamadas à API para dados auxiliares');
-        if (!token) {
-          throw new Error('Token de autenticação não encontrado. Certifique-se de que o usuário está logado.');
-        }
-
-        const config = {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        };
-
+        if (!token) throw new Error('Token não encontrado.');
+        setLoading(true);
         const [materiasRes, fasesRes, diligenciasRes, localTramitacoesRes] = await Promise.all([
           auxTablesService.getMateriaAssunto(token),
           auxTablesService.getFase(token),
           auxTablesService.getDiligencia(token),
           auxTablesService.getLocalTramitacao(token),
         ]);
-        console.log('Dados recebidos:', { materias: materiasRes, fases: fasesRes, diligencias: diligenciasRes, localTramitacoes: localTramitacoesRes });
         setMaterias(materiasRes);
         setFases(fasesRes);
         setDiligencias(diligenciasRes);
@@ -62,6 +59,8 @@ const FullProcessCreateForm = () => {
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
         alert(`Erro ao carregar dados auxiliares: ${error.message}`);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -72,384 +71,261 @@ const FullProcessCreateForm = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleAddNewValue = async (field, value) => {
+  const handleNewValueChange = (field, value) => {
+    setNewValues(prev => ({ ...prev, [field]: value }));
+  };
+
+  const toggleAddForm = (field, show) => {
+    setShowAddForms(prev => ({ ...prev, [field]: show }));
+    if (!show) {
+      handleNewValueChange(field, ''); // Limpa o campo ao fechar
+    }
+  };
+
+  const handleAddNewValue = async (field) => {
+    const value = newValues[field];
+    if (!value.trim()) {
+      alert('Por favor, digite um valor válido.');
+      return;
+    }
+
+    const services = {
+      materiaAssunto: { create: auxTablesService.createMateriaAssunto, fetch: auxTablesService.getMateriaAssunto, setter: setMaterias, fieldName: 'materia_assunto_id' },
+      localTramitacao: { create: auxTablesService.createLocalTramitacao, fetch: auxTablesService.getLocalTramitacao, setter: setLocalTramitacoes, fieldName: 'local_tramitacao_id' },
+      fase: { create: auxTablesService.createFase, fetch: auxTablesService.getFase, setter: setFases, fieldName: 'fase_id' },
+      diligencia: { create: auxTablesService.createDiligencia, fetch: auxTablesService.getDiligencia, setter: setDiligencias, fieldName: 'diligencia_id' },
+    };
+
+    const service = services[field];
+    if (!service) return;
+
     try {
-      let response;
-      if (field === 'materia-assunto') {
-        response = await auxTablesService.createMateriaAssunto(token, value);
-      } else if (field === 'local-tramitacao') {
-        response = await auxTablesService.createLocalTramitacao(token, value);
-      } else if (field === 'fase') {
-        response = await auxTablesService.createFase(token, value);
-      } else if (field === 'diligencia') {
-        response = await auxTablesService.createDiligencia(token, value);
-      } else {
-        throw new Error('Tipo de campo auxiliar desconhecido.');
-      }
-      alert(`${field} adicionado com sucesso!`);
+      setLoading(true);
+      const response = await service.create(token, value);
+      const updatedData = await service.fetch(token);
+      service.setter(updatedData);
 
-      // Re-fetch data after adding a new value
-      const [materiasRes, fasesRes, diligenciasRes, localTramitacoesRes] = await Promise.all([
-        auxTablesService.getMateriaAssunto(token),
-        auxTablesService.getFase(token),
-        auxTablesService.getDiligencia(token),
-        auxTablesService.getLocalTramitacao(token),
-      ]);
-      setMaterias(materiasRes);
-      setFases(fasesRes);
-      setDiligencias(diligenciasRes);
-      setLocalTramitacoes(localTramitacoesRes);
-
-      // Automatically select the newly added value
-      if (field === 'materia-assunto') {
-        setFormData({ ...formData, materia_assunto_id: response.id });
-      } else if (field === 'local-tramitacao') {
-        setFormData({ ...formData, local_tramitacao_id: response.id });
-      } else if (field === 'fase') {
-        setFormData({ ...formData, fase_id: response.id });
-      } else if (field === 'diligencia') {
-        setFormData({ ...formData, diligencia_id: response.id });
-      }
-
-      // Hide the input field
-      setShowNewValueField({ ...showNewValueField, [field]: false });
+      setFormData(prev => ({ ...prev, [service.fieldName]: response.id }));
+      toggleAddForm(field, false);
+      alert(`${value} adicionado com sucesso e selecionado!`);
     } catch (error) {
       console.error(`Erro ao adicionar novo valor em ${field}:`, error);
       alert(`Erro ao adicionar novo valor: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
+    
     try {
-      const userId = user?.id || null; // Obtém o ID do usuário a partir do contexto de autenticação
-      const response = await processService.createProcess(
-        token,
-        { 
-          ...formData, 
-          contato_assistido: contatoAssistido, 
-          idusuario_responsavel: userId 
-        }
-      );
+      setLoading(true);
+      const userId = user?.id || null;
+      await processService.createProcess(token, { 
+        ...formData, 
+        contato_assistido: contatoAssistido, 
+        idusuario_responsavel: userId 
+      });
+      
       alert('Processo criado com sucesso!');
+      navigate('/processos');
     } catch (error) {
-      console.error('Erro ao criar processo:',  error, error.response?.data);
+      console.error('Erro ao criar processo:', error, error.response?.data);
       alert(`Erro ao criar processo: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleCancel = () => {
+    if (window.confirm('Tem certeza que deseja cancelar? Todos os dados serão perdidos.')) {
+      navigate('/processos');
+    }
+  };
+
+  const renderField = (label, name, placeholder, required = false, component = 'input', type = 'text', rows = 3) => (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      {component === 'input' ? (
+        <input
+          type={type}
+          name={name}
+          value={name === 'contatoAssistido' ? contatoAssistido : formData[name]}
+          onChange={name === 'contatoAssistido' ? (e) => setContatoAssistido(e.target.value) : handleChange}
+          placeholder={placeholder}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-sm"
+          required={required}
+        />
+      ) : (
+        <textarea
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          placeholder={placeholder}
+          rows={rows}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none text-sm"
+          required={required}
+        />
+      )}
+    </div>
+  );
+
+  const renderSelect = (label, name, options, required = false) => (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <select
+        name={name}
+        value={formData[name]}
+        onChange={handleChange}
+        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-sm"
+        required={required}
+      >
+        {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+      </select>
+    </div>
+  );
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <h3 className="text-xl font-semibold mb-6 text-gray-800">Novo Processo</h3>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Número do Processo</label>
-          <input
-            type="text"
-            name="numero_processo"
-            value={formData.numero_processo}
-            onChange={handleChange}
-            className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Num/Processo/Sei</label>
-          <input
-            type="text"
-            name="num_processo_sei"
-            value={formData.num_processo_sei}
-            onChange={handleChange}
-            className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Assistido/a</label>
-          <input
-            type="text"
-            name="assistido"
-            value={formData.assistido}
-            onChange={handleChange}
-            className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Contato/Assistido</label>
-          <input
-            type="text"
-            name="contatoAssistido"
-            value={contatoAssistido}
-            onChange={(e) => setContatoAssistido(e.target.value)}
-            className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Descrição</label>
-          <textarea
-            name="descricao"
-            value={formData.descricao}
-            onChange={handleChange}
-            className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-            required
-          ></textarea>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Status</label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-            required
-          >
-            <option value="">Selecione o status</option>
-            <option value="Em andamento">Em andamento</option>
-            <option value="Concluído">Concluído</option>
-            <option value="Suspenso">Suspenso</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Matéria/Assunto</label>
-          <select
-            name="materia_assunto_id"
-            value={formData.materia_assunto_id}
-            onChange={handleChange}
-            className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-            required
-          >
-            <option value="">Selecione a matéria/assunto</option>
-            {materias.map((materia) => (
-              <option key={materia.id} value={materia.id}>
-                {materia.nome}
-              </option>
-            ))}
-          </select>
-          {!showNewValueField.materiaAssunto && (
-            <button
-              type="button"
-              onClick={() => setShowNewValueField({ ...showNewValueField, materiaAssunto: true })}
-              className="mt-2 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Adicionar novo valor
-            </button>
-          )}
-          {showNewValueField.materiaAssunto && (
-            <div className="flex flex-col gap-2 mt-2">
-              <input
-                type="text"
-                placeholder="Adicionar novo Matéria/Assunto"
-                value={newMateriaAssunto}
-                onChange={(e) => setNewMateriaAssunto(e.target.value)}
-                className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleAddNewValue('materia-assunto', newMateriaAssunto)}
-                  className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                >
-                  Adicionar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setShowNewValueField({ ...showNewValueField, materiaAssunto: false }); setNewMateriaAssunto(''); }}
-                  className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
-                >
-                  Cancelar
-                </button>
+    <div className="max-w-5xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">Cadastrar Novo Processo</h1>
+        <p className="text-gray-600 mt-1">Preencha os campos abaixo para criar um novo processo no sistema.</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+            
+            {/* Coluna da Esquerda */}
+            <div className="space-y-5">
+              <h3 className="text-base font-semibold text-gray-800 border-b pb-2 flex items-center">
+                <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Informações Básicas
+              </h3>
+              {renderField('Número do Processo', 'numero_processo', 'Ex: 0001234-56.2025.8.11.0001', true)}
+              {renderField('Número SEI', 'num_processo_sei', 'Ex: SEI-23085.012345/2025-67')}
+              {renderField('Assistido/a', 'assistido', 'Nome completo do assistido')}
+              {renderField('Contato do Assistido', 'contatoAssistido', 'Telefone ou e-mail')}
+              {renderField('Descrição', 'descricao', 'Descreva o caso ou a situação jurídica', true, 'textarea')}
+              <div className="grid grid-cols-2 gap-4">
+                {renderSelect('Status', 'status', [
+                  { value: 'Em andamento', label: 'Em andamento' },
+                  { value: 'Aguardando', label: 'Aguardando' },
+                  { value: 'Finalizado', label: 'Finalizado' },
+                  { value: 'Arquivado', label: 'Arquivado' },
+                ], true)}
+                {renderSelect('Sistema', 'sistema', [
+                  { value: 'Físico', label: 'Físico' },
+                  { value: 'PJE', label: 'PJE' },
+                  { value: 'PEA', label: 'PEA' },
+                ], true)}
               </div>
             </div>
-          )}
+
+            {/* Coluna da Direita */}
+            <div className="space-y-5">
+              <h3 className="text-base font-semibold text-gray-800 border-b pb-2 flex items-center">
+                <svg className="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                Categorização
+              </h3>
+              <SelectWithAdd
+                label="Matéria/Assunto *"
+                stateKey="materia_assunto_id"
+                value={formData.materia_assunto_id}
+                onChange={handleChange}
+                options={materias}
+                showAddForm={showAddForms.materiaAssunto}
+                onToggleAddForm={(show) => toggleAddForm('materiaAssunto', show)}
+                newValue={newValues.materiaAssunto}
+                onNewValueChange={(e) => handleNewValueChange('materiaAssunto', e.target.value)}
+                onAddNew={() => handleAddNewValue('materiaAssunto')}
+                placeholder="matéria/assunto"
+                loading={loading}
+              />
+              <SelectWithAdd
+                label="Fase *"
+                stateKey="fase_id"
+                value={formData.fase_id}
+                onChange={handleChange}
+                options={fases}
+                showAddForm={showAddForms.fase}
+                onToggleAddForm={(show) => toggleAddForm('fase', show)}
+                newValue={newValues.fase}
+                onNewValueChange={(e) => handleNewValueChange('fase', e.target.value)}
+                onAddNew={() => handleAddNewValue('fase')}
+                placeholder="fase"
+                loading={loading}
+              />
+              <SelectWithAdd
+                label="Diligência *"
+                stateKey="diligencia_id"
+                value={formData.diligencia_id}
+                onChange={handleChange}
+                options={diligencias}
+                showAddForm={showAddForms.diligencia}
+                onToggleAddForm={(show) => toggleAddForm('diligencia', show)}
+                newValue={newValues.diligencia}
+                onNewValueChange={(e) => handleNewValueChange('diligencia', e.target.value)}
+                onAddNew={() => handleAddNewValue('diligencia')}
+                placeholder="diligência"
+                loading={loading}
+              />
+              <SelectWithAdd
+                label="Local de Tramitação *"
+                stateKey="local_tramitacao_id"
+                value={formData.local_tramitacao_id}
+                onChange={handleChange}
+                options={localTramitacoes}
+                showAddForm={showAddForms.localTramitacao}
+                onToggleAddForm={(show) => toggleAddForm('localTramitacao', show)}
+                newValue={newValues.localTramitacao}
+                onNewValueChange={(e) => handleNewValueChange('localTramitacao', e.target.value)}
+                onAddNew={() => handleAddNewValue('localTramitacao')}
+                placeholder="local de tramitação"
+                loading={loading}
+              />
+            </div>
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Local de Tramitação</label>
-          <select
-            name="local_tramitacao_id"
-            value={formData.local_tramitacao_id}
-            onChange={handleChange}
-            className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-            required
-          >
-            <option value="">Selecione o local de tramitação</option>
-            {localTramitacoes.map((local) => (
-              <option key={local.id} value={local.id}>
-                {local.nome}
-              </option>
-            ))}
-          </select>
-          {!showNewValueField.localTramitacao && (
+
+        {/* Botões de Ação */}
+        <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 rounded-b-lg">
+          <div className="flex justify-end gap-3">
             <button
               type="button"
-              onClick={() => setShowNewValueField({ ...showNewValueField, localTramitacao: true })}
-              className="mt-2 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              onClick={handleCancel}
+              disabled={loading}
+              className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 transition-all"
             >
-              Adicionar novo valor
+              Cancelar
             </button>
-          )}
-          {showNewValueField.localTramitacao && (
-            <div className="flex flex-col gap-2 mt-2">
-              <input
-                type="text"
-                placeholder="Adicionar novo Local de Tramitação"
-                value={newLocalTramitacao}
-                onChange={(e) => setNewLocalTramitacao(e.target.value)}
-                className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleAddNewValue('local-tramitacao', newLocalTramitacao)}
-                  className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                >
-                  Adicionar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setShowNewValueField({ ...showNewValueField, localTramitacao: false }); setNewLocalTramitacao(''); }}
-                  className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Sistema</label>
-          <select
-            name="sistema"
-            value={formData.sistema}
-            onChange={handleChange}
-            className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-            required
-          >
-            <option value="">Selecione o sistema</option>
-            <option value="Físico">Físico</option>
-            <option value="PEA">PEA</option>
-            <option value="PJE">PJE</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Fase</label>
-          <select
-            name="fase_id"
-            value={formData.fase_id}
-            onChange={handleChange}
-            className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-            required
-          >
-            <option value="">Selecione a fase</option>
-            {fases.map((fase) => (
-              <option key={fase.id} value={fase.id}>
-                {fase.nome}
-              </option>
-            ))}
-          </select>
-          {!showNewValueField.fase && (
             <button
-              type="button"
-              onClick={() => setShowNewValueField({ ...showNewValueField, fase: true })}
-              className="mt-2 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              type="submit"
+              disabled={loading}
+              className="px-5 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all flex items-center"
             >
-              Adicionar novo valor
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Salvando...
+                </>
+              ) : (
+                'Criar Processo'
+              )}
             </button>
-          )}
-          {showNewValueField.fase && (
-            <div className="flex flex-col gap-2 mt-2">
-              <input
-                type="text"
-                placeholder="Adicionar nova Fase"
-                value={newFase}
-                onChange={(e) => setNewFase(e.target.value)}
-                className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleAddNewValue('fase', newFase)}
-                  className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                >
-                  Adicionar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setShowNewValueField({ ...showNewValueField, fase: false }); setNewFase(''); }}
-                  className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Diligência</label>
-          <select
-            name="diligencia_id"
-            value={formData.diligencia_id}
-            onChange={handleChange}
-            className="mt-2 block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-            required
-          >
-            <option value="">Selecione a diligência</option>
-            {diligencias.map((diligencia) => (
-              <option key={diligencia.id} value={diligencia.id}>
-                {diligencia.nome}
-              </option>
-            ))}
-          </select>
-          {!showNewValueField.diligencia && (
-            <button
-              type="button"
-              onClick={() => setShowNewValueField({ ...showNewValueField, diligencia: true })}
-              className="mt-2 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Adicionar novo valor
-            </button>
-          )}
-          {showNewValueField.diligencia && (
-            <div className="flex flex-col gap-2 mt-2">
-              <input
-                type="text"
-                placeholder="Adicionar nova Diligência"
-                value={newDiligencia}
-                onChange={(e) => setNewDiligencia(e.target.value)}
-                className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleAddNewValue('diligencia', newDiligencia)}
-                  className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                >
-                  Adicionar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setShowNewValueField({ ...showNewValueField, diligencia: false }); setNewDiligencia(''); }}
-                  className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="flex justify-end gap-4">
-          <button
-            type="submit"
-            className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Criar
-          </button>
-          <button
-            type="button"
-            className="bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-            onClick={() => window.location.href = 'http://localhost:5173/processos/'}
-          >
-            Cancelar
-          </button>
+          </div>
         </div>
       </form>
+    </div>
   );
 };
 

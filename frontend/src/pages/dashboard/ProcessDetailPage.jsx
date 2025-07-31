@@ -1,162 +1,136 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { api, apiRequest } from "@/api/apiRequest";
+import { apiRequest } from "@/api/apiRequest";
 import { useAuthContext } from "@/contexts/AuthContext";
 import Button from "@/components/common/Button";
 import StatusBadge from "@/components/common/StatusBadge";
-import Loader from "@/components/layout/Loader";
+import Loader from "@/components/common/Loader";
 import UpdateList from "@/components/atualizacoes/UpdateList";
+import ProcessAssignUserModal from "@/components/processos/ProcessAssignUserModal";
+import ProcessUnassignUserModal from "@/components/processos/ProcessUnassignUserModal";
 import { getUserRole, hasRole, formatDate, renderValue } from "@/utils/commonUtils";
+import { requestCache } from "@/utils/requestCache";
 
 export default function ProcessDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuthContext();
+  const { user, token } = useAuthContext();
   const [processo, setProcesso] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showUnassignModal, setShowUnassignModal] = useState(false);
   const [alunos, setAlunos] = useState([]);
 
-  // Se não houver usuário autenticado, redirecionar para login
   useEffect(() => {
-    if (!user || !user.token) {
-      navigate('/login', { 
-        replace: true,
-        state: { from: `/processos/${id}` }
-      });
-    }
-  }, [user, id, navigate]);
+    let isMounted = true;
 
-  useEffect(() => {
-    if (!user?.token || !id) {
-      setLoading(false);
-      return;
-    }
-
-    let mounted = true;
-    
-    const fetchData = async () => {
-      setLoading(true);
+    // Função para buscar os detalhes do processo com cache
+    const fetchProcesso = async () => {
+      const currentToken = token || localStorage.getItem('token');
+      const cacheKey = requestCache.generateKey(`/api/processos/${id}/detalhes`);
+      
       try {
-        console.log('Buscando processo:', id);
-        console.log('Token:', user.token ? 'Presente' : 'Ausente');
-        console.log('Headers:', {
-          'Authorization': `Bearer ${user.token}`
-        });
+        console.log('🔍 Buscando processo ID:', id);
+        console.log('🔑 Token presente:', !!currentToken);
         
-        // Fazer as duas chamadas em paralelo com headers explícitos
-        const [processoResponse, alunosResponse] = await Promise.all([
-          api.get(`/processos/${id}`, {
-            headers: {
-              'Authorization': `Bearer ${user.token}`
-            }
-          }),
-          api.get(`/processos/${id}/usuarios`, {
-            headers: {
-              'Authorization': `Bearer ${user.token}`
-            }
-          })
-        ]);
-
-        if (!mounted) return;
-
-        if (!processoResponse.data) {
-          console.log('Resposta vazia do processo');
-          setError('Processo não encontrado');
-          return;
+        const response = await requestCache.getOrFetch(cacheKey, () =>
+          apiRequest(`/api/processos/${id}/detalhes`, { method: "GET", token: currentToken })
+        );
+        
+        console.log('✅ Dados do processo recebidos:', response);
+        
+        if (isMounted) {
+          setProcesso(response);
         }
-
-        console.log('Processo encontrado:', processoResponse.data);
-        setProcesso(processoResponse.data);
-        setAlunos(alunosResponse.data);
-        setError(null);
       } catch (error) {
-        console.error("Erro ao buscar dados:", error);
-        if (error.response?.status === 403) {
-          setError('Você não tem permissão para acessar este processo');
-          setTimeout(() => navigate('/dashboard', { replace: true }), 2000);
-        } else if (error.response?.status === 404) {
-          setError('Processo não encontrado');
-        } else {
-          setError(error.response?.data?.erro || 'Erro ao carregar o processo');
+        console.error("Erro ao buscar processo:", error);
+        if (isMounted) {
+          setProcesso(null);
         }
-        setProcesso(null);
-      } finally {
-        if (mounted) {
+      }
+    };
+
+    // Função para buscar todos os usuários vinculados ao processo com cache
+    const fetchAlunos = async () => {
+      const currentToken = token || localStorage.getItem('token');
+      const cacheKey = requestCache.generateKey(`/api/processos/${id}/usuarios`);
+      
+      try {
+        const response = await requestCache.getOrFetch(cacheKey, () =>
+          apiRequest(`/api/processos/${id}/usuarios`, { method: "GET", token: currentToken })
+        );
+        
+        console.log('✅ Alunos vinculados:', response);
+        
+        if (isMounted) {
+          setAlunos(response);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar usuários vinculados:", error);
+        if (isMounted) {
+          setAlunos([]);
+        }
+      }
+    };
+
+    const loadData = async () => {
+      const currentToken = token || localStorage.getItem('token');
+      if (currentToken && id) {
+        setLoading(true);
+        await Promise.all([fetchProcesso(), fetchAlunos()]);
+        if (isMounted) {
           setLoading(false);
         }
       }
     };
 
-    fetchData();
+    loadData();
 
     return () => {
-      mounted = false;
+      isMounted = false;
     };
-  }, [id, user?.token]);
+  }, [id, token]);
 
-  // Funções para vinculação/desvinculação (será implementado conforme necessário)
+  // Funções para vinculação/desvinculação
   const handleAssignUser = async (userId) => {
-    // Implementar lógica de vinculação
-    console.log("Vinculando usuário:", userId);
+    // O modal já fez a vinculação, só precisamos recarregar os dados
+    try {
+      // Limpa cache e recarrega dados
+      requestCache.clear(`GET:/api/processos/${id}/usuarios:`);
+      const response = await apiRequest(`/api/processos/${id}/usuarios`, { method: "GET", token });
+      setAlunos(response);
+      setShowAssignModal(false);
+    } catch (error) {
+      console.error("Erro ao recarregar usuários:", error);
+      // Recarrega a página como fallback se falhar
+      window.location.reload();
+    }
   };
 
   const handleUnassignUser = async (userId) => {
-    // Implementar lógica de desvinculação  
-    console.log("Desvinculando usuário:", userId);
+    // O modal já fez a desvinculação, só precisamos atualizar a lista local
+    try {
+      // Limpa cache e atualiza lista local
+      requestCache.clear(`GET:/api/processos/${id}/usuarios:`);
+      if (userId) {
+        setAlunos(alunos.filter(aluno => aluno.id !== userId));
+      } else {
+        // Se não temos o userId, recarrega a lista
+        const response = await apiRequest(`/api/processos/${id}/usuarios`, { method: "GET", token });
+        setAlunos(response);
+      }
+      setShowUnassignModal(false);
+    } catch (error) {
+      console.error("Erro ao atualizar lista:", error);
+    }
   };
 
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <Loader size={40} text="Carregando detalhes do processo..." />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] p-4 bg-white rounded-lg shadow">
-        <div className="text-center">
-          <h2 className="text-xl font-bold text-red-600 mb-2">Erro ao carregar processo</h2>
-          <p className="text-gray-600">{error}</p>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Voltar para Dashboard
-          </button>
-        </div>
-      </div>
-    );
+    return <Loader message="Carregando processo..." />;
   }
 
   if (!processo) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] p-4 bg-white rounded-lg shadow">
-        <div className="text-center">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Processo não encontrado</h2>
-          <p className="text-gray-600 mb-4">O processo que você está procurando não existe ou foi removido.</p>
-          {import.meta.env.DEV && (
-            <div className="text-left p-4 bg-gray-100 rounded mb-4 text-sm">
-              <p className="font-bold mb-2">Informações de Debug:</p>
-              <p>ID do Processo: {id}</p>
-              <p>Token válido: {user?.token ? 'Sim' : 'Não'}</p>
-              <p>Role do usuário: {user?.role}</p>
-              <p>Erro: {error}</p>
-            </div>
-          )}
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Voltar para Dashboard
-          </button>
-        </div>
-      </div>
-    );
+    return <Loader error="Processo não encontrado" />;
   }
 
   return (
@@ -190,14 +164,12 @@ export default function ProcessDetailPage() {
         >
           ← Voltar à Lista
         </Button>
-        {hasRole(user, ['Admin', 'Professor']) && (
-          <Button
-            variant="primary"
-            onClick={() => navigate(`/processos/${id}/editar`)}
-          >
-            ✏️ Editar
-          </Button>
-        )}
+        <Button
+          variant="primary"
+          onClick={() => navigate(`/processos/${id}/editar`)}
+        >
+          ✏️ Editar
+        </Button>
       </div>
 
         {/* Informações Básicas */}
@@ -281,29 +253,46 @@ export default function ProcessDetailPage() {
         </div>
 
         {/* Usuários Vinculados */}
-        {alunos && alunos.length > 0 && (
+        <div style={{
+          backgroundColor: '#f8f9fa',
+          padding: '20px',
+          borderRadius: '8px',
+          border: '1px solid #e9ecef',
+          marginBottom: '24px'
+        }}>
           <div style={{
-            backgroundColor: '#f8f9fa',
-            padding: '20px',
-            borderRadius: '8px',
-            border: '1px solid #e9ecef',
-            marginBottom: '24px'
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '16px'
           }}>
             <h3 style={{
-              margin: '0 0 16px 0',
+              margin: 0,
               fontSize: '16px',
               fontWeight: '600',
               color: '#495057'
             }}>
               👥 Usuários Vinculados
             </h3>
+            {hasRole(user, ['Admin', 'Professor']) && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setShowAssignModal(true)}
+              >
+                + Vincular Usuário
+              </Button>
+            )}
+          </div>
+
+          {alunos && alunos.length > 0 ? (
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
               gap: '12px'
             }}>
-              {alunos.map((aluno) => (
-                <div key={aluno.id} style={{
+              {alunos.map((aluno, index) => (
+                <div key={aluno.id || aluno.email || index} style={{
                   backgroundColor: 'white',
                   padding: '12px',
                   borderRadius: '6px',
@@ -315,8 +304,13 @@ export default function ProcessDetailPage() {
                   <div>
                     <p style={{ margin: 0, fontWeight: '500' }}>{aluno.nome}</p>
                     <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#6c757d' }}>
-                      {aluno.email}
+                      {aluno.email} - {aluno.role}
                     </p>
+                    {aluno.telefone && (
+                      <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#6c757d' }}>
+                        📞 {aluno.telefone}
+                      </p>
+                    )}
                   </div>
                   {hasRole(user, ['Admin', 'Professor']) && (
                     <Button
@@ -330,8 +324,21 @@ export default function ProcessDetailPage() {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <div style={{
+              textAlign: 'center',
+              padding: '20px',
+              color: '#6c757d'
+            }}>
+              <p>Nenhum usuário vinculado a este processo.</p>
+              {hasRole(user, ['Admin', 'Professor']) && (
+                <p style={{ fontSize: '14px', marginTop: '8px' }}>
+                  Clique em "Vincular Usuário" para adicionar alunos ou professores.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Lista de Atualizações */}
         <div style={{
@@ -351,7 +358,79 @@ export default function ProcessDetailPage() {
           <UpdateList processoId={id} />
         </div>
 
+        {/* Modais */}
+        {showAssignModal && (
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
+            }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowAssignModal(false);
+              }
+            }}
+          >
+            <ProcessAssignUserModal
+              processoId={id}
+              onClose={() => setShowAssignModal(false)}
+              onAssigned={handleAssignUser}
+            />
+          </div>
+        )}
+
+        {showUnassignModal && (
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
+            }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowUnassignModal(false);
+              }
+            }}
+          >
+            <ProcessUnassignUserModal
+              processoId={id}
+              alunos={alunos}
+              onClose={() => setShowUnassignModal(false)}
+              onUnassigned={handleUnassignUser}
+            />
+          </div>
+        )}
+      <h3>Histórico de Atualizações</h3>
+      {processo.atualizacoes && processo.atualizacoes.length > 0 ? (
+        <ul>
+          {processo.atualizacoes.map((at, idx) => (
+            <li key={at.id || idx}>
+              <b>{at.tipo_atualizacao}</b> - {at.descricao}<br />
+              <span style={{ color: '#555', fontSize: 13 }}>
+                {at.usuario?.nome ? `Por: ${at.usuario.nome}` : ''} em {new Date(at.data_atualizacao).toLocaleString()}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div style={{ color: '#888' }}>Nenhuma atualização registrada.</div>
+      )}
+      <br />
       </div>
   );
 }
-

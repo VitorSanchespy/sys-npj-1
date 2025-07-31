@@ -97,7 +97,7 @@ exports.login = async (req, res) => {
 // Registro de novo usuário
 exports.registro = async (req, res) => {
   try {
-    const { nome, email, senha } = req.body;
+    const { nome, email, senha, role_id } = req.body;
     
     // Verificar se email já existe
     const usuarioExiste = await Usuario.findOne({ where: { email } });
@@ -108,18 +108,33 @@ exports.registro = async (req, res) => {
     // Criptografar senha com bcrypt
     const senhaHash = await bcrypt.hash(senha, 10);
     
+    // Usar role_id fornecido ou 3 (Aluno) por padrão
+    const roleIdFinal = role_id || 3;
+    
     // Criar novo usuário
     const usuario = await Usuario.create({
       nome,
       email,
       senha: senhaHash,
-      role_id: 1, // Admin por padrão
+      role_id: roleIdFinal,
       ativo: true
+    });
+    
+    // Buscar usuário criado com role para resposta
+    const usuarioComRole = await Usuario.findOne({
+      where: { id: usuario.id },
+      include: [{ model: Role, as: 'role' }]
     });
     
     res.status(201).json({
       mensagem: 'Usuário criado com sucesso',
-      usuario: { id: usuario.id, nome, email }
+      usuario: { 
+        id: usuario.id, 
+        nome, 
+        email,
+        role: usuarioComRole.role?.nome || 'Desconhecido',
+        role_id: roleIdFinal
+      }
     });
   } catch (error) {
     console.error('Erro no registro:', error);

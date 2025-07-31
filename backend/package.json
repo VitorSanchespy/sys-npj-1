@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.0.1",
     "express": "^4.21.2",
@@ -26,7 +27,8 @@
     "node-cron": "^3.0.2",
     "nodemailer": "^6.9.1",
     "sequelize": "^6.37.7",
-    "socket.io": "^4.7.5"
+    "socket.io": "^4.7.5",
+    "sqlite3": "^5.1.7"
   },
   "keywords": [],
   "author": "",
