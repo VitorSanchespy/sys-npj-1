@@ -90,15 +90,6 @@ const AgendamentoManager = ({ processoId = null }) => {
     }
   };
 
-  const handleNovoAgendamento = () => {
-    if (!userData || !userData.token) {
-      setError('Você precisa estar autenticado para criar um agendamento');
-      return;
-    }
-    setError(null);
-    setShowForm(true);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!userData || !userData.token) {

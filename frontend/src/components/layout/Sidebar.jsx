@@ -15,7 +15,7 @@ const Sidebar = () => {
           <li><Link to="/agendamentos">Agendamentos</Link></li>
           <li><Link to="/arquivos">Meus Arquivos</Link></li>
           <li><Link to="/profile">Meu Perfil</Link></li>
-          {hasRole(user, ["admin", "professor"]) && (
+          {hasRole(user, ["Admin", "Professor"]) && (
             <li><Link to="/usuarios">Usuários</Link></li>
           )}
           <li>

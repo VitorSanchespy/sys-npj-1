@@ -38,6 +38,10 @@ const Navigation = () => {
     if (typeof user.role === 'object' && user.role !== null) {
       return user.role.nome || user.role.name || 'Usuário';
     }
+    // Fallback para role_id
+    if (user?.role_id === 1) return 'Admin';
+    if (user?.role_id === 2) return 'Professor';
+    if (user?.role_id === 3) return 'Aluno';
     return 'Usuário';
   };
 

@@ -35,7 +35,7 @@ async function criarUsuariosNoBanco() {
             // Inserir roles padrão
             await connection.execute(`
                 INSERT IGNORE INTO roles (nome) VALUES 
-                ('admin'), ('professor'), ('aluno')
+                ('Admin'), ('Professor'), ('Aluno')
             `);
             
             // Criar tabela usuarios
@@ -64,21 +64,21 @@ async function criarUsuariosNoBanco() {
                 nome: 'Admin Sistema',
                 email: 'admin@teste.com',
                 senha: await bcrypt.hash('admin123', 10),
-                role_id: 1, // admin
+                role_id: 1, // Admin
                 telefone: '(65) 99999-0001'
             },
             {
                 nome: 'Professor João',
                 email: 'joao@teste.com', 
                 senha: await bcrypt.hash('joao123', 10),
-                role_id: 2, // professor
+                role_id: 2, // Professor
                 telefone: '(65) 99999-0002'
             },
             {
                 nome: 'Aluna Maria',
                 email: 'maria@teste.com',
                 senha: await bcrypt.hash('maria123', 10),
-                role_id: 3, // aluno
+                role_id: 3, // Aluno
                 telefone: '(65) 99999-0003'
             }
         ];

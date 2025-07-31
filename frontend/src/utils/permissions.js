@@ -3,21 +3,29 @@ export function hasRole(user, roles) {
 
   // Primeiro, tenta usar o role_id se disponível
   if (user.role_id) {
-    const roleMap = { 5: 'admin', 2: 'aluno', 1: 'professor' };
+    const roleMap = { 1: 'Admin', 2: 'Professor', 3: 'Aluno' };
     const userRole = roleMap[user.role_id];
     if (Array.isArray(roles)) {
-      return roles.map(r => String(r).toLowerCase()).includes(userRole);
+      return roles.includes(userRole);
     }
-    return userRole === String(roles).toLowerCase();
+    return userRole === roles;
   }
 
-  // Fallback para o campo 'role' (string)
+  // Fallback para o campo 'role' (string ou objeto)
   if (user.role) {
-    const userRoleString = String(user.role).toLowerCase();
-    if (Array.isArray(roles)) {
-      return roles.map(r => String(r).toLowerCase()).includes(userRoleString);
+    let userRoleString;
+    if (typeof user.role === 'string') {
+      userRoleString = user.role;
+    } else if (typeof user.role === 'object' && user.role !== null) {
+      userRoleString = user.role.nome || user.role.name;
     }
-    return userRoleString === String(roles).toLowerCase();
+
+    if (userRoleString) {
+      if (Array.isArray(roles)) {
+        return roles.includes(userRoleString);
+      }
+      return userRoleString === roles;
+    }
   }
 
   // Se não tem nem role_id nem role, retorna false

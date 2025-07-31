@@ -94,7 +94,7 @@ export default function AppRouter() {
           <Route path="/processos/:id/atualizacoes" element={<PrivateRoute><ProcessUpdatesPage /></PrivateRoute>} />
           <Route path="/processos/:id/editar" element={<PrivateRoute><ProcessEditPage /></PrivateRoute>} />
           {/* Rotas restritas para Professor/Admin */}
-          <Route path="/processos/novo" element={<PrivateRoute roles={["Professor", "admin"]}><ProcessFormPage /></PrivateRoute>} />
+          <Route path="/processos/novo" element={<PrivateRoute roles={["Professor", "Admin"]}><ProcessFormPage /></PrivateRoute>} />
           <Route path="/processos/:id/atribuir" element={<PrivateRoute roles={["Professor", "Admin"]}><ProcessAssignStudentPage /></PrivateRoute>} />
           {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />
