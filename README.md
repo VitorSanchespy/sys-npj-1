@@ -160,3 +160,8 @@ fazer:
 - limpar arquivos desnecessários e garantir que o repositório esteja organizado e fácil de navegar.
 
 - limpar arquivos orfãos e garantir que o repositório esteja livre de arquivos temporários ou desnecessários.
+
+
+os erros vc vai arrumando lembrando de usar o servirdor na maquina local backend (C:\Users\VTR\Documents\GitHub\sys-npj-1\backend) execulta npm start o do frontend (C:\Users\VTR\Documents\GitHub\sys-npj-1\frontend) execulta npm run dev e o servidor do banco de dados esta no conteiner (sistema-npj-db-1)
+
+evite ficar carregando pra sempre me de um status uma barra de carregamento para eu ver que voce esta funcionando

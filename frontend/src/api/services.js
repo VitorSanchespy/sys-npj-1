@@ -328,7 +328,7 @@ export const auxTablesService = {
 export const fileService = {
   // POST /api/arquivos/upload
   uploadFile: async (formData, token) => {
-    return await uploadFile(formData, token);
+    return await uploadFile('/api/arquivos/upload', formData, { token });
   },
 
   // GET /api/arquivos/processo/:processo_id

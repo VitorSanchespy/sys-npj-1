@@ -7,7 +7,6 @@ exports.listarUsuarios = async (req, res) => {
   try {
     // Buscar apenas usuários ativos com suas roles
     const usuarios = await Usuario.findAll({
-      where: { ativo: true },
       include: [{ model: Role, as: 'role' }]
     });
     res.json(usuarios);

@@ -8,6 +8,7 @@ const AgendamentoManager = ({ processoId = null }) => {
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editando, setEditando] = useState(null);
+  const [error, setError] = useState(null);
   const [filtros, setFiltros] = useState({
     tipo_evento: '',
     status: '',
@@ -89,9 +90,22 @@ const AgendamentoManager = ({ processoId = null }) => {
     }
   };
 
+  const handleNovoAgendamento = () => {
+    if (!userData || !userData.token) {
+      setError('Você precisa estar autenticado para criar um agendamento');
+      return;
+    }
+    setError(null);
+    setShowForm(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!userData || !userData.token) return;
+    if (!userData || !userData.token) {
+      setError('Você precisa estar autenticado para criar um agendamento');
+      return;
+    }
+
     try {
       if (editando) {
         await apiRequest(`/api/agendamentos/${editando}`, {
@@ -100,16 +114,17 @@ const AgendamentoManager = ({ processoId = null }) => {
           body: formData
         });
       } else {
-        await apiRequest('/api/agendamentos', {
+        const response = await apiRequest('/api/agendamentos', {
           method: 'POST',
           token: userData.token,
           body: formData
         });
+        console.log('Agendamento criado:', response);
       }
       setShowForm(false);
       setEditando(null);
       resetForm();
-      carregarAgendamentos();
+      await carregarAgendamentos();
     } catch (error) {
       console.error('Erro ao salvar agendamento:', error);
     }
@@ -186,6 +201,17 @@ const AgendamentoManager = ({ processoId = null }) => {
     return icons[tipo] || '📅';
   };
 
+  const handleNovoAgendamento = () => {
+    if (!userData || !userData.token) {
+      setError('Você precisa estar autenticado para criar um agendamento');
+      return;
+    }
+    setError(null);
+    setShowForm(true);
+    setEditando(null);
+    resetForm();
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -195,16 +221,17 @@ const AgendamentoManager = ({ processoId = null }) => {
         </h2>
         <button
           id="btn-add-appointment"
-          onClick={() => {
-            setShowForm(true);
-            setEditando(null);
-            resetForm();
-          }}
+          onClick={handleNovoAgendamento}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
         >
           + Novo Agendamento
         </button>
       </div>
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <span className="block sm:inline">{error}</span>
+        </div>
+      )}
 
       {/* Filtros */}
       <div className="bg-white rounded-lg shadow p-4">
@@ -251,12 +278,24 @@ const AgendamentoManager = ({ processoId = null }) => {
       </div>
 
       {/* Formulário */}
-      {showForm && (
+      {showForm && userData && userData.token && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold mb-4">
-              {editando ? 'Editar Agendamento' : 'Novo Agendamento'}
-            </h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">
+                {editando ? 'Editar Agendamento' : 'Novo Agendamento'}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowForm(false);
+                  setEditando(null);
+                  resetForm();
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

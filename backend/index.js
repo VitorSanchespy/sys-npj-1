@@ -17,16 +17,26 @@ module.exports = app; // Exporta o app para testes
 // Configuração básica de segurança
 app.use(helmet());
 
+// Configurar pasta de uploads
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Middleware para servir arquivos estáticos da pasta uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Middleware para correção de encoding UTF-8
 // app.use(require('./middleware/encodingMiddleware'));
 
-// express.json() será movido para depois da rota de upload
+// Configurar body parser antes das rotas, mas depois do upload
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(
   mongoSanitize({
     replaceWith: '_'
   })
 );
-app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
 // Configuração do CORS
@@ -145,9 +155,9 @@ app.use((req, res, next) => {
   express.json()(req, res, next);
 });
 
-// Rota de arquivos (temporariamente comentada)
-// app.use('/api/arquivos', require('./routes/arquivoRoutes'));
-// console.log('✅ /api/arquivos registrado');
+// Rota de arquivos
+app.use('/api/arquivos', require('./routes/arquivoRoutes'));
+console.log('✅ /api/arquivos registrado');
 
 // Demais rotas
 console.log('🔧 Registrando rotas...');

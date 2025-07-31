@@ -55,7 +55,7 @@ class NotificationService {
   // Buscar notificações do usuário
   async getNotifications(token, limit = 50, offset = 0) {
     try {
-      const response = await apiRequest('/api/notificacoes', 'GET', null, token);
+      const response = await apiRequest('/api/notificacoes', { method: 'GET', token });
       return response;
     } catch (error) {
       console.error('❌ Erro ao buscar notificações:', error);
@@ -66,7 +66,7 @@ class NotificationService {
   // Marcar notificação como lida
   async markAsRead(token, notificationId) {
     try {
-      const response = await apiRequest(`/api/notificacoes/${notificationId}/lida`, 'PUT', null, token);
+      const response = await apiRequest(`/api/notificacoes/${notificationId}/lida`, { method: 'PUT', token });
       return response;
     } catch (error) {
       console.error('❌ Erro ao marcar notificação como lida:', error);
@@ -77,7 +77,10 @@ class NotificationService {
   // Marcar todas como lidas
   async markAllAsRead(token) {
     try {
-      const response = await apiRequest('/api/notificacoes/marcar-todas-lidas', 'PUT', null, token);
+      const response = await apiRequest('/api/notificacoes/marcar-todas-lidas', { 
+        method: 'PUT', 
+        token 
+      });
       return response;
     } catch (error) {
       console.error('❌ Erro ao marcar todas como lidas:', error);
@@ -88,7 +91,7 @@ class NotificationService {
   // Buscar contador de notificações não lidas
   async getUnreadCount(token) {
     try {
-      const response = await apiRequest('/api/notificacoes/nao-lidas/contador', 'GET', null, token);
+      const response = await apiRequest('/api/notificacoes/nao-lidas/contador', { method: 'GET', token });
       return response.count || 0;
     } catch (error) {
       console.error('❌ Erro ao buscar contador:', error);
@@ -99,7 +102,7 @@ class NotificationService {
   // Configurações de notificação do usuário
   async getNotificationSettings(token) {
     try {
-      const response = await apiRequest('/api/notificacoes/configuracoes', 'GET', null, token);
+      const response = await apiRequest('/api/notificacoes/configuracoes', { method: 'GET', token });
       return response;
     } catch (error) {
       console.error('❌ Erro ao buscar configurações:', error);
@@ -110,7 +113,7 @@ class NotificationService {
   // Atualizar configurações de notificação
   async updateNotificationSettings(token, settings) {
     try {
-      const response = await apiRequest('/api/notificacoes/configuracoes', 'PUT', settings, token);
+      const response = await apiRequest('/api/notificacoes/configuracoes', { method: 'PUT', body: settings, token });
       return response;
     } catch (error) {
       console.error('❌ Erro ao atualizar configurações:', error);

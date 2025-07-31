@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { api } from "@/api/apiRequest";
+import { api, apiRequest } from "@/api/apiRequest";
 import { useAuthContext } from "@/contexts/AuthContext";
 import Button from "@/components/common/Button";
 import StatusBadge from "@/components/common/StatusBadge";
@@ -14,37 +14,88 @@ export default function ProcessDetailPage() {
   const { user } = useAuthContext();
   const [processo, setProcesso] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showUnassignModal, setShowUnassignModal] = useState(false);
   const [alunos, setAlunos] = useState([]);
 
+  // Se não houver usuário autenticado, redirecionar para login
   useEffect(() => {
-    // Função para buscar os detalhes do processo
-    const fetchProcesso = async () => {
+    if (!user || !user.token) {
+      navigate('/login', { 
+        replace: true,
+        state: { from: `/processos/${id}` }
+      });
+    }
+  }, [user, id, navigate]);
+
+  useEffect(() => {
+    if (!user?.token || !id) {
+      setLoading(false);
+      return;
+    }
+
+    let mounted = true;
+    
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await api.get(`/processos/${id}`, user?.token);
-        setProcesso(response.data);
+        console.log('Buscando processo:', id);
+        console.log('Token:', user.token ? 'Presente' : 'Ausente');
+        console.log('Headers:', {
+          'Authorization': `Bearer ${user.token}`
+        });
+        
+        // Fazer as duas chamadas em paralelo com headers explícitos
+        const [processoResponse, alunosResponse] = await Promise.all([
+          api.get(`/processos/${id}`, {
+            headers: {
+              'Authorization': `Bearer ${user.token}`
+            }
+          }),
+          api.get(`/processos/${id}/usuarios`, {
+            headers: {
+              'Authorization': `Bearer ${user.token}`
+            }
+          })
+        ]);
+
+        if (!mounted) return;
+
+        if (!processoResponse.data) {
+          console.log('Resposta vazia do processo');
+          setError('Processo não encontrado');
+          return;
+        }
+
+        console.log('Processo encontrado:', processoResponse.data);
+        setProcesso(processoResponse.data);
+        setAlunos(alunosResponse.data);
+        setError(null);
       } catch (error) {
-        console.error("Erro ao buscar processo:", error);
+        console.error("Erro ao buscar dados:", error);
+        if (error.response?.status === 403) {
+          setError('Você não tem permissão para acessar este processo');
+          setTimeout(() => navigate('/dashboard', { replace: true }), 2000);
+        } else if (error.response?.status === 404) {
+          setError('Processo não encontrado');
+        } else {
+          setError(error.response?.data?.erro || 'Erro ao carregar o processo');
+        }
+        setProcesso(null);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
-    // Função para buscar todos os usuários vinculados ao processo
-    const fetchAlunos = async () => {
-      try {
-        const response = await api.get(`/processos/${id}/usuarios`, user?.token);
-        setAlunos(response.data);
-      } catch (error) {
-        console.error("Erro ao buscar usuários vinculados:", error);
-      }
-    };
+    fetchData();
 
-    fetchProcesso();
-    fetchAlunos();
-  }, [id]);
+    return () => {
+      mounted = false;
+    };
+  }, [id, user?.token]);
 
   // Funções para vinculação/desvinculação (será implementado conforme necessário)
   const handleAssignUser = async (userId) => {
@@ -58,11 +109,54 @@ export default function ProcessDetailPage() {
   };
 
   if (loading) {
-    return <Loader message="Carregando processo..." />;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <Loader size={40} text="Carregando detalhes do processo..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] p-4 bg-white rounded-lg shadow">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-red-600 mb-2">Erro ao carregar processo</h2>
+          <p className="text-gray-600">{error}</p>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Voltar para Dashboard
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!processo) {
-    return <Loader error="Processo não encontrado" />;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] p-4 bg-white rounded-lg shadow">
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Processo não encontrado</h2>
+          <p className="text-gray-600 mb-4">O processo que você está procurando não existe ou foi removido.</p>
+          {import.meta.env.DEV && (
+            <div className="text-left p-4 bg-gray-100 rounded mb-4 text-sm">
+              <p className="font-bold mb-2">Informações de Debug:</p>
+              <p>ID do Processo: {id}</p>
+              <p>Token válido: {user?.token ? 'Sim' : 'Não'}</p>
+              <p>Role do usuário: {user?.role}</p>
+              <p>Erro: {error}</p>
+            </div>
+          )}
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Voltar para Dashboard
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -96,7 +190,7 @@ export default function ProcessDetailPage() {
         >
           ← Voltar à Lista
         </Button>
-        {hasRole(user, ['Administrador', 'Professor']) && (
+        {hasRole(user, ['Admin', 'Professor']) && (
           <Button
             variant="primary"
             onClick={() => navigate(`/processos/${id}/editar`)}
@@ -224,7 +318,7 @@ export default function ProcessDetailPage() {
                       {aluno.email}
                     </p>
                   </div>
-                  {hasRole(user, ['Administrador', 'Professor']) && (
+                  {hasRole(user, ['Admin', 'Professor']) && (
                     <Button
                       variant="outline"
                       size="sm"

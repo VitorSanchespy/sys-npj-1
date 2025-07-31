@@ -12,18 +12,24 @@ async function createAdmin() {
 
   const hashedPassword = await bcrypt.hash('123456', 10);
   
-  // Delete existing admin if exists
-  await connection.execute('DELETE FROM usuarios WHERE email = ?', ['admin@teste.com']);
+  // Check if admin already exists
+  const [existingUser] = await connection.execute('SELECT id FROM usuarios WHERE email = ?', ['admin@teste.com']);
   
-  // Create new admin
-  await connection.execute(
-    'INSERT INTO usuarios (nome, email, senha, role_id) VALUES (?, ?, ?, ?)',
-    ['Admin Teste', 'admin@teste.com', hashedPassword, 5]
-  );
-  
-  console.log('Admin criado com sucesso!');
-  console.log('Email: admin@teste.com');
-  console.log('Senha: 123456');
+  if (existingUser.length > 0) {
+    console.log('Admin já existe!');
+    console.log('Email: admin@teste.com');
+    console.log('Senha: 123456');
+  } else {
+    // Create new admin
+    await connection.execute(
+      'INSERT INTO usuarios (nome, email, senha, role_id, ativo) VALUES (?, ?, ?, ?, ?)',
+      ['Admin Teste', 'admin@teste.com', hashedPassword, 5, 1]
+    );
+    
+    console.log('Admin criado com sucesso!');
+    console.log('Email: admin@teste.com');
+    console.log('Senha: 123456');
+  }
   
   await connection.end();
 }

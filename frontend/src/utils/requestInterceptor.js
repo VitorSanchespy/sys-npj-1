@@ -24,6 +24,22 @@ class RequestInterceptor {
       options.timeout = NPJ_CONFIG.API.TIMEOUT;
     }
 
+    // Adicionar token de autorização se disponível
+    const token = localStorage.getItem('token');
+    if (token) {
+      options.headers = {
+        'Content-Type': 'application/json',
+        ...options.headers,
+        'Authorization': `Bearer ${token}`
+      };
+    } else if (options.body && typeof options.body === 'string') {
+      // Adicionar Content-Type mesmo sem token para requisições POST/PUT
+      options.headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+      };
+    }
+
     // Marcar como ativa
     this.activeRequests.add(requestId);
 
@@ -102,9 +118,14 @@ class RequestInterceptor {
 
   // Determinar se deve fazer retry
   shouldRetry(error) {
-    // Não retry para erros de autenticação/autorização
-    if (error.status === ERROR_CODES.UNAUTHORIZED || 
-        error.status === ERROR_CODES.FORBIDDEN) {
+    // Para erros 401, limpar tokens e redirecionar para login
+    if (error.status === ERROR_CODES.UNAUTHORIZED) {
+      this.handleUnauthorized();
+      return false;
+    }
+
+    // Não retry para erros de autorização
+    if (error.status === ERROR_CODES.FORBIDDEN) {
       return false;
     }
 
@@ -117,6 +138,19 @@ class RequestInterceptor {
     return error.status >= 500 || 
            error.code === ERROR_CODES.NETWORK_ERROR ||
            error.code === ERROR_CODES.TIMEOUT;
+  }
+
+  // Lidar com erro de autenticação
+  handleUnauthorized() {
+    // Limpar tokens expirados
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    
+    // Redirecionar para login se não estiver já na página de login
+    if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
+      window.location.href = '/login';
+    }
   }
 
   // Normalizar erros
@@ -182,20 +216,42 @@ export async function interceptedRequest(url, options = {}) {
 
   // Executar requisição com interceptação
   const response = await requestInterceptor.interceptRequest(url, options);
-  
-  // Verificar se a resposta é válida
+
+  // Se a resposta for nula ou indefinida (ex: requisição throttled),
+  // pode ser que outra requisição já esteja buscando o recurso.
+  // Neste caso, tentamos obter do cache após um breve período.
   if (!response) {
-    throw new Error('Resposta inválida do servidor');
+    await new Promise(resolve => setTimeout(resolve, 100)); // Aguarda um pouco
+    const cached = requestCache.get(cacheKey);
+    if (cached) {
+      if (NPJ_CONFIG.DEV.ENABLE_LOGS) {
+        console.log(`🔄 Cache hit after throttle/debounce: ${url}`);
+      }
+      return cached;
+    }
+    // Se ainda não houver nada, lançar um erro mais claro.
+    throw new Error('A requisição foi interrompida pelo throttle/debounce e não houve resposta.');
   }
   
-  const data = await response.json();
-
-  // Cachear resposta para requisições GET bem-sucedidas
-  if ((!options.method || options.method === 'GET')) {
-    requestCache.set(cacheKey, data);
+  // Se já é um objeto (dados do cache), retornar diretamente
+  if (typeof response === 'object' && !response.json) {
+    return response;
   }
-
-  return data;
+  
+  // Se é uma response do fetch, fazer parse JSON
+  if (typeof response.json === 'function') {
+    const data = await response.json();
+    
+    // Cachear resposta para requisições GET bem-sucedidas
+    if ((!options.method || options.method === 'GET')) {
+      requestCache.set(cacheKey, data);
+    }
+    
+    return data;
+  }
+  
+  // Fallback para outros tipos de resposta
+  return response;
 }
 
 export default requestInterceptor;

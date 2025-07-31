@@ -161,13 +161,12 @@ exports.listarArquivosUsuario = async (req, res) => {
     
     const arquivos = await Arquivo.findAll({
       where: { 
-        usuario_id,
-        ativo: true 
+        usuario_id
       },
       include: [{
         model: Processo,
         as: 'processo',
-        attributes: ['numero', 'titulo']
+        attributes: ['id', 'numero_processo', 'descricao']
       }],
       order: [['criado_em', 'DESC']]
     });

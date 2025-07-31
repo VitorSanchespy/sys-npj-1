@@ -11,8 +11,8 @@ export const getUserRole = (user) => {
   }
   
   if (user.role_id === 1) return 'Admin';
-  if (user.role_id === 2) return 'Aluno';
-  if (user.role_id === 3) return 'Professor';
+  if (user.role_id === 2) return 'Professor';
+  if (user.role_id === 3) return 'Aluno';
   
   return null;
 };

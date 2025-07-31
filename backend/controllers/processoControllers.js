@@ -24,7 +24,7 @@ exports.listarProcessos = async (req, res) => {
       )`;
     }
     
-    query += ' ORDER BY p.data_atualizacao DESC';
+    query += ' ORDER BY p.criado_em DESC';
     
     const processos = await db.query(query, { type: db.QueryTypes.SELECT });
     res.json(processos);
@@ -37,13 +37,13 @@ exports.listarProcessos = async (req, res) => {
 // Buscar processo por ID
 exports.buscarProcessoPorId = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { processo_id } = req.params;
     const { id: userId, role } = req.usuario;
     
     // Se for Aluno, verificar se tem acesso ao processo
     if (role === 'Aluno' || role === 2 || role === '2') {
       const acesso = await UsuariosProcesso.findOne({
-        where: { usuario_id: userId, processo_id: id }
+        where: { usuario_id: userId, processo_id: processo_id }
       });
       
       if (!acesso) {
@@ -51,7 +51,35 @@ exports.buscarProcessoPorId = async (req, res) => {
       }
     }
     
-    const processo = await Processo.findByPk(id);
+    console.log('Buscando processo:', processo_id);
+    const processo = await Processo.findOne({
+      where: { id: processo_id },
+      include: [
+        {
+          model: Usuario,
+          as: 'responsavel', // Corrigido o alias para match com o modelo
+          attributes: ['id', 'nome', 'email', 'role_id']
+        },
+        {
+          model: models.materiaAssuntoModels,
+          as: 'materiaAssunto',
+          attributes: ['id', 'nome']
+        },
+        {
+          model: models.faseModels,
+          as: 'fase',
+          attributes: ['id', 'nome']
+        },
+        {
+          model: models.localTramitacaoModels,
+          as: 'localTramitacao',
+          attributes: ['id', 'nome']
+        }
+      ]
+    });
+    
+    console.log('Processo encontrado:', processo ? 'Sim' : 'Não');
+
     if (!processo) {
       return res.status(404).json({ erro: 'Processo não encontrado' });
     }
@@ -157,8 +185,7 @@ exports.atualizarProcessos = async (req, res) => {
 
     // Atualizar o processo
     await processo.update({
-      ...req.body,
-      data_atualizacao: new Date()
+      ...req.body
     });
 
     res.json({
@@ -300,7 +327,7 @@ exports.listarMeusProcessos = async (req, res) => {
       LEFT JOIN usuarios u ON p.idusuario_responsavel = u.id
       INNER JOIN usuarios_processo up ON p.id = up.processo_id
       WHERE up.usuario_id = ?
-      ORDER BY p.data_atualizacao DESC
+      ORDER BY p.criado_em DESC
     `, {
       replacements: [userId],
       type: db.QueryTypes.SELECT
@@ -343,7 +370,7 @@ exports.buscarProcessos = async (req, res) => {
       replacements.push(userId);
     }
 
-    query += ' ORDER BY p.data_atualizacao DESC';
+    query += ' ORDER BY p.criado_em DESC';
 
     const processos = await db.query(query, {
       replacements,
@@ -378,7 +405,7 @@ exports.listarProcessosRecentes = async (req, res) => {
       )`;
     }
 
-    query += ' ORDER BY p.data_atualizacao DESC LIMIT 10';
+    query += ' ORDER BY p.criado_em DESC LIMIT 10';
 
     const processos = await db.query(query, { type: db.QueryTypes.SELECT });
     res.json(processos);
@@ -406,7 +433,7 @@ exports.estatisticasProcessos = async (req, res) => {
     const estatisticas = await db.query(`
       SELECT 
         COUNT(*) as total_processos,
-        COUNT(CASE WHEN p.data_atualizacao >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as processos_recentes,
+        COUNT(CASE WHEN p.criado_em >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as processos_recentes,
         COUNT(DISTINCT p.idusuario_responsavel) as usuarios_responsaveis
       FROM processos p
       WHERE 1=1 ${baseQuery}

@@ -13,7 +13,7 @@ export const useNotificationContext = () => {
 };
 
 export const NotificationProvider = ({ children }) => {
-  const { user, token } = useAuthContext();
+  const { user, token, loading: authLoading } = useAuthContext();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,6 +21,9 @@ export const NotificationProvider = ({ children }) => {
 
   // Conectar WebSocket quando usuário logar
   useEffect(() => {
+    // Aguardar que a autenticação seja verificada antes de carregar notificações
+    if (authLoading) return;
+    
     if (user && token) {
       notificationService.connect(user.id, token);
       
@@ -45,7 +48,7 @@ export const NotificationProvider = ({ children }) => {
     return () => {
       notificationService.disconnect();
     };
-  }, [user, token]);
+  }, [user, token, authLoading]);
 
   // Carregar notificações do servidor
   const loadNotifications = async () => {

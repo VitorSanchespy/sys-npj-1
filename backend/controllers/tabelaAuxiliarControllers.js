@@ -14,11 +14,30 @@ const modelMap = {
   local_tramitacao: LocalTramitacao
 };
 
+// Funções de criação
+exports.criarMateria = async (data) => {
+  return await MateriaAssunto.create(data);
+};
+
+exports.criarFase = async (data) => {
+  return await Fase.create(data);
+};
+
+exports.criarDiligencia = async (data) => {
+  return await Diligencia.create(data);
+};
+
+exports.criarLocal = async (data) => {
+  return await LocalTramitacao.create(data);
+};
+
 // Listar matérias/assuntos
 exports.listarMaterias = async (req, res) => {
   try {
-    // Teste básico
-    res.json([]);
+    const materias = await MateriaAssunto.findAll({
+      order: [['nome', 'ASC']]
+    });
+    res.json(materias);
   } catch (err) {
     console.error('Erro ao listar matérias:', err);
     res.status(500).json({ erro: 'Erro ao listar matérias.' });
@@ -28,8 +47,10 @@ exports.listarMaterias = async (req, res) => {
 // Listar fases
 exports.listarFases = async (req, res) => {
   try {
-    // Teste básico
-    res.json([]);
+    const fases = await Fase.findAll({
+      order: [['nome', 'ASC']]
+    });
+    res.json(fases);
   } catch (err) {
     console.error('Erro ao listar fases:', err);
     res.status(500).json({ erro: 'Erro ao listar fases.' });
@@ -39,8 +60,10 @@ exports.listarFases = async (req, res) => {
 // Listar diligências
 exports.listarDiligencias = async (req, res) => {
   try {
-    // Teste básico
-    res.json([]);
+    const diligencias = await Diligencia.findAll({
+      order: [['nome', 'ASC']]
+    });
+    res.json(diligencias);
   } catch (err) {
     console.error('Erro ao listar diligências:', err);
     res.status(500).json({ erro: 'Erro ao listar diligências.' });
@@ -50,8 +73,10 @@ exports.listarDiligencias = async (req, res) => {
 // Listar locais de tramitação
 exports.listarLocais = async (req, res) => {
   try {
-    // Teste básico
-    res.json([]);
+    const locais = await LocalTramitacao.findAll({
+      order: [['nome', 'ASC']]
+    });
+    res.json(locais);
   } catch (err) {
     console.error('Erro ao listar locais:', err);
     res.status(500).json({ erro: 'Erro ao listar locais.' });

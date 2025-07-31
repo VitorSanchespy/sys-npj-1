@@ -16,6 +16,24 @@ const {
 // Aplicar middleware de autenticação a todas as rotas
 router.use(verificarToken);
 
+// Listar meus processos (Alunos e Professores)
+router.get('/meus-processos', listarMeusProcessos);
+
+// Listar processos recentes (últimos 5 atualizados)
+router.get('/recentes', 
+    roleMiddleware(['Professor', 'Admin', 'Aluno']),
+    listarProcessosRecentes
+);
+
+// Estatísticas dos processos (para dashboard)
+router.get('/stats', 
+    roleMiddleware(['Professor', 'Admin']),
+    estatisticasProcessos
+);
+
+// Buscar processos por numero
+router.get('/buscar', buscarProcessos);
+
 // criar novo processo
 router.post('/novo',
     roleMiddleware(['Professor', 'Admin']),
@@ -39,6 +57,9 @@ router.get('/:processo_id/detalhes',
     roleMiddleware(['Professor', 'Admin', 'Aluno']),
     detalharProcessos
 );
+
+// Listar meus processos (Alunos e Professores)
+router.get('/meus-processos', listarMeusProcessos);
 
 // listar processos
 router.get('/', 
@@ -74,14 +95,17 @@ router.delete('/remover-usuario',
     removerUsuarioProcessos
 );
 
+// Buscar processo específico por ID
+router.get('/:processo_id',
+    roleMiddleware(['Professor', 'Admin', 'Aluno']),
+    buscarProcessoPorId
+);
+
 // Listar usuários vinculados a um processo
 router.get('/:processo_id/usuarios',
     roleMiddleware(['Professor', 'Admin', 'Aluno']),
     listarUsuariosPorProcessos
 );
-
-// Listar meus processos (Alunos e Professores)
-router.get('/meus-processos', listarMeusProcessos);
 
 // Listar processos recentes (últimos 5 atualizados)
 router.get('/recentes', 
