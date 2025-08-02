@@ -1,22 +1,61 @@
-# 🏛️ Sistema NPJ - Núcleo de Prática Jurídica UFMT
+# 🏛️ Sistema NPJ - Núcleo de Prática Jurídica
 
-- Evite realizar trabalhos direto no container faça alterações no código localmente e depois faça o build do container.
+## 📋 **VISÃO GERAL**
 
-- Use o comando `docker-compose up -d` para iniciar os containers em segundo plano.
-- Use o comando `docker-compose down` para parar e remover os containers.
-- Use o comando `docker-compose logs -f` para acompanhar os logs dos containers em tempo real.
+Sistema completo de gestão para Núcleos de Prática Jurídica, desenvolvido com tecnologias modernas e arquitetura escalável.
 
-Sistema completo de gerenciamento de processos jurídicos para o Núcleo de Prática Jurídica da UFMT, desenvolvido em Node.js + React com MySQL.
+### **🛠️ Stack Tecnológica:**
+- **Backend:** Node.js + Express + MySQL + Sequelize
+- **Frontend:** React + Vite + TailwindCSS
+- **Banco:** MySQL 8.0 com 15 tabelas relacionais
+- **Autenticação:** JWT com refresh tokens
+- **Upload:** Sistema de arquivos integrado
 
-## 📋 Visão Geral
+---
 
-- **Frontend**: React 18 + Vite + TailwindCSS  
-- **Backend**: Node.js + Express + Sequelize ORM
-- **Banco de Dados**: MySQL 8.0
-- **Containerização**: Docker + Docker Compose
-- **Autenticação**: JWT + Refresh Tokens
+## 🚀 **CONFIGURAÇÃO RÁPIDA**
 
-## 📚 Documentação da API
+### **📦 Instalação Automática (Windows):**
+```bash
+# Clone o repositório
+git clone https://github.com/VitorSanchespy/sys-npj-1.git
+cd sys-npj-1
+
+# Execute o setup automático
+setup.bat
+```
+
+### **📦 Instalação Automática (Linux/Mac):**
+```bash
+# Clone o repositório
+git clone https://github.com/VitorSanchespy/sys-npj-1.git
+cd sys-npj-1
+
+# Torne o script executável e execute
+chmod +x setup.sh
+./setup.sh
+```
+
+### **🎯 Inicialização Rápida:**
+```bash
+# Windows
+start.bat
+
+# Linux/Mac
+./start.sh
+```
+
+---
+
+## � **DOCUMENTAÇÃO COMPLETA**
+
+| Documento | Descrição |
+|-----------|-----------|
+| **[CONFIGURACAO-LOCAL.md](CONFIGURACAO-LOCAL.md)** | Guia completo de configuração local |
+| **[ENDPOINTS-BACKEND.md](ENDPOINTS-BACKEND.md)** | Documentação detalhada da API (49 endpoints) |
+| **[API-QUICK-REFERENCE.md](API-QUICK-REFERENCE.md)** | Referência rápida da API |
+| **[GUIA-CONFIGURACAO-BANCO.md](GUIA-CONFIGURACAO-BANCO.md)** | Configuração do banco de dados |
+| **[ANALISE-BANCO-DADOS.md](ANALISE-BANCO-DADOS.md)** | Análise da estrutura do banco |
 
 - 📡 **[Endpoints Completos](ENDPOINTS-BACKEND.md)** - Documentação detalhada de todos os 49 endpoints
 - 🚀 **[Consulta Rápida](API-QUICK-REFERENCE.md)** - Referência rápida dos endpoints
