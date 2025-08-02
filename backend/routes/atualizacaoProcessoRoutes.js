@@ -8,9 +8,10 @@ const atualizacaoController = require('../controllers/atualizacaoProcessoControl
 router.use(verificarToken);
 
 // Rotas básicas
-router.get('/', atualizacaoController.listarTodasAtualizacoes);
-router.post('/', atualizacaoController.adicionarAtualizacaoProcessos);
-router.get('/:processoId', atualizacaoController.listarAtualizacaoProcesso);
-router.delete('/:id', atualizacaoController.removerAtualizacaoProcessos);
+router.get('/', atualizacaoController.listarAtualizacoes);
+router.post('/', atualizacaoController.criarAtualizacao);
+router.get('/:id', atualizacaoController.obterAtualizacao);
+router.put('/:id', atualizacaoController.atualizarAtualizacao);
+router.delete('/:id', atualizacaoController.deletarAtualizacao);
 
 module.exports = router;

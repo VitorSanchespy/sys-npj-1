@@ -8,9 +8,12 @@ const tabelaController = require('../controllers/tabelaAuxiliarControllers');
 router.use(verificarToken);
 
 // Rotas básicas
-router.get('/materias', tabelaController.listarMaterias);
-router.get('/fases', tabelaController.listarFases);
-router.get('/diligencias', tabelaController.listarDiligencias);
-router.get('/locais', tabelaController.listarLocais);
+router.get('/todas', tabelaController.obterTodasOpcoes);
+router.get('/roles', tabelaController.listarRoles);
+router.get('/tipos-acao', tabelaController.listarTiposAcao);
+router.get('/status', tabelaController.listarStatusProcesso);
+router.get('/prioridades', tabelaController.listarPrioridades);
+router.get('/comarcas', tabelaController.listarComarcas);
+router.get('/varas', tabelaController.listarVaras);
 
 module.exports = router;

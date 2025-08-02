@@ -6,10 +6,13 @@ const verificarToken = require('../middleware/authMiddleware');
 // Aplicar autenticação a todas as rotas
 router.use(verificarToken);
 
-// Rotas simplificadas
+// Rotas básicas
 router.get('/', agendamentoControllers.listarAgendamentos);
 router.post('/', agendamentoControllers.criarAgendamento);
+router.get('/usuario', agendamentoControllers.listarAgendamentosUsuario);
+router.get('/periodo', agendamentoControllers.listarAgendamentosPeriodo);
 router.get('/:id', agendamentoControllers.obterAgendamento);
 router.put('/:id', agendamentoControllers.atualizarAgendamento);
+router.delete('/:id', agendamentoControllers.deletarAgendamento);
 
 module.exports = router;
