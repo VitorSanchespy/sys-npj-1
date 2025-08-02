@@ -5,7 +5,7 @@ class Arquivo extends Model {
   static associate(models) {
     Arquivo.belongsTo(models.processoModel, { foreignKey: 'processo_id', as: 'processo' });
     Arquivo.belongsTo(models.usuarioModel, { foreignKey: 'usuario_id', as: 'usuario' });
-    Arquivo.hasMany(models.atualizacoesprocessoModel, { foreignKey: 'arquivos_id', as: 'atualizacoes' });
+    Arquivo.hasMany(models.atualizacaoProcessoModel, { foreignKey: 'arquivos_id', as: 'atualizacoes' });
   }
 
   static async anexarAProcesso(arquivo_id, processo_id) {

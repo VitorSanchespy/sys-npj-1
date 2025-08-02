@@ -13,7 +13,7 @@ class AtualizacoesProcesso extends Model {
       as: 'processo',
       onDelete: 'CASCADE'
     });
-    AtualizacoesProcesso.belongsTo(models.arquivoModels, {
+    AtualizacoesProcesso.belongsTo(models.arquivoModel, {
       foreignKey: 'arquivos_id',
       as: 'arquivo',
       onDelete: 'SET NULL'

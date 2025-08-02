@@ -1,69 +1,18 @@
-// Controller de Tabelas Auxiliares simplificado
-
-// Função utilitária para verificar disponibilidade do banco
-function isDbAvailable() {
-  return global.dbAvailable || false;
-}
-
-// Dados mock para desenvolvimento
-const getMockData = () => {
-  return {
-    roles: [
-      { id: 1, nome: 'Admin' },
-      { id: 2, nome: 'Professor' },
-      { id: 3, nome: 'Aluno' }
-    ],
-    tipos_acao: [
-      { id: 1, nome: 'Civil' },
-      { id: 2, nome: 'Trabalhista' },
-      { id: 3, nome: 'Criminal' },
-      { id: 4, nome: 'Administrativa' }
-    ],
-    status_processo: [
-      { id: 1, nome: 'Em Andamento' },
-      { id: 2, nome: 'Aguardando' },
-      { id: 3, nome: 'Concluído' },
-      { id: 4, nome: 'Suspenso' },
-      { id: 5, nome: 'Arquivado' }
-    ],
-    prioridades: [
-      { id: 1, nome: 'Baixa' },
-      { id: 2, nome: 'Normal' },
-      { id: 3, nome: 'Alta' },
-      { id: 4, nome: 'Urgente' }
-    ],
-    comarcas: [
-      { id: 1, nome: 'Cuiabá' },
-      { id: 2, nome: 'Várzea Grande' },
-      { id: 3, nome: 'Rondonópolis' },
-      { id: 4, nome: 'Sinop' },
-      { id: 5, nome: 'Tangará da Serra' }
-    ],
-    varas: [
-      { id: 1, nome: '1ª Vara Civil' },
-      { id: 2, nome: '2ª Vara Civil' },
-      { id: 3, nome: '1ª Vara Criminal' },
-      { id: 4, nome: '2ª Vara Criminal' },
-      { id: 5, nome: '1ª Vara Trabalhista' },
-      { id: 6, nome: '2ª Vara Trabalhista' }
-    ]
-  };
-};
+// Controller de Tabelas Auxiliares
+const { 
+  roleModel: Role,
+  materiaAssuntoModel: MateriaAssunto,
+  faseModel: Fase,
+  diligenciaModel: Diligencia,
+  localTramitacaoModel: LocalTramitacao
+} = require('../models/indexModel');
 
 // Listar roles
 exports.listarRoles = async (req, res) => {
   try {
-    let roles = [];
-    
-    if (isDbAvailable()) {
-      const { roleModel: Role } = require('../models/indexModel');
-      roles = await Role.findAll({
-        order: [['nome', 'ASC']]
-      });
-    } else {
-      const mockData = getMockData();
-      roles = mockData.roles;
-    }
+    const roles = await Role.findAll({
+      order: [['nome', 'ASC']]
+    });
     
     res.json(roles);
     
@@ -73,173 +22,134 @@ exports.listarRoles = async (req, res) => {
   }
 };
 
-// Listar tipos de ação
-exports.listarTiposAcao = async (req, res) => {
+// Listar matérias/assuntos
+exports.listarMateriaAssunto = async (req, res) => {
   try {
-    let tipos = [];
+    const materias = await MateriaAssunto.findAll({
+      order: [['nome', 'ASC']]
+    });
     
-    if (isDbAvailable()) {
-      const { tipoAcaoModel: TipoAcao } = require('../models/indexModel');
-      tipos = await TipoAcao.findAll({
-        order: [['nome', 'ASC']]
-      });
-    } else {
-      const mockData = getMockData();
-      tipos = mockData.tipos_acao;
-    }
-    
-    res.json(tipos);
+    res.json(materias);
     
   } catch (error) {
-    console.error('Erro ao listar tipos de ação:', error);
+    console.error('Erro ao listar matérias/assuntos:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
 
-// Listar status de processo
-exports.listarStatusProcesso = async (req, res) => {
+// Listar fases
+exports.listarFases = async (req, res) => {
   try {
-    let status = [];
+    const fases = await Fase.findAll({
+      order: [['nome', 'ASC']]
+    });
     
-    if (isDbAvailable()) {
-      const { statusModel: StatusProcesso } = require('../models/indexModel');
-      status = await StatusProcesso.findAll({
-        order: [['nome', 'ASC']]
-      });
-    } else {
-      const mockData = getMockData();
-      status = mockData.status_processo;
-    }
-    
-    res.json(status);
+    res.json(fases);
     
   } catch (error) {
-    console.error('Erro ao listar status de processo:', error);
+    console.error('Erro ao listar fases:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
 
-// Listar prioridades
-exports.listarPrioridades = async (req, res) => {
+// Listar diligências
+exports.listarDiligencias = async (req, res) => {
   try {
-    let prioridades = [];
+    const diligencias = await Diligencia.findAll({
+      order: [['nome', 'ASC']]
+    });
     
-    if (isDbAvailable()) {
-      const { prioridadeModel: Prioridade } = require('../models/indexModel');
-      prioridades = await Prioridade.findAll({
-        order: [['nome', 'ASC']]
-      });
-    } else {
-      const mockData = getMockData();
-      prioridades = mockData.prioridades;
-    }
-    
-    res.json(prioridades);
+    res.json(diligencias);
     
   } catch (error) {
-    console.error('Erro ao listar prioridades:', error);
+    console.error('Erro ao listar diligências:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
 
-// Listar comarcas
-exports.listarComarcas = async (req, res) => {
+// Listar locais de tramitação
+exports.listarLocaisTramitacao = async (req, res) => {
   try {
-    let comarcas = [];
+    const locais = await LocalTramitacao.findAll({
+      order: [['nome', 'ASC']]
+    });
     
-    if (isDbAvailable()) {
-      const { comarcaModel: Comarca } = require('../models/indexModel');
-      comarcas = await Comarca.findAll({
-        order: [['nome', 'ASC']]
-      });
-    } else {
-      const mockData = getMockData();
-      comarcas = mockData.comarcas;
-    }
-    
-    res.json(comarcas);
+    res.json(locais);
     
   } catch (error) {
-    console.error('Erro ao listar comarcas:', error);
+    console.error('Erro ao listar locais de tramitação:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
 
-// Listar varas
-exports.listarVaras = async (req, res) => {
+// Criar nova matéria/assunto
+exports.criarMateriaAssunto = async (req, res) => {
   try {
-    let varas = [];
+    const { nome } = req.body;
     
-    if (isDbAvailable()) {
-      const { varaModel: Vara } = require('../models/indexModel');
-      varas = await Vara.findAll({
-        order: [['nome', 'ASC']]
-      });
-    } else {
-      const mockData = getMockData();
-      varas = mockData.varas;
+    if (!nome) {
+      return res.status(400).json({ erro: 'Nome é obrigatório' });
     }
     
-    res.json(varas);
+    const novaMateria = await MateriaAssunto.create({ nome });
+    res.status(201).json(novaMateria);
     
   } catch (error) {
-    console.error('Erro ao listar varas:', error);
+    console.error('Erro ao criar matéria/assunto:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
 
-// Obter todas as opções auxiliares
-exports.obterTodasOpcoes = async (req, res) => {
+// Criar nova fase
+exports.criarFase = async (req, res) => {
   try {
-    const mockData = getMockData();
+    const { nome } = req.body;
     
-    let dados = {
-      roles: mockData.roles,
-      tipos_acao: mockData.tipos_acao,
-      status_processo: mockData.status_processo,
-      prioridades: mockData.prioridades,
-      comarcas: mockData.comarcas,
-      varas: mockData.varas
-    };
-    
-    if (isDbAvailable()) {
-      // Se o banco estiver disponível, buscar dados reais
-      try {
-        const { 
-          roleModel: Role, 
-          tipoAcaoModel: TipoAcao,
-          statusModel: StatusProcesso,
-          prioridadeModel: Prioridade,
-          comarcaModel: Comarca,
-          varaModel: Vara
-        } = require('../models/indexModel');
-        
-        const [roles, tipos, status, prioridades, comarcas, varas] = await Promise.all([
-          Role.findAll({ order: [['nome', 'ASC']] }),
-          TipoAcao.findAll({ order: [['nome', 'ASC']] }),
-          StatusProcesso.findAll({ order: [['nome', 'ASC']] }),
-          Prioridade.findAll({ order: [['nome', 'ASC']] }),
-          Comarca.findAll({ order: [['nome', 'ASC']] }),
-          Vara.findAll({ order: [['nome', 'ASC']] })
-        ]);
-        
-        dados = {
-          roles,
-          tipos_acao: tipos,
-          status_processo: status,
-          prioridades,
-          comarcas,
-          varas
-        };
-      } catch (dbError) {
-        console.log('⚠️ Erro no banco, usando dados mock:', dbError.message);
-      }
+    if (!nome) {
+      return res.status(400).json({ erro: 'Nome é obrigatório' });
     }
     
-    res.json(dados);
+    const novaFase = await Fase.create({ nome });
+    res.status(201).json(novaFase);
     
   } catch (error) {
-    console.error('Erro ao obter opções auxiliares:', error);
+    console.error('Erro ao criar fase:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Criar nova diligência
+exports.criarDiligencia = async (req, res) => {
+  try {
+    const { nome } = req.body;
+    
+    if (!nome) {
+      return res.status(400).json({ erro: 'Nome é obrigatório' });
+    }
+    
+    const novaDiligencia = await Diligencia.create({ nome });
+    res.status(201).json(novaDiligencia);
+    
+  } catch (error) {
+    console.error('Erro ao criar diligência:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Criar novo local de tramitação
+exports.criarLocalTramitacao = async (req, res) => {
+  try {
+    const { nome } = req.body;
+    
+    if (!nome) {
+      return res.status(400).json({ erro: 'Nome é obrigatório' });
+    }
+    
+    const novoLocal = await LocalTramitacao.create({ nome });
+    res.status(201).json(novoLocal);
+    
+  } catch (error) {
+    console.error('Erro ao criar local de tramitação:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };

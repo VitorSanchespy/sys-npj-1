@@ -11,7 +11,7 @@ class Notificacao extends Model {
       foreignKey: 'processo_id', 
       as: 'processo' 
     });
-    Notificacao.belongsTo(models.agendamentoModels, { 
+    Notificacao.belongsTo(models.agendamentoModel, { 
       foreignKey: 'agendamento_id', 
       as: 'agendamento' 
     });

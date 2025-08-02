@@ -3,14 +3,14 @@ const sequelize = require('../utils/sequelize');
 
 class Processo extends Model {
   static associate(models) {
-    Processo.hasMany(models.atualizacoesprocessoModel, { foreignKey: 'processo_id', as: 'atualizacoes' });
-    Processo.hasMany(models.arquivoModels, { foreignKey: 'processo_id', as: 'arquivos' });
-    Processo.hasMany(models.usuariosprocessoModel, { foreignKey: 'processo_id', as: 'usuariosProcesso' });
+    Processo.hasMany(models.atualizacaoProcessoModel, { foreignKey: 'processo_id', as: 'atualizacoes' });
+    Processo.hasMany(models.arquivoModel, { foreignKey: 'processo_id', as: 'arquivos' });
+    Processo.hasMany(models.usuarioProcessoModel, { foreignKey: 'processo_id', as: 'usuariosProcesso' });
     // Associações belongsTo para includes
-    Processo.belongsTo(models.materiaAssuntoModels, { foreignKey: 'materia_assunto_id', as: 'materiaAssunto' });
-    Processo.belongsTo(models.faseModels, { foreignKey: 'fase_id', as: 'fase' });
-    Processo.belongsTo(models.diligenciaModels, { foreignKey: 'diligencia_id', as: 'diligencia' });
-    Processo.belongsTo(models.localTramitacaoModels, { foreignKey: 'local_tramitacao_id', as: 'localTramitacao' });
+    Processo.belongsTo(models.materiaAssuntoModel, { foreignKey: 'materia_assunto_id', as: 'materiaAssunto' });
+    Processo.belongsTo(models.faseModel, { foreignKey: 'fase_id', as: 'fase' });
+    Processo.belongsTo(models.diligenciaModel, { foreignKey: 'diligencia_id', as: 'diligencia' });
+    Processo.belongsTo(models.localTramitacaoModel, { foreignKey: 'local_tramitacao_id', as: 'localTramitacao' });
     Processo.belongsTo(models.usuarioModel, { foreignKey: 'idusuario_responsavel', as: 'responsavel' });
   }
 }

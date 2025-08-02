@@ -8,12 +8,7 @@ const tabelaController = require('../controllers/tabelaAuxiliarController');
 router.use(verificarToken);
 
 // Rotas básicas
-router.get('/todas', tabelaController.obterTodasOpcoes);
 router.get('/roles', tabelaController.listarRoles);
-router.get('/tipos-acao', tabelaController.listarTiposAcao);
-router.get('/status', tabelaController.listarStatusProcesso);
-router.get('/prioridades', tabelaController.listarPrioridades);
-router.get('/comarcas', tabelaController.listarComarcas);
-router.get('/varas', tabelaController.listarVaras);
+// Adicione aqui apenas rotas cujos controllers existem
 
 module.exports = router;

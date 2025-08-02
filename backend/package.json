@@ -7,11 +7,14 @@
     "dev": "node index.js",
     "migrate": "node migrate.js up",
     "migrate:check": "node migrate.js check",
-    "migrate:rollback": "node migrate.js rollback"
+    "migrate:rollback": "node migrate.js rollback",
+    "setup": "node migrate.js up && node utils/createAdmin.js",
+    "test": "jest"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
+    "chokidar": "^4.0.3",
     "cors": "^2.8.5",
     "dotenv": "^17.0.1",
     "express": "^4.21.2",

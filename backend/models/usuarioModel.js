@@ -4,9 +4,9 @@ const sequelize = require('../utils/sequelize');
 class Usuario extends Model {
   static associate(models) {
     Usuario.belongsTo(models.roleModel, { foreignKey: 'role_id', as: 'role' });
-    Usuario.hasMany(models.atualizacoesprocessoModel, { foreignKey: 'usuario_id', as: 'atualizacoes' });
-    Usuario.hasMany(models.arquivoModels, { foreignKey: 'usuario_id', as: 'arquivos' });
-    Usuario.hasMany(models.usuariosprocessoModel, { foreignKey: 'usuario_id', as: 'usuariosProcesso' });
+    Usuario.hasMany(models.atualizacaoProcessoModel, { foreignKey: 'usuario_id', as: 'atualizacoes' });
+    Usuario.hasMany(models.arquivoModel, { foreignKey: 'usuario_id', as: 'arquivos' });
+    Usuario.hasMany(models.usuarioProcessoModel, { foreignKey: 'usuario_id', as: 'usuariosProcesso' });
     Usuario.hasMany(models.processoModel, { foreignKey: 'idusuario_responsavel', as: 'processosResponsavel' });
   }
 

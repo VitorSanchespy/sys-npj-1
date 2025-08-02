@@ -13,37 +13,55 @@ Sistema completo de gestão para Núcleos de Prática Jurídica, desenvolvido co
 
 ---
 
-## 🚀 **CONFIGURAÇÃO RÁPIDA**
+## 🚀 **CONFIGURAÇÃO PARA DESENVOLVIMENTO LOCAL**
 
-### **📦 Instalação Automática (Windows):**
+### **� Pré-requisitos:**
+- Node.js 16+ 
+- MySQL 8.0+
+- npm
+
+### **📦 Configuração Automática:**
+
+**Windows:**
 ```bash
 # Clone o repositório
 git clone https://github.com/VitorSanchespy/sys-npj-1.git
 cd sys-npj-1
 
-# Execute o setup automático
-setup.bat
+# Execute o setup local
+setup-local.bat
 ```
 
-### **📦 Instalação Automática (Linux/Mac):**
+**Linux/Mac:**
 ```bash
 # Clone o repositório
 git clone https://github.com/VitorSanchespy/sys-npj-1.git
 cd sys-npj-1
 
-# Torne o script executável e execute
-chmod +x setup.sh
-./setup.sh
+# Torne executável e execute
+chmod +x setup-local.sh
+./setup-local.sh
 ```
 
-### **🎯 Inicialização Rápida:**
+### **🎯 Iniciar Servidores:**
+
+**Windows:**
 ```bash
-# Windows
-start.bat
-
-# Linux/Mac
-./start.sh
+start-local.bat
 ```
+
+**Linux/Mac:**
+```bash
+chmod +x start-local.sh
+./start-local.sh
+```
+
+### **🌐 Acessos:**
+- **Frontend:** http://localhost:5173
+- **Backend API:** http://localhost:3001
+- **Usuário Admin:** admin@npj.com / admin123
+
+⚠️ **IMPORTANTE:** Altere a senha do admin após o primeiro login!
 
 ---
 
