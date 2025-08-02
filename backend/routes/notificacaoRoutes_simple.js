@@ -9,7 +9,8 @@ router.use(verificarToken);
 
 // Rotas básicas
 router.get('/', notificacaoController.listarNotificacoes);
-router.get('/nao-lidas/count', notificacaoController.contarNaoLidas);
-router.put('/:id/lida', notificacaoController.marcarComoLida);
+router.post('/', notificacaoController.criarNotificacao);
+router.get('/:id', notificacaoController.obterNotificacao);
+router.put('/:id', notificacaoController.atualizarNotificacao);
 
 module.exports = router;

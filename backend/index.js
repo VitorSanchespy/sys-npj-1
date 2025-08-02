@@ -15,7 +15,30 @@ const app = express();
 module.exports = app; // Exporta o app para testes
 
 // Configuração básica de segurança
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", 'cdn.example.com'],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'cdn.example.com']
+    }
+  },
+  hsts: {
+    maxAge: 63072000, // 2 anos em segundos
+    includeSubDomains: true,
+    preload: true
+  }
+}));
+
+// Header adicional contra XSS
+app.use((req, res, next) => {
+  res.header('X-XSS-Protection', '1; mode=block');
+  next();
+});
+
+// Configuração do CORS
+app.use(cors());
 
 // Configurar pasta de uploads
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -26,53 +49,47 @@ if (!fs.existsSync(uploadsDir)) {
 // Middleware para servir arquivos estáticos da pasta uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Middleware para correção de encoding UTF-8
-// app.use(require('./middleware/encodingMiddleware'));
-
-// Configurar body parser antes das rotas, mas depois do upload
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(
-  mongoSanitize({
-    replaceWith: '_'
-  })
-);
-app.use(morgan('dev'));
-
-// Configuração do CORS
-app.use(cors());
-
-const auxTablesRoutes = require('./routes/tabelaAuxiliarRoutes');
-app.use('/api/aux', auxTablesRoutes);
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", 'cdn.example.com'],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:', 'cdn.example.com']
-      }
-    },
-    hsts: {
-      maxAge: 63072000, // 2 anos em segundos
-      includeSubDomains: true,
-      preload: true
-    }
-  })
-);
-
-// Header adicional contra XSS
+// Configurar body parser (exceto para upload de arquivos)
 app.use((req, res, next) => {
-  res.header('X-XSS-Protection', '1; mode=block');
-  next();
+  // Pular express.json() apenas para a rota de upload de arquivos
+  if (req.path === '/api/arquivos/upload' && req.method === 'POST') {
+    return next();
+  }
+  express.json()(req, res, next);
 });
 
+app.use(express.urlencoded({ extended: true }));
+app.use(mongoSanitize({ replaceWith: '_' }));
+app.use(morgan('dev'));
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message:'Muitas requisições - tente novamente mais tarde',
+  standardHeaders: true,
+  legacyHeaders: false
+});
+app.use(limiter);
+
+const speedLimiter = slowDown({
+  windowMs: 15 * 60 * 1000,
+  delayAfter: 50,
+  delayMs:(used, req) => {
+    const delayAfter = req.slowDown.limit;
+    return (used - delayAfter) * 500;
+  }
+});
+app.use(speedLimiter);
+
+// Conexão com o banco de dados
+require('./utils/config');
+
 //server
-const server = http.createServer(app); // Cria servidor HTTP
+const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:5173", // Altere para seu frontend
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"]
   }
 });
@@ -106,54 +123,8 @@ agendamentoController.setNotificacaoService(notificacaoService);
 
 console.log('✅ Serviço de notificações inicializado');
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message:'Muitas requisições - tente novamente mais tarde',
-  standardHeaders: true,
-  legacyHeaders: false
-});
-app.use(limiter);
 
-
-const speedLimiter = slowDown({
-  windowMs: 15 * 60 * 1000,
-  delayAfter: 50,
-  delayMs:(used, req) => {
-    const delayAfter = req.slowDown.limit; // Pega o valor de delayAfter
-    return (used - delayAfter) * 500; // Aumenta 500ms por requisição excedente
-  }
-});
-app.use(speedLimiter);
-
-// Conexão com o banco de dados
-require('./utils/config');
-
-
-// Cria a pasta 'uploads' se não existir
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
-
-// Servir arquivos estáticos da pasta uploads
-app.use('/uploads', express.static(uploadDir));
-
-// Adicionar express.json() ANTES das rotas (exceto para upload de arquivos)
-app.use((req, res, next) => {
-  // Pular express.json() apenas para a rota de upload de arquivos
-  if (req.path === '/api/arquivos/upload' && req.method === 'POST') {
-    return next();
-  }
-  express.json()(req, res, next);
-});
-
-// Rota de arquivos
-app.use('/api/arquivos', require('./routes/arquivoRoutes'));
-console.log('✅ /api/arquivos registrado');
-
-// Demais rotas
+// Rotas
 console.log('🔧 Registrando rotas...');
 app.use('/auth', require('./routes/autorizacaoRoutes'));
 console.log('✅ /auth registrado');
@@ -175,38 +146,58 @@ app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoutes'));
 console.log('✅ /api/atualizacoes registrado');
 app.use('/api/aux', require('./routes/tabelaAuxiliarRoutes'));
 console.log('✅ /api/aux registrado');
+app.use('/api/arquivos', require('./routes/arquivoRoutes'));
+console.log('✅ /api/arquivos registrado');
 // Tratamento de erros
-app.use((err, req, res, next) => {
-  res.status(500).json({ error: 'Erro interno do servidor' });
-});
+const errorHandler = require('./middleware/errorHandlerMiddleware');
+app.use(errorHandler);
 
-// Rota não encontrada
+// Rota não encontrada (deve ser a última)
 app.use((req, res) => {
   res.status(404).json({ message: 'Rota não encontrada' });
 });
 
-const errorHandler = require('./middleware/errorHandlerMiddleware');
-app.use(errorHandler);
-
 if (require.main === module) {
   const PORT = process.env.PORT || 3001;
   
-  // Executar migrations automaticamente
-  const MigrationRunner = require('./utils/migrationRunner');
-  
   async function initializeServer() {
     try {
-      console.log('🔄 Pulando migrations temporariamente...');
-      // const runner = new MigrationRunner();
-      // await runner.runMigrations();
+      // Verificar se MySQL está disponível
+      const sequelize = require('./utils/sequelize');
+      let dbConnected = false;
       
-      // Inicializar sistema de notificações
-      const { inicializarCronJobs } = require('./services/notificationScheduler');
-      inicializarCronJobs();
+      try {
+        await sequelize.authenticate();
+        console.log('✅ Conexão com o banco estabelecida');
+        dbConnected = true;
+        
+        // Executar migrations apenas se o banco estiver conectado
+        console.log('🔄 Executando migrations...');
+        const MigrationRunner = require('./utils/migrationRunner');
+        const runner = new MigrationRunner();
+        await runner.runMigrations();
+      } catch (dbError) {
+        console.log('⚠️ MySQL não está disponível. Executando em modo desenvolvimento...');
+        console.log('💡 Para usar o banco completo, inicie o MySQL e reinicie o servidor.');
+        dbConnected = false;
+      }
+      
+      // Inicializar sistema de notificações mesmo sem banco
+      try {
+        const { inicializarCronJobs } = require('./services/notificationScheduler');
+        inicializarCronJobs();
+        console.log('✅ Sistema de notificações inicializado');
+      } catch (notifError) {
+        console.log('⚠️ Sistema de notificações não pôde ser inicializado:', notifError.message);
+      }
       
       server.listen(PORT, () => {
         console.log(`🚀 Servidor rodando na porta ${PORT}`);
-        console.log('✅ Sistema NPJ inicializado com sucesso!');
+        console.log(dbConnected ? 
+          '✅ Sistema NPJ inicializado com banco completo!' : 
+          '⚠️ Sistema NPJ em modo desenvolvimento (sem banco)'
+        );
+        console.log(`🌐 Acesse: http://localhost:${PORT}`);
       });
     } catch (error) {
       console.error('❌ Erro ao inicializar servidor:', error);
@@ -215,13 +206,4 @@ if (require.main === module) {
   }
   
   initializeServer();
-}
-
-// Função para criar um novo processo
-app.createProcess = async (token, processData) => {
-  return await apiRequest('/api/processos/novo', {
-    method: 'POST',
-    token,
-    body: processData
-  });
 }

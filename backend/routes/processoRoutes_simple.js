@@ -10,7 +10,8 @@ router.use(verificarToken);
 // Rotas básicas
 router.get('/', processoController.listarProcessos);
 router.post('/', processoController.criarProcesso);
-router.get('/:id', processoController.obterProcesso);
-router.put('/:id', processoController.atualizarProcesso);
+router.get('/:id', processoController.buscarProcessoPorId);
+router.put('/:id', processoController.atualizarProcessos);
+router.delete('/:id', processoController.excluirProcesso);
 
 module.exports = router;

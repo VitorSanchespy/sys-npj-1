@@ -7,25 +7,12 @@ let dbAvailable = false;
 let mockData = null;
 
 try {
-  // Tentar conectar ao banco
-  const sequelize = require('../utils/sequelize');
-  sequelize.authenticate().then(() => {
-    dbAvailable = true;
-    console.log('✅ Controller de auth conectado ao banco');
-  }).catch(() => {
-    dbAvailable = false;
-    console.log('⚠️ Controller de auth usando modo mock');
-    mockData = require('../utils/mockData');
-  });
+  const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
+  dbAvailable = true;
 } catch (error) {
-  console.log('⚠️ Banco não disponível no controller, usando dados mock');
+  console.log('⚠️ Banco não disponível, usando dados mock');
   mockData = require('../utils/mockData');
   dbAvailable = false;
-}
-
-// Se não conseguiu carregar mockData, criar dados padrão
-if (!mockData) {
-  mockData = require('../utils/mockData');
 }
 
 // Função para obter detalhes da requisição
@@ -44,9 +31,15 @@ exports.login = async (req, res) => {
     
     let usuario = null;
     
-    // Sempre usar mock primeiro se não estiver conectado ao banco
-    if (!dbAvailable) {
-      console.log('🔄 Usando dados mock para login');
+    if (dbAvailable) {
+      // Usar banco de dados real
+      const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
+      usuario = await Usuario.findOne({
+        where: { email, ativo: [true, 1] },
+        include: [{ model: Role, as: 'role' }]
+      });
+    } else {
+      // Usar dados mock
       const usuarios = mockData.usuarios;
       usuario = usuarios.find(u => u.email === email && u.ativo);
       
@@ -54,13 +47,6 @@ exports.login = async (req, res) => {
       if (usuario) {
         usuario.role = { nome: usuario.role };
       }
-    } else {
-      // Usar banco de dados real
-      const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
-      usuario = await Usuario.findOne({
-        where: { email, ativo: [true, 1] },
-        include: [{ model: Role, as: 'role' }]
-      });
     }
     
     if (!usuario) {
@@ -75,7 +61,6 @@ exports.login = async (req, res) => {
     } else {
       // Em modo mock, aceitar senhas específicas
       senhaValida = ['admin123', '123456', 'senha123'].includes(senha);
-      console.log(`🔑 Modo mock - senha "${senha}" é válida: ${senhaValida}`);
     }
     
     if (!senhaValida) {
@@ -241,33 +226,6 @@ exports.esqueciSenha = async (req, res) => {
     
   } catch (error) {
     console.error('❌ Erro em esqueci senha:', error);
-    res.status(500).json({ erro: 'Erro interno do servidor' });
-  }
-};
-
-// Refresh token
-exports.refreshToken = async (req, res) => {
-  try {
-    const { refreshToken } = req.body;
-    
-    if (dbAvailable) {
-      // Implementação real
-      res.json({ 
-        success: true, 
-        message: 'Token renovado',
-        token: 'new_token_here'
-      });
-    } else {
-      // Modo mock
-      res.json({ 
-        success: true, 
-        message: 'Token renovado (modo desenvolvimento)',
-        token: 'mock_token_' + Date.now()
-      });
-    }
-    
-  } catch (error) {
-    console.error('❌ Erro ao renovar token:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
