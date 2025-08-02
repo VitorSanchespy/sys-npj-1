@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const verificarToken = require('../middleware/authMiddleware');
-const notificacaoController = require('../controllers/notificacaoControllers');
+const notificacaoController = require('../controllers/notificacaoController');
 
 // Aplicar autenticação a todas as rotas
 router.use(verificarToken);

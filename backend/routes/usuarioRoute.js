@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const verificarToken = require('../middleware/authMiddleware');
-const usuarioController = require('../controllers/usuarioControllers');
+const usuarioController = require('../controllers/usuarioController');
 
 // Autenticação obrigatória para todas rotas
 router.use(verificarToken);

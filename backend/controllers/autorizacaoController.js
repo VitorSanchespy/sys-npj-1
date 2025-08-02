@@ -2,23 +2,20 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 // Função utilitária para verificar disponibilidade do banco
-function isDbAvailable() {
-  return global.dbAvailable || false;
-}
+const isDbAvailable = () => global.dbAvailable || false;
 
 // Dados mock para desenvolvimento
 const getMockData = () => {
   try {
     return require('../utils/mockData');
   } catch (error) {
-    // Dados padrão se o arquivo não existir
     return {
       usuarios: [
         {
           id: 1,
           nome: 'Admin Sistema',
           email: 'admin@teste.com',
-          senha: '$2b$10$8KJvbTZHh4Q6W5k8lB2YEuN8qNGrYwHoF9Z.5J7X6k4B1Q9cD8fC6', // admin123
+          senha: '$2b$10$8KJvbTZHh4Q6W5k8lB2YEuN8qNGrYwHoF9Z.5J7X6k4B1Q9cD8fC6',
           role: 'Admin',
           ativo: true
         },
@@ -26,7 +23,7 @@ const getMockData = () => {
           id: 2,
           nome: 'Professor Teste',
           email: 'professor@teste.com',
-          senha: '$2b$10$8KJvbTZHh4Q6W5k8lB2YEuN8qNGrYwHoF9Z.5J7X6k4B1Q9cD8fC6', // admin123
+          senha: '$2b$10$8KJvbTZHh4Q6W5k8lB2YEuN8qNGrYwHoF9Z.5J7X6k4B1Q9cD8fC6',
           role: 'Professor',
           ativo: true
         },
@@ -34,7 +31,7 @@ const getMockData = () => {
           id: 3,
           nome: 'Aluno Teste',
           email: 'aluno@teste.com',
-          senha: '$2b$10$8KJvbTZHh4Q6W5k8lB2YEuN8qNGrYwHoF9Z.5J7X6k4B1Q9cD8fC6', // admin123
+          senha: '$2b$10$8KJvbTZHh4Q6W5k8lB2YEuN8qNGrYwHoF9Z.5J7X6k4B1Q9cD8fC6',
           role: 'Aluno',
           ativo: true
         }
@@ -55,9 +52,8 @@ exports.login = async (req, res) => {
     let usuario = null;
     
     if (isDbAvailable()) {
-      // Usar banco de dados
       try {
-        const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
+        const { usuarioModel: Usuario, roleModel: Role } = require('../models/indexModel');
         usuario = await Usuario.findOne({
           where: { email, ativo: true },
           include: [{ model: Role, as: 'role' }]
@@ -67,13 +63,11 @@ exports.login = async (req, res) => {
           usuario.role = usuario.role.nome;
         }
       } catch (dbError) {
-        console.log('⚠️ Erro no banco, usando mock:', dbError.message);
         global.dbAvailable = false;
       }
     }
     
     if (!usuario) {
-      // Usar dados mock
       const mockData = getMockData();
       usuario = mockData.usuarios.find(u => u.email === email && u.ativo);
     }
@@ -87,7 +81,6 @@ exports.login = async (req, res) => {
     if (isDbAvailable() && usuario.senha && usuario.senha.startsWith('$2b$')) {
       senhaValida = await bcrypt.compare(senha, usuario.senha);
     } else {
-      // Modo mock: aceitar senhas comuns de desenvolvimento
       senhaValida = ['admin123', '123456', 'senha123', 'professor123', 'aluno123'].includes(senha);
     }
     
@@ -119,7 +112,6 @@ exports.login = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Erro no login:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
@@ -134,19 +126,15 @@ exports.registro = async (req, res) => {
     }
     
     if (isDbAvailable()) {
-      // Usar banco de dados
-      const { usuariosModels: Usuario } = require('../models/indexModels');
+      const { usuarioModel: Usuario } = require('../models/indexModel');
       
-      // Verificar se email já existe
       const usuarioExistente = await Usuario.findOne({ where: { email } });
       if (usuarioExistente) {
         return res.status(400).json({ erro: 'Email já cadastrado' });
       }
       
-      // Hash da senha
       const senhaHash = await bcrypt.hash(senha, 10);
       
-      // Criar usuário
       const novoUsuario = await Usuario.create({
         nome,
         email,
@@ -167,7 +155,6 @@ exports.registro = async (req, res) => {
       });
       
     } else {
-      // Modo mock
       res.status(201).json({
         success: true,
         message: 'Usuário criado com sucesso (modo desenvolvimento)',
@@ -181,7 +168,6 @@ exports.registro = async (req, res) => {
     }
     
   } catch (error) {
-    console.error('Erro no registro:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
@@ -193,7 +179,7 @@ exports.perfil = async (req, res) => {
     let usuario = null;
     
     if (isDbAvailable()) {
-      const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
+      const { usuarioModel: Usuario, roleModel: Role } = require('../models/indexModel');
       usuario = await Usuario.findByPk(userId, {
         include: [{ model: Role, as: 'role' }]
       });
@@ -202,7 +188,6 @@ exports.perfil = async (req, res) => {
         usuario.role = usuario.role.nome;
       }
     } else {
-      // Usar dados mock
       const mockData = getMockData();
       usuario = mockData.usuarios.find(u => u.id === userId);
     }
@@ -220,7 +205,6 @@ exports.perfil = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Erro ao obter perfil:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
@@ -234,14 +218,12 @@ exports.esqueciSenha = async (req, res) => {
       return res.status(400).json({ erro: 'Email é obrigatório' });
     }
     
-    // Para desenvolvimento, sempre retornar sucesso
     res.json({
       success: true,
       message: 'Se o email existir, você receberá instruções de recuperação'
     });
     
   } catch (error) {
-    console.error('Erro ao processar esqueci senha:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };

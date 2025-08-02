@@ -2,15 +2,16 @@ const express = require('express');
 const router = express.Router();
 
 const verificarToken = require('../middleware/authMiddleware');
-const arquivoController = require('../controllers/arquivoControllers');
+const arquivoController = require('../controllers/arquivoController');
 
 // Aplicar autenticação a todas as rotas
 router.use(verificarToken);
 
 // Rotas básicas
 router.get('/', arquivoController.listarArquivos);
-router.get('/processo/:processoId', arquivoController.listarArquivosPorProcesso);
-router.get('/:id', arquivoController.buscarArquivoPorId);
+router.post('/upload', arquivoController.uploadArquivo);
+router.get('/:id', arquivoController.obterArquivo);
+router.get('/:id/download', arquivoController.downloadArquivo);
 router.delete('/:id', arquivoController.deletarArquivo);
 
 module.exports = router;

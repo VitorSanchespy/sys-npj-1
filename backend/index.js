@@ -55,19 +55,19 @@ app.get('/', (req, res) => {
 });
 
 // Rotas principais
-app.use('/api/auth', require('./routes/autorizacaoRoutes'));
-app.use('/api/usuarios', require('./routes/usuarioRoutes'));
-app.use('/api/processos', require('./routes/processoRoutes'));
-app.use('/api/agendamentos', require('./routes/agendamentoRoutes'));
-app.use('/api/notificacoes', require('./routes/notificacaoRoutes'));
-app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoutes'));
-app.use('/api/tabelas', require('./routes/tabelaAuxiliarRoutes'));
-app.use('/api/arquivos', require('./routes/arquivoRoutes'));
+app.use('/api/auth', require('./routes/autorizacaoRoute'));
+app.use('/api/usuarios', require('./routes/usuarioRoute'));
+app.use('/api/processos', require('./routes/processoRoute'));
+app.use('/api/agendamentos', require('./routes/agendamentoRoute'));
+app.use('/api/notificacoes', require('./routes/notificacaoRoute'));
+app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoute'));
+app.use('/api/tabelas', require('./routes/tabelaAuxiliarRoute'));
+app.use('/api/arquivos', require('./routes/arquivoRoute'));
 
 // Rotas de compatibilidade (sem /api)
-app.use('/auth', require('./routes/autorizacaoRoutes'));
-app.use('/processos', require('./routes/processoRoutes'));
-app.use('/notificacoes', require('./routes/notificacaoRoutes'));
+app.use('/auth', require('./routes/autorizacaoRoute'));
+app.use('/processos', require('./routes/processoRoute'));
+app.use('/notificacoes', require('./routes/notificacaoRoute'));
 
 // Rota de teste
 app.get('/test', (req, res) => {
