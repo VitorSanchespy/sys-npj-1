@@ -1,8 +1,8 @@
 {
-  "timestamp": "2025-08-02T16:50:12.827Z",
+  "timestamp": "2025-08-02T17:00:46.125Z",
   "totalTests": 28,
-  "passedTests": 23,
-  "failedTests": 5,
+  "passedTests": 28,
+  "failedTests": 0,
   "endpoints": [
     {
       "endpoint": "/",
@@ -10,7 +10,7 @@
       "description": "Teste de conexão básica",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.861Z"
+      "timestamp": "2025-08-02T17:00:46.157Z"
     },
     {
       "endpoint": "/api/auth/login",
@@ -18,18 +18,15 @@
       "description": "Login com credenciais válidas",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.865Z"
+      "timestamp": "2025-08-02T17:00:46.160Z"
     },
     {
       "endpoint": "/api/auth/login",
       "method": "POST",
       "description": "Login com credenciais inválidas (deve falhar)",
       "status": 401,
-      "success": false,
-      "timestamp": "2025-08-02T16:50:12.868Z",
-      "error": {
-        "erro": "Credenciais inválidas"
-      }
+      "success": true,
+      "timestamp": "2025-08-02T17:00:46.163Z"
     },
     {
       "endpoint": "/api/auth/registro",
@@ -37,7 +34,7 @@
       "description": "Registro de novo usuário",
       "status": 201,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.870Z"
+      "timestamp": "2025-08-02T17:00:46.165Z"
     },
     {
       "endpoint": "/api/auth/esqueci-senha",
@@ -45,7 +42,7 @@
       "description": "Esqueci senha",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.872Z"
+      "timestamp": "2025-08-02T17:00:46.167Z"
     },
     {
       "endpoint": "/api/auth/perfil",
@@ -53,7 +50,7 @@
       "description": "Obter perfil do usuário",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.875Z"
+      "timestamp": "2025-08-02T17:00:46.170Z"
     },
     {
       "endpoint": "/api/usuarios",
@@ -61,7 +58,7 @@
       "description": "Listar usuários",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.878Z"
+      "timestamp": "2025-08-02T17:00:46.173Z"
     },
     {
       "endpoint": "/api/usuarios",
@@ -69,7 +66,7 @@
       "description": "Criar novo usuário",
       "status": 201,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.882Z"
+      "timestamp": "2025-08-02T17:00:46.177Z"
     },
     {
       "endpoint": "/api/usuarios/1",
@@ -77,7 +74,7 @@
       "description": "Obter usuário específico",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.885Z"
+      "timestamp": "2025-08-02T17:00:46.180Z"
     },
     {
       "endpoint": "/api/usuarios/1",
@@ -85,7 +82,7 @@
       "description": "Atualizar usuário",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.888Z"
+      "timestamp": "2025-08-02T17:00:46.183Z"
     },
     {
       "endpoint": "/api/processos",
@@ -93,7 +90,7 @@
       "description": "Listar processos",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.890Z"
+      "timestamp": "2025-08-02T17:00:46.185Z"
     },
     {
       "endpoint": "/api/processos",
@@ -101,7 +98,7 @@
       "description": "Criar novo processo",
       "status": 201,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.892Z"
+      "timestamp": "2025-08-02T17:00:46.188Z"
     },
     {
       "endpoint": "/api/processos/1",
@@ -109,7 +106,7 @@
       "description": "Obter processo específico",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.895Z"
+      "timestamp": "2025-08-02T17:00:46.190Z"
     },
     {
       "endpoint": "/api/processos/1",
@@ -117,7 +114,7 @@
       "description": "Atualizar processo",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.897Z"
+      "timestamp": "2025-08-02T17:00:46.192Z"
     },
     {
       "endpoint": "/api/agendamentos",
@@ -125,18 +122,15 @@
       "description": "Listar agendamentos",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.899Z"
+      "timestamp": "2025-08-02T17:00:46.195Z"
     },
     {
       "endpoint": "/api/agendamentos",
       "method": "POST",
       "description": "Criar novo agendamento",
-      "status": 400,
-      "success": false,
-      "timestamp": "2025-08-02T16:50:12.902Z",
-      "error": {
-        "erro": "Título, data e hora de início são obrigatórios"
-      }
+      "status": 201,
+      "success": true,
+      "timestamp": "2025-08-02T17:00:46.197Z"
     },
     {
       "endpoint": "/api/agendamentos/1",
@@ -144,7 +138,7 @@
       "description": "Obter agendamento específico",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.904Z"
+      "timestamp": "2025-08-02T17:00:46.200Z"
     },
     {
       "endpoint": "/api/agendamentos/1",
@@ -152,7 +146,7 @@
       "description": "Atualizar agendamento",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.906Z"
+      "timestamp": "2025-08-02T17:00:46.202Z"
     },
     {
       "endpoint": "/api/notificacoes",
@@ -160,18 +154,15 @@
       "description": "Listar notificações",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.909Z"
+      "timestamp": "2025-08-02T17:00:46.204Z"
     },
     {
       "endpoint": "/api/notificacoes",
       "method": "POST",
       "description": "Criar nova notificação",
-      "status": 400,
-      "success": false,
-      "timestamp": "2025-08-02T16:50:12.912Z",
-      "error": {
-        "erro": "Título, mensagem e ID do usuário são obrigatórios"
-      }
+      "status": 201,
+      "success": true,
+      "timestamp": "2025-08-02T17:00:46.207Z"
     },
     {
       "endpoint": "/api/notificacoes/1/lida",
@@ -179,7 +170,7 @@
       "description": "Marcar notificação como lida",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.914Z"
+      "timestamp": "2025-08-02T17:00:46.209Z"
     },
     {
       "endpoint": "/api/arquivos",
@@ -187,18 +178,15 @@
       "description": "Listar arquivos",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.917Z"
+      "timestamp": "2025-08-02T17:00:46.211Z"
     },
     {
       "endpoint": "/api/arquivos/upload",
       "method": "POST",
-      "description": "Teste estrutura upload (sem arquivo)",
+      "description": "Teste estrutura upload (sem arquivo - deve falhar)",
       "status": 400,
-      "success": false,
-      "timestamp": "2025-08-02T16:50:12.919Z",
-      "error": {
-        "erro": "Nenhum arquivo foi enviado"
-      }
+      "success": true,
+      "timestamp": "2025-08-02T17:00:46.214Z"
     },
     {
       "endpoint": "/api/atualizacoes",
@@ -206,18 +194,15 @@
       "description": "Listar atualizações de processo",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.922Z"
+      "timestamp": "2025-08-02T17:00:46.216Z"
     },
     {
       "endpoint": "/api/atualizacoes",
       "method": "POST",
       "description": "Criar nova atualização",
-      "status": 400,
-      "success": false,
-      "timestamp": "2025-08-02T16:50:12.925Z",
-      "error": {
-        "erro": "Título, descrição e ID do processo são obrigatórios"
-      }
+      "status": 201,
+      "success": true,
+      "timestamp": "2025-08-02T17:00:46.218Z"
     },
     {
       "endpoint": "/api/tabelas/roles",
@@ -225,7 +210,7 @@
       "description": "Listar roles",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.927Z"
+      "timestamp": "2025-08-02T17:00:46.220Z"
     },
     {
       "endpoint": "/api/tabelas/status",
@@ -233,7 +218,7 @@
       "description": "Listar status",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.929Z"
+      "timestamp": "2025-08-02T17:00:46.222Z"
     },
     {
       "endpoint": "/api/tabelas/tipos-acao",
@@ -241,49 +226,8 @@
       "description": "Listar tipos de ação",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-02T16:50:12.931Z"
+      "timestamp": "2025-08-02T17:00:46.224Z"
     }
   ],
-  "errors": [
-    {
-      "endpoint": "/api/auth/login",
-      "method": "POST",
-      "error": {
-        "erro": "Credenciais inválidas"
-      },
-      "status": 401
-    },
-    {
-      "endpoint": "/api/agendamentos",
-      "method": "POST",
-      "error": {
-        "erro": "Título, data e hora de início são obrigatórios"
-      },
-      "status": 400
-    },
-    {
-      "endpoint": "/api/notificacoes",
-      "method": "POST",
-      "error": {
-        "erro": "Título, mensagem e ID do usuário são obrigatórios"
-      },
-      "status": 400
-    },
-    {
-      "endpoint": "/api/arquivos/upload",
-      "method": "POST",
-      "error": {
-        "erro": "Nenhum arquivo foi enviado"
-      },
-      "status": 400
-    },
-    {
-      "endpoint": "/api/atualizacoes",
-      "method": "POST",
-      "error": {
-        "erro": "Título, descrição e ID do processo são obrigatórios"
-      },
-      "status": 400
-    }
-  ]
+  "errors": []
 }

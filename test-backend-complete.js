@@ -134,13 +134,13 @@ async function runAllTests() {
   
   // Testes de Tabelas Auxiliares
   console.log('\n🗂️ TABELAS AUXILIARES:');
-  totalTests++; await testAuthenticatedEndpoint('GET', '/api/aux/todas', null, 'Todas as opções') && successCount++;
-  totalTests++; await testAuthenticatedEndpoint('GET', '/api/aux/roles', null, 'Roles') && successCount++;
-  totalTests++; await testAuthenticatedEndpoint('GET', '/api/aux/tipos-acao', null, 'Tipos de ação') && successCount++;
-  totalTests++; await testAuthenticatedEndpoint('GET', '/api/aux/status', null, 'Status de processo') && successCount++;
-  totalTests++; await testAuthenticatedEndpoint('GET', '/api/aux/prioridades', null, 'Prioridades') && successCount++;
-  totalTests++; await testAuthenticatedEndpoint('GET', '/api/aux/comarcas', null, 'Comarcas') && successCount++;
-  totalTests++; await testAuthenticatedEndpoint('GET', '/api/aux/varas', null, 'Varas') && successCount++;
+  totalTests++; await testAuthenticatedEndpoint('GET', '/api/tabelas/todas', null, 'Todas as opções') && successCount++;
+  totalTests++; await testAuthenticatedEndpoint('GET', '/api/tabelas/roles', null, 'Roles') && successCount++;
+  totalTests++; await testAuthenticatedEndpoint('GET', '/api/tabelas/tipos-acao', null, 'Tipos de ação') && successCount++;
+  totalTests++; await testAuthenticatedEndpoint('GET', '/api/tabelas/status', null, 'Status de processo') && successCount++;
+  totalTests++; await testAuthenticatedEndpoint('GET', '/api/tabelas/prioridades', null, 'Prioridades') && successCount++;
+  totalTests++; await testAuthenticatedEndpoint('GET', '/api/tabelas/comarcas', null, 'Comarcas') && successCount++;
+  totalTests++; await testAuthenticatedEndpoint('GET', '/api/tabelas/varas', null, 'Varas') && successCount++;
   
   // Teste de criação (POST)
   console.log('\n➕ TESTES DE CRIAÇÃO:');

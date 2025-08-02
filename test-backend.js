@@ -94,12 +94,18 @@ async function runTests() {
     console.log('🔑 Token obtido com sucesso');
   }
   
-  // Login com credenciais inválidas
+  // Login com credenciais inválidas (deve falhar)
   const loginInvalidResult = await makeRequest('POST', '/api/auth/login', {
     email: 'invalido@teste.com',
     senha: 'senhaerrada'
   });
-  logTest('/api/auth/login', 'POST', loginInvalidResult, 'Login com credenciais inválidas (deve falhar)');
+  // Este teste DEVE falhar - é um teste negativo
+  const loginInvalidTestResult = {
+    success: !loginInvalidResult.success && loginInvalidResult.status === 401,
+    status: loginInvalidResult.status,
+    error: loginInvalidResult.error
+  };
+  logTest('/api/auth/login', 'POST', loginInvalidTestResult, 'Login com credenciais inválidas (deve falhar)');
   
   // Registro de novo usuário
   const registroResult = await makeRequest('POST', '/api/auth/registro', {
@@ -237,7 +243,14 @@ async function runTests() {
   
   // Upload seria testado com multipart, aqui testamos só a estrutura
   const uploadTestResult = await makeRequest('POST', '/api/arquivos/upload', {}, authHeaders);
-  logTest('/api/arquivos/upload', 'POST', uploadTestResult, 'Teste estrutura upload (sem arquivo)');
+  // Este teste verifica se a estrutura está funcionando - deve retornar erro de arquivo não enviado
+  const uploadStructureTestResult = {
+    success: !uploadTestResult.success && uploadTestResult.status === 400 && 
+             uploadTestResult.error.erro === 'Nenhum arquivo foi enviado',
+    status: uploadTestResult.status,
+    error: uploadTestResult.error
+  };
+  logTest('/api/arquivos/upload', 'POST', uploadStructureTestResult, 'Teste estrutura upload (sem arquivo - deve falhar)');
   
   console.log('\n🔄 8. TESTANDO ENDPOINTS DE ATUALIZAÇÕES');
   
