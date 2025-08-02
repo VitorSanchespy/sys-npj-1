@@ -56,7 +56,7 @@ exports.listarRoles = async (req, res) => {
     let roles = [];
     
     if (isDbAvailable()) {
-      const { rolesModels: Role } = require('../models/indexModels');
+      const { roleModel: Role } = require('../models/indexModel');
       roles = await Role.findAll({
         order: [['nome', 'ASC']]
       });
@@ -79,7 +79,7 @@ exports.listarTiposAcao = async (req, res) => {
     let tipos = [];
     
     if (isDbAvailable()) {
-      const { tiposAcaoModels: TipoAcao } = require('../models/indexModels');
+      const { tipoAcaoModel: TipoAcao } = require('../models/indexModel');
       tipos = await TipoAcao.findAll({
         order: [['nome', 'ASC']]
       });
@@ -102,7 +102,7 @@ exports.listarStatusProcesso = async (req, res) => {
     let status = [];
     
     if (isDbAvailable()) {
-      const { statusProcessoModels: StatusProcesso } = require('../models/indexModels');
+      const { statusModel: StatusProcesso } = require('../models/indexModel');
       status = await StatusProcesso.findAll({
         order: [['nome', 'ASC']]
       });
@@ -125,7 +125,7 @@ exports.listarPrioridades = async (req, res) => {
     let prioridades = [];
     
     if (isDbAvailable()) {
-      const { prioridadesModels: Prioridade } = require('../models/indexModels');
+      const { prioridadeModel: Prioridade } = require('../models/indexModel');
       prioridades = await Prioridade.findAll({
         order: [['nome', 'ASC']]
       });
@@ -148,7 +148,7 @@ exports.listarComarcas = async (req, res) => {
     let comarcas = [];
     
     if (isDbAvailable()) {
-      const { comarcasModels: Comarca } = require('../models/indexModels');
+      const { comarcaModel: Comarca } = require('../models/indexModel');
       comarcas = await Comarca.findAll({
         order: [['nome', 'ASC']]
       });
@@ -171,7 +171,7 @@ exports.listarVaras = async (req, res) => {
     let varas = [];
     
     if (isDbAvailable()) {
-      const { varasModels: Vara } = require('../models/indexModels');
+      const { varaModel: Vara } = require('../models/indexModel');
       varas = await Vara.findAll({
         order: [['nome', 'ASC']]
       });
@@ -206,13 +206,13 @@ exports.obterTodasOpcoes = async (req, res) => {
       // Se o banco estiver disponível, buscar dados reais
       try {
         const { 
-          rolesModels: Role, 
-          tiposAcaoModels: TipoAcao,
-          statusProcessoModels: StatusProcesso,
-          prioridadesModels: Prioridade,
-          comarcasModels: Comarca,
-          varasModels: Vara
-        } = require('../models/indexModels');
+          roleModel: Role, 
+          tipoAcaoModel: TipoAcao,
+          statusModel: StatusProcesso,
+          prioridadeModel: Prioridade,
+          comarcaModel: Comarca,
+          varaModel: Vara
+        } = require('../models/indexModel');
         
         const [roles, tipos, status, prioridades, comarcas, varas] = await Promise.all([
           Role.findAll({ order: [['nome', 'ASC']] }),

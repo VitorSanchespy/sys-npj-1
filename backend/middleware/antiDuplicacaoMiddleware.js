@@ -45,7 +45,7 @@ const validarUsuarioDuplicado = async (req, res, next) => {
       }
     } else {
       // Usar banco real
-      const { usuariosModels: Usuario } = require('../models/indexModels');
+      const { usuarioModel: Usuario } = require('../models/indexModel');
       const { Op } = require('sequelize');
       
       const whereClause = { email };
@@ -92,7 +92,7 @@ const validarProcessoDuplicado = async (req, res, next) => {
       }
     } else {
       // Usar banco real
-      const { processoModels: Processo } = require('../models/indexModels');
+      const { processoModel: Processo } = require('../models/indexModel');
       const { Op } = require('sequelize');
       
       const whereClause = { numero_processo };

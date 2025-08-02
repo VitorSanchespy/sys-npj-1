@@ -89,7 +89,7 @@ exports.uploadArquivo = [
       };
       
       if (isDbAvailable()) {
-        const { arquivosModels: Arquivo } = require('../models/indexModels');
+        const { arquivoModel: Arquivo } = require('../models/indexModel');
         const novoArquivo = await Arquivo.create(arquivoData);
         res.status(201).json(novoArquivo);
       } else {
@@ -115,7 +115,7 @@ exports.listarArquivos = async (req, res) => {
     let arquivos = [];
     
     if (isDbAvailable()) {
-      const { arquivosModels: Arquivo, usuariosModels: Usuario } = require('../models/indexModels');
+      const { arquivoModel: Arquivo, usuarioModel: Usuario } = require('../models/indexModel');
       const where = idprocesso ? { idprocesso } : {};
       
       arquivos = await Arquivo.findAll({
@@ -147,7 +147,7 @@ exports.obterArquivo = async (req, res) => {
     let arquivo = null;
     
     if (isDbAvailable()) {
-      const { arquivosModels: Arquivo, usuariosModels: Usuario } = require('../models/indexModels');
+      const { arquivoModel: Arquivo, usuarioModel: Usuario } = require('../models/indexModel');
       arquivo = await Arquivo.findByPk(id, {
         include: [{ model: Usuario, as: 'usuario' }]
       });
@@ -175,7 +175,7 @@ exports.downloadArquivo = async (req, res) => {
     let arquivo = null;
     
     if (isDbAvailable()) {
-      const { arquivosModels: Arquivo } = require('../models/indexModels');
+      const { arquivoModel: Arquivo } = require('../models/indexModel');
       arquivo = await Arquivo.findByPk(id);
     } else {
       const mockData = getMockData();
@@ -206,7 +206,7 @@ exports.deletarArquivo = async (req, res) => {
     const { id } = req.params;
     
     if (isDbAvailable()) {
-      const { arquivosModels: Arquivo } = require('../models/indexModels');
+      const { arquivoModel: Arquivo } = require('../models/indexModel');
       
       const arquivo = await Arquivo.findByPk(id);
       if (!arquivo) {

@@ -3,8 +3,8 @@ const sequelize = require('../utils/sequelize');
 
 class UsuariosProcesso extends Model {
   static associate(models) {
-    UsuariosProcesso.belongsTo(models.usuariosModels, { foreignKey: 'usuario_id', as: 'usuario' });
-    UsuariosProcesso.belongsTo(models.processoModels, { foreignKey: 'processo_id', as: 'processo' });
+    UsuariosProcesso.belongsTo(models.usuarioModel, { foreignKey: 'usuario_id', as: 'usuario' });
+    UsuariosProcesso.belongsTo(models.processoModel, { foreignKey: 'processo_id', as: 'processo' });
   }
 }
 

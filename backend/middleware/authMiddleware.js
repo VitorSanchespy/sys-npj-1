@@ -59,7 +59,7 @@ const authMiddleware = async (req, res, next) => {
     if (isDbAvailable()) {
       // Usar banco de dados
       try {
-        const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
+        const { usuarioModel: Usuario, roleModel: Role } = require('../models/indexModel');
         usuario = await Usuario.findByPk(decoded.id, {
           include: [{ model: Role, as: 'role' }]
         });

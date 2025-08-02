@@ -1,12 +1,12 @@
 const nodemailer = require('nodemailer');
 const cron = require('node-cron');
 const { 
-  notificacaoModels: Notificacao, 
-  usuariosModels: Usuario, 
-  processoModels: Processo,
+  notificacaoModel: Notificacao, 
+  usuarioModel: Usuario, 
+  processoModel: Processo,
   agendamentoModels: Agendamento,
-  configuracaoNotificacaoModels: ConfiguracaoNotificacao
-} = require('../models/indexModels');
+  configuracaonotificacaoModel: ConfiguracaoNotificacao
+} = require('../models/indexModel');
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -153,7 +153,7 @@ const verificarProcessosSemAtualizacao = async () => {
         },
         include: [
           {
-            model: require('../models/atualizacaoProcessoModels'),
+            model: require('../models/atualizacaoprocessoModel'),
             as: 'atualizacoes',
             required: false,
             where: {

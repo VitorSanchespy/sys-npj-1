@@ -3,9 +3,9 @@ const sequelize = require('../utils/sequelize');
 
 class Arquivo extends Model {
   static associate(models) {
-    Arquivo.belongsTo(models.processoModels, { foreignKey: 'processo_id', as: 'processo' });
-    Arquivo.belongsTo(models.usuariosModels, { foreignKey: 'usuario_id', as: 'usuario' });
-    Arquivo.hasMany(models.atualizacoesProcessoModels, { foreignKey: 'arquivos_id', as: 'atualizacoes' });
+    Arquivo.belongsTo(models.processoModel, { foreignKey: 'processo_id', as: 'processo' });
+    Arquivo.belongsTo(models.usuarioModel, { foreignKey: 'usuario_id', as: 'usuario' });
+    Arquivo.hasMany(models.atualizacoesprocessoModel, { foreignKey: 'arquivos_id', as: 'atualizacoes' });
   }
 
   static async anexarAProcesso(arquivo_id, processo_id) {

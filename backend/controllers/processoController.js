@@ -53,7 +53,7 @@ exports.listarProcessos = async (req, res) => {
     let processos = [];
     
     if (isDbAvailable()) {
-      const { processosModels: Processo, usuariosModels: Usuario } = require('../models/indexModels');
+      const { processoModel: Processo, usuarioModel: Usuario } = require('../models/indexModel');
       processos = await Processo.findAll({
         include: [{ model: Usuario, as: 'responsavel' }],
         order: [['data_criacao', 'DESC']]
@@ -78,7 +78,7 @@ exports.obterProcesso = async (req, res) => {
     let processo = null;
     
     if (isDbAvailable()) {
-      const { processosModels: Processo, usuariosModels: Usuario } = require('../models/indexModels');
+      const { processoModel: Processo, usuarioModel: Usuario } = require('../models/indexModel');
       processo = await Processo.findByPk(id, {
         include: [{ model: Usuario, as: 'responsavel' }]
       });
@@ -123,7 +123,7 @@ exports.criarProcesso = async (req, res) => {
     }
     
     if (isDbAvailable()) {
-      const { processosModels: Processo } = require('../models/indexModels');
+      const { processoModel: Processo } = require('../models/indexModel');
       
       // Verificar se número do processo já existe
       const processoExistente = await Processo.findOne({ where: { numero_processo } });
@@ -181,7 +181,7 @@ exports.atualizarProcesso = async (req, res) => {
     const dadosAtualizacao = req.body;
     
     if (isDbAvailable()) {
-      const { processosModels: Processo } = require('../models/indexModels');
+      const { processoModel: Processo } = require('../models/indexModel');
       
       const processo = await Processo.findByPk(id);
       if (!processo) {
@@ -212,7 +212,7 @@ exports.deletarProcesso = async (req, res) => {
     const { id } = req.params;
     
     if (isDbAvailable()) {
-      const { processosModels: Processo } = require('../models/indexModels');
+      const { processoModel: Processo } = require('../models/indexModel');
       
       const processo = await Processo.findByPk(id);
       if (!processo) {
@@ -240,7 +240,7 @@ exports.listarProcessosUsuario = async (req, res) => {
     let processos = [];
     
     if (isDbAvailable()) {
-      const { processosModels: Processo, usuariosModels: Usuario } = require('../models/indexModels');
+      const { processoModel: Processo, usuarioModel: Usuario } = require('../models/indexModel');
       processos = await Processo.findAll({
         where: { idusuario_responsavel: userId },
         include: [{ model: Usuario, as: 'responsavel' }],

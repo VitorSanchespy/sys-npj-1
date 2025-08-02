@@ -1,5 +1,5 @@
 // Utilitário para corrigir dados com encoding corrompido
-const { sequelize } = require('../models/indexModels');
+const { sequelize } = require('../models/indexModel');
 
 // Função para corrigir encoding
 function fixEncoding(text) {

@@ -3,15 +3,15 @@ const sequelize = require('../utils/sequelize');
 
 class Processo extends Model {
   static associate(models) {
-    Processo.hasMany(models.atualizacoesProcessoModels, { foreignKey: 'processo_id', as: 'atualizacoes' });
+    Processo.hasMany(models.atualizacoesprocessoModel, { foreignKey: 'processo_id', as: 'atualizacoes' });
     Processo.hasMany(models.arquivoModels, { foreignKey: 'processo_id', as: 'arquivos' });
-    Processo.hasMany(models.usuariosProcessoModels, { foreignKey: 'processo_id', as: 'usuariosProcesso' });
+    Processo.hasMany(models.usuariosprocessoModel, { foreignKey: 'processo_id', as: 'usuariosProcesso' });
     // Associações belongsTo para includes
     Processo.belongsTo(models.materiaAssuntoModels, { foreignKey: 'materia_assunto_id', as: 'materiaAssunto' });
     Processo.belongsTo(models.faseModels, { foreignKey: 'fase_id', as: 'fase' });
     Processo.belongsTo(models.diligenciaModels, { foreignKey: 'diligencia_id', as: 'diligencia' });
     Processo.belongsTo(models.localTramitacaoModels, { foreignKey: 'local_tramitacao_id', as: 'localTramitacao' });
-    Processo.belongsTo(models.usuariosModels, { foreignKey: 'idusuario_responsavel', as: 'responsavel' });
+    Processo.belongsTo(models.usuarioModel, { foreignKey: 'idusuario_responsavel', as: 'responsavel' });
   }
 }
 

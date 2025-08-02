@@ -16,6 +16,13 @@ Sistema completo de gerenciamento de processos jurídicos para o Núcleo de Prá
 - **Containerização**: Docker + Docker Compose
 - **Autenticação**: JWT + Refresh Tokens
 
+## 📚 Documentação da API
+
+- 📡 **[Endpoints Completos](ENDPOINTS-BACKEND.md)** - Documentação detalhada de todos os 49 endpoints
+- 🚀 **[Consulta Rápida](API-QUICK-REFERENCE.md)** - Referência rápida dos endpoints
+- 📝 **[Changelog](CHANGELOG.md)** - Histórico de mudanças e melhorias
+- 🔧 **[Relatório de Correções](RELATORIO-CORRECOES.md)** - Detalhes das correções realizadas
+
 ## 🚀 Execução com Docker (Recomendado)
 
 ### Pré-requisitos

@@ -3,11 +3,11 @@ const sequelize = require('../utils/sequelize');
 
 class ConfiguracaoNotificacao extends Model {
   static associate(models) {
-    ConfiguracaoNotificacao.belongsTo(models.usuariosModels, { 
+    ConfiguracaoNotificacao.belongsTo(models.usuarioModel, { 
       foreignKey: 'usuario_id', 
       as: 'usuario' 
     });
-    models.usuariosModels.hasOne(ConfiguracaoNotificacao, {
+    models.usuarioModel.hasOne(ConfiguracaoNotificacao, {
       foreignKey: 'usuario_id',     
         as: 'configuracao'
     });

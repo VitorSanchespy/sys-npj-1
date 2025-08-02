@@ -3,12 +3,12 @@ const sequelize = require('../utils/sequelize');
 
 class AtualizacoesProcesso extends Model {
   static associate(models) {
-    AtualizacoesProcesso.belongsTo(models.usuariosModels, {
+    AtualizacoesProcesso.belongsTo(models.usuarioModel, {
       foreignKey: 'usuario_id',
       as: 'usuario',
       onDelete: 'CASCADE'
     });
-    AtualizacoesProcesso.belongsTo(models.processoModels, {
+    AtualizacoesProcesso.belongsTo(models.processoModel, {
       foreignKey: 'processo_id',
       as: 'processo',
       onDelete: 'CASCADE'

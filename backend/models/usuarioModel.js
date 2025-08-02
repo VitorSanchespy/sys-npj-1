@@ -3,17 +3,17 @@ const sequelize = require('../utils/sequelize');
 
 class Usuario extends Model {
   static associate(models) {
-    Usuario.belongsTo(models.rolesModels, { foreignKey: 'role_id', as: 'role' });
-    Usuario.hasMany(models.atualizacoesProcessoModels, { foreignKey: 'usuario_id', as: 'atualizacoes' });
+    Usuario.belongsTo(models.roleModel, { foreignKey: 'role_id', as: 'role' });
+    Usuario.hasMany(models.atualizacoesprocessoModel, { foreignKey: 'usuario_id', as: 'atualizacoes' });
     Usuario.hasMany(models.arquivoModels, { foreignKey: 'usuario_id', as: 'arquivos' });
-    Usuario.hasMany(models.usuariosProcessoModels, { foreignKey: 'usuario_id', as: 'usuariosProcesso' });
-    Usuario.hasMany(models.processoModels, { foreignKey: 'idusuario_responsavel', as: 'processosResponsavel' });
+    Usuario.hasMany(models.usuariosprocessoModel, { foreignKey: 'usuario_id', as: 'usuariosProcesso' });
+    Usuario.hasMany(models.processoModel, { foreignKey: 'idusuario_responsavel', as: 'processosResponsavel' });
   }
 
   static async usuarioCompleto(id) {
-    const { rolesModels } = require('./indexModels');
+    const { roleModel } = require('./indexModel');
     return await Usuario.findByPk(id, {
-      include: [{ model: rolesModels, as: 'role' }]
+      include: [{ model: roleModel, as: 'role' }]
     });
   }
 }

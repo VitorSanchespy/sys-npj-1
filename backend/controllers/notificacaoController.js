@@ -43,7 +43,7 @@ exports.listarNotificacoes = async (req, res) => {
     let notificacoes = [];
     
     if (isDbAvailable()) {
-      const { notificacoesModels: Notificacao, usuariosModels: Usuario } = require('../models/indexModels');
+      const { notificacaoModel: Notificacao, usuarioModel: Usuario } = require('../models/indexModel');
       notificacoes = await Notificacao.findAll({
         include: [{ model: Usuario, as: 'usuario' }],
         order: [['data_criacao', 'DESC']]
@@ -68,7 +68,7 @@ exports.listarNotificacoesUsuario = async (req, res) => {
     let notificacoes = [];
     
     if (isDbAvailable()) {
-      const { notificacoesModels: Notificacao } = require('../models/indexModels');
+      const { notificacaoModel: Notificacao } = require('../models/indexModel');
       notificacoes = await Notificacao.findAll({
         where: { idusuario: userId },
         order: [['data_criacao', 'DESC']]
@@ -93,7 +93,7 @@ exports.obterNotificacao = async (req, res) => {
     let notificacao = null;
     
     if (isDbAvailable()) {
-      const { notificacoesModels: Notificacao, usuariosModels: Usuario } = require('../models/indexModels');
+      const { notificacaoModel: Notificacao, usuarioModel: Usuario } = require('../models/indexModel');
       notificacao = await Notificacao.findByPk(id, {
         include: [{ model: Usuario, as: 'usuario' }]
       });
@@ -133,7 +133,7 @@ exports.criarNotificacao = async (req, res) => {
     }
     
     if (isDbAvailable()) {
-      const { notificacoesModels: Notificacao } = require('../models/indexModels');
+      const { notificacaoModel: Notificacao } = require('../models/indexModel');
       
       const novaNotificacao = await Notificacao.create({
         titulo,
@@ -176,7 +176,7 @@ exports.marcarComoLida = async (req, res) => {
     const { id } = req.params;
     
     if (isDbAvailable()) {
-      const { notificacoesModels: Notificacao } = require('../models/indexModels');
+      const { notificacaoModel: Notificacao } = require('../models/indexModel');
       
       const notificacao = await Notificacao.findByPk(id);
       if (!notificacao) {
@@ -207,7 +207,7 @@ exports.marcarTodasComoLidas = async (req, res) => {
     const userId = req.user.id;
     
     if (isDbAvailable()) {
-      const { notificacoesModels: Notificacao } = require('../models/indexModels');
+      const { notificacaoModel: Notificacao } = require('../models/indexModel');
       
       await Notificacao.update(
         { lida: true },
@@ -233,7 +233,7 @@ exports.deletarNotificacao = async (req, res) => {
     const { id } = req.params;
     
     if (isDbAvailable()) {
-      const { notificacoesModels: Notificacao } = require('../models/indexModels');
+      const { notificacaoModel: Notificacao } = require('../models/indexModel');
       
       const notificacao = await Notificacao.findByPk(id);
       if (!notificacao) {
@@ -261,7 +261,7 @@ exports.contarNaoLidas = async (req, res) => {
     let count = 0;
     
     if (isDbAvailable()) {
-      const { notificacoesModels: Notificacao } = require('../models/indexModels');
+      const { notificacaoModel: Notificacao } = require('../models/indexModel');
       count = await Notificacao.count({
         where: { idusuario: userId, lida: false }
       });

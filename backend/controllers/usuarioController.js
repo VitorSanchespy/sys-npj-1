@@ -48,7 +48,7 @@ exports.listarUsuarios = async (req, res) => {
     let usuarios = [];
     
     if (isDbAvailable()) {
-      const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
+      const { usuarioModel: Usuario, roleModel: Role } = require('../models/indexModel');
       usuarios = await Usuario.findAll({
         include: [{ model: Role, as: 'role' }],
         attributes: ['id', 'nome', 'email', 'role_id', 'ativo', 'data_criacao']
@@ -73,7 +73,7 @@ exports.obterUsuario = async (req, res) => {
     let usuario = null;
     
     if (isDbAvailable()) {
-      const { usuariosModels: Usuario, rolesModels: Role } = require('../models/indexModels');
+      const { usuarioModel: Usuario, roleModel: Role } = require('../models/indexModel');
       usuario = await Usuario.findByPk(id, {
         include: [{ model: Role, as: 'role' }]
       });
@@ -104,7 +104,7 @@ exports.criarUsuario = async (req, res) => {
     }
     
     if (isDbAvailable()) {
-      const { usuariosModels: Usuario } = require('../models/indexModels');
+      const { usuarioModel: Usuario } = require('../models/indexModel');
       
       // Verificar se email já existe
       const usuarioExistente = await Usuario.findOne({ where: { email } });
@@ -159,7 +159,7 @@ exports.atualizarUsuario = async (req, res) => {
     const dadosAtualizacao = req.body;
     
     if (isDbAvailable()) {
-      const { usuariosModels: Usuario } = require('../models/indexModels');
+      const { usuarioModel: Usuario } = require('../models/indexModel');
       
       const usuario = await Usuario.findByPk(id);
       if (!usuario) {
@@ -195,7 +195,7 @@ exports.deletarUsuario = async (req, res) => {
     const { id } = req.params;
     
     if (isDbAvailable()) {
-      const { usuariosModels: Usuario } = require('../models/indexModels');
+      const { usuarioModel: Usuario } = require('../models/indexModel');
       
       const usuario = await Usuario.findByPk(id);
       if (!usuario) {

@@ -1,4 +1,4 @@
-const { notificacaoModels: Notificacao } = require('../models/indexModels');
+const { notificacaoModel: Notificacao } = require('../models/indexModel');
 const { 
   enviarEmailAgendamentoCriado, 
   enviarEmailAgendamentoConfirmado, 
@@ -279,7 +279,7 @@ class NotificacaoService {
   async notificarSenhaIncorreta(email, detalhesLogin = {}) {
     try {
       // Buscar usuário pelo email para enviar notificação
-      const { usuariosModels: Usuario } = require('../models/indexModels');
+      const { usuarioModel: Usuario } = require('../models/indexModel');
       const usuario = await Usuario.findOne({ where: { email } });
       
       if (usuario) {

@@ -4,19 +4,19 @@ const sequelize = require('../utils/sequelize');
 class Agendamento extends Model {
   static associate(models) {
     // Associações básicas
-    Agendamento.belongsTo(models.processoModels, {
+    Agendamento.belongsTo(models.processoModel, {
       foreignKey: 'processo_id',
       as: 'processo'
     });
     
     // Usuario destinatário (para quem é o agendamento)
-    Agendamento.belongsTo(models.usuariosModels, {
+    Agendamento.belongsTo(models.usuarioModel, {
       foreignKey: 'usuario_id',
       as: 'destinatario'
     });
     
     // Usuario criador (quem criou o agendamento)
-    Agendamento.belongsTo(models.usuariosModels, {
+    Agendamento.belongsTo(models.usuarioModel, {
       foreignKey: 'criado_por',
       as: 'criador'
     });

@@ -44,7 +44,7 @@ exports.listarAtualizacoes = async (req, res) => {
     let atualizacoes = [];
     
     if (isDbAvailable()) {
-      const { atualizacoesModels: Atualizacao, usuariosModels: Usuario, processosModels: Processo } = require('../models/indexModels');
+      const { atualizacaoProcessoModel: Atualizacao, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
       const where = idprocesso ? { idprocesso } : {};
       
       atualizacoes = await Atualizacao.findAll({
@@ -79,7 +79,7 @@ exports.obterAtualizacao = async (req, res) => {
     let atualizacao = null;
     
     if (isDbAvailable()) {
-      const { atualizacoesModels: Atualizacao, usuariosModels: Usuario, processosModels: Processo } = require('../models/indexModels');
+      const { atualizacaoProcessoModel: Atualizacao, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
       atualizacao = await Atualizacao.findByPk(id, {
         include: [
           { model: Usuario, as: 'usuario' },
@@ -121,7 +121,7 @@ exports.criarAtualizacao = async (req, res) => {
     }
     
     if (isDbAvailable()) {
-      const { atualizacoesModels: Atualizacao } = require('../models/indexModels');
+      const { atualizacaoProcessoModel: Atualizacao } = require('../models/indexModel');
       
       const novaAtualizacao = await Atualizacao.create({
         titulo,
@@ -163,7 +163,7 @@ exports.atualizarAtualizacao = async (req, res) => {
     const dadosAtualizacao = req.body;
     
     if (isDbAvailable()) {
-      const { atualizacoesModels: Atualizacao } = require('../models/indexModels');
+      const { atualizacaoProcessoModel: Atualizacao } = require('../models/indexModel');
       
       const atualizacao = await Atualizacao.findByPk(id);
       if (!atualizacao) {
@@ -194,7 +194,7 @@ exports.deletarAtualizacao = async (req, res) => {
     const { id } = req.params;
     
     if (isDbAvailable()) {
-      const { atualizacoesModels: Atualizacao } = require('../models/indexModels');
+      const { atualizacaoProcessoModel: Atualizacao } = require('../models/indexModel');
       
       const atualizacao = await Atualizacao.findByPk(id);
       if (!atualizacao) {

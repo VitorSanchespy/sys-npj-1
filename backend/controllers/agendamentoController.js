@@ -51,7 +51,7 @@ exports.listarAgendamentos = async (req, res) => {
     let agendamentos = [];
     
     if (isDbAvailable()) {
-      const { agendamentosModels: Agendamento, usuariosModels: Usuario, processosModels: Processo } = require('../models/indexModels');
+      const { agendamentoModel: Agendamento, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
       agendamentos = await Agendamento.findAll({
         include: [
           { model: Usuario, as: 'usuario' },
@@ -79,7 +79,7 @@ exports.obterAgendamento = async (req, res) => {
     let agendamento = null;
     
     if (isDbAvailable()) {
-      const { agendamentosModels: Agendamento, usuariosModels: Usuario, processosModels: Processo } = require('../models/indexModels');
+      const { agendamentoModel: Agendamento, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
       agendamento = await Agendamento.findByPk(id, {
         include: [
           { model: Usuario, as: 'usuario' },
@@ -126,7 +126,7 @@ exports.criarAgendamento = async (req, res) => {
     }
     
     if (isDbAvailable()) {
-      const { agendamentosModels: Agendamento } = require('../models/indexModels');
+      const { agendamentoModel: Agendamento } = require('../models/indexModel');
       
       const novoAgendamento = await Agendamento.create({
         titulo,
@@ -176,7 +176,7 @@ exports.atualizarAgendamento = async (req, res) => {
     const dadosAtualizacao = req.body;
     
     if (isDbAvailable()) {
-      const { agendamentosModels: Agendamento } = require('../models/indexModels');
+      const { agendamentoModel: Agendamento } = require('../models/indexModel');
       
       const agendamento = await Agendamento.findByPk(id);
       if (!agendamento) {
@@ -207,7 +207,7 @@ exports.deletarAgendamento = async (req, res) => {
     const { id } = req.params;
     
     if (isDbAvailable()) {
-      const { agendamentosModels: Agendamento } = require('../models/indexModels');
+      const { agendamentoModel: Agendamento } = require('../models/indexModel');
       
       const agendamento = await Agendamento.findByPk(id);
       if (!agendamento) {
@@ -235,7 +235,7 @@ exports.listarAgendamentosUsuario = async (req, res) => {
     let agendamentos = [];
     
     if (isDbAvailable()) {
-      const { agendamentosModels: Agendamento, usuariosModels: Usuario, processosModels: Processo } = require('../models/indexModels');
+      const { agendamentoModel: Agendamento, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
       agendamentos = await Agendamento.findAll({
         where: { idusuario: userId },
         include: [
@@ -269,7 +269,7 @@ exports.listarAgendamentosPeriodo = async (req, res) => {
     let agendamentos = [];
     
     if (isDbAvailable()) {
-      const { agendamentosModels: Agendamento, usuariosModels: Usuario, processosModels: Processo } = require('../models/indexModels');
+      const { agendamentoModel: Agendamento, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
       const { Op } = require('sequelize');
       
       agendamentos = await Agendamento.findAll({
