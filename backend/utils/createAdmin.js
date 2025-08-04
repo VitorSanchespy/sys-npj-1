@@ -4,9 +4,9 @@
 
 require('dotenv').config();
 const bcrypt = require('bcrypt');
-const sequelize = require('./utils/sequelize');
-const Usuario = require('./models/usuarioModel');
-const Role = require('./models/roleModel');
+const sequelize = require('./sequelize');
+const Usuario = require('../models/usuarioModel');
+const Role = require('../models/roleModel');
 
 async function createAdminUser() {
   try {

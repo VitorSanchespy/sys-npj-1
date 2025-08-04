@@ -1,7 +1,25 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
-const fs = require('fs');
+const cors = require('cors') // Inicializar servidor
+if (require.main === module) {
+  // Validar variável de ambiente obrigatória
+  if (!process.env.PORT) {
+    console.error(' Erro: Variável de ambiente PORT é obrigatória!');
+    console.error(' Configure no arquivo .env: PORT=3001');
+    process.exit(1);
+  }
+  
+  const PORT = parseInt(process.env.PORT);
+  
+  app.listen(PORT, () => {
+    console.log(` Servidor rodando na porta ${PORT}`);
+    console.log(` Acesse: http://localhost:${PORT}`);
+    console.log(global.dbAvailable ? 
+      ' Sistema com banco de dados' : 
+      ' Sistema em modo mock'
+    );
+  });
+} 
 const path = require('path');
 const app = express();
 
@@ -31,14 +49,14 @@ try {
   const sequelize = require('./utils/sequelize');
   sequelize.authenticate().then(() => {
     dbAvailable = true;
-    console.log('✅ Banco de dados conectado');
+    console.log(' Banco de dados conectado');
   }).catch(() => {
     dbAvailable = false;
-    console.log('⚠️ Usando modo mock (sem banco)');
+    console.log(' Usando modo mock (sem banco)');
   });
 } catch (error) {
   dbAvailable = false;
-  console.log('⚠️ Usando modo mock (sem banco)');
+  console.log(' Usando modo mock (sem banco)');
 }
 
 // Tornar status do banco globalmente disponível
@@ -94,11 +112,11 @@ if (require.main === module) {
   const PORT = process.env.PORT || 3001;
   
   app.listen(PORT, () => {
-    console.log(`� Servidor rodando na porta ${PORT}`);
-    console.log(`🌐 Acesse: http://localhost:${PORT}`);
+    console.log(` Servidor rodando na porta ${PORT}`);
+    console.log(` Acesse: http://localhost:${PORT}`);
     console.log(global.dbAvailable ? 
       '✅ Sistema com banco de dados' : 
-      '⚠️ Sistema em modo mock'
+      ' Sistema em modo mock'
     );
   });
 }
