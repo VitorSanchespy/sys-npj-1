@@ -1,26 +1,8 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors') // Inicializar servidor
-if (require.main === module) {
-  // Validar variável de ambiente obrigatória
-  if (!process.env.PORT) {
-    console.error(' Erro: Variável de ambiente PORT é obrigatória!');
-    console.error(' Configure no arquivo .env: PORT=3001');
-    process.exit(1);
-  }
-  
-  const PORT = parseInt(process.env.PORT);
-  
-  app.listen(PORT, () => {
-    console.log(` Servidor rodando na porta ${PORT}`);
-    console.log(` Acesse: http://localhost:${PORT}`);
-    console.log(global.dbAvailable ? 
-      ' Sistema com banco de dados' : 
-      ' Sistema em modo mock'
-    );
-  });
-} 
+const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const app = express();
 
 module.exports = app;
@@ -101,6 +83,22 @@ app.use((err, req, res, next) => {
   console.error('Erro:', err.message);
   res.status(500).json({ erro: 'Erro interno do servidor' });
 });
+  const PORT = parseInt(process.env.PORT);
+  const sequelize = require('./utils/sequelize');
+  sequelize.authenticate().then(() => {
+    global.dbAvailable = true;
+    console.log('✅ Banco de dados conectado');
+    app.listen(PORT, () => {
+      console.log(` Servidor rodando na porta ${PORT}`);
+      console.log(` Acesse: http://localhost:${PORT}`);
+      console.log('✅ Sistema com banco de dados');
+    });
+  }).catch((err) => {
+    global.dbAvailable = false;
+    console.error('❌ Erro ao conectar ao banco de dados:', err.message);
+    console.error(' O servidor não será iniciado sem banco de dados.');
+    process.exit(1);
+  });
 
 // Rota não encontrada
 app.use((req, res) => {
@@ -109,14 +107,10 @@ app.use((req, res) => {
 
 // Inicializar servidor
 if (require.main === module) {
-  const PORT = process.env.PORT || 3001;
-  
-  app.listen(PORT, () => {
-    console.log(` Servidor rodando na porta ${PORT}`);
-    console.log(` Acesse: http://localhost:${PORT}`);
-    console.log(global.dbAvailable ? 
-      '✅ Sistema com banco de dados' : 
-      ' Sistema em modo mock'
-    );
-  });
+  // Validar variável de ambiente obrigatória
+  if (!process.env.PORT) {
+    console.error(' Erro: Variável de ambiente PORT é obrigatória!');
+    console.error(' Configure no arquivo .env: PORT=3001');
+    process.exit(1);
+  }
 }
