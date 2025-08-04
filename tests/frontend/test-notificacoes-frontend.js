@@ -80,7 +80,7 @@ async function testarBuscaNotificacoes(token) {
 async function testarContagemNaoLidas(token) {
     console.log('\n🔢 TESTANDO CONTAGEM DE NÃO LIDAS...');
     try {
-        const result = await makeRequest(`${api}/api/notificacoes/nao-lidas/contador`, {
+        const result = await makeRequest(`${api}/api/notificacoes/nao-lidas/count`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }

@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { processUpdatesService, auxTablesService } from "../../api/services";
+import { atualizacaoProcessoService, tabelaAuxiliarService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import UpdateForm from "./UpdateForm";
 import { getFileUrl } from '../../utils/fileUrl';
@@ -29,8 +29,11 @@ export default function UpdateList({ processoId }) {
   useEffect(() => {
     async function fetchUpdates() {
       try {
-        const data = await processUpdatesService.getProcessUpdates(processoId, token);
-        setUpdates(data);
+        // O método correto para listar atualizações de processo
+        const data = await atualizacaoProcessoService.listAtualizacoes(token);
+        // Se precisar filtrar por processo:
+        const atualizacoesProcesso = processoId ? data.filter(a => a.processo_id === processoId) : data;
+        setUpdates(atualizacoesProcesso);
       } catch {
         setUpdates([]);
       }
@@ -90,7 +93,7 @@ export default function UpdateList({ processoId }) {
                 style={{ marginLeft: 12, color: '#fff', background: '#d32f2f', border: 'none', borderRadius: 4, padding: '2px 10px', fontWeight: 500, cursor: 'pointer' }}
                 onClick={async () => {
                   if(window.confirm('Tem certeza que deseja excluir esta atualização?')) {
-                    await processUpdatesService.deleteProcessUpdate(upd.processo_id, upd.id, token);
+                    await atualizacaoProcessoService.deleteAtualizacao(token, upd.id);
                     setUpdates(updates.filter(u => u.id !== upd.id));
                   }
                 }}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fileService } from "../../api/services";
+import { arquivoService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import FileUploadForm from "../../components/arquivos/FileUploadForm";
 import { getFileUrl } from '../../utils/fileUrl';
@@ -14,8 +14,11 @@ export default function ArquivosPage() {
       setLoading(true);
       try {
         // Busca apenas arquivos do usuário logado
-        const data = await fileService.getUserFiles(token, user.id);
-        setArquivos(data);
+        // O método correto para listar arquivos do usuário
+        const data = await arquivoService.listArquivos(token);
+        // Se precisar filtrar por usuário:
+        const arquivosUsuario = user?.id ? data.filter(a => a.usuario_id === user.id) : data;
+        setArquivos(arquivosUsuario);
       } catch {
         setArquivos([]);
       }
@@ -80,7 +83,7 @@ export default function ArquivosPage() {
                         onClick={async () => {
                           if (window.confirm('Tem certeza que deseja excluir este arquivo?')) {
                             try {
-                              await fileService.deleteFile(arquivo.id, token);
+                              await arquivoService.deleteArquivo(token, arquivo.id);
                               setArquivos(arquivos.filter(a => a.id !== arquivo.id));
                             } catch (err) {
                               alert('Erro ao excluir arquivo: ' + (err.message || 'Erro desconhecido'));

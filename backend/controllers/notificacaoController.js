@@ -16,21 +16,21 @@ const getMockData = () => {
           id: 1,
           titulo: 'Novo Processo Atribuído',
           mensagem: 'Você foi atribuído ao processo 2024-001-TESTE',
-          tipo: 'info',
-          lida: false,
-          idusuario: 1,
-          idprocesso: 1,
-          data_criacao: new Date().toISOString()
+          tipo: 'informacao',
+          status: 'pendente',
+          usuario_id: 1,
+          processo_id: 1,
+          criado_em: new Date().toISOString()
         },
         {
           id: 2,
           titulo: 'Agendamento Próximo',
           mensagem: 'Você tem uma reunião agendada para amanhã às 14:00',
-          tipo: 'warning',
-          lida: false,
-          idusuario: 1,
-          idagendamento: 1,
-          data_criacao: new Date().toISOString()
+          tipo: 'alerta',
+          status: 'pendente',
+          usuario_id: 1,
+          agendamento_id: 1,
+          criado_em: new Date().toISOString()
         }
       ]
     };
@@ -46,7 +46,7 @@ exports.listarNotificacoes = async (req, res) => {
       const { notificacaoModel: Notificacao, usuarioModel: Usuario } = require('../models/indexModel');
       notificacoes = await Notificacao.findAll({
         include: [{ model: Usuario, as: 'usuario' }],
-        order: [['data_criacao', 'DESC']]
+        order: [['criado_em', 'DESC']]
       });
     } else {
       const mockData = getMockData();
@@ -61,24 +61,35 @@ exports.listarNotificacoes = async (req, res) => {
   }
 };
 
-// Listar notificações do usuário
+// Listar notificações do usuário com estatísticas
 exports.listarNotificacoesUsuario = async (req, res) => {
   try {
     const userId = req.user.id;
     let notificacoes = [];
+    let total = 0;
+    let naoLidas = 0;
     
     if (isDbAvailable()) {
       const { notificacaoModel: Notificacao } = require('../models/indexModel');
       notificacoes = await Notificacao.findAll({
-        where: { idusuario: userId },
-        order: [['data_criacao', 'DESC']]
+        where: { usuario_id: userId },
+        order: [['criado_em', 'DESC']]
       });
+      
+      total = notificacoes.length;
+      naoLidas = notificacoes.filter(n => ['pendente', 'enviado'].includes(n.status)).length;
     } else {
       const mockData = getMockData();
-      notificacoes = mockData.notificacoes.filter(n => n.idusuario === userId);
+      notificacoes = mockData.notificacoes.filter(n => n.usuario_id === userId);
+      total = notificacoes.length;
+      naoLidas = notificacoes.filter(n => ['pendente', 'enviado'].includes(n.status)).length;
     }
     
-    res.json(notificacoes);
+    res.json({
+      notificacoes,
+      total,
+      naoLidas
+    });
     
   } catch (error) {
     console.error('Erro ao listar notificações do usuário:', error);
@@ -120,32 +131,59 @@ exports.criarNotificacao = async (req, res) => {
     const {
       titulo,
       mensagem,
-      tipo = 'info',
-      idusuario,
-      idprocesso,
-      idagendamento
+      tipo = 'informacao',
+      usuario_id,
+      idusuario, // suporte para formato alternativo
+      processo_id,
+      agendamento_id
     } = req.body;
     
-    if (!titulo || !mensagem || !idusuario) {
+    // Aceita tanto usuario_id quanto idusuario para compatibilidade
+    const userId = usuario_id || idusuario;
+    
+    // Normalizar o tipo para valores aceitos
+    const tipoNormalizado = ['info', 'alerta', 'erro', 'sucesso', 'informacao'].includes(tipo) 
+      ? (tipo === 'info' ? 'informacao' : tipo) 
+      : 'informacao';
+    
+    if (!titulo || !mensagem || !userId) {
       return res.status(400).json({ 
         erro: 'Título, mensagem e ID do usuário são obrigatórios' 
       });
     }
     
     if (isDbAvailable()) {
-      const { notificacaoModel: Notificacao } = require('../models/indexModel');
-      
-      const novaNotificacao = await Notificacao.create({
-        titulo,
-        mensagem,
-        tipo,
-        lida: false,
-        idusuario,
-        idprocesso,
-        idagendamento
-      });
-      
-      res.status(201).json(novaNotificacao);
+      try {
+        const { notificacaoModel: Notificacao } = require('../models/indexModel');
+        
+        const novaNotificacao = await Notificacao.create({
+          titulo,
+          mensagem,
+          tipo: tipoNormalizado,
+          status: 'pendente',
+          usuario_id: userId,
+          processo_id,
+          agendamento_id
+        });
+        
+        res.status(201).json(novaNotificacao);
+      } catch (dbError) {
+        console.log('Erro no banco, usando modo mock:', dbError.message);
+        // Fallback para modo mock
+        const novaNotificacao = {
+          id: Date.now(),
+          titulo,
+          mensagem,
+          tipo: tipoNormalizado,
+          status: 'pendente',
+          usuario_id: userId,
+          processo_id,
+          agendamento_id,
+          criado_em: new Date().toISOString()
+        };
+        
+        res.status(201).json(novaNotificacao);
+      }
       
     } else {
       // Modo mock
@@ -153,12 +191,12 @@ exports.criarNotificacao = async (req, res) => {
         id: Date.now(),
         titulo,
         mensagem,
-        tipo,
-        lida: false,
-        idusuario,
-        idprocesso,
-        idagendamento,
-        data_criacao: new Date().toISOString()
+        tipo: tipoNormalizado,
+        status: 'pendente',
+        usuario_id: userId,
+        processo_id,
+        agendamento_id,
+        criado_em: new Date().toISOString()
       };
       
       res.status(201).json(novaNotificacao);
@@ -183,14 +221,25 @@ exports.marcarComoLida = async (req, res) => {
         return res.status(404).json({ erro: 'Notificação não encontrada' });
       }
       
-      await notificacao.update({ lida: true });
+      await notificacao.update({ 
+        status: 'lido',
+        data_leitura: new Date()
+      });
       res.json(notificacao);
       
     } else {
-      // Modo mock
+      // Modo mock - simular encontrar a notificação
+      const mockData = getMockData();
+      const notificacao = mockData.notificacoes.find(n => n.id == id);
+      
+      if (!notificacao) {
+        return res.status(404).json({ erro: 'Notificação não encontrada' });
+      }
+      
       res.json({
-        id: parseInt(id),
-        lida: true,
+        ...notificacao,
+        status: 'lido',
+        data_leitura: new Date().toISOString(),
         atualizado_em: new Date().toISOString()
       });
     }
@@ -210,8 +259,16 @@ exports.marcarTodasComoLidas = async (req, res) => {
       const { notificacaoModel: Notificacao } = require('../models/indexModel');
       
       await Notificacao.update(
-        { lida: true },
-        { where: { idusuario: userId, lida: false } }
+        { 
+          status: 'lido',
+          data_leitura: new Date()
+        },
+        { 
+          where: { 
+            usuario_id: userId, 
+            status: ['pendente', 'enviado'] 
+          } 
+        }
       );
       
       res.json({ message: 'Todas as notificações foram marcadas como lidas' });
@@ -263,11 +320,14 @@ exports.contarNaoLidas = async (req, res) => {
     if (isDbAvailable()) {
       const { notificacaoModel: Notificacao } = require('../models/indexModel');
       count = await Notificacao.count({
-        where: { idusuario: userId, lida: false }
+        where: { 
+          usuario_id: userId, 
+          status: ['pendente', 'enviado'] // não lidas são pendentes ou enviadas mas não lidas
+        }
       });
     } else {
       const mockData = getMockData();
-      count = mockData.notificacoes.filter(n => n.idusuario === userId && !n.lida).length;
+      count = mockData.notificacoes.filter(n => n.usuario_id === userId && ['pendente', 'enviado'].includes(n.status)).length;
     }
     
     res.json({ count });

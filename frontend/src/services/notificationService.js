@@ -91,7 +91,7 @@ class NotificationService {
   // Buscar contador de notificações não lidas
   async getUnreadCount(token) {
     try {
-      const response = await apiRequest('/api/notificacoes/nao-lidas/contador', { method: 'GET', token });
+      const response = await apiRequest('/api/notificacoes/nao-lidas/count', { method: 'GET', token });
       return response.count || 0;
     } catch (error) {
       console.error('❌ Erro ao buscar contador:', error);

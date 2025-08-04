@@ -9,6 +9,8 @@ router.use(verificarToken);
 
 // Rotas básicas
 router.get('/roles', tabelaController.listarRoles);
+router.get('/status', tabelaController.listarStatus);
+router.get('/tipos-acao', tabelaController.listarTiposAcao);
 // Adicione aqui apenas rotas cujos controllers existem
 
 module.exports = router;

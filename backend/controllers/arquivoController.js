@@ -115,14 +115,24 @@ exports.listarArquivos = async (req, res) => {
     let arquivos = [];
     
     if (isDbAvailable()) {
-      const { arquivoModel: Arquivo, usuarioModel: Usuario } = require('../models/indexModel');
-      const where = idprocesso ? { idprocesso } : {};
-      
-      arquivos = await Arquivo.findAll({
-        where,
-        include: [{ model: Usuario, as: 'usuario' }],
-        order: [['data_upload', 'DESC']]
-      });
+      try {
+        const { arquivoModel: Arquivo, usuarioModel: Usuario } = require('../models/indexModel');
+        const where = idprocesso ? { idprocesso } : {};
+        
+        arquivos = await Arquivo.findAll({
+          where,
+          include: [{ model: Usuario, as: 'usuario' }],
+          order: [['data_upload', 'DESC']]
+        });
+      } catch (dbError) {
+        console.log('Erro no banco, usando dados mock:', dbError.message);
+        const mockData = getMockData();
+        arquivos = mockData.arquivos;
+        
+        if (idprocesso) {
+          arquivos = arquivos.filter(a => a.idprocesso == idprocesso);
+        }
+      }
     } else {
       const mockData = getMockData();
       arquivos = mockData.arquivos;

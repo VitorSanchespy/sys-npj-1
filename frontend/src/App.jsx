@@ -7,12 +7,12 @@ import AppRouter from "@/routes/AppRouter";
 import { queryClient } from "./hooks/useQueryClient";
 import NotificationToast from "./components/notifications/NotificationToast";
 import LoginDebugComponent from "./components/debug/LoginDebugComponent";
-// import PerformanceMonitor from "./components/dev/PerformanceMonitor";
 
 // Debug tools apenas em desenvolvimento
-// if (import.meta.env.DEV) {
-//   import('./debug/apiTester.js');
-// }
+if (import.meta.env.DEV) {
+  import('./utils/apiTester.js');
+  import('./utils/frontendInitializer.js');
+}
 
 function App() {
   // Renderizar apenas o debug se estiver em modo de desenvolvimento

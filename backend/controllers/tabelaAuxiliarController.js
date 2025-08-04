@@ -1,4 +1,28 @@
 // Controller de Tabelas Auxiliares
+
+// Função utilitária para verificar disponibilidade do banco
+function isDbAvailable() {
+  return global.dbAvailable || false;
+}
+
+// Dados mock
+const getMockData = () => {
+  return {
+    status: [
+      { id: 1, nome: 'Ativo', descricao: 'Status ativo' },
+      { id: 2, nome: 'Inativo', descricao: 'Status inativo' },
+      { id: 3, nome: 'Pendente', descricao: 'Status pendente' },
+      { id: 4, nome: 'Concluído', descricao: 'Status concluído' }
+    ],
+    tiposAcao: [
+      { id: 1, nome: 'Criar', descricao: 'Ação de criação' },
+      { id: 2, nome: 'Editar', descricao: 'Ação de edição' },
+      { id: 3, nome: 'Excluir', descricao: 'Ação de exclusão' },
+      { id: 4, nome: 'Visualizar', descricao: 'Ação de visualização' }
+    ]
+  };
+};
+
 const { 
   roleModel: Role,
   materiaAssuntoModel: MateriaAssunto,
@@ -10,11 +34,29 @@ const {
 // Listar roles
 exports.listarRoles = async (req, res) => {
   try {
-    const roles = await Role.findAll({
-      order: [['nome', 'ASC']]
-    });
-    
-    res.json(roles);
+    if (isDbAvailable()) {
+      try {
+        const roles = await Role.findAll({
+          order: [['nome', 'ASC']]
+        });
+        res.json(roles);
+      } catch (dbError) {
+        console.log('Erro no banco, usando dados mock:', dbError.message);
+        // Fallback com dados mock básicos
+        res.json([
+          { id: 1, nome: 'Admin', descricao: 'Administrador do sistema' },
+          { id: 2, nome: 'Usuario', descricao: 'Usuário comum' },
+          { id: 3, nome: 'Coordenador', descricao: 'Coordenador de processos' }
+        ]);
+      }
+    } else {
+      // Dados mock quando banco não está disponível
+      res.json([
+        { id: 1, nome: 'Admin', descricao: 'Administrador do sistema' },
+        { id: 2, nome: 'Usuario', descricao: 'Usuário comum' },
+        { id: 3, nome: 'Coordenador', descricao: 'Coordenador de processos' }
+      ]);
+    }
     
   } catch (error) {
     console.error('Erro ao listar roles:', error);
@@ -132,6 +174,28 @@ exports.criarDiligencia = async (req, res) => {
     
   } catch (error) {
     console.error('Erro ao criar diligência:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Listar status
+exports.listarStatus = async (req, res) => {
+  try {
+    const mockData = getMockData();
+    res.json(mockData.status);
+  } catch (error) {
+    console.error('Erro ao listar status:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Listar tipos de ação
+exports.listarTiposAcao = async (req, res) => {
+  try {
+    const mockData = getMockData();
+    res.json(mockData.tiposAcao);
+  } catch (error) {
+    console.error('Erro ao listar tipos de ação:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };

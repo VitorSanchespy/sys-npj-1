@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auxTablesService, processService } from '../api/services';
+import { tabelaAuxiliarService, processService } from '../api/services';
 import { useAuthContext } from '../contexts/AuthContext';
 import SelectWithAdd from './common/SelectWithAdd'; // Importando o novo componente
 
@@ -47,10 +47,10 @@ const FullProcessCreateForm = () => {
         if (!token) throw new Error('Token não encontrado.');
         setLoading(true);
         const [materiasRes, fasesRes, diligenciasRes, localTramitacoesRes] = await Promise.all([
-          auxTablesService.getMateriaAssunto(token),
-          auxTablesService.getFase(token),
-          auxTablesService.getDiligencia(token),
-          auxTablesService.getLocalTramitacao(token),
+          tabelaAuxiliarService.getMateriaAssunto(token),
+          tabelaAuxiliarService.getFase(token),
+          tabelaAuxiliarService.getDiligencia(token),
+          tabelaAuxiliarService.getLocalTramitacao(token),
         ]);
         setMaterias(materiasRes);
         setFases(fasesRes);
@@ -90,10 +90,10 @@ const FullProcessCreateForm = () => {
     }
 
     const services = {
-      materiaAssunto: { create: auxTablesService.createMateriaAssunto, fetch: auxTablesService.getMateriaAssunto, setter: setMaterias, fieldName: 'materia_assunto_id' },
-      localTramitacao: { create: auxTablesService.createLocalTramitacao, fetch: auxTablesService.getLocalTramitacao, setter: setLocalTramitacoes, fieldName: 'local_tramitacao_id' },
-      fase: { create: auxTablesService.createFase, fetch: auxTablesService.getFase, setter: setFases, fieldName: 'fase_id' },
-      diligencia: { create: auxTablesService.createDiligencia, fetch: auxTablesService.getDiligencia, setter: setDiligencias, fieldName: 'diligencia_id' },
+      materiaAssunto: { create: tabelaAuxiliarService.createMateriaAssunto, fetch: tabelaAuxiliarService.getMateriaAssunto, setter: setMaterias, fieldName: 'materia_assunto_id' },
+      localTramitacao: { create: tabelaAuxiliarService.createLocalTramitacao, fetch: tabelaAuxiliarService.getLocalTramitacao, setter: setLocalTramitacoes, fieldName: 'local_tramitacao_id' },
+      fase: { create: tabelaAuxiliarService.createFase, fetch: tabelaAuxiliarService.getFase, setter: setFases, fieldName: 'fase_id' },
+      diligencia: { create: tabelaAuxiliarService.createDiligencia, fetch: tabelaAuxiliarService.getDiligencia, setter: setDiligencias, fieldName: 'diligencia_id' },
     };
 
     const service = services[field];

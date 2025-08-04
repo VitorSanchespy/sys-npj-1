@@ -179,7 +179,7 @@ npx sequelize-cli migration:generate --name nome_da_migration
 ```powershell
 npx sequelize-cli db:migrate
 ```
-
+window.testAPI()
 ### Reverter a última migration
 ```powershell
 npx sequelize-cli db:migrate:undo

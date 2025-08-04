@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { processUpdatesService, fileService } from "../../api/services";
+import { atualizacaoProcessoService, arquivoService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { getFileUrl } from '../../utils/fileUrl';
 
@@ -22,8 +22,11 @@ function UpdateForm({ processoId, onSuccess }) {
   useEffect(() => {
     async function fetchArquivos() {
       try {
-        const data = await fileService.getFilesByUser(user.id, token);
-        setMeusArquivos(data);
+        // O método correto para listar arquivos do usuário
+        const data = await arquivoService.listArquivos(token);
+        // Se precisar filtrar por usuário:
+        const arquivosUsuario = user?.id ? data.filter(a => a.usuario_id === user.id) : data;
+        setMeusArquivos(arquivosUsuario);
       } catch {
         setMeusArquivos([]);
       }
@@ -54,11 +57,12 @@ function UpdateForm({ processoId, onSuccess }) {
         setLoading(false);
         return;
       }
-      await processUpdatesService.createProcessUpdate(processoId, {
-        descricao, 
-        tipo, 
-        anexo: arquivoSelecionado.caminho 
-      }, token);
+      await atualizacaoProcessoService.createAtualizacao(token, {
+        processo_id: processoId,
+        descricao,
+        tipo,
+        anexo: arquivoSelecionado.caminho
+      });
       setMsg("Atualização cadastrada!");
       setDescricao("");
       setTipo("");

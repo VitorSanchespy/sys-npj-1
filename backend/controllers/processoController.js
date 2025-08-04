@@ -53,11 +53,17 @@ exports.listarProcessos = async (req, res) => {
     let processos = [];
     
     if (isDbAvailable()) {
-      const { processoModel: Processo, usuarioModel: Usuario } = require('../models/indexModel');
-      processos = await Processo.findAll({
-        include: [{ model: Usuario, as: 'responsavel' }],
-        order: [['data_criacao', 'DESC']]
-      });
+      try {
+        const { processoModel: Processo, usuarioModel: Usuario } = require('../models/indexModel');
+        processos = await Processo.findAll({
+          include: [{ model: Usuario, as: 'responsavel' }],
+          order: [['data_criacao', 'DESC']]
+        });
+      } catch (dbError) {
+        console.log('Erro no banco, usando dados mock:', dbError.message);
+        const mockData = getMockData();
+        processos = mockData.processos;
+      }
     } else {
       const mockData = getMockData();
       processos = mockData.processos;

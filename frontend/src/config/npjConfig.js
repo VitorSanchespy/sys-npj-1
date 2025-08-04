@@ -2,7 +2,7 @@
 export const NPJ_CONFIG = {
   // URLs da API
   API: {
-    BASE_URL: 'http://localhost:3001',
+    BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:3001',
     TIMEOUT: 10000, // 10 segundos
     RETRY_ATTEMPTS: 3,
     RETRY_DELAY: 1000 // 1 segundo

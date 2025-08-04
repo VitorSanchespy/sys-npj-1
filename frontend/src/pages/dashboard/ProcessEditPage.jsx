@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { apiRequest } from "@/api/apiRequest";
-import { auxTablesService, processService } from "../../api/services";
+import { tabelaAuxiliarService, processService } from "../../api/services";
 
 export default function ProcessEditPage() {
   const { id } = useParams();
@@ -34,10 +34,10 @@ export default function ProcessEditPage() {
           contato_assistido: proc.contato_assistido || '',
         });
         const [materiasRes, fasesRes, diligenciasRes, localTramitacoesRes] = await Promise.all([
-          auxTablesService.getMateriaAssunto(token),
-          auxTablesService.getFase(token),
-          auxTablesService.getDiligencia(token),
-          auxTablesService.getLocalTramitacao(token),
+          tabelaAuxiliarService.getMateriaAssunto(token),
+          tabelaAuxiliarService.getFase(token),
+          tabelaAuxiliarService.getDiligencia(token),
+          tabelaAuxiliarService.getLocalTramitacao(token),
         ]);
         setMaterias(Array.isArray(materiasRes) ? materiasRes : []);
         setFases(Array.isArray(fasesRes) ? fasesRes : []);
