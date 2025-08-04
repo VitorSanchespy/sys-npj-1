@@ -85,15 +85,15 @@ const FullProcessCreateForm = () => {
   const handleAddNewValue = async (field) => {
     const value = newValues[field];
     if (!value.trim()) {
-      alert('Por favor, digite um valor válido.');
+      window.alert('Por favor, digite um valor válido.');
       return;
     }
 
     const services = {
-      materiaAssunto: { create: tabelaAuxiliarService.createMateriaAssunto, fetch: tabelaAuxiliarService.getMateriaAssunto, setter: setMaterias, fieldName: 'materia_assunto_id' },
-      localTramitacao: { create: tabelaAuxiliarService.createLocalTramitacao, fetch: tabelaAuxiliarService.getLocalTramitacao, setter: setLocalTramitacoes, fieldName: 'local_tramitacao_id' },
-      fase: { create: tabelaAuxiliarService.createFase, fetch: tabelaAuxiliarService.getFase, setter: setFases, fieldName: 'fase_id' },
-      diligencia: { create: tabelaAuxiliarService.createDiligencia, fetch: tabelaAuxiliarService.getDiligencia, setter: setDiligencias, fieldName: 'diligencia_id' },
+      materiaAssunto: { create: tabelaAuxiliarService.createMateriaAssunto, setter: setMaterias, options: materias, fieldName: 'materia_assunto_id', label: 'Matéria/Assunto' },
+      localTramitacao: { create: tabelaAuxiliarService.createLocalTramitacao, setter: setLocalTramitacoes, options: localTramitacoes, fieldName: 'local_tramitacao_id', label: 'Local de Tramitação' },
+      fase: { create: tabelaAuxiliarService.createFase, setter: setFases, options: fases, fieldName: 'fase_id', label: 'Fase' },
+      diligencia: { create: tabelaAuxiliarService.createDiligencia, setter: setDiligencias, options: diligencias, fieldName: 'diligencia_id', label: 'Diligência' },
     };
 
     const service = services[field];
@@ -102,15 +102,16 @@ const FullProcessCreateForm = () => {
     try {
       setLoading(true);
       const response = await service.create(token, value);
-      const updatedData = await service.fetch(token);
-      service.setter(updatedData);
-
+      // Adiciona o novo valor diretamente à lista local com a estrutura correta
+      const newOption = { id: response.id, nome: response.nome || value };
+      service.setter([...service.options, newOption]);
+      // Seleciona o novo valor imediatamente
       setFormData(prev => ({ ...prev, [service.fieldName]: response.id }));
       toggleAddForm(field, false);
-      alert(`${value} adicionado com sucesso e selecionado!`);
+      window.alert(`${service.label} "${value}" adicionado com sucesso e selecionado!`);
     } catch (error) {
       console.error(`Erro ao adicionar novo valor em ${field}:`, error);
-      alert(`Erro ao adicionar novo valor: ${error.message}`);
+      window.alert(`Erro ao adicionar novo valor: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -204,8 +205,7 @@ const FullProcessCreateForm = () => {
             
             {/* Coluna da Esquerda */}
             <div className="space-y-5">
-              <h3 className="text-base font-semibold text-gray-800 border-b pb-2 flex items-center">
-                <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              <h3 className="text-base font-semibold text-gray-800 border-b pb-2">
                 Informações Básicas
               </h3>
               {renderField('Número do Processo', 'numero_processo', 'Ex: 0001234-56.2025.8.11.0001', true)}
@@ -230,10 +230,10 @@ const FullProcessCreateForm = () => {
 
             {/* Coluna da Direita */}
             <div className="space-y-5">
-              <h3 className="text-base font-semibold text-gray-800 border-b pb-2 flex items-center">
-                <svg className="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+              <h3 className="text-base font-semibold text-gray-800 border-b pb-2">
                 Categorização
               </h3>
+              {/* Remove SVG icons from SelectWithAdd buttons and improve user feedback */}
               <SelectWithAdd
                 label="Matéria/Assunto *"
                 stateKey="materia_assunto_id"
@@ -247,6 +247,7 @@ const FullProcessCreateForm = () => {
                 onAddNew={() => handleAddNewValue('materiaAssunto')}
                 placeholder="matéria/assunto"
                 loading={loading}
+                noIcon
               />
               <SelectWithAdd
                 label="Fase *"
@@ -261,6 +262,7 @@ const FullProcessCreateForm = () => {
                 onAddNew={() => handleAddNewValue('fase')}
                 placeholder="fase"
                 loading={loading}
+                noIcon
               />
               <SelectWithAdd
                 label="Diligência *"
@@ -275,6 +277,7 @@ const FullProcessCreateForm = () => {
                 onAddNew={() => handleAddNewValue('diligencia')}
                 placeholder="diligência"
                 loading={loading}
+                noIcon
               />
               <SelectWithAdd
                 label="Local de Tramitação *"
@@ -289,35 +292,30 @@ const FullProcessCreateForm = () => {
                 onAddNew={() => handleAddNewValue('localTramitacao')}
                 placeholder="local de tramitação"
                 loading={loading}
+                noIcon
               />
             </div>
           </div>
         </div>
 
         {/* Botões de Ação */}
-        <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 rounded-b-lg">
-          <div className="flex justify-end gap-3">
+        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 rounded-b-lg">
+          <div className="flex justify-end items-center space-x-4">
             <button
               type="button"
               onClick={handleCancel}
               disabled={loading}
-              className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 transition-all"
+              className="mt-2 text-xs font-medium text-blue-600 hover:text-blue-800 border-none bg-transparent px-4 py-2 rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all flex items-center"
+              className="px-6 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200 flex items-center gap-2"
             >
               {loading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Salvando...
-                </>
+                'Salvando...'
               ) : (
                 'Criar Processo'
               )}

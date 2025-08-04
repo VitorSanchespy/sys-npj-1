@@ -5,77 +5,6 @@ function isDbAvailable() {
   return global.dbAvailable || false;
 }
 
-// Dados mock para desenvolvimento
-const getMockData = () => {
-  try {
-    return require('../utils/mockData');
-  } catch (error) {
-    return {
-      processos: [
-        {
-          id: 1,
-          numero_processo: '2024-001-TESTE',
-          parte_contraria: 'João Silva',
-          comarca: 'Cuiabá',
-          vara: '1ª Vara Civil',
-          valor_causa: 10000.00,
-          tipo_acao: 'Civil',
-          assunto: 'Cobrança',
-          status: 'Em Andamento',
-          prioridade: 'Normal',
-          descricao: 'Processo de teste do sistema',
-          idusuario_responsavel: 1,
-          data_criacao: new Date().toISOString()
-        },
-        {
-          id: 2,
-          numero_processo: '2024-002-TESTE',
-          parte_contraria: 'Maria Santos',
-          comarca: 'Várzea Grande',
-          vara: '2ª Vara Civil',
-          valor_causa: 5000.00,
-          tipo_acao: 'Trabalhista',
-          assunto: 'Rescisão',
-          status: 'Aguardando',
-          prioridade: 'Alta',
-          descricao: 'Processo trabalhista de teste',
-          idusuario_responsavel: 2,
-          data_criacao: new Date().toISOString()
-        }
-      ]
-    };
-  }
-};
-
-// Listar processos
-exports.listarProcessos = async (req, res) => {
-  try {
-    let processos = [];
-    
-    if (isDbAvailable()) {
-      try {
-        const { processoModel: Processo, usuarioModel: Usuario } = require('../models/indexModel');
-        processos = await Processo.findAll({
-          include: [{ model: Usuario, as: 'responsavel' }],
-          order: [['data_criacao', 'DESC']]
-        });
-      } catch (dbError) {
-        console.log('Erro no banco, usando dados mock:', dbError.message);
-        const mockData = getMockData();
-        processos = mockData.processos;
-      }
-    } else {
-      const mockData = getMockData();
-      processos = mockData.processos;
-    }
-    
-    res.json(processos);
-    
-  } catch (error) {
-    console.error('Erro ao listar processos:', error);
-    res.status(500).json({ erro: 'Erro interno do servidor' });
-  }
-};
 
 // Obter processo por ID
 exports.obterProcesso = async (req, res) => {
@@ -88,10 +17,7 @@ exports.obterProcesso = async (req, res) => {
       processo = await Processo.findByPk(id, {
         include: [{ model: Usuario, as: 'responsavel' }]
       });
-    } else {
-      const mockData = getMockData();
-      processo = mockData.processos.find(p => p.id == id);
-    }
+    } 
     
     if (!processo) {
       return res.status(404).json({ erro: 'Processo não encontrado' });
@@ -110,69 +36,48 @@ exports.criarProcesso = async (req, res) => {
   try {
     const {
       numero_processo,
-      parte_contraria,
-      comarca,
-      vara,
-      valor_causa,
-      tipo_acao,
-      assunto,
-      status = 'Em Andamento',
-      prioridade = 'Normal',
+      num_processo_sei,
+      assistido,
       descricao,
+      status = 'Em andamento',
+      materia_assunto_id,
+      local_tramitacao_id,
+      sistema = 'Físico',
+      fase_id,
+      diligencia_id,
+      contato_assistido,
       idusuario_responsavel
     } = req.body;
-    
-    if (!numero_processo || !parte_contraria || !assunto) {
+
+    if (!numero_processo) {
       return res.status(400).json({ 
-        erro: 'Número do processo, parte contrária e assunto são obrigatórios' 
+        erro: 'Número do processo é obrigatório' 
       });
     }
     
     if (isDbAvailable()) {
       const { processoModel: Processo } = require('../models/indexModel');
-      
       // Verificar se número do processo já existe
       const processoExistente = await Processo.findOne({ where: { numero_processo } });
       if (processoExistente) {
         return res.status(400).json({ erro: 'Número do processo já cadastrado' });
       }
-      
       const novoProcesso = await Processo.create({
         numero_processo,
-        parte_contraria,
-        comarca,
-        vara,
-        valor_causa,
-        tipo_acao,
-        assunto,
-        status,
-        prioridade,
+        num_processo_sei,
+        assistido,
         descricao,
+        status,
+        materia_assunto_id,
+        local_tramitacao_id,
+        sistema,
+        fase_id,
+        diligencia_id,
+        contato_assistido,
         idusuario_responsavel
       });
-      
       res.status(201).json(novoProcesso);
-      
-    } else {
-      // Modo mock
-      const novoProcesso = {
-        id: Date.now(),
-        numero_processo,
-        parte_contraria,
-        comarca,
-        vara,
-        valor_causa,
-        tipo_acao,
-        assunto,
-        status,
-        prioridade,
-        descricao,
-        idusuario_responsavel,
-        data_criacao: new Date().toISOString()
-      };
-      
-      res.status(201).json(novoProcesso);
-    }
+    } 
     
   } catch (error) {
     console.error('Erro ao criar processo:', error);
@@ -197,14 +102,7 @@ exports.atualizarProcesso = async (req, res) => {
       await processo.update(dadosAtualizacao);
       res.json(processo);
       
-    } else {
-      // Modo mock
-      res.json({
-        id: parseInt(id),
-        ...dadosAtualizacao,
-        atualizado_em: new Date().toISOString()
-      });
-    }
+    } 
     
   } catch (error) {
     console.error('Erro ao atualizar processo:', error);
@@ -228,10 +126,7 @@ exports.deletarProcesso = async (req, res) => {
       await processo.destroy();
       res.json({ message: 'Processo deletado com sucesso' });
       
-    } else {
-      // Modo mock
-      res.json({ message: 'Processo deletado com sucesso (modo desenvolvimento)' });
-    }
+    } 
     
   } catch (error) {
     console.error('Erro ao deletar processo:', error);
@@ -250,17 +145,29 @@ exports.listarProcessosUsuario = async (req, res) => {
       processos = await Processo.findAll({
         where: { idusuario_responsavel: userId },
         include: [{ model: Usuario, as: 'responsavel' }],
-        order: [['data_criacao', 'DESC']]
+        order: [['criado_em', 'DESC']]
       });
-    } else {
-      const mockData = getMockData();
-      processos = mockData.processos.filter(p => p.idusuario_responsavel === userId);
-    }
+    } 
     
     res.json(processos);
     
   } catch (error) {
     console.error('Erro ao listar processos do usuário:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Listar todos os processos
+exports.listarProcessos = async (req, res) => {
+  try {
+    const { processoModel: Processo, usuarioModel: Usuario } = require('../models/indexModel');
+    const processos = await Processo.findAll({
+      include: [{ model: Usuario, as: 'responsavel' }],
+      order: [['criado_em', 'DESC']]
+    });
+    res.json(processos);
+  } catch (error) {
+    console.error('Erro ao listar processos:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };

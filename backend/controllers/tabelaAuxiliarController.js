@@ -67,11 +67,31 @@ exports.listarRoles = async (req, res) => {
 // Listar matérias/assuntos
 exports.listarMateriaAssunto = async (req, res) => {
   try {
-    const materias = await MateriaAssunto.findAll({
-      order: [['nome', 'ASC']]
-    });
-    
-    res.json(materias);
+    if (isDbAvailable()) {
+      try {
+        const materias = await MateriaAssunto.findAll({
+          order: [['nome', 'ASC']]
+        });
+        res.json(materias);
+      } catch (dbError) {
+        console.log('Erro no banco, usando dados mock:', dbError.message);
+        // Fallback com dados mock
+        res.json([
+          { id: 1, nome: 'Direito Civil', descricao: 'Questões de direito civil' },
+          { id: 2, nome: 'Direito Trabalhista', descricao: 'Questões trabalhistas' },
+          { id: 3, nome: 'Direito Penal', descricao: 'Questões penais' },
+          { id: 4, nome: 'Direito Consumidor', descricao: 'Defesa do consumidor' }
+        ]);
+      }
+    } else {
+      // Dados mock quando banco não está disponível
+      res.json([
+        { id: 1, nome: 'Direito Civil', descricao: 'Questões de direito civil' },
+        { id: 2, nome: 'Direito Trabalhista', descricao: 'Questões trabalhistas' },
+        { id: 3, nome: 'Direito Penal', descricao: 'Questões penais' },
+        { id: 4, nome: 'Direito Consumidor', descricao: 'Defesa do consumidor' }
+      ]);
+    }
     
   } catch (error) {
     console.error('Erro ao listar matérias/assuntos:', error);
@@ -82,11 +102,33 @@ exports.listarMateriaAssunto = async (req, res) => {
 // Listar fases
 exports.listarFases = async (req, res) => {
   try {
-    const fases = await Fase.findAll({
-      order: [['nome', 'ASC']]
-    });
-    
-    res.json(fases);
+    if (isDbAvailable()) {
+      try {
+        const fases = await Fase.findAll({
+          order: [['nome', 'ASC']]
+        });
+        res.json(fases);
+      } catch (dbError) {
+        console.log('Erro no banco, usando dados mock:', dbError.message);
+        // Fallback com dados mock
+        res.json([
+          { id: 1, nome: 'Inicial', descricao: 'Fase inicial do processo' },
+          { id: 2, nome: 'Instrução', descricao: 'Fase de instrução processual' },
+          { id: 3, nome: 'Julgamento', descricao: 'Fase de julgamento' },
+          { id: 4, nome: 'Recurso', descricao: 'Fase recursal' },
+          { id: 5, nome: 'Execução', descricao: 'Fase de execução' }
+        ]);
+      }
+    } else {
+      // Dados mock quando banco não está disponível
+      res.json([
+        { id: 1, nome: 'Inicial', descricao: 'Fase inicial do processo' },
+        { id: 2, nome: 'Instrução', descricao: 'Fase de instrução processual' },
+        { id: 3, nome: 'Julgamento', descricao: 'Fase de julgamento' },
+        { id: 4, nome: 'Recurso', descricao: 'Fase recursal' },
+        { id: 5, nome: 'Execução', descricao: 'Fase de execução' }
+      ]);
+    }
     
   } catch (error) {
     console.error('Erro ao listar fases:', error);
@@ -97,11 +139,31 @@ exports.listarFases = async (req, res) => {
 // Listar diligências
 exports.listarDiligencias = async (req, res) => {
   try {
-    const diligencias = await Diligencia.findAll({
-      order: [['nome', 'ASC']]
-    });
-    
-    res.json(diligencias);
+    if (isDbAvailable()) {
+      try {
+        const diligencias = await Diligencia.findAll({
+          order: [['nome', 'ASC']]
+        });
+        res.json(diligencias);
+      } catch (dbError) {
+        console.log('Erro no banco, usando dados mock:', dbError.message);
+        // Fallback com dados mock
+        res.json([
+          { id: 1, nome: 'Petição Inicial', descricao: 'Elaboração de petição inicial' },
+          { id: 2, nome: 'Contestação', descricao: 'Preparação de contestação' },
+          { id: 3, nome: 'Audiência', descricao: 'Participação em audiência' },
+          { id: 4, nome: 'Recurso', descricao: 'Interposição de recurso' }
+        ]);
+      }
+    } else {
+      // Dados mock quando banco não está disponível
+      res.json([
+        { id: 1, nome: 'Petição Inicial', descricao: 'Elaboração de petição inicial' },
+        { id: 2, nome: 'Contestação', descricao: 'Preparação de contestação' },
+        { id: 3, nome: 'Audiência', descricao: 'Participação em audiência' },
+        { id: 4, nome: 'Recurso', descricao: 'Interposição de recurso' }
+      ]);
+    }
     
   } catch (error) {
     console.error('Erro ao listar diligências:', error);
@@ -112,11 +174,31 @@ exports.listarDiligencias = async (req, res) => {
 // Listar locais de tramitação
 exports.listarLocaisTramitacao = async (req, res) => {
   try {
-    const locais = await LocalTramitacao.findAll({
-      order: [['nome', 'ASC']]
-    });
-    
-    res.json(locais);
+    if (isDbAvailable()) {
+      try {
+        const locais = await LocalTramitacao.findAll({
+          order: [['nome', 'ASC']]
+        });
+        res.json(locais);
+      } catch (dbError) {
+        console.log('Erro no banco, usando dados mock:', dbError.message);
+        // Fallback com dados mock
+        res.json([
+          { id: 1, nome: 'Vara Cível', descricao: 'Vara Cível Central' },
+          { id: 2, nome: 'Vara Trabalhista', descricao: 'Vara do Trabalho' },
+          { id: 3, nome: 'Tribunal de Justiça', descricao: 'TJ/MT' },
+          { id: 4, nome: 'Defensoria Pública', descricao: 'Defensoria Pública do Estado' }
+        ]);
+      }
+    } else {
+      // Dados mock quando banco não está disponível
+      res.json([
+        { id: 1, nome: 'Vara Cível', descricao: 'Vara Cível Central' },
+        { id: 2, nome: 'Vara Trabalhista', descricao: 'Vara do Trabalho' },
+        { id: 3, nome: 'Tribunal de Justiça', descricao: 'TJ/MT' },
+        { id: 4, nome: 'Defensoria Pública', descricao: 'Defensoria Pública do Estado' }
+      ]);
+    }
     
   } catch (error) {
     console.error('Erro ao listar locais de tramitação:', error);

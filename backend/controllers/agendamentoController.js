@@ -55,7 +55,8 @@ exports.listarAgendamentos = async (req, res) => {
         const { agendamentoModel: Agendamento, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
         agendamentos = await Agendamento.findAll({
           include: [
-            { model: Usuario, as: 'usuario' },
+            { model: Usuario, as: 'destinatario' },
+            { model: Usuario, as: 'criador' },
             { model: Processo, as: 'processo' }
           ],
           order: [['data_agendamento', 'ASC']]
@@ -89,7 +90,8 @@ exports.obterAgendamento = async (req, res) => {
         const { agendamentoModel: Agendamento, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
         agendamento = await Agendamento.findByPk(id, {
           include: [
-            { model: Usuario, as: 'usuario' },
+            { model: Usuario, as: 'destinatario' },
+            { model: Usuario, as: 'criador' },
             { model: Processo, as: 'processo' }
           ]
         });

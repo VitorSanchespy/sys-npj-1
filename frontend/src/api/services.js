@@ -305,46 +305,66 @@ export const tabelaAuxiliarService = {
     });
   },
 
-  // Métodos placeholder para tabelas auxiliares (não implementadas no backend)
+  // Métodos para tabelas auxiliares
   getMateriaAssunto: async (token) => {
-    console.warn('getMateriaAssunto: Endpoint não implementado no backend');
-    return [];
+    return await apiRequest('/api/tabelas/materia-assunto', {
+      method: 'GET',
+      token
+    });
   },
 
   getFase: async (token) => {
-    console.warn('getFase: Endpoint não implementado no backend');
-    return [];
+    return await apiRequest('/api/tabelas/fases', {
+      method: 'GET',
+      token
+    });
   },
 
   getDiligencia: async (token) => {
-    console.warn('getDiligencia: Endpoint não implementado no backend');
-    return [];
+    return await apiRequest('/api/tabelas/diligencias', {
+      method: 'GET',
+      token
+    });
   },
 
   getLocalTramitacao: async (token) => {
-    console.warn('getLocalTramitacao: Endpoint não implementado no backend');
-    return [];
+    return await apiRequest('/api/tabelas/locais-tramitacao', {
+      method: 'GET',
+      token
+    });
   },
 
-  // Métodos de criação (também não implementados)
+  // Métodos de criação (implementação básica - podem precisar de endpoints no backend)
   createMateriaAssunto: async (token, nome) => {
-    console.warn('createMateriaAssunto: Endpoint não implementado no backend');
-    return { id: Date.now(), nome };
+    return await apiRequest('/api/tabelas/materia-assunto', {
+      method: 'POST',
+      token,
+      body: { nome }
+    });
   },
 
   createFase: async (token, nome) => {
-    console.warn('createFase: Endpoint não implementado no backend');
-    return { id: Date.now(), nome };
+    return await apiRequest('/api/tabelas/fases', {
+      method: 'POST',
+      token,
+      body: { nome }
+    });
   },
 
   createDiligencia: async (token, nome) => {
-    console.warn('createDiligencia: Endpoint não implementado no backend');
-    return { id: Date.now(), nome };
+    return await apiRequest('/api/tabelas/diligencias', {
+      method: 'POST',
+      token,
+      body: { nome }
+    });
   },
 
   createLocalTramitacao: async (token, nome) => {
-    console.warn('createLocalTramitacao: Endpoint não implementado no backend');
-    return { id: Date.now(), nome };
+    return await apiRequest('/api/tabelas/locais-tramitacao', {
+      method: 'POST',
+      token,
+      body: { nome }
+    });
   }
 };
 
