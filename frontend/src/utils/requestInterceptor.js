@@ -61,13 +61,13 @@ class RequestInterceptor {
       const response = await this.makeRequest(url, options);
       
       if (NPJ_CONFIG.DEV.ENABLE_LOGS) {
-        console.log(`✅ Request success: ${url} (attempt ${attempt})`);
+        // log removido
       }
       
       return response;
     } catch (error) {
       if (NPJ_CONFIG.DEV.ENABLE_LOGS) {
-        console.warn(`⚠️ Request failed: ${url} (attempt ${attempt}/${maxAttempts})`, error);
+        // log removido
       }
 
       // Determinar se deve fazer retry
@@ -208,7 +208,7 @@ export async function interceptedRequest(url, options = {}) {
     const cached = requestCache.get(cacheKey);
     if (cached) {
       if (NPJ_CONFIG.DEV.ENABLE_LOGS) {
-        console.log(`💾 Cache hit: ${url}`);
+        // log removido
       }
       return cached;
     }
@@ -225,7 +225,7 @@ export async function interceptedRequest(url, options = {}) {
     const cached = requestCache.get(cacheKey);
     if (cached) {
       if (NPJ_CONFIG.DEV.ENABLE_LOGS) {
-        console.log(`🔄 Cache hit after throttle/debounce: ${url}`);
+        // log removido
       }
       return cached;
     }

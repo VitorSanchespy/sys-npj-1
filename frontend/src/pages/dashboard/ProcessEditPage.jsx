@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from "@/api/apiRequest";
 import { tabelaAuxiliarService, processService } from "../../api/services";
 
@@ -14,6 +15,7 @@ export default function ProcessEditPage() {
   const [fases, setFases] = useState([]);
   const [diligencias, setDiligencias] = useState([]);
   const [localTramitacoes, setLocalTramitacoes] = useState([]);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     async function fetchAll() {
@@ -60,8 +62,11 @@ export default function ProcessEditPage() {
     e.preventDefault();
     try {
       await processService.updateProcess(token, id, formData);
+      // Invalida o cache do processo para garantir atualização imediata
+      queryClient.invalidateQueries(['processo', id]);
+      queryClient.invalidateQueries(['processos']);
       alert('Processo atualizado com sucesso!');
-      navigate(`/processos/${id}`);
+      navigate(`/processos/${id}`, { state: { updated: Date.now() } });
     } catch (err) {
       alert('Erro ao atualizar processo: ' + (err?.response?.data?.erro || err.message));
     }

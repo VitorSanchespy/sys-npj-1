@@ -36,12 +36,12 @@ export function useProcessos(search = "", showMyProcesses = false) {
       let data = [];
       
       if (userRole === "Aluno") {
-        data = await apiRequest("/api/processos/meus-processos", { token });
+        data = await apiRequest("/api/processos/usuario", { token });
       } else if (userRole === "Professor") {
         if (search.trim()) {
           data = await apiRequest("/api/processos", { token });
         } else if (showMyProcesses) {
-          data = await apiRequest("/api/processos/meus-processos", { token });
+          data = await apiRequest("/api/processos/usuario", { token });
         } else {
           const allProcesses = await apiRequest("/api/processos", { token });
           data = allProcesses
@@ -50,7 +50,7 @@ export function useProcessos(search = "", showMyProcesses = false) {
         }
       } else if (userRole === "Admin") {
         if (showMyProcesses) {
-          data = await apiRequest("/api/processos/meus-processos", { token });
+          data = await apiRequest("/api/processos/usuario", { token });
         } else {
           data = await apiRequest("/api/processos", { token });
         }

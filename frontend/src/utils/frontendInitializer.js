@@ -13,27 +13,20 @@ class FrontendInitializer {
 
   // Inicialização completa
   async initialize() {
-    console.log('🚀 Inicializando Sistema NPJ Frontend...\n');
-    
+    // console.log removido
     // 1. Verificar configurações
     this.checkConfig();
-    
     // 2. Testar conectividade com backend
     await this.testBackendConnection();
-    
     // 3. Verificar localStorage
     this.checkLocalStorage();
-    
     // 4. Status final
     this.printStatus();
-    
     return this.backendStatus;
   }
 
   // Verificar configurações
   checkConfig() {
-    console.log('⚙️ Verificando configurações...');
-    
     const config = {
       'API Base URL': NPJ_CONFIG.API.BASE_URL,
       'API Timeout': `${NPJ_CONFIG.API.TIMEOUT}ms`,
@@ -43,16 +36,12 @@ class FrontendInitializer {
     };
     
     Object.entries(config).forEach(([key, value]) => {
-      console.log(`  ${key}: ${value}`);
+      // logs removidos
     });
-    
-    console.log('✅ Configurações OK\n');
   }
 
   // Testar conectividade com backend
   async testBackendConnection() {
-    console.log('🔌 Testando conectividade com backend...');
-    
     try {
       const response = await fetch(`${NPJ_CONFIG.API.BASE_URL}/test`, {
         method: 'GET',
@@ -68,15 +57,7 @@ class FrontendInitializer {
           dbAvailable: data.dbAvailable
         };
         
-        console.log('✅ Backend conectado');
-        console.log(`  Mensagem: ${this.backendStatus.message}`);
-        console.log(`  DB Disponível: ${this.backendStatus.dbAvailable ? 'Sim' : 'Não'}`);
-        
-        if (this.backendStatus.dbAvailable) {
-          console.log('✅ Banco de dados conectado');
-        } else {
-          console.log('⚠️ Backend em modo mock (sem banco)');
-        }
+        // logs removidos
       } else {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -87,18 +68,12 @@ class FrontendInitializer {
         dbAvailable: false
       };
       
-      console.log('❌ Erro ao conectar com backend');
-      console.log(`  Erro: ${error.message}`);
-      console.log('  Verifique se o backend está rodando em http://localhost:3001');
+      // logs removidos
     }
-    
-    console.log('');
   }
 
   // Verificar localStorage
   checkLocalStorage() {
-    console.log('💾 Verificando localStorage...');
-    
     const items = {
       'Token': localStorage.getItem('token') ? '✅ Presente' : '❌ Ausente',
       'User': localStorage.getItem('user') ? '✅ Presente' : '❌ Ausente',
@@ -106,44 +81,35 @@ class FrontendInitializer {
     };
     
     Object.entries(items).forEach(([key, status]) => {
-      console.log(`  ${key}: ${status}`);
+      // logs removidos
     });
     
     const hasValidSession = localStorage.getItem('token') && localStorage.getItem('user');
     if (hasValidSession) {
       try {
         const user = JSON.parse(localStorage.getItem('user'));
-        console.log(`  Usuário logado: ${user.nome || user.email || 'Desconhecido'}`);
-        console.log('✅ Sessão válida encontrada');
+        // logs removidos
       } catch (error) {
-        console.log('⚠️ Dados de usuário corrompidos no localStorage');
+        // logs removidos
       }
     } else {
-      console.log('ℹ️ Nenhuma sessão ativa');
+      // logs removidos
     }
-    
-    console.log('');
   }
 
   // Status final
   printStatus() {
     const initDuration = Date.now() - this.initTime;
     
-    console.log('📊 STATUS FINAL DA INICIALIZAÇÃO');
-    console.log('================================');
-    console.log(`⏱️ Tempo de inicialização: ${initDuration}ms`);
-    console.log(`🔌 Backend: ${this.backendStatus?.connected ? '✅ Conectado' : '❌ Desconectado'}`);
-    console.log(`💾 Banco de dados: ${this.backendStatus?.dbAvailable ? '✅ Disponível' : '❌ Indisponível'}`);
-    
+    // logs removidos
+
     if (this.backendStatus?.connected && this.backendStatus?.dbAvailable) {
-      console.log('🎉 Sistema completamente funcional!');
+      // logs removidos
     } else if (this.backendStatus?.connected) {
-      console.log('⚠️ Sistema em modo limitado (sem banco de dados)');
+      // logs removidos
     } else {
-      console.log('🚨 Sistema offline - verificar backend');
+      // logs removidos
     }
-    
-    console.log('\n🧪 Para testar endpoints, execute: window.testAPI()');
   }
 
   // Método estático para inicialização rápida

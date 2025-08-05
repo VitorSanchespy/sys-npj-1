@@ -23,12 +23,12 @@ class ApiTester {
 
   // Executar todos os testes
   async runAllTests() {
-    console.log('🧪 Iniciando testes de API...\n');
+    // console.log removido
     
     // Primeiro, fazer login para obter token
     const loginResult = await this.testLogin();
     if (!loginResult.success) {
-      console.error('❌ Não foi possível fazer login. Interrompendo testes.');
+    // console.error removido
       return this.results;
     }
 
@@ -61,7 +61,6 @@ class ApiTester {
       }
     } catch (error) {
       this.addTest('POST /auth/login', false, `Erro: ${error.message}`);
-      return { success: false };
     }
   }
 
@@ -69,8 +68,8 @@ class ApiTester {
   async testAuthEndpoints(token) {
     // GET /auth/perfil
     try {
-      const profile = await authService.getProfile(token);
-      this.addTest('GET /auth/perfil', !!profile, profile ? 'Perfil obtido' : 'Perfil não encontrado');
+      const perfil = await authService.getPerfil(token);
+      this.addTest('GET /auth/perfil', !!perfil, perfil ? 'Perfil obtido' : 'Perfil não encontrado');
     } catch (error) {
       this.addTest('GET /auth/perfil', false, `Erro: ${error.message}`);
     }
@@ -212,7 +211,7 @@ if (import.meta.env.DEV) {
     return tester.runAllTests();
   };
   
-  console.log('🧪 API Tester carregado! Execute window.testAPI() no console para testar todos os endpoints.');
+    // console.log removido
 }
 
 export default ApiTester;

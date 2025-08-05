@@ -32,8 +32,8 @@ export default function ProcessListPage() {
       key: 'numero_processo',
       label: 'Número do Processo',
       render: (value, row) => (
-        <Button
-          variant="link"
+        <button
+          type="button"
           onClick={() => navigate(`/processos/${row.id}`)}
           style={{
             color: '#007bff',
@@ -43,11 +43,15 @@ export default function ProcessListPage() {
             fontSize: '0.95rem',
             fontWeight: 'bold',
             textDecoration: 'underline',
-            boxShadow: 'none'
+            boxShadow: 'none',
+            borderRadius: 0,
+            cursor: 'pointer',
+            transition: 'color 0.2s',
+            opacity: 1
           }}
         >
           {value || row.numero || "-"}
-        </Button>
+        </button>
       )
     },
     {
@@ -119,25 +123,6 @@ export default function ProcessListPage() {
         Gerencie todos os processos do sistema
       </p>
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center', margin: '20px 0' }}>
-        {/* Campo de busca */}
-        <div style={{ flex: 1, maxWidth: '400px' }}>
-          <input
-            id="search-processes"
-            type="text"
-            placeholder="🔍 Buscar por número, descrição ou assistido..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px',
-              backgroundColor: '#fff'
-            }}
-          />
-        </div>
-        
         {/* Toggle meus processos */}
         {getUserRole(user) !== "Aluno" && (
           <label style={{ 
@@ -145,7 +130,8 @@ export default function ProcessListPage() {
             alignItems: 'center', 
             gap: '8px', 
             fontSize: '14px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            marginRight: 'auto'
           }}>
             <input
               type="checkbox"
@@ -156,7 +142,6 @@ export default function ProcessListPage() {
             Apenas meus processos
           </label>
         )}
-        
         {/* Botão novo processo */}
         {canCreateProcess(user) && (
           <Button
@@ -166,7 +151,8 @@ export default function ProcessListPage() {
             style={{
               padding: '10px 16px',
               fontSize: '14px',
-              fontWeight: '500'
+              fontWeight: '500',
+              marginLeft: 'auto'
             }}
           >
             ➕ Novo Processo

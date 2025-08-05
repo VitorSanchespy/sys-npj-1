@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { apiRequest } from "@/api/apiRequest";
 import { useAuthContext } from "@/contexts/AuthContext";
 import Button from "@/components/common/Button";
@@ -14,6 +14,7 @@ import { requestCache } from "@/utils/requestCache";
 export default function ProcessDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, token } = useAuthContext();
   const [processo, setProcesso] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,22 +29,14 @@ export default function ProcessDetailPage() {
     const fetchProcesso = async () => {
       const currentToken = token || localStorage.getItem('token');
       const cacheKey = requestCache.generateKey(`/api/processos/${id}/detalhes`);
-      
       try {
-        console.log('🔍 Buscando processo ID:', id);
-        console.log('🔑 Token presente:', !!currentToken);
-        
         const response = await requestCache.getOrFetch(cacheKey, () =>
           apiRequest(`/api/processos/${id}/detalhes`, { method: "GET", token: currentToken })
         );
-        
-        console.log('✅ Dados do processo recebidos:', response);
-        
         if (isMounted) {
           setProcesso(response);
         }
       } catch (error) {
-        console.error("Erro ao buscar processo:", error);
         if (isMounted) {
           setProcesso(null);
         }
@@ -54,19 +47,14 @@ export default function ProcessDetailPage() {
     const fetchAlunos = async () => {
       const currentToken = token || localStorage.getItem('token');
       const cacheKey = requestCache.generateKey(`/api/processos/${id}/usuarios`);
-      
       try {
         const response = await requestCache.getOrFetch(cacheKey, () =>
           apiRequest(`/api/processos/${id}/usuarios`, { method: "GET", token: currentToken })
         );
-        
-        console.log('✅ Alunos vinculados:', response);
-        
         if (isMounted) {
           setAlunos(response);
         }
       } catch (error) {
-        console.error("Erro ao buscar usuários vinculados:", error);
         if (isMounted) {
           setAlunos([]);
         }
@@ -89,7 +77,7 @@ export default function ProcessDetailPage() {
     return () => {
       isMounted = false;
     };
-  }, [id, token]);
+  }, [id, token, location.state]);
 
   // Funções para vinculação/desvinculação
   const handleAssignUser = async (userId) => {
@@ -201,6 +189,18 @@ export default function ProcessDetailPage() {
                 </div>
               </div>
               <div>
+                <strong>Sistema:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {renderValue(processo.sistema)}
+                </p>
+              </div>
+              <div>
+                <strong>Tipo:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {renderValue(processo.tipo_processo)}
+                </p>
+              </div>
+              <div>
                 <strong>Descrição:</strong>
                 <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
                   {renderValue(processo.descricao)}
@@ -209,15 +209,17 @@ export default function ProcessDetailPage() {
               <div>
                 <strong>Data de Criação:</strong>
                 <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
-                  {formatDate(processo.created_at)}
+                  {formatDate(processo.criado_em)}
                 </p>
               </div>
-              <div>
-                <strong>Última Atualização:</strong>
-                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
-                  {formatDate(processo.updated_at)}
-                </p>
-              </div>
+              {processo.data_encerramento && (
+                <div>
+                  <strong>Data de Encerramento:</strong>
+                  <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                    {formatDate(processo.data_encerramento)}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -248,6 +250,98 @@ export default function ProcessDetailPage() {
                   {renderValue(processo.contato_assistido)}
                 </p>
               </div>
+              <div>
+                <strong>Processo SEI:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {renderValue(processo.num_processo_sei)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{
+            backgroundColor: '#f8f9fa',
+            padding: '20px',
+            borderRadius: '8px',
+            border: '1px solid #e9ecef'
+          }}>
+            <h3 style={{
+              margin: '0 0 16px 0',
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#495057'
+            }}>
+              📋 Classificação
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <strong>Matéria/Assunto:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {processo.materiaAssunto?.nome || 'Não definido'}
+                </p>
+              </div>
+              <div>
+                <strong>Fase:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {processo.fase?.nome || 'Não definido'}
+                </p>
+              </div>
+              <div>
+                <strong>Diligência:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {processo.diligencia?.nome || 'Não definido'}
+                </p>
+              </div>
+              <div>
+                <strong>Local de Tramitação:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {processo.localTramitacao?.nome || 'Não definido'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{
+            backgroundColor: '#f8f9fa',
+            padding: '20px',
+            borderRadius: '8px',
+            border: '1px solid #e9ecef'
+          }}>
+            <h3 style={{
+              margin: '0 0 16px 0',
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#495057'
+            }}>
+              👨‍💼 Responsável
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <strong>Nome:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {processo.responsavel?.nome || 'Não atribuído'}
+                </p>
+              </div>
+              <div>
+                <strong>Email:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {processo.responsavel?.email || 'Não informado'}
+                </p>
+              </div>
+              <div>
+                <strong>Telefone:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {processo.responsavel?.telefone || 'Não informado'}
+                </p>
+              </div>
+              {processo.observacoes && (
+                <div>
+                  <strong>Observações:</strong>
+                  <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                    {processo.observacoes}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -345,6 +439,68 @@ export default function ProcessDetailPage() {
           backgroundColor: '#f8f9fa',
           padding: '20px',
           borderRadius: '8px',
+          border: '1px solid #e9ecef',
+          marginBottom: '24px'
+        }}>
+          <h3 style={{
+            margin: '0 0 16px 0',
+            fontSize: '16px',
+            fontWeight: '600',
+            color: '#495057'
+          }}>
+            📝 Histórico de Atualizações
+          </h3>
+          {processo.atualizacoes && processo.atualizacoes.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {processo.atualizacoes.map((atualizacao, idx) => (
+                <div key={atualizacao.id || idx} style={{
+                  backgroundColor: 'white',
+                  padding: '16px',
+                  borderRadius: '6px',
+                  border: '1px solid #dee2e6',
+                  borderLeft: '4px solid #007bff'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#212529' }}>
+                      {atualizacao.tipo_atualizacao || 'Atualização'}
+                    </h4>
+                    <span style={{ fontSize: '12px', color: '#6c757d' }}>
+                      {formatDate(atualizacao.data_atualizacao)}
+                    </span>
+                  </div>
+                  <p style={{ margin: '0 0 8px 0', color: '#495057', fontSize: '14px' }}>
+                    {atualizacao.descricao || 'Sem descrição'}
+                  </p>
+                  {atualizacao.usuario && (
+                    <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                      👤 Por: {atualizacao.usuario.nome}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{
+              textAlign: 'center',
+              padding: '20px',
+              color: '#6c757d',
+              backgroundColor: 'white',
+              borderRadius: '6px',
+              border: '1px solid #dee2e6'
+            }}>
+              <p>📝 Nenhuma atualização registrada para este processo.</p>
+              <p style={{ fontSize: '14px', marginTop: '8px' }}>
+                As atualizações aparecerão aqui conforme o processo for sendo trabalhado.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Componente UpdateList (mantido para funcionalidades adicionais) */}
+        <div style={{
+          backgroundColor: '#f8f9fa',
+          padding: '20px',
+          borderRadius: '8px',
           border: '1px solid #e9ecef'
         }}>
           <h3 style={{
@@ -415,22 +571,6 @@ export default function ProcessDetailPage() {
             />
           </div>
         )}
-      <h3>Histórico de Atualizações</h3>
-      {processo.atualizacoes && processo.atualizacoes.length > 0 ? (
-        <ul>
-          {processo.atualizacoes.map((at, idx) => (
-            <li key={at.id || idx}>
-              <b>{at.tipo_atualizacao}</b> - {at.descricao}<br />
-              <span style={{ color: '#555', fontSize: 13 }}>
-                {at.usuario?.nome ? `Por: ${at.usuario.nome}` : ''} em {new Date(at.data_atualizacao).toLocaleString()}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <div style={{ color: '#888' }}>Nenhuma atualização registrada.</div>
-      )}
-      <br />
       </div>
   );
 }

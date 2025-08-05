@@ -31,6 +31,96 @@ exports.obterProcesso = async (req, res) => {
   }
 };
 
+// Obter processo com detalhes completos
+exports.obterProcessoDetalhes = async (req, res) => {
+  try {
+    const { id } = req.params;
+    let processo = null;
+    
+    if (isDbAvailable()) {
+      const { 
+        processoModel: Processo, 
+        usuarioModel: Usuario,
+        atualizacaoProcessoModel: AtualizacaoProcesso,
+        arquivoModel: Arquivo,
+        materiaAssuntoModel: MateriaAssunto,
+        faseModel: Fase,
+        diligenciaModel: Diligencia,
+        localTramitacaoModel: LocalTramitacao
+      } = require('../models/indexModel');
+      
+      processo = await Processo.findByPk(id, {
+        include: [
+          { model: Usuario, as: 'responsavel' },
+          { 
+            model: AtualizacaoProcesso, 
+            as: 'atualizacoes',
+            include: [{ model: Usuario, as: 'usuario' }],
+            order: [['data_atualizacao', 'DESC']]
+          },
+          { model: Arquivo, as: 'arquivos' },
+          { model: MateriaAssunto, as: 'materiaAssunto' },
+          { model: Fase, as: 'fase' },
+          { model: Diligencia, as: 'diligencia' },
+          { model: LocalTramitacao, as: 'localTramitacao' }
+        ]
+      });
+    }
+    
+    if (!processo) {
+      return res.status(404).json({ erro: 'Processo não encontrado' });
+    }
+    
+    res.json(processo);
+    
+  } catch (error) {
+    console.error('Erro ao obter detalhes do processo:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Listar usuários vinculados ao processo
+exports.listarUsuariosProcesso = async (req, res) => {
+  try {
+    const { id } = req.params;
+    let usuarios = [];
+    
+    if (isDbAvailable()) {
+      const { 
+        usuarioProcessoModel: UsuarioProcesso,
+        usuarioModel: Usuario,
+        roleModel: Role
+      } = require('../models/indexModel');
+      
+      const usuariosProcesso = await UsuarioProcesso.findAll({
+        where: { processo_id: id },
+        include: [{
+          model: Usuario,
+          as: 'usuario',
+          include: [{ model: Role, as: 'role' }]
+        }]
+      });
+      
+      usuarios = usuariosProcesso.map(up => {
+        const usuario = up.usuario;
+        return {
+          id: usuario.id,
+          nome: usuario.nome,
+          email: usuario.email,
+          telefone: usuario.telefone,
+          role: usuario.role ? usuario.role.nome : 'Não definido'
+        };
+      });
+    }
+    
+    res.json(usuarios);
+    
+  } catch (error) {
+    console.error('Erro ao listar usuários do processo:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
 // Criar processo
 exports.criarProcesso = async (req, res) => {
   try {

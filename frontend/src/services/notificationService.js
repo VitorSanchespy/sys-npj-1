@@ -12,7 +12,7 @@ class NotificationService {
   // Conectar polling para notificações (temporário até WebSocket funcionar)
   connect(userId, token) {
     try {
-      console.log('🔗 Conectando serviço de notificações para usuário:', userId);
+      // log removido
       
       // Polling a cada 30 segundos para verificar novas notificações
       this.pollInterval = setInterval(() => {

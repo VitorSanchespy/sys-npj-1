@@ -11,6 +11,8 @@ router.use(verificarToken);
 router.get('/', processoController.listarProcessos);
 router.post('/', processoController.criarProcesso);
 router.get('/usuario', processoController.listarProcessosUsuario);
+router.get('/:id/detalhes', processoController.obterProcessoDetalhes);
+router.get('/:id/usuarios', processoController.listarUsuariosProcesso);
 router.get('/:id', processoController.obterProcesso);
 router.put('/:id', processoController.atualizarProcesso);
 router.delete('/:id', processoController.deletarProcesso);

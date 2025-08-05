@@ -26,23 +26,8 @@ if (!fs.existsSync(uploadsDir)) {
 app.use('/uploads', express.static(uploadsDir));
 
 // Verificar banco de dados
-let dbAvailable = false;
-try {
-  const sequelize = require('./utils/sequelize');
-  sequelize.authenticate().then(() => {
-    dbAvailable = true;
-    console.log(' Banco de dados conectado');
-  }).catch(() => {
-    dbAvailable = false;
-    console.log(' Usando modo mock (sem banco)');
-  });
-} catch (error) {
-  dbAvailable = false;
-  console.log(' Usando modo mock (sem banco)');
-}
-
 // Tornar status do banco globalmente disponível
-global.dbAvailable = dbAvailable;
+// O status será definido após autenticação abaixo
 
 // Rota raiz
 app.get('/', (req, res) => {
