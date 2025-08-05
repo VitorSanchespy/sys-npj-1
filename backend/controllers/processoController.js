@@ -146,7 +146,10 @@ exports.criarProcesso = async (req, res) => {
     }
     
     if (isDbAvailable()) {
-      const { processoModel: Processo } = require('../models/indexModel');
+      const { 
+        processoModel: Processo,
+        atualizacaoProcessoModel: AtualizacaoProcesso
+      } = require('../models/indexModel');
       // Verificar se número do processo já existe
       const processoExistente = await Processo.findOne({ where: { numero_processo } });
       if (processoExistente) {
@@ -166,6 +169,15 @@ exports.criarProcesso = async (req, res) => {
         contato_assistido,
         idusuario_responsavel
       });
+      
+      // Registrar criação no histórico
+      await AtualizacaoProcesso.create({
+        usuario_id: req.user.id,
+        processo_id: novoProcesso.id,
+        tipo_atualizacao: 'Criação do Processo',
+        descricao: `Processo "${numero_processo}" criado no sistema`
+      });
+      
       res.status(201).json(novoProcesso);
     } 
     
@@ -180,19 +192,69 @@ exports.atualizarProcesso = async (req, res) => {
   try {
     const { id } = req.params;
     const dadosAtualizacao = req.body;
+    const usuarioId = req.user.id; // ID do usuário que está fazendo a atualização
     
     if (isDbAvailable()) {
-      const { processoModel: Processo } = require('../models/indexModel');
+      const { 
+        processoModel: Processo, 
+        atualizacaoProcessoModel: AtualizacaoProcesso 
+      } = require('../models/indexModel');
       
       const processo = await Processo.findByPk(id);
       if (!processo) {
         return res.status(404).json({ erro: 'Processo não encontrado' });
       }
       
+      // Capturar valores antigos para comparação
+      const valoresAntigos = processo.toJSON();
+      
+      // Atualizar processo
       await processo.update(dadosAtualizacao);
+      
+      // Registrar histórico de alterações
+      const alteracoes = [];
+      const camposMonitorados = {
+        'numero_processo': 'Número do Processo',
+        'descricao': 'Descrição',
+        'status': 'Status',
+        'tipo_processo': 'Tipo do Processo',
+        'assistido': 'Nome do Assistido',
+        'contato_assistido': 'Contato do Assistido',
+        'num_processo_sei': 'Número SEI',
+        'sistema': 'Sistema',
+        'observacoes': 'Observações',
+        'materia_assunto_id': 'Matéria/Assunto',
+        'fase_id': 'Fase',
+        'diligencia_id': 'Diligência',
+        'local_tramitacao_id': 'Local de Tramitação',
+        'idusuario_responsavel': 'Responsável'
+      };
+      
+      // Verificar quais campos foram alterados
+      for (const [campo, label] of Object.entries(camposMonitorados)) {
+        if (dadosAtualizacao.hasOwnProperty(campo) && 
+            valoresAntigos[campo] !== dadosAtualizacao[campo]) {
+          const valorAntigo = valoresAntigos[campo] || 'Não definido';
+          const valorNovo = dadosAtualizacao[campo] || 'Não definido';
+          alteracoes.push(`${label}: "${valorAntigo}" → "${valorNovo}"`);
+        }
+      }
+      
+      // Se houve alterações, registrar no histórico
+      if (alteracoes.length > 0) {
+        await AtualizacaoProcesso.create({
+          usuario_id: usuarioId,
+          processo_id: id,
+          tipo_atualizacao: 'Edição do Processo',
+          descricao: `Processo editado. Alterações: ${alteracoes.join('; ')}`
+        });
+      }
+      
       res.json(processo);
       
-    } 
+    } else {
+      res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
     
   } catch (error) {
     console.error('Erro ao atualizar processo:', error);
@@ -267,6 +329,7 @@ exports.vincularUsuario = async (req, res) => {
   try {
     const { id } = req.params; // ID do processo
     const { usuario_id, role } = req.body;
+    const usuarioLogado = req.user.id; // ID do usuário que está fazendo a vinculação
     
     if (!usuario_id) {
       return res.status(400).json({ erro: 'ID do usuário é obrigatório' });
@@ -276,7 +339,8 @@ exports.vincularUsuario = async (req, res) => {
       const { 
         usuarioProcessoModel: UsuarioProcesso,
         usuarioModel: Usuario,
-        processoModel: Processo
+        processoModel: Processo,
+        atualizacaoProcessoModel: AtualizacaoProcesso
       } = require('../models/indexModel');
       
       // Verificar se processo existe
@@ -306,6 +370,14 @@ exports.vincularUsuario = async (req, res) => {
         processo_id: id
       });
       
+      // Registrar no histórico
+      await AtualizacaoProcesso.create({
+        usuario_id: usuarioLogado,
+        processo_id: id,
+        tipo_atualizacao: 'Vinculação de Usuário',
+        descricao: `Usuário "${usuario.nome}" (${usuario.email}) foi vinculado ao processo`
+      });
+      
       res.status(201).json({ mensagem: 'Usuário vinculado ao processo com sucesso' });
     } else {
       res.status(503).json({ erro: 'Banco de dados não disponível' });
@@ -322,13 +394,21 @@ exports.desvincularUsuario = async (req, res) => {
   try {
     const { id } = req.params; // ID do processo
     const { usuario_id } = req.body;
+    const usuarioLogado = req.user.id; // ID do usuário que está fazendo a desvinculação
     
     if (!usuario_id) {
       return res.status(400).json({ erro: 'ID do usuário é obrigatório' });
     }
     
     if (isDbAvailable()) {
-      const { usuarioProcessoModel: UsuarioProcesso } = require('../models/indexModel');
+      const { 
+        usuarioProcessoModel: UsuarioProcesso,
+        usuarioModel: Usuario,
+        atualizacaoProcessoModel: AtualizacaoProcesso
+      } = require('../models/indexModel');
+      
+      // Buscar usuário para obter informações antes de desvincular
+      const usuario = await Usuario.findByPk(usuario_id);
       
       // Buscar vinculação
       const vinculo = await UsuarioProcesso.findOne({
@@ -341,6 +421,16 @@ exports.desvincularUsuario = async (req, res) => {
       
       // Remover vinculação
       await vinculo.destroy();
+      
+      // Registrar no histórico se conseguiu obter dados do usuário
+      if (usuario) {
+        await AtualizacaoProcesso.create({
+          usuario_id: usuarioLogado,
+          processo_id: id,
+          tipo_atualizacao: 'Desvinculação de Usuário',
+          descricao: `Usuário "${usuario.nome}" (${usuario.email}) foi desvinculado do processo`
+        });
+      }
       
       res.json({ mensagem: 'Usuário desvinculado do processo com sucesso' });
     } else {
