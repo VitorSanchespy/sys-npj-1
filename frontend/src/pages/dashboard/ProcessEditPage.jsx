@@ -4,6 +4,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from "@/api/apiRequest";
 import { tabelaAuxiliarService, processService } from "../../api/services";
+import { requestCache } from "@/utils/requestCache";
 
 export default function ProcessEditPage() {
   const { id } = useParams();
@@ -62,9 +63,16 @@ export default function ProcessEditPage() {
     e.preventDefault();
     try {
       await processService.updateProcess(token, id, formData);
-      // Invalida o cache do processo para garantir atualização imediata
+      
+      // Limpa o cache de forma mais agressiva
+      requestCache.clear(`GET:/api/processos/${id}/detalhes:`);
+      requestCache.clear(`GET:/api/processos/${id}/usuarios:`);
+      requestCache.clear(`GET:/api/processos:`);
+      
+      // Invalida o cache do React Query
       queryClient.invalidateQueries(['processo', id]);
       queryClient.invalidateQueries(['processos']);
+      
       alert('Processo atualizado com sucesso!');
       navigate(`/processos/${id}`, { state: { updated: Date.now() } });
     } catch (err) {

@@ -103,9 +103,7 @@ class RequestCache {
       this.timestamps.delete(key);
     });
     
-    if (process.env.NODE_ENV === 'development' && keysToDelete.length > 0) {
-      console.log(`🧹 Cache cleanup: removed ${keysToDelete.length} expired items`);
-    }
+    // Limpeza silenciosa do cache
   }
 
   // Evitar requisições duplicadas simultâneas
@@ -138,12 +136,11 @@ class RequestCache {
     }
   }
 
-  // Limpar todo o cache
+  // Limpar todo o cache (silencioso)
   clear() {
     this.cache.clear();
     this.timestamps.clear();
     this.pendingRequests.clear();
-    console.log('🗑️ Cache completamente limpo');
   }
 
   // Estatísticas do cache (para desenvolvimento)

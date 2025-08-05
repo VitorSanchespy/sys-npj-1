@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { processService } from "@/api/services";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { apiRequest } from "@/api/apiRequest";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -30,6 +31,11 @@ export default function ProcessDetailPage() {
       const currentToken = token || localStorage.getItem('token');
       const cacheKey = requestCache.generateKey(`/api/processos/${id}/detalhes`);
       try {
+        // Se veio de uma edição (location.state.updated), limpa o cache primeiro
+        if (location.state?.updated) {
+          requestCache.clear(cacheKey);
+        }
+        
         const response = await requestCache.getOrFetch(cacheKey, () =>
           apiRequest(`/api/processos/${id}/detalhes`, { method: "GET", token: currentToken })
         );
@@ -48,6 +54,11 @@ export default function ProcessDetailPage() {
       const currentToken = token || localStorage.getItem('token');
       const cacheKey = requestCache.generateKey(`/api/processos/${id}/usuarios`);
       try {
+        // Se veio de uma edição (location.state.updated), limpa o cache primeiro
+        if (location.state?.updated) {
+          requestCache.clear(cacheKey);
+        }
+        
         const response = await requestCache.getOrFetch(cacheKey, () =>
           apiRequest(`/api/processos/${id}/usuarios`, { method: "GET", token: currentToken })
         );
@@ -65,6 +76,14 @@ export default function ProcessDetailPage() {
       const currentToken = token || localStorage.getItem('token');
       if (currentToken && id) {
         setLoading(true);
+        
+        // Se veio de uma edição, limpa todo o cache relacionado ao processo
+        if (location.state?.updated) {
+          requestCache.clear(`GET:/api/processos/${id}/detalhes:`);
+          requestCache.clear(`GET:/api/processos/${id}/usuarios:`);
+          requestCache.clear(`GET:/api/processos:`);
+        }
+        
         await Promise.all([fetchProcesso(), fetchAlunos()]);
         if (isMounted) {
           setLoading(false);
@@ -80,36 +99,34 @@ export default function ProcessDetailPage() {
   }, [id, token, location.state]);
 
   // Funções para vinculação/desvinculação
-  const handleAssignUser = async (userId) => {
-    // O modal já fez a vinculação, só precisamos recarregar os dados
+  const handleAssignUser = async () => {
+    // Recarregar dados após vinculação
     try {
-      // Limpa cache e recarrega dados
+      setLoading(true);
       requestCache.clear(`GET:/api/processos/${id}/usuarios:`);
       const response = await apiRequest(`/api/processos/${id}/usuarios`, { method: "GET", token });
       setAlunos(response);
       setShowAssignModal(false);
     } catch (error) {
       console.error("Erro ao recarregar usuários:", error);
-      // Recarrega a página como fallback se falhar
-      window.location.reload();
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleUnassignUser = async (userId) => {
-    // O modal já fez a desvinculação, só precisamos atualizar a lista local
     try {
-      // Limpa cache e atualiza lista local
+      setLoading(true);
+      // Chama o backend para desvincular
+      await processService.removeUserFromProcess(token, id, userId);
+      // Limpa cache e recarrega lista
       requestCache.clear(`GET:/api/processos/${id}/usuarios:`);
-      if (userId) {
-        setAlunos(alunos.filter(aluno => aluno.id !== userId));
-      } else {
-        // Se não temos o userId, recarrega a lista
-        const response = await apiRequest(`/api/processos/${id}/usuarios`, { method: "GET", token });
-        setAlunos(response);
-      }
-      setShowUnassignModal(false);
+      const response = await apiRequest(`/api/processos/${id}/usuarios`, { method: "GET", token });
+      setAlunos(response);
     } catch (error) {
-      console.error("Erro ao atualizar lista:", error);
+      console.error("Erro ao desvincular usuário:", error);
+    } finally {
+      setLoading(false);
     }
   };
 

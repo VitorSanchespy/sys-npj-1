@@ -10,6 +10,7 @@ router.use(verificarToken);
 // Rotas básicas
 router.get('/', usuarioController.listarUsuarios);
 router.post('/', usuarioController.criarUsuario);
+router.get('/para-vinculacao', usuarioController.buscarUsuariosParaVinculacao);
 router.get('/:id', usuarioController.obterUsuario);
 router.put('/:id', usuarioController.atualizarUsuario);
 router.delete('/:id', usuarioController.deletarUsuario);

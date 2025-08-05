@@ -13,6 +13,8 @@ router.post('/', processoController.criarProcesso);
 router.get('/usuario', processoController.listarProcessosUsuario);
 router.get('/:id/detalhes', processoController.obterProcessoDetalhes);
 router.get('/:id/usuarios', processoController.listarUsuariosProcesso);
+router.post('/:id/vincular-usuario', processoController.vincularUsuario);
+router.delete('/:id/desvincular-usuario', processoController.desvincularUsuario);
 router.get('/:id', processoController.obterProcesso);
 router.put('/:id', processoController.atualizarProcesso);
 router.delete('/:id', processoController.deletarProcesso);

@@ -261,3 +261,94 @@ exports.listarProcessos = async (req, res) => {
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
+
+// Vincular usuário ao processo
+exports.vincularUsuario = async (req, res) => {
+  try {
+    const { id } = req.params; // ID do processo
+    const { usuario_id, role } = req.body;
+    
+    if (!usuario_id) {
+      return res.status(400).json({ erro: 'ID do usuário é obrigatório' });
+    }
+    
+    if (isDbAvailable()) {
+      const { 
+        usuarioProcessoModel: UsuarioProcesso,
+        usuarioModel: Usuario,
+        processoModel: Processo
+      } = require('../models/indexModel');
+      
+      // Verificar se processo existe
+      const processo = await Processo.findByPk(id);
+      if (!processo) {
+        return res.status(404).json({ erro: 'Processo não encontrado' });
+      }
+      
+      // Verificar se usuário existe
+      const usuario = await Usuario.findByPk(usuario_id);
+      if (!usuario) {
+        return res.status(404).json({ erro: 'Usuário não encontrado' });
+      }
+      
+      // Verificar se já está vinculado
+      const vinculoExistente = await UsuarioProcesso.findOne({
+        where: { usuario_id, processo_id: id }
+      });
+      
+      if (vinculoExistente) {
+        return res.status(400).json({ erro: 'Usuário já está vinculado a este processo' });
+      }
+      
+      // Criar vinculação
+      await UsuarioProcesso.create({
+        usuario_id,
+        processo_id: id
+      });
+      
+      res.status(201).json({ mensagem: 'Usuário vinculado ao processo com sucesso' });
+    } else {
+      res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
+    
+  } catch (error) {
+    console.error('Erro ao vincular usuário ao processo:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Desvincular usuário do processo
+exports.desvincularUsuario = async (req, res) => {
+  try {
+    const { id } = req.params; // ID do processo
+    const { usuario_id } = req.body;
+    
+    if (!usuario_id) {
+      return res.status(400).json({ erro: 'ID do usuário é obrigatório' });
+    }
+    
+    if (isDbAvailable()) {
+      const { usuarioProcessoModel: UsuarioProcesso } = require('../models/indexModel');
+      
+      // Buscar vinculação
+      const vinculo = await UsuarioProcesso.findOne({
+        where: { usuario_id, processo_id: id }
+      });
+      
+      if (!vinculo) {
+        return res.status(404).json({ erro: 'Usuário não está vinculado a este processo' });
+      }
+      
+      // Remover vinculação
+      await vinculo.destroy();
+      
+      res.json({ mensagem: 'Usuário desvinculado do processo com sucesso' });
+    } else {
+      res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
+    
+  } catch (error) {
+    console.error('Erro ao desvincular usuário do processo:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};

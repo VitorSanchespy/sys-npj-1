@@ -94,6 +94,14 @@ export const userService = {
       method: 'DELETE',
       token
     });
+  },
+
+  // GET /api/usuarios/para-vinculacao
+  getUsersForAssignment: async (token, search) => {
+    return await apiRequest(`/api/usuarios/para-vinculacao?search=${encodeURIComponent(search)}`, {
+      method: 'GET',
+      token
+    });
   }
 };
 
@@ -161,6 +169,24 @@ export const processService = {
     return await apiRequest('/api/processos/usuario', {
       method: 'GET',
       token
+    });
+  },
+
+  // POST /api/processos/:id/vincular-usuario
+  assignUserToProcess: async (token, processoId, usuarioId, role) => {
+    return await apiRequest(`/api/processos/${processoId}/vincular-usuario`, {
+      method: 'POST',
+      token,
+      body: { usuario_id: usuarioId, role }
+    });
+  },
+
+  // DELETE /api/processos/:id/desvincular-usuario  
+  removeUserFromProcess: async (token, processoId, usuarioId) => {
+    return await apiRequest(`/api/processos/${processoId}/desvincular-usuario`, {
+      method: 'DELETE',
+      token,
+      body: { usuario_id: usuarioId }
     });
   }
 };

@@ -30,8 +30,7 @@ export default function ProcessAssignUserModal({ processoId, onClose, onAssigned
     e.preventDefault();
     setMsg("");
     setLoading(true);
-    // Log para depuração
-    console.log("[Vincular Usuário] processoId:", processoId, "selected:", selected);
+    
     if (!selected) {
       setMsg("Selecione um usuário válido.");
       setLoading(false);
@@ -41,7 +40,7 @@ export default function ProcessAssignUserModal({ processoId, onClose, onAssigned
       // Garante que o ID seja número
       const usuarioId = Number(selected);
       const usuarioObj = usuarios.find(u => u.id === usuarioId);
-      console.log('[Vincular Usuário] Usuário selecionado:', usuarioObj);
+      
       // Mapear role_id para nome da role aceito pelo backend
       const roleMap = { 2: 'Aluno', 3: 'Professor' };
       const role = roleMap[usuarioObj.role_id];

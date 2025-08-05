@@ -126,3 +126,35 @@ exports.deletarUsuario = async (req, res) => {
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
+
+// Buscar usuários para vinculação (apenas alunos e professores ativos)
+exports.buscarUsuariosParaVinculacao = async (req, res) => {
+  try {
+    const { search } = req.query;
+    
+    if (!search || search.length < 3) {
+      return res.json([]);
+    }
+    
+    const usuarios = await Usuario.findAll({
+      where: {
+        ativo: true,
+        role_id: [2, 3], // Apenas alunos (2) e professores (3)
+        [require('sequelize').Op.or]: [
+          { nome: { [require('sequelize').Op.like]: `%${search}%` } },
+          { email: { [require('sequelize').Op.like]: `%${search}%` } }
+        ]
+      },
+      include: [{ model: Role, as: 'role' }],
+      attributes: ['id', 'nome', 'email', 'role_id'],
+      order: [['nome', 'ASC']],
+      limit: 10
+    });
+    
+    res.json(usuarios);
+    
+  } catch (error) {
+    console.error('Erro ao buscar usuários para vinculação:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
