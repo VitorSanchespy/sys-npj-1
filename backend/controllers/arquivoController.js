@@ -190,6 +190,14 @@ exports.deletarArquivo = async (req, res) => {
         return res.status(404).json({ erro: 'Arquivo não encontrado' });
       }
       
+      // Verificar se o arquivo está anexado a um processo
+      if (arquivo.processo_id) {
+        return res.status(400).json({ 
+          erro: 'Não é possível excluir arquivo anexado a um processo',
+          message: 'Este documento está anexado a um processo e não pode ser excluído para manter a integridade dos registros.'
+        });
+      }
+      
       // Deletar arquivo físico - extrair nome do arquivo do caminho
       const nomeArquivo = arquivo.caminho.split('/').pop();
       const caminhoArquivo = path.join(__dirname, '../uploads', nomeArquivo);

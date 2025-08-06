@@ -7,6 +7,7 @@ import Button from "@/components/common/Button";
 import StatusBadge from "@/components/common/StatusBadge";
 import Loader from "@/components/common/Loader";
 import UpdateList from "@/components/atualizacoes/UpdateList";
+import DocumentList from "@/components/documentos/DocumentList";
 import ProcessAssignUserModal from "@/components/processos/ProcessAssignUserModal";
 import ProcessUnassignUserModal from "@/components/processos/ProcessUnassignUserModal";
 import { getUserRole, hasRole, formatDate, renderValue } from "@/utils/commonUtils";
@@ -451,13 +452,13 @@ export default function ProcessDetailPage() {
           )}
         </div>
 
-        {/* Lista de Atualizações */}
+        {/* Seção de Documentos e Anexos */}
         <div style={{
           backgroundColor: '#f8f9fa',
           padding: '20px',
           borderRadius: '8px',
           border: '1px solid #e9ecef',
-          marginBottom: '24px'
+          marginBottom: '20px'
         }}>
           <h3 style={{
             margin: '0 0 16px 0',
@@ -465,55 +466,15 @@ export default function ProcessDetailPage() {
             fontWeight: '600',
             color: '#495057'
           }}>
-            📝 Histórico de Atualizações
+            📎 Documentos e Anexos
           </h3>
-          {processo.atualizacoes && processo.atualizacoes.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {processo.atualizacoes.map((atualizacao, idx) => (
-                <div key={atualizacao.id || idx} style={{
-                  backgroundColor: 'white',
-                  padding: '16px',
-                  borderRadius: '6px',
-                  border: '1px solid #dee2e6',
-                  borderLeft: '4px solid #007bff'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#212529' }}>
-                      {atualizacao.tipo_atualizacao || 'Atualização'}
-                    </h4>
-                    <span style={{ fontSize: '12px', color: '#6c757d' }}>
-                      {formatDate(atualizacao.data_atualizacao)}
-                    </span>
-                  </div>
-                  <p style={{ margin: '0 0 8px 0', color: '#495057', fontSize: '14px' }}>
-                    {atualizacao.descricao || 'Sem descrição'}
-                  </p>
-                  {atualizacao.usuario && (
-                    <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                      👤 Por: {atualizacao.usuario.nome}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{
-              textAlign: 'center',
-              padding: '20px',
-              color: '#6c757d',
-              backgroundColor: 'white',
-              borderRadius: '6px',
-              border: '1px solid #dee2e6'
-            }}>
-              <p>📝 Nenhuma atualização registrada para este processo.</p>
-              <p style={{ fontSize: '14px', marginTop: '8px' }}>
-                As atualizações aparecerão aqui conforme o processo for sendo trabalhado.
-              </p>
-            </div>
-          )}
+          <p style={{ fontSize: '14px', color: '#6c757d', marginBottom: '16px' }}>
+            Anexe documentos relacionados ao processo como despachos, atas, petições, etc.
+          </p>
+          <DocumentList processoId={id} />
         </div>
 
-        {/* Componente UpdateList (mantido para funcionalidades adicionais) */}
+        {/* Histórico de Atualizações do Processo */}
         <div style={{
           backgroundColor: '#f8f9fa',
           padding: '20px',
@@ -526,8 +487,11 @@ export default function ProcessDetailPage() {
             fontWeight: '600',
             color: '#495057'
           }}>
-            📝 Atualizações do Processo
+            📝 Histórico de Alterações
           </h3>
+          <p style={{ fontSize: '14px', color: '#6c757d', marginBottom: '16px' }}>
+            Registro de todas as alterações feitas nos dados do processo.
+          </p>
           <UpdateList processoId={id} />
         </div>
 

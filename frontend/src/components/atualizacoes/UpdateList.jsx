@@ -19,7 +19,7 @@ function formatDescricao(descricao, auxData) {
   });
 }
 
-export default function UpdateList({ processoId }) {
+export default function UpdateList({ processoId, showDeleteButton = true }) {
   const { token, user } = useAuthContext();
   const [updates, setUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,7 +87,7 @@ export default function UpdateList({ processoId }) {
             )}
             <br />
             <small>Por: {upd.usuario_nome} em {new Date(upd.data_atualizacao).toLocaleString()}</small>
-            {user.role && ['professor', 'admin'].includes(user.role.toLowerCase()) && (
+            {user.role && ['professor', 'admin'].includes(user.role.toLowerCase()) && showDeleteButton && (
               <button
                 style={{ marginLeft: 12, color: '#fff', background: '#d32f2f', border: 'none', borderRadius: 4, padding: '2px 10px', fontWeight: 500, cursor: 'pointer' }}
                 onClick={async () => {
