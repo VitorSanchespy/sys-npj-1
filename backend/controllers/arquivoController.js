@@ -1,41 +1,7 @@
 // Controller de Arquivos simplificado
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-
-// Configuração do multer para upload
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../uploads');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB
-  },
-  fileFilter: (req, file, cb) => {
-    // Permitir tipos comuns de arquivo
-    const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt|rtf/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Tipo de arquivo não permitido'));
-    }
-  }
-});
+const uploadMiddleware = require('../middleware/uploadMiddleware');
 
 // Função utilitária para verificar disponibilidade do banco
 function isDbAvailable() {
@@ -66,79 +32,76 @@ const getMockData = () => {
 };
 
 // Upload de arquivo
-exports.uploadArquivo = [
-  upload.single('arquivo'),
-  async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ erro: 'Nenhum arquivo foi enviado' });
-      }
-      
-      const { idprocesso, descricao } = req.body;
-      
-      const arquivoData = {
-        nome_original: req.file.originalname,
-        nome_arquivo: req.file.filename,
-        caminho: `/uploads/${req.file.filename}`,
-        tamanho: req.file.size,
-        tipo: req.file.mimetype,
-        idprocesso: idprocesso ? parseInt(idprocesso) : null,
-        idusuario: req.user.id,
-        descricao: descricao || '',
-        data_upload: new Date().toISOString()
+exports.uploadArquivo = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ erro: 'Nenhum arquivo foi enviado' });
+    }
+    
+    const { processo_id, usuario_id, nome, descricao } = req.body;
+
+    const arquivoData = {
+      nome: nome || req.file.originalname,
+      nome_original: req.file.originalname,
+      caminho: `/uploads/${req.file.filename}`,
+      tamanho: req.file.size,
+      tipo: req.file.mimetype,
+      processo_id: processo_id ? parseInt(processo_id) : null,
+      usuario_id: usuario_id ? parseInt(usuario_id) : req.user.id
+    };
+
+    if (isDbAvailable()) {
+      const { arquivoModel: Arquivo } = require('../models/indexModel');
+      const novoArquivo = await Arquivo.create(arquivoData);
+      res.status(201).json(novoArquivo);
+    } else {
+      // Modo mock
+      const novoArquivo = {
+        id: Date.now(),
+        ...arquivoData,
+        criado_em: new Date().toISOString()
       };
-      
-      if (isDbAvailable()) {
-        const { arquivoModel: Arquivo } = require('../models/indexModel');
-        const novoArquivo = await Arquivo.create(arquivoData);
-        res.status(201).json(novoArquivo);
-      } else {
-        // Modo mock
-        const novoArquivo = {
-          id: Date.now(),
-          ...arquivoData
-        };
-        res.status(201).json(novoArquivo);
-      }
+      res.status(201).json(novoArquivo);
+    }
       
     } catch (error) {
       console.error('Erro no upload:', error);
-      res.status(500).json({ erro: 'Erro interno do servidor' });
+      res.status(500).json({ erro: 'Erro interno do servidor', detalhes: error.message });
     }
-  }
-];
+};
 
 // Listar arquivos
 exports.listarArquivos = async (req, res) => {
   try {
-    const { idprocesso } = req.query;
+    const { processo_id, idprocesso } = req.query;
+    const processoId = processo_id || idprocesso;
     let arquivos = [];
     
     if (isDbAvailable()) {
       try {
         const { arquivoModel: Arquivo, usuarioModel: Usuario } = require('../models/indexModel');
-        const where = idprocesso ? { idprocesso } : {};
+        const where = processoId ? { processo_id: processoId } : {};
         
         arquivos = await Arquivo.findAll({
           where,
-          include: [{ model: Usuario, as: 'usuario' }],
-          order: [['data_upload', 'DESC']]
+          include: [{ model: Usuario, as: 'usuario', attributes: ['nome', 'email'] }],
+          order: [['criado_em', 'DESC']]
         });
       } catch (dbError) {
         console.log('Erro no banco, usando dados mock:', dbError.message);
         const mockData = getMockData();
         arquivos = mockData.arquivos;
         
-        if (idprocesso) {
-          arquivos = arquivos.filter(a => a.idprocesso == idprocesso);
+        if (processoId) {
+          arquivos = arquivos.filter(a => a.processo_id == processoId || a.idprocesso == processoId);
         }
       }
     } else {
       const mockData = getMockData();
       arquivos = mockData.arquivos;
       
-      if (idprocesso) {
-        arquivos = arquivos.filter(a => a.idprocesso == idprocesso);
+      if (processoId) {
+        arquivos = arquivos.filter(a => a.processo_id == processoId || a.idprocesso == processoId);
       }
     }
     
@@ -196,13 +159,17 @@ exports.downloadArquivo = async (req, res) => {
       return res.status(404).json({ erro: 'Arquivo não encontrado' });
     }
     
-    const caminhoArquivo = path.join(__dirname, '../uploads', arquivo.nome_arquivo);
+    // Extrair o nome do arquivo do caminho
+    const nomeArquivo = arquivo.caminho.split('/').pop();
+    const caminhoArquivo = path.join(__dirname, '../uploads', nomeArquivo);
     
     if (!fs.existsSync(caminhoArquivo)) {
       return res.status(404).json({ erro: 'Arquivo físico não encontrado' });
     }
     
-    res.download(caminhoArquivo, arquivo.nome_original);
+    // Usar o nome original salvo no campo nome_original, ou o nome do arquivo se não existir
+    const nomeDownload = arquivo.nome_original || arquivo.nome || nomeArquivo;
+    res.download(caminhoArquivo, nomeDownload);
     
   } catch (error) {
     console.error('Erro no download:', error);
@@ -223,8 +190,9 @@ exports.deletarArquivo = async (req, res) => {
         return res.status(404).json({ erro: 'Arquivo não encontrado' });
       }
       
-      // Deletar arquivo físico
-      const caminhoArquivo = path.join(__dirname, '../uploads', arquivo.nome_arquivo);
+      // Deletar arquivo físico - extrair nome do arquivo do caminho
+      const nomeArquivo = arquivo.caminho.split('/').pop();
+      const caminhoArquivo = path.join(__dirname, '../uploads', nomeArquivo);
       if (fs.existsSync(caminhoArquivo)) {
         fs.unlinkSync(caminhoArquivo);
       }

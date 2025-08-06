@@ -40,12 +40,14 @@ const getMockData = () => {
 // Listar atualizações
 exports.listarAtualizacoes = async (req, res) => {
   try {
-    const { idprocesso } = req.query;
+    const { idprocesso, processo_id } = req.query;
+    // Aceitar tanto idprocesso quanto processo_id para compatibilidade
+    const processoIdFilter = idprocesso || processo_id;
     let atualizacoes = [];
     
     if (isDbAvailable()) {
       const { atualizacaoProcessoModel: Atualizacao, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
-      const where = idprocesso ? { idprocesso } : {};
+      const where = processoIdFilter ? { processo_id: processoIdFilter } : {};
       
       atualizacoes = await Atualizacao.findAll({
         where,
@@ -59,8 +61,8 @@ exports.listarAtualizacoes = async (req, res) => {
       const mockData = getMockData();
       atualizacoes = mockData.atualizacoes;
       
-      if (idprocesso) {
-        atualizacoes = atualizacoes.filter(a => a.idprocesso == idprocesso);
+      if (processoIdFilter) {
+        atualizacoes = atualizacoes.filter(a => a.idprocesso == processoIdFilter || a.processo_id == processoIdFilter);
       }
     }
     

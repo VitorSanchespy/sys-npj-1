@@ -23,11 +23,11 @@ export default function FileUploadForm({ processoId, onUpload }) {
     const formData = new FormData();
     formData.append("nome", file.name);
     formData.append("arquivo", file); // nome do campo deve ser 'arquivo' para o multer
-    formData.append("processo_id", processoId);
-    formData.append("usuario_id", user.id);
+    if (processoId) formData.append("processo_id", processoId);
+    if (user?.id) formData.append("usuario_id", user.id);
 
     try {
-      await arquivoService.uploadArquivo(token, file);
+      await arquivoService.uploadArquivo(token, formData);
       setMsg("Arquivo enviado com sucesso!");
       fileInput.current.value = "";
       if (onUpload) onUpload();

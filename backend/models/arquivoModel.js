@@ -21,11 +21,13 @@ Arquivo.init(
   {
     id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
     nome: { type: DataTypes.STRING, allowNull: false },
+    nome_original: { type: DataTypes.STRING, allowNull: false },
     caminho: { type: DataTypes.STRING, allowNull: false },
     tamanho: { type: DataTypes.INTEGER, allowNull: false },
     tipo: { type: DataTypes.STRING, allowNull: false },
     processo_id: { type: DataTypes.INTEGER },
     usuario_id: { type: DataTypes.INTEGER, allowNull: false },
+    ativo: { type: DataTypes.BOOLEAN, defaultValue: true },
     criado_em: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
   },
   {

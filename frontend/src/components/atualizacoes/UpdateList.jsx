@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { atualizacaoProcessoService, tabelaAuxiliarService } from "../../api/services";
+import { atualizacaoProcessoService, tabelaAuxiliarService as auxTablesService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import UpdateForm from "./UpdateForm";
 import { getFileUrl } from '../../utils/fileUrl';
@@ -29,11 +29,10 @@ export default function UpdateList({ processoId }) {
   useEffect(() => {
     async function fetchUpdates() {
       try {
-        // O método correto para listar atualizações de processo
-        const data = await atualizacaoProcessoService.listAtualizacoes(token);
-        // Se precisar filtrar por processo:
-        const atualizacoesProcesso = processoId ? data.filter(a => a.processo_id === processoId) : data;
-        setUpdates(atualizacoesProcesso);
+        // Usar processo_id como query parameter
+        const url = processoId ? `?processo_id=${processoId}` : '';
+        const data = await atualizacaoProcessoService.listAtualizacoes(token, url);
+        setUpdates(data);
       } catch {
         setUpdates([]);
       }

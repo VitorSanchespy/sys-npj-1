@@ -1,4 +1,5 @@
 import { apiRequest, uploadFile } from './apiRequest.js';
+import { API_BASE_URL } from '../utils/constants.js';
 
 // ===== AUTH SERVICES =====
 export const authService = {
@@ -397,8 +398,8 @@ export const tabelaAuxiliarService = {
 // ===== PROCESS UPDATE SERVICES (UPDATED) =====
 export const atualizacaoProcessoService = {
   // GET /api/atualizacoes
-  listAtualizacoes: async (token) => {
-    return await apiRequest('/api/atualizacoes', {
+  listAtualizacoes: async (token, queryParams = '') => {
+    return await apiRequest(`/api/atualizacoes${queryParams}`, {
       method: 'GET',
       token
     });
@@ -450,8 +451,29 @@ export const arquivoService = {
   },
 
   // POST /api/arquivos/upload
-  uploadArquivo: async (token, file) => {
-    return await uploadFile('/api/arquivos/upload', file, { token });
+  uploadArquivo: async (token, formData) => {
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const requestOptions = {
+      method: 'POST',
+      headers,
+      body: formData
+    };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/arquivos/upload`, requestOptions);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.erro || 'Erro no upload');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Erro no upload:', error);
+      throw error;
+    }
   },
 
   // GET /api/arquivos/:id
