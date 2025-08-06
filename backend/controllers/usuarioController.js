@@ -2,6 +2,126 @@
 const bcrypt = require('bcrypt');
 const { usuarioModel: Usuario, roleModel: Role } = require('../models/indexModel');
 
+// Obter perfil do usuário autenticado
+exports.me = async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ erro: 'Usuário não autenticado' });
+    }
+    
+    const usuario = await Usuario.findByPk(req.user.id, {
+      include: [{ model: Role, as: 'role' }],
+      attributes: ['id', 'nome', 'email', 'role_id', 'ativo', 'criado_em', 'telefone']
+    });
+    
+    if (!usuario) {
+      return res.status(404).json({ erro: 'Usuário não encontrado' });
+    }
+    
+    res.json(usuario);
+    
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Atualizar perfil do usuário autenticado
+exports.updateMe = async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ erro: 'Usuário não autenticado' });
+    }
+    
+    const { nome, email, telefone } = req.body;
+    
+    // Verificar se email já existe (se foi alterado)
+    if (email) {
+      const usuarioExistente = await Usuario.findOne({ 
+        where: { 
+          email,
+          id: { [require('sequelize').Op.ne]: req.user.id } // Excluir o próprio usuário
+        } 
+      });
+      if (usuarioExistente) {
+        return res.status(400).json({ erro: 'Email já está em uso' });
+      }
+    }
+    
+    const usuario = await Usuario.findByPk(req.user.id);
+    if (!usuario) {
+      return res.status(404).json({ erro: 'Usuário não encontrado' });
+    }
+    
+    await usuario.update({ nome, email, telefone });
+    
+    // Retornar usuário atualizado com role
+    const usuarioAtualizado = await Usuario.findByPk(req.user.id, {
+      include: [{ model: Role, as: 'role' }],
+      attributes: ['id', 'nome', 'email', 'role_id', 'ativo', 'criado_em', 'telefone']
+    });
+    
+    res.json(usuarioAtualizado);
+    
+  } catch (error) {
+    console.error('Erro ao atualizar perfil:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Alterar senha do usuário autenticado
+exports.changePassword = async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ erro: 'Usuário não autenticado' });
+    }
+    
+    const { senha } = req.body;
+    
+    if (!senha || senha.length < 6) {
+      return res.status(400).json({ erro: 'Senha deve ter pelo menos 6 caracteres' });
+    }
+    
+    const usuario = await Usuario.findByPk(req.user.id);
+    if (!usuario) {
+      return res.status(404).json({ erro: 'Usuário não encontrado' });
+    }
+    
+    // Hash da nova senha
+    const senhaHash = await bcrypt.hash(senha, 10);
+    
+    await usuario.update({ senha: senhaHash });
+    
+    res.json({ mensagem: 'Senha alterada com sucesso' });
+    
+  } catch (error) {
+    console.error('Erro ao alterar senha:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Inativar conta do usuário autenticado
+exports.deleteMe = async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ erro: 'Usuário não autenticado' });
+    }
+    
+    const usuario = await Usuario.findByPk(req.user.id);
+    if (!usuario) {
+      return res.status(404).json({ erro: 'Usuário não encontrado' });
+    }
+    
+    // Marcar como inativo ao invés de deletar
+    await usuario.update({ ativo: false });
+    
+    res.json({ mensagem: 'Conta inativada com sucesso' });
+    
+  } catch (error) {
+    console.error('Erro ao inativar conta:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
 // Listar usuários
 exports.listarUsuarios = async (req, res) => {
   try {

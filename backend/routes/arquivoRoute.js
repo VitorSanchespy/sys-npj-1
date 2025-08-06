@@ -8,8 +8,10 @@ const uploadMiddleware = require('../middleware/uploadMiddleware');
 // Aplicar autenticação a todas as rotas
 router.use(verificarToken);
 
+
 // Rotas básicas
 router.get('/', arquivoController.listarArquivos);
+router.get('/usuario/:id', arquivoController.listarArquivosPorUsuario);
 router.post('/upload', uploadMiddleware.single('arquivo'), arquivoController.uploadArquivo);
 router.get('/:id', arquivoController.obterArquivo);
 router.get('/:id/download', arquivoController.downloadArquivo);

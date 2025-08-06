@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-08-05T11:58:32.863Z",
+  "timestamp": "2025-08-06T19:08:59.244Z",
   "totalTests": 28,
   "passedTests": 25,
   "failedTests": 3,
@@ -10,7 +10,7 @@
       "description": "Teste de conexão básica",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:32.910Z"
+      "timestamp": "2025-08-06T19:08:59.291Z"
     },
     {
       "endpoint": "/api/auth/login",
@@ -18,7 +18,7 @@
       "description": "Login com credenciais válidas",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.007Z"
+      "timestamp": "2025-08-06T19:08:59.373Z"
     },
     {
       "endpoint": "/api/auth/login",
@@ -26,7 +26,7 @@
       "description": "Login com credenciais inválidas (deve falhar)",
       "status": 401,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.013Z"
+      "timestamp": "2025-08-06T19:08:59.380Z"
     },
     {
       "endpoint": "/api/auth/registro",
@@ -34,7 +34,7 @@
       "description": "Registro de novo usuário",
       "status": 400,
       "success": false,
-      "timestamp": "2025-08-05T11:58:33.020Z",
+      "timestamp": "2025-08-06T19:08:59.387Z",
       "error": {
         "erro": "Email já cadastrado"
       }
@@ -45,7 +45,7 @@
       "description": "Esqueci senha",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.023Z"
+      "timestamp": "2025-08-06T19:08:59.390Z"
     },
     {
       "endpoint": "/api/auth/perfil",
@@ -53,7 +53,7 @@
       "description": "Obter perfil do usuário",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.035Z"
+      "timestamp": "2025-08-06T19:08:59.398Z"
     },
     {
       "endpoint": "/api/usuarios",
@@ -61,7 +61,7 @@
       "description": "Listar usuários",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.046Z"
+      "timestamp": "2025-08-06T19:08:59.408Z"
     },
     {
       "endpoint": "/api/usuarios",
@@ -69,7 +69,7 @@
       "description": "Criar novo usuário",
       "status": 400,
       "success": false,
-      "timestamp": "2025-08-05T11:58:33.056Z",
+      "timestamp": "2025-08-06T19:08:59.421Z",
       "error": {
         "erro": "Email já está em uso"
       }
@@ -80,7 +80,7 @@
       "description": "Obter usuário específico",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.065Z"
+      "timestamp": "2025-08-06T19:08:59.431Z"
     },
     {
       "endpoint": "/api/usuarios/1",
@@ -88,7 +88,7 @@
       "description": "Atualizar usuário",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.074Z"
+      "timestamp": "2025-08-06T19:08:59.441Z"
     },
     {
       "endpoint": "/api/processos",
@@ -96,7 +96,7 @@
       "description": "Listar processos",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.085Z"
+      "timestamp": "2025-08-06T19:08:59.453Z"
     },
     {
       "endpoint": "/api/processos",
@@ -104,7 +104,7 @@
       "description": "Criar novo processo",
       "status": 400,
       "success": false,
-      "timestamp": "2025-08-05T11:58:33.092Z",
+      "timestamp": "2025-08-06T19:08:59.466Z",
       "error": {
         "erro": "Número do processo já cadastrado"
       }
@@ -115,7 +115,7 @@
       "description": "Obter processo específico",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.100Z"
+      "timestamp": "2025-08-06T19:08:59.475Z"
     },
     {
       "endpoint": "/api/processos/1",
@@ -123,7 +123,7 @@
       "description": "Atualizar processo",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.107Z"
+      "timestamp": "2025-08-06T19:08:59.483Z"
     },
     {
       "endpoint": "/api/agendamentos",
@@ -131,7 +131,7 @@
       "description": "Listar agendamentos",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.116Z"
+      "timestamp": "2025-08-06T19:08:59.495Z"
     },
     {
       "endpoint": "/api/agendamentos",
@@ -139,7 +139,7 @@
       "description": "Criar novo agendamento",
       "status": 201,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.123Z"
+      "timestamp": "2025-08-06T19:08:59.504Z"
     },
     {
       "endpoint": "/api/agendamentos/1",
@@ -147,7 +147,7 @@
       "description": "Obter agendamento específico",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.133Z"
+      "timestamp": "2025-08-06T19:08:59.515Z"
     },
     {
       "endpoint": "/api/agendamentos/1",
@@ -155,7 +155,7 @@
       "description": "Atualizar agendamento",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.150Z"
+      "timestamp": "2025-08-06T19:08:59.538Z"
     },
     {
       "endpoint": "/api/notificacoes",
@@ -163,7 +163,7 @@
       "description": "Listar notificações",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.158Z"
+      "timestamp": "2025-08-06T19:08:59.548Z"
     },
     {
       "endpoint": "/api/notificacoes",
@@ -171,7 +171,7 @@
       "description": "Criar nova notificação",
       "status": 201,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.180Z"
+      "timestamp": "2025-08-06T19:08:59.565Z"
     },
     {
       "endpoint": "/api/notificacoes/1/lida",
@@ -179,7 +179,7 @@
       "description": "Marcar notificação como lida",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.192Z"
+      "timestamp": "2025-08-06T19:08:59.582Z"
     },
     {
       "endpoint": "/api/arquivos",
@@ -187,7 +187,7 @@
       "description": "Listar arquivos",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.201Z"
+      "timestamp": "2025-08-06T19:08:59.592Z"
     },
     {
       "endpoint": "/api/arquivos/upload",
@@ -195,7 +195,7 @@
       "description": "Teste estrutura upload (sem arquivo - deve falhar)",
       "status": 400,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.207Z"
+      "timestamp": "2025-08-06T19:08:59.599Z"
     },
     {
       "endpoint": "/api/atualizacoes",
@@ -203,7 +203,7 @@
       "description": "Listar atualizações de processo",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.216Z"
+      "timestamp": "2025-08-06T19:08:59.610Z"
     },
     {
       "endpoint": "/api/atualizacoes",
@@ -211,7 +211,7 @@
       "description": "Criar nova atualização",
       "status": 201,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.223Z"
+      "timestamp": "2025-08-06T19:08:59.619Z"
     },
     {
       "endpoint": "/api/tabelas/roles",
@@ -219,7 +219,7 @@
       "description": "Listar roles",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.230Z"
+      "timestamp": "2025-08-06T19:08:59.628Z"
     },
     {
       "endpoint": "/api/tabelas/status",
@@ -227,7 +227,7 @@
       "description": "Listar status",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.235Z"
+      "timestamp": "2025-08-06T19:08:59.635Z"
     },
     {
       "endpoint": "/api/tabelas/tipos-acao",
@@ -235,7 +235,7 @@
       "description": "Listar tipos de ação",
       "status": 200,
       "success": true,
-      "timestamp": "2025-08-05T11:58:33.239Z"
+      "timestamp": "2025-08-06T19:08:59.642Z"
     }
   ],
   "errors": [

@@ -8,6 +8,10 @@ const usuarioController = require('../controllers/usuarioController');
 router.use(verificarToken);
 
 // Rotas básicas
+router.get('/me', usuarioController.me);
+router.put('/me', usuarioController.updateMe);
+router.put('/me/senha', usuarioController.changePassword);
+router.delete('/me', usuarioController.deleteMe);
 router.get('/', usuarioController.listarUsuarios);
 router.post('/', usuarioController.criarUsuario);
 router.get('/para-vinculacao', usuarioController.buscarUsuariosParaVinculacao);

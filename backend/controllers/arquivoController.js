@@ -1,3 +1,25 @@
+// Listar arquivos de um usuário específico
+exports.listarArquivosPorUsuario = async (req, res) => {
+  try {
+    const { id } = req.params;
+    let arquivos = [];
+    if (isDbAvailable()) {
+      const { arquivoModel: Arquivo, usuarioModel: Usuario } = require('../models/indexModel');
+      arquivos = await Arquivo.findAll({
+        where: { usuario_id: id, ativo: true },
+        include: [{ model: Usuario, as: 'usuario', attributes: ['nome', 'email'] }],
+        order: [['criado_em', 'DESC']]
+      });
+    } else {
+      const mockData = getMockData();
+      arquivos = mockData.arquivos.filter(a => a.usuario_id == id && a.ativo !== false);
+    }
+    res.json(arquivos);
+  } catch (error) {
+    console.error('Erro ao listar arquivos do usuário:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
 // Controller de Arquivos simplificado
 const path = require('path');
 const fs = require('fs');
