@@ -471,7 +471,7 @@ export default function ProcessDetailPage() {
           <p style={{ fontSize: '14px', color: '#6c757d', marginBottom: '16px' }}>
             Anexe documentos relacionados ao processo como despachos, atas, petições, etc.
           </p>
-          <DocumentList processoId={id} />
+          <DocumentList processoId={id} showInactive={true} />
         </div>
 
         {/* Histórico de Atualizações do Processo */}

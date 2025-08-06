@@ -73,7 +73,7 @@ exports.uploadArquivo = async (req, res) => {
 // Listar arquivos
 exports.listarArquivos = async (req, res) => {
   try {
-    const { processo_id, idprocesso } = req.query;
+    const { processo_id, idprocesso, incluir_inativos } = req.query;
     const processoId = processo_id || idprocesso;
     let arquivos = [];
     
@@ -81,6 +81,11 @@ exports.listarArquivos = async (req, res) => {
       try {
         const { arquivoModel: Arquivo, usuarioModel: Usuario } = require('../models/indexModel');
         const where = processoId ? { processo_id: processoId } : {};
+        
+        // Por padrão, mostrar apenas arquivos ativos, exceto se explicitamente solicitado
+        if (incluir_inativos !== 'true') {
+          where.ativo = true;
+        }
         
         arquivos = await Arquivo.findAll({
           where,
@@ -177,7 +182,7 @@ exports.downloadArquivo = async (req, res) => {
   }
 };
 
-// Deletar arquivo
+// Deletar arquivo (Soft Delete)
 exports.deletarArquivo = async (req, res) => {
   try {
     const { id } = req.params;
@@ -190,27 +195,32 @@ exports.deletarArquivo = async (req, res) => {
         return res.status(404).json({ erro: 'Arquivo não encontrado' });
       }
       
-      // Verificar se o arquivo está anexado a um processo
-      if (arquivo.processo_id) {
-        return res.status(400).json({ 
-          erro: 'Não é possível excluir arquivo anexado a um processo',
-          message: 'Este documento está anexado a um processo e não pode ser excluído para manter a integridade dos registros.'
-        });
+      // Soft delete: marcar como inativo ao invés de deletar
+      await arquivo.update({ ativo: false });
+      
+      // Se o arquivo não estiver vinculado a um processo, também pode deletar fisicamente
+      if (!arquivo.processo_id) {
+        const nomeArquivo = arquivo.caminho.split('/').pop();
+        const caminhoArquivo = path.join(__dirname, '../uploads', nomeArquivo);
+        if (fs.existsSync(caminhoArquivo)) {
+          try {
+            fs.unlinkSync(caminhoArquivo);
+          } catch (fsError) {
+            console.log('Erro ao deletar arquivo físico:', fsError.message);
+            // Continua mesmo se não conseguir deletar o arquivo físico
+          }
+        }
       }
       
-      // Deletar arquivo físico - extrair nome do arquivo do caminho
-      const nomeArquivo = arquivo.caminho.split('/').pop();
-      const caminhoArquivo = path.join(__dirname, '../uploads', nomeArquivo);
-      if (fs.existsSync(caminhoArquivo)) {
-        fs.unlinkSync(caminhoArquivo);
-      }
-      
-      await arquivo.destroy();
-      res.json({ message: 'Arquivo deletado com sucesso' });
+      res.json({ 
+        message: 'Arquivo removido com sucesso',
+        vinculado_processo: !!arquivo.processo_id,
+        info: arquivo.processo_id ? 'Arquivo mantido no processo para preservar histórico' : 'Arquivo completamente removido'
+      });
       
     } else {
       // Modo mock
-      res.json({ message: 'Arquivo deletado com sucesso (modo desenvolvimento)' });
+      res.json({ message: 'Arquivo removido com sucesso (modo desenvolvimento)' });
     }
     
   } catch (error) {

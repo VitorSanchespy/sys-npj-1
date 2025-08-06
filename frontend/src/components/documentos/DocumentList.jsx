@@ -3,7 +3,7 @@ import { arquivoService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import DocumentUploadForm from "./DocumentUploadForm";
 
-export default function DocumentList({ processoId }) {
+export default function DocumentList({ processoId, showInactive = false }) {
   const { token, user } = useAuthContext();
   const [documentos, setDocumentos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,9 +13,24 @@ export default function DocumentList({ processoId }) {
     async function fetchDocumentos() {
       try {
         let data = await arquivoService.listArquivos(token);
+        
         // Filtrar por processoId se fornecido
         if (processoId) {
           data = data.filter(doc => String(doc.processo_id) === String(processoId));
+          
+          // Se é para mostrar no processo, buscar também os inativos vinculados ao processo
+          if (showInactive) {
+            try {
+              const response = await fetch(`http://localhost:3001/api/arquivos?processo_id=${processoId}&incluir_inativos=true`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              if (response.ok) {
+                data = await response.json();
+              }
+            } catch (error) {
+              console.log('Erro ao buscar arquivos inativos, usando apenas ativos:', error);
+            }
+          }
         }
         setDocumentos(data);
       } catch (error) {
@@ -27,7 +42,7 @@ export default function DocumentList({ processoId }) {
     if (token) {
       fetchDocumentos();
     }
-  }, [processoId, token, showUploadForm]);
+  }, [processoId, token, showUploadForm, showInactive]);
 
   const handleDownload = async (arquivoId, nomeOriginal) => {
     try {
@@ -55,6 +70,29 @@ export default function DocumentList({ processoId }) {
     } catch (error) {
       console.error('Erro no download:', error);
       alert('Erro ao baixar o arquivo');
+    }
+  };
+
+  const handleDelete = async (arquivoId) => {
+    if (!window.confirm('Tem certeza que deseja remover este documento?\n\nNota: Se o documento estiver vinculado a um processo, ele será mantido no histórico do processo.')) {
+      return;
+    }
+    
+    try {
+      const response = await arquivoService.deleteArquivo(token, arquivoId);
+      
+      // Remover da lista local independentemente se foi soft delete ou delete completo
+      setDocumentos(documentos.filter(doc => doc.id !== arquivoId));
+      
+      // Mostrar mensagem informativa
+      if (response.vinculado_processo) {
+        alert('Documento removido da lista geral, mas mantido no processo para preservar o histórico.');
+      } else {
+        alert('Documento removido completamente.');
+      }
+    } catch (error) {
+      console.error('Erro ao deletar documento:', error);
+      alert('Erro ao remover o documento: ' + (error.message || 'Erro desconhecido'));
     }
   };
 
@@ -102,13 +140,25 @@ export default function DocumentList({ processoId }) {
                   borderRadius: '4px',
                   padding: '12px',
                   marginBottom: '8px',
-                  backgroundColor: '#f8f9fa'
+                  backgroundColor: doc.ativo === false ? '#f1f1f1' : '#f8f9fa',
+                  opacity: doc.ativo === false ? 0.7 : 1
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div style={{ flex: 1 }}>
                     <strong style={{ color: '#495057' }}>
                       📄 {doc.nome_original || doc.nome}
+                      {doc.ativo === false && (
+                        <span style={{ 
+                          marginLeft: '8px', 
+                          color: '#dc3545', 
+                          fontSize: '12px', 
+                          fontWeight: 'normal',
+                          fontStyle: 'italic' 
+                        }}>
+                          (removido)
+                        </span>
+                      )}
                     </strong>
                     <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
                       Tamanho: {(doc.tamanho / 1024).toFixed(1)} KB | 
@@ -132,6 +182,22 @@ export default function DocumentList({ processoId }) {
                     >
                       📥 Baixar
                     </button>
+                    {user.role && ['professor', 'admin'].includes(user.role.toLowerCase()) && (
+                      <button
+                        onClick={() => handleDelete(doc.id)}
+                        style={{
+                          backgroundColor: '#dc3545',
+                          color: 'white',
+                          border: 'none',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                      >
+                        🗑️ Remover
+                      </button>
+                    )}
                   </div>
                 </div>
               </li>
