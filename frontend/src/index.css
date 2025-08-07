@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* index.css - Estilos globais do seu projeto React/Vite */
 
 /* Reset básico para garantir aparência uniforme */
