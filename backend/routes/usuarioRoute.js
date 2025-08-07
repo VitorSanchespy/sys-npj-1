@@ -17,6 +17,7 @@ router.post('/', usuarioController.criarUsuario);
 router.get('/para-vinculacao', usuarioController.buscarUsuariosParaVinculacao);
 router.get('/:id', usuarioController.obterUsuario);
 router.put('/:id', usuarioController.atualizarUsuario);
+router.put('/:id/reativar', usuarioController.reativarUsuario);
 router.delete('/:id', usuarioController.deletarUsuario);
 
 module.exports = router;

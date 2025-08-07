@@ -4,6 +4,9 @@ const path = require('path');
 // Criar agendamento
 exports.criarAgendamento = async (req, res) => {
   try {
+    console.log('📅 Dados recebidos para criar agendamento:', req.body);
+    console.log('👤 Usuário autenticado:', req.user);
+    
     const {
       titulo,
       descricao,
@@ -18,15 +21,37 @@ exports.criarAgendamento = async (req, res) => {
       lembrete_1_semana = false
     } = req.body;
     
+    console.log('📝 Dados processados:', {
+      titulo,
+      descricao,
+      data_evento,
+      tipo_evento,
+      status,
+      local,
+      processo_id,
+      usuario_id,
+      usuario_req: req.user?.id
+    });
+    
     if (!titulo || !data_evento) {
+      console.log('❌ Validação falhou: título ou data ausente');
       return res.status(400).json({ 
         erro: 'Título e data do evento são obrigatórios' 
       });
     }
     
+    // Validar tipo_evento
+    const tiposValidos = ['audiencia', 'prazo', 'reuniao', 'diligencia', 'outro'];
+    if (!tiposValidos.includes(tipo_evento)) {
+      console.log('❌ Tipo de evento inválido:', tipo_evento);
+      return res.status(400).json({ 
+        erro: `Tipo de evento inválido. Valores aceitos: ${tiposValidos.join(', ')}` 
+      });
+    }
+    
     const { agendamentoModel: Agendamento, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
     
-    const novoAgendamento = await Agendamento.create({
+    const dadosAgendamento = {
       titulo,
       descricao,
       data_evento: new Date(data_evento),
@@ -39,7 +64,13 @@ exports.criarAgendamento = async (req, res) => {
       lembrete_1_dia,
       lembrete_2_dias,
       lembrete_1_semana
-    });
+    };
+    
+    console.log('💾 Dados para salvar no banco:', dadosAgendamento);
+    
+    const novoAgendamento = await Agendamento.create(dadosAgendamento);
+    
+    console.log('✅ Agendamento criado com sucesso, ID:', novoAgendamento.id);
     
     // Buscar o agendamento criado com as associações
     const agendamentoCriado = await Agendamento.findByPk(novoAgendamento.id, {
@@ -53,8 +84,9 @@ exports.criarAgendamento = async (req, res) => {
     res.status(201).json(agendamentoCriado);
     
   } catch (error) {
-    console.error('Erro ao criar agendamento:', error);
-    res.status(500).json({ erro: 'Erro interno do servidor' });
+    console.error('❌ Erro detalhado ao criar agendamento:', error);
+    console.error('❌ Stack trace:', error.stack);
+    res.status(500).json({ erro: 'Erro interno do servidor', detalhes: error.message });
   }
 };
 

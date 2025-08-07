@@ -13,6 +13,12 @@ router.post('/', notificacaoController.criarNotificacao);
 router.get('/usuario', notificacaoController.listarNotificacoesUsuario);
 router.get('/nao-lidas/count', notificacaoController.contarNaoLidas);
 router.put('/marcar-todas-lidas', notificacaoController.marcarTodasComoLidas);
+
+// Rotas de configuração (devem vir antes das rotas paramétricas)
+router.get('/configuracoes', notificacaoController.obterConfiguracoesNotificacao);
+router.put('/configuracoes', notificacaoController.atualizarConfiguracoesNotificacao);
+
+// Rotas paramétricas (devem vir por último)
 router.get('/:id', notificacaoController.obterNotificacao);
 router.put('/:id/lida', notificacaoController.marcarComoLida);
 router.delete('/:id', notificacaoController.deletarNotificacao);

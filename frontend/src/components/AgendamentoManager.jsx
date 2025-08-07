@@ -29,7 +29,7 @@ const AgendamentoManager = ({ processoId = null }) => {
     titulo: '',
     descricao: '',
     data_evento: '',
-    tipo_evento: 'audiencia',
+    tipo_evento: 'reuniao',
     processo_id: processoId || '',
     usuario_id: '',
     local: '',
@@ -126,7 +126,7 @@ const AgendamentoManager = ({ processoId = null }) => {
       titulo: '',
       descricao: '',
       data_evento: '',
-      tipo_evento: 'audiencia',
+      tipo_evento: 'reuniao',
       processo_id: processoId || '',
       usuario_id: '',
       local: '',
@@ -135,6 +135,53 @@ const AgendamentoManager = ({ processoId = null }) => {
       lembrete_1_semana: false,
       status: 'agendado'
     });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!user || !token) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+
+      const dadosEnvio = {
+        ...formData,
+        usuario_id: formData.usuario_id || user.id,
+        data_evento: new Date(formData.data_evento).toISOString()
+      };
+
+      console.log('📤 Dados sendo enviados:', dadosEnvio);
+      console.log('👤 Usuário atual:', user);
+
+      if (editando) {
+        // Editar agendamento existente
+        await apiRequest(`/api/agendamentos/${editando}`, {
+          method: 'PUT',
+          token: token,
+          data: dadosEnvio
+        });
+      } else {
+        // Criar novo agendamento
+        await apiRequest('/api/agendamentos', {
+          method: 'POST',
+          token: token,
+          data: dadosEnvio
+        });
+      }
+
+      // Fechar o modal e recarregar a lista
+      setShowForm(false);
+      setEditando(null);
+      resetForm();
+      carregarAgendamentos();
+      
+    } catch (error) {
+      console.error('Erro ao salvar agendamento:', error);
+      setError(error.message || 'Erro ao salvar agendamento');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatarData = (data) => {

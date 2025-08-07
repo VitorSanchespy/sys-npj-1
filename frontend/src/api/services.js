@@ -103,7 +103,24 @@ export const userService = {
       method: 'GET',
       token
     });
-  }
+  },
+
+  // GET /api/usuarios (com busca)
+  getAllUsers: async (token, search = '') => {
+    const url = search
+      ? `/api/usuarios?search=${encodeURIComponent(search)}`
+      : '/api/usuarios';
+    return apiRequest(url, { token });
+  },
+
+  // Reativar usuário (PATCH ou PUT, conforme sua API)
+  reactivateUser: async (token, id) => {
+    // Ajuste o método e endpoint conforme sua API
+    return await apiRequest(`/api/usuarios/${id}/reativar`, {
+      method: 'PUT',
+      token
+    });
+  },
 };
 
 // ===== PROCESS SERVICES (UPDATED) =====

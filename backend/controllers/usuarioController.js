@@ -278,3 +278,31 @@ exports.buscarUsuariosParaVinculacao = async (req, res) => {
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
+
+// Reativar usuário
+exports.reativarUsuario = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const usuario = await Usuario.findByPk(id);
+    if (!usuario) {
+      return res.status(404).json({ erro: 'Usuário não encontrado' });
+    }
+    
+    await usuario.update({ ativo: true });
+    
+    res.json({ 
+      message: 'Usuário reativado com sucesso',
+      usuario: {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        ativo: usuario.ativo
+      }
+    });
+    
+  } catch (error) {
+    console.error('Erro ao reativar usuário:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};

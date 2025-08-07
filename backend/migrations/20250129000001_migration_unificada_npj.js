@@ -5,7 +5,7 @@
  */
 module.exports = {
   async up(connection) {
-    console.log('🚀 Iniciando migration unificada NPJ...\n');
+    console.log('Iniciando migration unificada NPJ...\n');
 
     // 1. Criar tabela agendamentos se não existir
     await connection.execute(`
@@ -72,5 +72,28 @@ module.exports = {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
     `);
     console.log('✅ Tabela notificacoes criada ou já existente');
+
+    // 3. Criar tabela configuracoes_notificacao se não existir
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS configuracoes_notificacao (
+        id INT NOT NULL AUTO_INCREMENT,
+        usuario_id INT NOT NULL,
+        email_lembretes TINYINT(1) DEFAULT 1,
+        email_alertas TINYINT(1) DEFAULT 1,
+        email_atualizacoes TINYINT(1) DEFAULT 0,
+        sistema_lembretes TINYINT(1) DEFAULT 1,
+        sistema_alertas TINYINT(1) DEFAULT 1,
+        sistema_atualizacoes TINYINT(1) DEFAULT 1,
+        dias_alerta_sem_atualizacao INT DEFAULT 30,
+        horario_preferido_email TIME DEFAULT '09:00:00',
+        criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+        atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        UNIQUE KEY unique_usuario_config (usuario_id),
+        KEY idx_usuario_id (usuario_id),
+        CONSTRAINT configuracoes_notificacao_usuario_id_foreign FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    `);
+    console.log('✅ Tabela configuracoes_notificacao criada ou já existente');
   }
 };
