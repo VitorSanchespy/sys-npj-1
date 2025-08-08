@@ -1,16 +1,17 @@
 import React, { useState, useRef } from "react";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 import Button from "@/components/common/Button";
-import StatusBadge from "@/components/common/StatusBadge";
 import { userService } from "@/api/services";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { getUserRole, hasRole, renderValue } from "@/utils/commonUtils";
+import { hasRole } from "@/utils/commonUtils";
 import UserCreateForm from "./UserCreateForm";
+import { useUsuarios } from "../../hooks/useApi.jsx";
+import { useQueryClient } from "@tanstack/react-query";
+import { requestCache } from "../../utils/requestCache";
 
 export default function UserList() {
   const { token, user } = useAuthContext();
   const [search, setSearch] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
@@ -19,6 +20,8 @@ export default function UserList() {
   const [showCreate, setShowCreate] = useState(false);
   const [confirm, setConfirm] = useState({ open: false, user: null, action: null });
   const debounceTimeout = useRef();
+  const { data: suggestions = [], refetch } = useUsuarios(search);
+  const queryClient = useQueryClient();
 
   // Controle de acesso - Aluno não tem acesso
   if (user?.role_id === 2) {
@@ -38,48 +41,17 @@ export default function UserList() {
     );
   }
 
-  // Busca de usuários com debounce
-  async function searchUsers(searchTerm) {
-    if (!searchTerm.trim()) {
-      setSuggestions([]);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      let data = [];
-      
-      // Admin pode ver todos, Professor só alunos
-      if (user?.role_id === 1) {
-        data = await userService.getAllUsers(token, searchTerm);
-      } else if (user?.role_id === 3) {
-        data = await userService.getStudents(token, searchTerm);
-      }
-      
-      setSuggestions(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Erro ao buscar usuários:', error);
-      setSuggestions([]);
-    } finally {
-      setLoading(false);
-    }
-  }
+  // Busca de usuários é feita automaticamente pelo hook useUsuarios
 
   function handleSearch(e) {
     const value = e.target.value;
     setSearch(value);
     setShowSuggestions(!!value);
-    
     if (!value.trim()) {
-      setSuggestions([]);
       setSelectedUser(null);
       return;
     }
-    
-    clearTimeout(debounceTimeout.current);
-    debounceTimeout.current = setTimeout(() => {
-      searchUsers(value);
-    }, 400);
+    // O hook useUsuarios já faz a busca automaticamente
   }
 
   function selectUser(usuario) {
@@ -122,6 +94,11 @@ export default function UserList() {
       }
       
       setSelectedUser({ ...userData });
+      
+  // Atualização automática via React Query
+  requestCache.clear();
+  await queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+      
       setTimeout(() => setActionMsg(''), 3000);
     } catch (error) {
       console.error('Erro ao atualizar usuário:', error);
@@ -139,6 +116,13 @@ export default function UserList() {
       setActionMsg(`Usuário ${usuario.nome} inativado com sucesso!`);
       setSelectedUser(prev => ({ ...prev, ativo: false }));
       setEditingUser(prev => ({ ...prev, ativo: false }));
+      
+  // Atualização automática via React Query
+      
+  // Atualização automática via React Query
+  requestCache.clear();
+  await queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+      
       setTimeout(() => setActionMsg(''), 3000);
     } catch (error) {
       console.error('Erro ao inativar usuário:', error);
@@ -156,6 +140,13 @@ export default function UserList() {
       setActionMsg(`Usuário ${usuario.nome} reativado com sucesso!`);
       setSelectedUser(prev => ({ ...prev, ativo: true }));
       setEditingUser(prev => ({ ...prev, ativo: true }));
+      
+  // Atualização automática via React Query
+      
+  // Atualização automática via React Query
+  requestCache.clear();
+  await queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+      
       setTimeout(() => setActionMsg(''), 3000);
     } catch (error) {
       console.error('Erro ao reativar usuário:', error);
@@ -170,7 +161,6 @@ export default function UserList() {
     setSearch("");
     setSelectedUser(null);
     setEditingUser(null);
-    setSuggestions([]);
     setShowSuggestions(false);
   }
 
