@@ -33,7 +33,7 @@ exports.criarAgendamento = async (req, res) => {
       usuario_req: req.user?.id
     });
     
-    if (!titulo || !data_evento) {
+    if (!titulo || !titulo.trim() || !data_evento) {
       console.log('❌ Validação falhou: título ou data ausente');
       return res.status(400).json({ 
         erro: 'Título e data do evento são obrigatórios' 
@@ -58,7 +58,7 @@ exports.criarAgendamento = async (req, res) => {
       tipo_evento,
       status,
       local,
-      processo_id: processo_id || null,
+      processo_id: processo_id && processo_id !== '' ? processo_id : null,
       usuario_id: usuario_id || req.user.id,
       criado_por: req.user.id,
       lembrete_1_dia,
@@ -86,6 +86,16 @@ exports.criarAgendamento = async (req, res) => {
   } catch (error) {
     console.error('❌ Erro detalhado ao criar agendamento:', error);
     console.error('❌ Stack trace:', error.stack);
+    
+    // Verificar se é erro de validação do Sequelize
+    if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeDatabaseError') {
+      const validationErrors = error.errors?.map(err => err.message) || [error.message];
+      return res.status(400).json({ 
+        erro: 'Erro de validação', 
+        detalhes: validationErrors 
+      });
+    }
+    
     res.status(500).json({ erro: 'Erro interno do servidor', detalhes: error.message });
   }
 };
@@ -170,6 +180,9 @@ exports.atualizarAgendamento = async (req, res) => {
     const { id } = req.params;
     const dadosAtualizacao = req.body;
     
+    console.log('🔄 Atualizando agendamento ID:', id);
+    console.log('📝 Dados recebidos:', dadosAtualizacao);
+    
     const { agendamentoModel: Agendamento, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
     
     const agendamento = await Agendamento.findByPk(id);
@@ -185,20 +198,53 @@ exports.atualizarAgendamento = async (req, res) => {
     
     await agendamento.update(dadosAtualizacao);
     
-    // Buscar o agendamento atualizado com as associações
-    const agendamentoAtualizado = await Agendamento.findByPk(id, {
-      include: [
-        { model: Usuario, as: 'destinatario', attributes: ['id', 'nome', 'email'] },
-        { model: Usuario, as: 'criador', attributes: ['id', 'nome', 'email'] },
-        { model: Processo, as: 'processo', attributes: ['id', 'numero_processo', 'descricao'] }
-      ]
-    });
-    
-    res.json(agendamentoAtualizado);
+    // Buscar o agendamento atualizado com as associações (com fallback)
+    try {
+      const agendamentoAtualizado = await Agendamento.findByPk(id, {
+        include: [
+          { 
+            model: Usuario, 
+            as: 'destinatario', 
+            attributes: ['id', 'nome', 'email'],
+            required: false
+          },
+          { 
+            model: Usuario, 
+            as: 'criador', 
+            attributes: ['id', 'nome', 'email'],
+            required: false
+          },
+          { 
+            model: Processo, 
+            as: 'processo', 
+            attributes: ['id', 'numero_processo', 'descricao'],
+            required: false
+          }
+        ]
+      });
+      
+      res.json(agendamentoAtualizado);
+    } catch (includeError) {
+      console.warn('⚠️ Erro nas associações, retornando sem includes:', includeError.message);
+      // Se der erro nas associações, retorna sem elas
+      const agendamentoSimples = await Agendamento.findByPk(id);
+      res.json(agendamentoSimples);
+    }
     
   } catch (error) {
-    console.error('Erro ao atualizar agendamento:', error);
-    res.status(500).json({ erro: 'Erro interno do servidor' });
+    console.error('❌ Erro ao atualizar agendamento:', error);
+    console.error('❌ Stack trace:', error.stack);
+    
+    // Verificar se é erro de validação do Sequelize
+    if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeDatabaseError') {
+      const validationErrors = error.errors?.map(err => err.message) || [error.message];
+      return res.status(400).json({ 
+        erro: 'Erro de validação', 
+        detalhes: validationErrors 
+      });
+    }
+    
+    res.status(500).json({ erro: 'Erro interno do servidor', detalhes: error.message });
   }
 };
 

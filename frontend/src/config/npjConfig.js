@@ -45,6 +45,7 @@ export const NPJ_CONFIG = {
 
 // Códigos de erro padronizados
 export const ERROR_CODES = {
+  BAD_REQUEST: 400,
   UNAUTHORIZED: 401,
   FORBIDDEN: 403,
   NOT_FOUND: 404,
@@ -56,6 +57,7 @@ export const ERROR_CODES = {
 
 // Mensagens de erro padronizadas
 export const ERROR_MESSAGES = {
+  [ERROR_CODES.BAD_REQUEST]: 'Dados inválidos na requisição.',
   [ERROR_CODES.UNAUTHORIZED]: 'Sessão expirada. Faça login novamente.',
   [ERROR_CODES.FORBIDDEN]: 'Você não tem permissão para esta ação.',
   [ERROR_CODES.NOT_FOUND]: 'Recurso não encontrado.',

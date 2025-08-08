@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { getUserRole } from "../../hooks/useApi";
 
 export default function RegisterForm() {
   const { user, register } = useAuthContext();
+  const userRole = getUserRole(user);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -22,9 +24,9 @@ export default function RegisterForm() {
     try {
       let finalRoleId = 2; // Aluno
       if (user && user.role_id === 1) finalRoleId = roleId;
-      else if (user && user.role === "Professor" && (roleId === 2 || roleId === 3)) finalRoleId = roleId;
+      else if (user && userRole === "Professor" && (roleId === 2 || roleId === 3)) finalRoleId = roleId;
       // Professor não pode criar Admin
-      else if (user && user.role === "Professor" && roleId === 1) {
+      else if (user && userRole === "Professor" && roleId === 1) {
         setError("Professores não podem criar Admins.");
         setLoading(false);
         return;

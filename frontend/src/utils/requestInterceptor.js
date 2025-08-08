@@ -97,9 +97,25 @@ class RequestInterceptor {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
+        // Tentar extrair mensagem de erro do corpo da resposta
+        let errorMessage = `HTTP ${response.status}`;
+        let errorData = null;
+        
+        try {
+          const responseText = await response.text();
+          if (responseText) {
+            errorData = JSON.parse(responseText);
+            errorMessage = errorData.erro || errorData.message || errorData.detalhes || errorMessage;
+          }
+        } catch (parseError) {
+          console.warn('Não foi possível extrair erro do corpo da resposta:', parseError);
+        }
+
         throw {
           status: response.status,
           statusText: response.statusText,
+          message: errorMessage,
+          data: errorData,
           url
         };
       }
@@ -157,10 +173,15 @@ class RequestInterceptor {
   normalizeError(error) {
     let normalizedError = {
       code: error.status || error.code || ERROR_CODES.SERVER_ERROR,
-      message: ERROR_MESSAGES[error.status || error.code] || error.message || 'Erro desconhecido',
+      message: error.message || ERROR_MESSAGES[error.status || error.code] || 'Erro desconhecido',
       url: error.url,
       originalError: error
     };
+
+    // Usar mensagem específica se disponível
+    if (error.data && (error.data.erro || error.data.message || error.data.detalhes)) {
+      normalizedError.message = error.data.erro || error.data.message || error.data.detalhes;
+    }
 
     // Casos especiais
     if (error.name === 'TypeError' && error.message.includes('fetch')) {

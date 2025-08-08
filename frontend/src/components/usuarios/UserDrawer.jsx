@@ -1,13 +1,5 @@
 import React from "react";
-
-// Helper function to safely get role name
-const getRoleName = (role) => {
-  if (!role) return 'Usuário';
-  if (typeof role === 'string') return role;
-  if (typeof role === 'object' && role.nome) return role.nome;
-  if (typeof role === 'object' && role.name) return role.name;
-  return 'Usuário';
-};
+import { getUserRole } from "../../hooks/useApi";
 
 export default function UserDrawer({ user, open, onClose, onEdit }) {
   if (!open || !user) return null;
@@ -29,7 +21,7 @@ export default function UserDrawer({ user, open, onClose, onEdit }) {
       <h3>Detalhes do Usuário</h3>
       <div><b>Nome:</b> {user.nome}</div>
       <div><b>Email:</b> {user.email}</div>
-      <div><b>Papel:</b> {getRoleName(user.role)}</div>
+      <div><b>Papel:</b> {getUserRole(user) || 'Usuário'}</div>
       <div><b>Status:</b> {user.ativo === false ? 'Inativo' : 'Ativo'}</div>
       <div style={{ marginTop: 16 }}>
         <button onClick={onEdit}>Editar</button>

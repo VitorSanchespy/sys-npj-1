@@ -2,25 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api/apiRequest";
 import { useAuthContext } from "../../contexts/AuthContext";
-
-// Helper para verificar role
-const getUserRole = (user) => {
-  if (!user) return null;
-  
-  if (typeof user.role === 'string') {
-    return user.role;
-  }
-  
-  if (user.role && typeof user.role === 'object') {
-    return user.role.nome || user.role.name || null;
-  }
-  
-  if (user.role_id === 1) return 'Admin';
-  if (user.role_id === 2) return 'Aluno';
-  if (user.role_id === 3) return 'Professor';
-  
-  return null;
-};
+import { getUserRole } from "../../hooks/useApi";
 
 export default function UserEditForm() {
   const { id } = useParams();

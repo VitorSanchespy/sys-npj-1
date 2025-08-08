@@ -1,7 +1,10 @@
 
 import React, { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { atualizacaoProcessoService, tabelaAuxiliarService as auxTablesService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { getUserRole } from "../../hooks/useApi";
+import { requestCache } from "../../utils/requestCache";
 import UpdateForm from "./UpdateForm";
 import { getFileUrl } from '../../utils/fileUrl';
 import { FIELD_LABELS, getFieldDisplayValue } from './fieldNameMaps';
@@ -21,6 +24,7 @@ function formatDescricao(descricao, auxData) {
 
 export default function UpdateList({ processoId, showDeleteButton = true }) {
   const { token, user } = useAuthContext();
+  const queryClient = useQueryClient();
   const [updates, setUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -60,9 +64,12 @@ export default function UpdateList({ processoId, showDeleteButton = true }) {
   }, [token]);
 
   if (loading) return <div>Carregando atualizações...</div>;
+  
+  const userRole = getUserRole(user);
+  
   return (
     <div>
-      {["admin", "professor", "aluno"].includes((user.role || "").toLowerCase()) && (
+      {["admin", "professor", "aluno"].includes(userRole?.toLowerCase()) && (
         <button onClick={() => setShowForm(v => !v)}>
           {showForm ? "Fechar" : "Nova Atualização"}
         </button>
@@ -70,7 +77,14 @@ export default function UpdateList({ processoId, showDeleteButton = true }) {
       {showForm && (
         <UpdateForm
           processoId={processoId}
-          onSuccess={() => setShowForm(false)}
+          onSuccess={async () => {
+            setShowForm(false);
+            
+            // Atualização automática via React Query
+            requestCache.clear();
+            await queryClient.invalidateQueries({ queryKey: ['atualizacoes'] });
+            await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+          }}
         />
       )}
       <ul>
@@ -87,13 +101,25 @@ export default function UpdateList({ processoId, showDeleteButton = true }) {
             )}
             <br />
             <small>Por: {upd.usuario_nome} em {new Date(upd.data_atualizacao).toLocaleString()}</small>
-            {user.role && ['professor', 'admin'].includes(user.role.toLowerCase()) && showDeleteButton && (
+            {userRole && ['professor', 'admin'].includes(userRole.toLowerCase()) && showDeleteButton && (
               <button
                 style={{ marginLeft: 12, color: '#fff', background: '#d32f2f', border: 'none', borderRadius: 4, padding: '2px 10px', fontWeight: 500, cursor: 'pointer' }}
                 onClick={async () => {
                   if(window.confirm('Tem certeza que deseja excluir esta atualização?')) {
-                    await atualizacaoProcessoService.deleteAtualizacao(token, upd.id);
-                    setUpdates(updates.filter(u => u.id !== upd.id));
+                    try {
+                      await atualizacaoProcessoService.deleteAtualizacao(token, upd.id);
+                      
+                      // Atualização automática via React Query
+                      requestCache.clear();
+                      await queryClient.invalidateQueries({ queryKey: ['atualizacoes'] });
+                      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+                      
+                      // Atualizar estado local
+                      setUpdates(updates.filter(u => u.id !== upd.id));
+                    } catch (error) {
+                      console.error('Erro ao excluir atualização:', error);
+                      alert('Erro ao excluir atualização. Tente novamente.');
+                    }
                   }
                 }}
               >Excluir</button>

@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { arquivoService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { getUserRole } from "../../hooks/useApi";
+import { requestCache } from "../../utils/requestCache";
 import DocumentUploadForm from "./DocumentUploadForm";
 
 export default function DocumentList({ processoId, showInactive = false }) {
   const { token, user } = useAuthContext();
+  const queryClient = useQueryClient();
   const [documentos, setDocumentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showUploadForm, setShowUploadForm] = useState(false);
+
+  const userRole = getUserRole(user);
 
   useEffect(() => {
     async function fetchDocumentos() {
@@ -81,6 +87,11 @@ export default function DocumentList({ processoId, showInactive = false }) {
     try {
       const response = await arquivoService.deleteArquivo(token, arquivoId);
       
+      // Atualização automática via React Query
+      requestCache.clear();
+      await queryClient.invalidateQueries({ queryKey: ['arquivos'] });
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      
       // Remover da lista local independentemente se foi soft delete ou delete completo
       setDocumentos(documentos.filter(doc => doc.id !== arquivoId));
       
@@ -100,7 +111,7 @@ export default function DocumentList({ processoId, showInactive = false }) {
 
   return (
     <div>
-      {["admin", "professor", "aluno"].includes((user.role || "").toLowerCase()) && (
+      {["admin", "professor", "aluno"].includes(userRole?.toLowerCase()) && (
         <button 
           onClick={() => setShowUploadForm(v => !v)}
           style={{
@@ -120,7 +131,14 @@ export default function DocumentList({ processoId, showInactive = false }) {
       {showUploadForm && (
         <DocumentUploadForm
           processoId={processoId}
-          onSuccess={() => setShowUploadForm(false)}
+          onSuccess={async () => {
+            setShowUploadForm(false);
+            
+            // Atualização automática via React Query
+            requestCache.clear();
+            await queryClient.invalidateQueries({ queryKey: ['arquivos'] });
+            await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+          }}
           onCancel={() => setShowUploadForm(false)}
         />
       )}
@@ -182,7 +200,7 @@ export default function DocumentList({ processoId, showInactive = false }) {
                     >
                       📥 Baixar
                     </button>
-                    {user.role && ['professor', 'admin'].includes(user.role.toLowerCase()) && (
+                    {userRole && ['professor', 'admin'].includes(userRole.toLowerCase()) && (
                       <button
                         onClick={() => handleDelete(doc.id)}
                         style={{

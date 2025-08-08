@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/apiRequest';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { useQueryClient } from "@tanstack/react-query";
+import { getUserRole } from "../hooks/useApi";
+import { requestCache } from "../utils/requestCache";
 
 const AgendamentoManager = ({ processoId = null }) => {
   const { user, token } = useAuthContext();
+  const queryClient = useQueryClient();
+  const userRole = getUserRole(user);
   const [agendamentos, setAgendamentos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -67,7 +72,7 @@ const AgendamentoManager = ({ processoId = null }) => {
 
   const carregarUsuarios = async () => {
     if (!user || !token) return;
-    if (user.role === 'Aluno') return;
+    if (userRole === 'Aluno') return;
     try {
       const response = await apiRequest('/api/usuarios', {
         method: 'GET',
@@ -114,7 +119,11 @@ const AgendamentoManager = ({ processoId = null }) => {
           method: 'DELETE',
           token: token
         });
-        carregarAgendamentos();
+        
+        // Atualização automática via React Query
+        requestCache.clear();
+        await queryClient.invalidateQueries({ queryKey: ['agendamentos'] });
+        await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       } catch (error) {
         console.error('Erro ao excluir agendamento:', error);
       }
@@ -159,14 +168,14 @@ const AgendamentoManager = ({ processoId = null }) => {
         await apiRequest(`/api/agendamentos/${editando}`, {
           method: 'PUT',
           token: token,
-          data: dadosEnvio
+          body: dadosEnvio
         });
       } else {
         // Criar novo agendamento
         await apiRequest('/api/agendamentos', {
           method: 'POST',
           token: token,
-          data: dadosEnvio
+          body: dadosEnvio
         });
       }
 
@@ -174,7 +183,11 @@ const AgendamentoManager = ({ processoId = null }) => {
       setShowForm(false);
       setEditando(null);
       resetForm();
-      carregarAgendamentos();
+      
+      // Atualização automática via React Query
+      requestCache.clear();
+      await queryClient.invalidateQueries({ queryKey: ['agendamentos'] });
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       
     } catch (error) {
       console.error('Erro ao salvar agendamento:', error);
