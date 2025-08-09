@@ -4,42 +4,6 @@ const jwt = require('jsonwebtoken');
 // Função utilitária para verificar disponibilidade do banco
 const isDbAvailable = () => global.dbAvailable || false;
 
-// Dados mock para desenvolvimento
-const getMockData = () => {
-  try {
-    return require('../utils/mockData');
-  } catch (error) {
-    return {
-      usuarios: [
-        {
-          id: 1,
-          nome: 'Admin Sistema',
-          email: 'admin@teste.com',
-          senha: '$2b$10$8KJvbTZHh4Q6W5k8lB2YEuN8qNGrYwHoF9Z.5J7X6k4B1Q9cD8fC6',
-          role: 'Admin',
-          ativo: true
-        },
-        {
-          id: 2,
-          nome: 'Professor Teste',
-          email: 'professor@teste.com',
-          senha: '$2b$10$8KJvbTZHh4Q6W5k8lB2YEuN8qNGrYwHoF9Z.5J7X6k4B1Q9cD8fC6',
-          role: 'Professor',
-          ativo: true
-        },
-        {
-          id: 3,
-          nome: 'Aluno Teste',
-          email: 'aluno@teste.com',
-          senha: '$2b$10$8KJvbTZHh4Q6W5k8lB2YEuN8qNGrYwHoF9Z.5J7X6k4B1Q9cD8fC6',
-          role: 'Aluno',
-          ativo: true
-        }
-      ]
-    };
-  }
-};
-
 // Login
 exports.login = async (req, res) => {
   try {
@@ -68,11 +32,6 @@ exports.login = async (req, res) => {
     }
     
     if (!usuario) {
-      const mockData = getMockData();
-      usuario = mockData.usuarios.find(u => u.email === email && u.ativo);
-    }
-    
-    if (!usuario) {
       return res.status(401).json({ erro: 'Credenciais inválidas' });
     }
     
@@ -81,7 +40,7 @@ exports.login = async (req, res) => {
     if (isDbAvailable() && usuario.senha && usuario.senha.startsWith('$2b$')) {
       senhaValida = await bcrypt.compare(senha, usuario.senha);
     } else {
-      senhaValida = ['admin123', '123456', 'senha123', 'professor123', 'aluno123'].includes(senha);
+      return res.status(503).json({ erro: 'Banco de dados não disponível' });
     }
     
     if (!senhaValida) {
@@ -188,8 +147,7 @@ exports.perfil = async (req, res) => {
         usuario.role = usuario.role.nome;
       }
     } else {
-      const mockData = getMockData();
-      usuario = mockData.usuarios.find(u => u.id === userId);
+      return res.status(503).json({ erro: 'Banco de dados não disponível' });
     }
     
     if (!usuario) {

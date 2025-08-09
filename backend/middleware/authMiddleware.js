@@ -5,39 +5,6 @@ function isDbAvailable() {
   return global.dbAvailable || false;
 }
 
-// Dados mock para desenvolvimento
-const getMockData = () => {
-  try {
-    return require('../utils/mockData');
-  } catch (error) {
-    return {
-      usuarios: [
-        {
-          id: 1,
-          nome: 'Admin Sistema',
-          email: 'admin@teste.com',
-          role: 'Admin',
-          ativo: true
-        },
-        {
-          id: 2,
-          nome: 'Professor Teste',
-          email: 'professor@teste.com',
-          role: 'Professor',
-          ativo: true
-        },
-        {
-          id: 3,
-          nome: 'Aluno Teste',
-          email: 'aluno@teste.com',
-          role: 'Aluno',
-          ativo: true
-        }
-      ]
-    };
-  }
-};
-
 const authMiddleware = async (req, res, next) => {
   try {
     // Permitir OPTIONS requests
@@ -68,15 +35,10 @@ const authMiddleware = async (req, res, next) => {
           usuario.role = usuario.role.nome;
         }
       } catch (dbError) {
-        console.log('⚠️ Erro no banco, usando mock:', dbError.message);
+        console.log('⚠️ Erro no banco:', dbError.message);
         global.dbAvailable = false;
+        return res.status(503).json({ erro: 'Banco de dados não disponível' });
       }
-    }
-    
-    if (!usuario) {
-      // Usar dados mock
-      const mockData = getMockData();
-      usuario = mockData.usuarios.find(u => u.id === decoded.id && u.ativo);
     }
     
     if (!usuario || !usuario.ativo) {

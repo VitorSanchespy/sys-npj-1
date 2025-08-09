@@ -179,27 +179,40 @@ export function useDashboardData() {
   return useQuery({
     queryKey: ['dashboard', user?.id, getUserRole(user)],
     queryFn: async () => {
-      const userRole = getUserRole(user);  
-      
+      const userRole = getUserRole(user);
       if (!token || !userRole) {
         throw new Error(`Token ou usuário não disponível`);
       }
-      
+
+      // Para Admin, buscar estatísticas reais do backend
+      if (userRole === "Admin") {
+        const stats = await apiRequest('/api/dashboard/stats', { token });
+        // Estrutura compatível com DashboardSummary
+        return {
+          totalProcessos: stats.totalProcessos,
+          processosAtivos: stats.processosAtivos,
+          processosPorStatus: stats.processosPorStatus,
+          totalUsuarios: stats.totalUsuarios,
+          usuariosAtivos: stats.usuariosAtivos,
+          usuariosPorTipo: stats.usuariosPorTipo,
+          processos: [],
+          processosRecentes: [],
+          agendamentos: [],
+          usuarios: []
+        };
+      }
+
+      // Para outros perfis, manter lógica anterior
       try {
-        // Usar cache para requisições simultâneas
         const requests = [
           { key: 'processos', url: '/api/processos?recent=true&limit=4' },
           { key: 'agendamentos', url: '/api/agendamentos' }
         ];
-
-        // Adicionar requisições específicas para Admin/Professor
-        if (userRole === "Admin" || userRole === "Professor") {
+        if (userRole === "Professor") {
           requests.push({ key: 'usuarios', url: '/api/usuarios' });
         }
-
-        // Executar todas as requisições com cache
         const results = await Promise.allSettled(
-          requests.map(({ key, url }) => 
+          requests.map(({ key, url }) =>
             requestCache.getOrFetch(
               `${url}:${token}`,
               () => apiRequest(url, { token })
@@ -209,15 +222,11 @@ export function useDashboardData() {
             })
           )
         );
-
-        // Processar resultados
         const data = requests.reduce((acc, { key }, index) => {
           const result = results[index];
           acc[key] = result.status === 'fulfilled' ? result.value : getDefaultValue(key);
           return acc;
         }, {});
-
-        // Garantir que processos é sempre um array
         let processos = [];
         if (data.processos) {
           if (Array.isArray(data.processos)) {
@@ -226,47 +235,26 @@ export function useDashboardData() {
             processos = data.processos.processos;
           }
         }
-
-        // Estruturar dados do dashboard
         const dashboardData = {
           processos: processos,
-          processosRecentes: processos.slice(0, 4), // Agora garantimos que é array
+          processosRecentes: processos.slice(0, 4),
           agendamentos: Array.isArray(data.agendamentos) ? data.agendamentos : [],
           usuarios: Array.isArray(data.usuarios) ? data.usuarios : []
         };
-
-        // Calcular estatísticas baseadas nos dados disponíveis
         const statusCounts = dashboardData.processos.reduce((acc, proc) => {
           const status = proc.status || 'Indefinido';
           acc[status] = (acc[status] || 0) + 1;
           return acc;
         }, {});
-
         dashboardData.statusCounts = statusCounts;
         dashboardData.totalProcessos = dashboardData.processos.length;
         dashboardData.processosAtivos = dashboardData.processos.filter(p => p.status !== 'arquivado').length;
-        
         dashboardData.processosPorStatus = {
           ativo: statusCounts.ativo || 0,
           em_andamento: statusCounts.em_andamento || 0,
           finalizado: statusCounts.finalizado || 0,
           arquivado: statusCounts.arquivado || 0
         };
-
-        if (userRole === "Admin") {
-          dashboardData.totalUsuarios = data.usuarios?.length || 0;
-          dashboardData.usuariosAtivos = data.usuarios?.filter(u => u.ativo)?.length || 0;
-          
-          // Calcular usuários por tipo
-          const usuariosPorTipo = data.usuarios?.reduce((acc, user) => {
-            const role = getUserRole(user) || 'Outros';
-            acc[role] = (acc[role] || 0) + 1;
-            return acc;
-          }, {}) || {};
-          
-          dashboardData.usuariosPorTipo = usuariosPorTipo;
-        }
-
         return dashboardData;
       } catch (error) {
         console.error('Erro na busca do dashboard:', error);
@@ -274,20 +262,9 @@ export function useDashboardData() {
       }
     },
     enabled: !!(token && user),
-    staleTime: 30 * 1000, // 30 segundos
-    gcTime: 5 * 60 * 1000, // 5 minutos
-    retry: 2
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
   });
-}
-
-// Função helper para valores padrão
-function getDefaultValue(key) {
-  const defaults = {
-    processos: [],
-    agendamentos: [],
-    usuarios: []
-  };
-  return defaults[key] || null;
 }
 
 // ===== HOOKS PARA USUÁRIOS =====
@@ -444,12 +421,45 @@ export function useUpdateProcesso() {
   });
 }
 
+// ===== FUNÇÕES UTILITÁRIAS =====
+
+// Função para baixar relatório em PDF
+export const downloadRelatorio = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Token não encontrado');
+
+    const response = await fetch('/api/dashboard/relatorio', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) throw new Error('Erro ao baixar relatório');
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = `relatorio-npj-${new Date().toISOString().split('T')[0]}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch (error) {
+    console.error('Erro ao baixar relatório:', error);
+    throw error;
+  }
+};
+
 // ===== HOOK GENÉRICO (para compatibilidade) =====
 
 export default function useApi() {
   // Retorna funções úteis para componentes legados
   return {
     getUserRole,
+    downloadRelatorio,
     // Adicionar outras funções conforme necessário
   };
 }

@@ -145,13 +145,6 @@ node test_system.js
 - ✅ **Dashboard**: Visão geral e estatísticas
 - ✅ **Responsividade**: Interface otimizada para mobile
 
-## 📊 Documentação Completa
-
-- **`EXECUTIVE_ROADMAP.md`** - Roadmap estratégico do projeto
-- **`PROJECT_ANALYSIS_COMPLETE.md`** - Análise técnica completa
-- **`TECHNICAL_ISSUES_DETAILED.md`** - Issues e melhorias identificadas
-- **`RESTAURACAO_COMPLETA.md`** - Guia de restauração e uso
-
 ## 🔧 Desenvolvimento Local (Opcional)
 ### Git:
 ```powershell

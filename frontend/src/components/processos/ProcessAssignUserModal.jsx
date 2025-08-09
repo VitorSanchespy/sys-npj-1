@@ -41,8 +41,8 @@ export default function ProcessAssignUserModal({ processoId, onClose, onAssigned
       const usuarioId = Number(selected);
       const usuarioObj = usuarios.find(u => u.id === usuarioId);
       
-      // Mapear role_id para nome da role aceito pelo backend
-      const roleMap = { 2: 'Aluno', 3: 'Professor' };
+      // Mapear role_id para nome da role aceito pelo backend (corrigido)
+      const roleMap = { 3: 'Aluno', 2: 'Professor', 1: 'Admin' };
       const role = roleMap[usuarioObj.role_id];
       
       if (!usuarioObj || !usuarioObj.role_id || !role) {

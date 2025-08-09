@@ -1,6 +1,7 @@
-import React from "react";
-import useApi from '../../hooks/useApi.jsx';
+import React, { useState } from "react";
+import useApi, { downloadRelatorio } from '../../hooks/useApi.jsx';
 import Button from "@/components/common/Button";
+import { useNavigate } from 'react-router-dom';
 const { getUserRole } = useApi();
 
 // Helper function to safely render values that might be objects
@@ -407,17 +408,33 @@ function ProfessoresDashboard({ dashboardData, user }) {
 
 // Dashboard específico para Administradores
 function AdminsDashboard({ dashboardData }) {
+  const navigate = useNavigate();
+  const [isDownloading, setIsDownloading] = useState(false);
+  
   const totalProcessos = dashboardData?.totalProcessos || 0;
   const totalUsuarios = dashboardData?.totalUsuarios || 0;
   const processosAtivos = dashboardData?.processosAtivos || 0;
   const usuariosAtivos = dashboardData?.usuariosAtivos || 0;
+  
+  // Função para baixar relatório
+  const handleDownloadRelatorio = async () => {
+    setIsDownloading(true);
+    try {
+      await downloadRelatorio();
+    } catch (error) {
+      alert('Erro ao baixar relatório. Tente novamente.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   
   // Dados para gráficos
   const statusData = [
     { label: "Em Andamento", value: dashboardData?.processosPorStatus?.em_andamento || 0 },
     { label: "Aguardando", value: dashboardData?.processosPorStatus?.aguardando || 0 },
     { label: "Finalizados", value: dashboardData?.processosPorStatus?.finalizado || 0 },
-    { label: "Arquivados", value: dashboardData?.processosPorStatus?.arquivado || 0 }
+    { label: "Arquivados", value: dashboardData?.processosPorStatus?.arquivado || 0 },
+    { label: "Outros", value: dashboardData?.processosPorStatus?.outros || 0 }
   ];
 
   const usuariosPorTipo = [
@@ -486,13 +503,24 @@ function AdminsDashboard({ dashboardData }) {
       {/* Ações Administrativas */}
       <Card title="Ações Administrativas" color="#20c997">
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <Button variant="primary">
-            Relatório Completo
+          <Button 
+            variant="primary"
+            onClick={handleDownloadRelatorio}
+            disabled={isDownloading}
+          >
+            {isDownloading ? "Gerando..." : "Relatório Completo"}
           </Button>
-          <Button variant="success">
+          <Button 
+            variant="success"
+            onClick={() => navigate('/usuarios')}
+          >
             Gerenciar Usuários
           </Button>
-          <Button variant="secondary" style={{ backgroundColor: "#ffc107", color: "#212529" }}>
+          <Button 
+            variant="secondary" 
+            style={{ backgroundColor: "#ffc107", color: "#212529" }}
+            onClick={() => navigate('/processos')}
+          >
             Gerenciar Processos
           </Button>
         </div>

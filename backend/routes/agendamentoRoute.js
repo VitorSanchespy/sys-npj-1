@@ -11,8 +11,10 @@ router.get('/', agendamentoController.listarAgendamentos);
 router.post('/', agendamentoController.criarAgendamento);
 router.get('/usuario', agendamentoController.listarAgendamentosUsuario);
 router.get('/periodo', agendamentoController.listarAgendamentosPeriodo);
+router.get('/estatisticas', agendamentoController.obterEstatisticas);
 router.get('/:id', agendamentoController.obterAgendamento);
 router.put('/:id', agendamentoController.atualizarAgendamento);
 router.delete('/:id', agendamentoController.deletarAgendamento);
+router.post('/:id/sincronizar-google', agendamentoController.sincronizarGoogleCalendar);
 
 module.exports = router;

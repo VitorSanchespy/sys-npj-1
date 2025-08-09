@@ -5,24 +5,6 @@ function isDbAvailable() {
   return global.dbAvailable || false;
 }
 
-// Dados mock
-const getMockData = () => {
-  return {
-    status: [
-      { id: 1, nome: 'Ativo', descricao: 'Status ativo' },
-      { id: 2, nome: 'Inativo', descricao: 'Status inativo' },
-      { id: 3, nome: 'Pendente', descricao: 'Status pendente' },
-      { id: 4, nome: 'Concluído', descricao: 'Status concluído' }
-    ],
-    tiposAcao: [
-      { id: 1, nome: 'Criar', descricao: 'Ação de criação' },
-      { id: 2, nome: 'Editar', descricao: 'Ação de edição' },
-      { id: 3, nome: 'Excluir', descricao: 'Ação de exclusão' },
-      { id: 4, nome: 'Visualizar', descricao: 'Ação de visualização' }
-    ]
-  };
-};
-
 const { 
   roleModel: Role,
   materiaAssuntoModel: MateriaAssunto,
@@ -263,8 +245,19 @@ exports.criarDiligencia = async (req, res) => {
 // Listar status
 exports.listarStatus = async (req, res) => {
   try {
-    const mockData = getMockData();
-    res.json(mockData.status);
+    if (!isDbAvailable()) {
+      return res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
+
+    // Retornar status padrão do sistema
+    const statusPadrao = [
+      { id: 1, nome: 'Ativo', descricao: 'Registro ativo no sistema' },
+      { id: 2, nome: 'Inativo', descricao: 'Registro inativo no sistema' },
+      { id: 3, nome: 'Pendente', descricao: 'Aguardando análise' },
+      { id: 4, nome: 'Concluído', descricao: 'Processo finalizado' }
+    ];
+    
+    res.json(statusPadrao);
   } catch (error) {
     console.error('Erro ao listar status:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
@@ -274,8 +267,19 @@ exports.listarStatus = async (req, res) => {
 // Listar tipos de ação
 exports.listarTiposAcao = async (req, res) => {
   try {
-    const mockData = getMockData();
-    res.json(mockData.tiposAcao);
+    if (!isDbAvailable()) {
+      return res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
+
+    // Retornar tipos de ação padrão do sistema
+    const tiposAcaoPadrao = [
+      { id: 1, nome: 'Criar', descricao: 'Criar novo registro' },
+      { id: 2, nome: 'Editar', descricao: 'Editar registro existente' },
+      { id: 3, nome: 'Excluir', descricao: 'Excluir registro' },
+      { id: 4, nome: 'Visualizar', descricao: 'Visualizar detalhes' }
+    ];
+    
+    res.json(tiposAcaoPadrao);
   } catch (error) {
     console.error('Erro ao listar tipos de ação:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });

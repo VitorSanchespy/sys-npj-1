@@ -256,10 +256,11 @@ exports.buscarUsuariosParaVinculacao = async (req, res) => {
       return res.json([]);
     }
     
+    // Permitir Admin (1), Professor (2) e Aluno (3) na busca
     const usuarios = await Usuario.findAll({
       where: {
         ativo: true,
-        role_id: [2, 3], // Apenas alunos (2) e professores (3)
+        role_id: [1, 2, 3], // Admin (1), Professor (2), Aluno (3)
         [require('sequelize').Op.or]: [
           { nome: { [require('sequelize').Op.like]: `%${search}%` } },
           { email: { [require('sequelize').Op.like]: `%${search}%` } }

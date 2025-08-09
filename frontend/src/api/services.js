@@ -288,6 +288,22 @@ export const agendamentoService = {
       method: 'DELETE',
       token
     });
+  },
+
+  // GET /api/agendamentos/estatisticas
+  getEstatisticas: async (token) => {
+    return await apiRequest('/api/agendamentos/estatisticas', {
+      method: 'GET',
+      token
+    });
+  },
+
+  // POST /api/agendamentos/:id/sincronizar-google
+  sincronizarGoogleCalendar: async (token, id) => {
+    return await apiRequest(`/api/agendamentos/${id}/sincronizar-google`, {
+      method: 'POST',
+      token
+    });
   }
 };
 

@@ -522,52 +522,61 @@ exports.vincularUsuario = async (req, res) => {
     if (!usuario_id) {
       return res.status(400).json({ erro: 'ID do usuário é obrigatório' });
     }
-    
+
     if (isDbAvailable()) {
       const { 
         usuarioProcessoModel: UsuarioProcesso,
         usuarioModel: Usuario,
         processoModel: Processo,
-        atualizacaoProcessoModel: AtualizacaoProcesso
+        atualizacaoProcessoModel: AtualizacaoProcesso,
+        roleModel: Role
       } = require('../models/indexModel');
-      
+
+      // Buscar usuário logado e verificar permissão
+      const usuarioLogadoObj = await Usuario.findByPk(usuarioLogado, { include: [{ model: Role, as: 'role' }] });
+      if (!usuarioLogadoObj || !usuarioLogadoObj.role) {
+        return res.status(403).json({ erro: 'Permissão negada: usuário sem role definida' });
+      }
+      const roleNome = usuarioLogadoObj.role.nome;
+      if (roleNome !== 'Admin' && roleNome !== 'Professor') {
+        return res.status(403).json({ erro: 'Apenas usuários com perfil Professor ou Admin podem vincular usuários a processos.' });
+      }
+
       // Verificar se processo existe
       const processo = await Processo.findByPk(id);
       if (!processo) {
         return res.status(404).json({ erro: 'Processo não encontrado' });
       }
-      
+
       // Verificar se usuário existe
       const usuario = await Usuario.findByPk(usuario_id);
       if (!usuario) {
         return res.status(404).json({ erro: 'Usuário não encontrado' });
       }
-      
+
       // Verificar se já está vinculado
       const vinculoExistente = await UsuarioProcesso.findOne({
         where: { usuario_id, processo_id: id }
       });
-      
+
       if (vinculoExistente) {
         return res.status(400).json({ erro: 'Usuário já está vinculado a este processo' });
       }
-      
+
       // Criar vinculação
       await UsuarioProcesso.create({
         usuario_id,
         processo_id: id
       });
-      
-      // Buscar usuário que fez a alteração
-      const usuarioAlteracao = await Usuario.findByPk(usuarioLogado);
+
       // Registrar no histórico
       await AtualizacaoProcesso.create({
         usuario_id: usuarioLogado,
         processo_id: id,
         tipo_atualizacao: 'Vinculação de Usuário',
-        descricao: `Usuário "${usuario.nome}" (${usuario.email}) foi vinculado ao processo\nPor: ${usuarioAlteracao ? usuarioAlteracao.nome : 'Desconhecido'} (${usuarioAlteracao ? usuarioAlteracao.email : ''})`
+        descricao: `Usuário "${usuario.nome}" (${usuario.email}) foi vinculado ao processo\nPor: ${usuarioLogadoObj.nome} (${usuarioLogadoObj.email})`
       });
-      
+
       res.status(201).json({ mensagem: 'Usuário vinculado ao processo com sucesso' });
     } else {
       res.status(503).json({ erro: 'Banco de dados não disponível' });
@@ -704,8 +713,19 @@ exports.desvincularUsuario = async (req, res) => {
       const { 
         usuarioProcessoModel: UsuarioProcesso,
         usuarioModel: Usuario,
-        atualizacaoProcessoModel: AtualizacaoProcesso
+        atualizacaoProcessoModel: AtualizacaoProcesso,
+        roleModel: Role
       } = require('../models/indexModel');
+
+      // Buscar usuário logado e verificar permissão
+      const usuarioLogadoObj = await Usuario.findByPk(usuarioLogado, { include: [{ model: Role, as: 'role' }] });
+      if (!usuarioLogadoObj || !usuarioLogadoObj.role) {
+        return res.status(403).json({ erro: 'Permissão negada: usuário sem role definida' });
+      }
+      const roleNome = usuarioLogadoObj.role.nome;
+      if (roleNome !== 'Admin' && roleNome !== 'Professor') {
+        return res.status(403).json({ erro: 'Apenas usuários com perfil Professor ou Admin podem desvincular usuários de processos.' });
+      }
       
       // Buscar usuário para obter informações antes de desvincular
       const usuario = await Usuario.findByPk(usuario_id);

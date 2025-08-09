@@ -226,6 +226,32 @@ exports.atualizarAgendamento = async (req, res) => {
     
     await agendamento.update(dadosAtualizacao);
     
+    // Tentar atualizar no Google Calendar se existe googleEventId
+    if (agendamento.googleEventId) {
+      try {
+        const usuario = await Usuario.findByPk(agendamento.criado_por);
+        if (usuario && usuario.googleCalendarConnected) {
+          const tokens = {
+            access_token: usuario.googleAccessToken,
+            refresh_token: usuario.googleRefreshToken
+          };
+
+          const eventData = {
+            titulo: agendamento.titulo,
+            descricao: agendamento.descricao,
+            dataInicio: agendamento.data_evento.toISOString(),
+            dataFim: new Date(new Date(agendamento.data_evento).getTime() + 60 * 60 * 1000).toISOString()
+          };
+
+          await googleCalendarService.updateEvent(tokens, agendamento.googleEventId, eventData);
+          console.log('✅ Evento atualizado no Google Calendar');
+        }
+      } catch (googleError) {
+        console.log('⚠️ Erro ao atualizar no Google Calendar:', googleError.message);
+        // Não falhamos a operação, apenas logamos
+      }
+    }
+    
     // Buscar o agendamento atualizado com as associações (com fallback)
     try {
       const agendamentoAtualizado = await Agendamento.findByPk(id, {
@@ -281,12 +307,31 @@ exports.deletarAgendamento = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const { agendamentoModel: Agendamento } = require('../models/indexModel');
+    const { agendamentoModel: Agendamento, usuarioModel: Usuario } = require('../models/indexModel');
     
     const agendamento = await Agendamento.findByPk(id);
     
     if (!agendamento) {
       return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    }
+    
+    // Tentar remover do Google Calendar se existe googleEventId
+    if (agendamento.googleEventId) {
+      try {
+        const usuario = await Usuario.findByPk(agendamento.criado_por);
+        if (usuario && usuario.googleCalendarConnected) {
+          const tokens = {
+            access_token: usuario.googleAccessToken,
+            refresh_token: usuario.googleRefreshToken
+          };
+
+          await googleCalendarService.deleteEvent(tokens, agendamento.googleEventId);
+          console.log('✅ Evento removido do Google Calendar');
+        }
+      } catch (googleError) {
+        console.log('⚠️ Erro ao remover do Google Calendar:', googleError.message);
+        // Não falhamos a operação, apenas logamos
+      }
     }
     
     await agendamento.destroy();
@@ -354,6 +399,145 @@ exports.listarAgendamentosPeriodo = async (req, res) => {
     
   } catch (error) {
     console.error('Erro ao listar agendamentos por período:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Sincronizar agendamento com Google Calendar
+exports.sincronizarGoogleCalendar = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { agendamentoModel: Agendamento, usuarioModel: Usuario } = require('../models/indexModel');
+    
+    const agendamento = await Agendamento.findByPk(id);
+    
+    if (!agendamento) {
+      return res.status(404).json({ erro: 'Agendamento não encontrado' });
+    }
+    
+    const usuario = await Usuario.findByPk(req.user.id);
+    if (!usuario.googleCalendarConnected) {
+      return res.status(400).json({ erro: 'Google Calendar não conectado' });
+    }
+    
+    try {
+      const tokens = {
+        access_token: usuario.googleAccessToken,
+        refresh_token: usuario.googleRefreshToken
+      };
+
+      const eventData = {
+        titulo: agendamento.titulo,
+        descricao: agendamento.descricao,
+        dataInicio: agendamento.data_evento.toISOString(),
+        dataFim: new Date(new Date(agendamento.data_evento).getTime() + 60 * 60 * 1000).toISOString()
+      };
+
+      let googleEvent;
+      if (agendamento.googleEventId) {
+        // Atualizar evento existente
+        googleEvent = await googleCalendarService.updateEvent(tokens, agendamento.googleEventId, eventData);
+      } else {
+        // Criar novo evento
+        googleEvent = await googleCalendarService.createEvent(tokens, eventData);
+        await agendamento.update({ googleEventId: googleEvent.id });
+      }
+      
+      res.json({ 
+        mensagem: 'Agendamento sincronizado com Google Calendar',
+        googleEventId: googleEvent.id
+      });
+      
+    } catch (googleError) {
+      console.error('Erro ao sincronizar com Google Calendar:', googleError);
+      res.status(500).json({ erro: 'Erro ao sincronizar com Google Calendar', detalhes: googleError.message });
+    }
+    
+  } catch (error) {
+    console.error('Erro ao sincronizar agendamento:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Obter estatísticas de agendamentos
+exports.obterEstatisticas = async (req, res) => {
+  try {
+    const { agendamentoModel: Agendamento } = require('../models/indexModel');
+    const { Op } = require('sequelize');
+    
+    const userId = req.user.id;
+    const userRole = req.user.role?.nome || req.user.role;
+    
+    // Base query - Admin vê todos, outros apenas os seus
+    const whereClause = userRole === 'Admin' ? {} : { 
+      [Op.or]: [
+        { usuario_id: userId },
+        { criado_por: userId }
+      ]
+    };
+    
+    const total = await Agendamento.count({ where: whereClause });
+    
+    const porStatus = await Agendamento.findAll({
+      where: whereClause,
+      attributes: [
+        'status',
+        [require('sequelize').fn('COUNT', require('sequelize').col('status')), 'count']
+      ],
+      group: ['status']
+    });
+    
+    const porTipo = await Agendamento.findAll({
+      where: whereClause,
+      attributes: [
+        'tipo_evento',
+        [require('sequelize').fn('COUNT', require('sequelize').col('tipo_evento')), 'count']
+      ],
+      group: ['tipo_evento']
+    });
+    
+    // Próximos agendamentos (próximos 7 dias)
+    const hoje = new Date();
+    const proximaSemana = new Date();
+    proximaSemana.setDate(hoje.getDate() + 7);
+    
+    const proximosAgendamentos = await Agendamento.count({
+      where: {
+        ...whereClause,
+        data_evento: {
+          [Op.between]: [hoje, proximaSemana]
+        },
+        status: 'agendado'
+      }
+    });
+    
+    // Agendamentos vencidos (não realizados)
+    const vencidos = await Agendamento.count({
+      where: {
+        ...whereClause,
+        data_evento: {
+          [Op.lt]: hoje
+        },
+        status: 'agendado'
+      }
+    });
+    
+    res.json({
+      total,
+      proximosAgendamentos,
+      vencidos,
+      porStatus: porStatus.reduce((acc, item) => {
+        acc[item.status] = parseInt(item.get('count'));
+        return acc;
+      }, {}),
+      porTipo: porTipo.reduce((acc, item) => {
+        acc[item.tipo_evento] = parseInt(item.get('count'));
+        return acc;
+      }, {})
+    });
+    
+  } catch (error) {
+    console.error('Erro ao obter estatísticas:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };

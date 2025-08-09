@@ -92,6 +92,44 @@ class GoogleCalendarService {
     }
   }
 
+  // Atualizar evento
+  async updateEvent(tokens, eventId, eventData) {
+    try {
+      this.oauth2Client.setCredentials(tokens);
+      const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
+
+      const event = {
+        summary: eventData.titulo,
+        description: eventData.descricao,
+        start: {
+          dateTime: eventData.dataInicio,
+          timeZone: 'America/Sao_Paulo',
+        },
+        end: {
+          dateTime: eventData.dataFim,
+          timeZone: 'America/Sao_Paulo',
+        },
+        reminders: {
+          useDefault: false,
+          overrides: [
+            { method: 'email', minutes: 24 * 60 }, // 1 dia antes
+            { method: 'popup', minutes: 60 }, // 1 hora antes
+          ],
+        },
+      };
+
+      const response = await calendar.events.update({
+        calendarId: 'primary',
+        eventId: eventId,
+        resource: event,
+      });
+
+      return response.data;
+    } catch (error) {
+      throw new Error('Erro ao atualizar evento: ' + error.message);
+    }
+  }
+
   // Deletar evento
   async deleteEvent(tokens, eventId) {
     try {

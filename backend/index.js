@@ -48,6 +48,7 @@ app.use('/api/notificacoes', require('./routes/notificacaoRoute'));
 app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoute'));
 app.use('/api/tabelas', require('./routes/tabelaAuxiliarRoute'));
 app.use('/api/arquivos', require('./routes/arquivoRoute'));
+app.use('/api/dashboard', require('./routes/dashboardRoute'));
 app.use('/api/google-calendar', require('./routes/googleCalendarRoute'));
 
 // Rotas de compatibilidade (sem /api)

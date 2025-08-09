@@ -5,66 +5,28 @@ function isDbAvailable() {
   return global.dbAvailable || false;
 }
 
-// Dados mock para desenvolvimento
-const getMockData = () => {
-  try {
-    return require('../utils/mockData');
-  } catch (error) {
-    return {
-      atualizacoes: [
-        {
-          id: 1,
-          titulo: 'Processo em Andamento',
-          descricao: 'Processo iniciado e documentos enviados para análise',
-          status_anterior: 'Aguardando',
-          status_novo: 'Em Andamento',
-          idprocesso: 1,
-          idusuario: 1,
-          data_atualizacao: new Date().toISOString()
-        },
-        {
-          id: 2,
-          titulo: 'Documentos Anexados',
-          descricao: 'Novos documentos foram anexados ao processo',
-          status_anterior: 'Em Andamento',
-          status_novo: 'Em Andamento',
-          idprocesso: 1,
-          idusuario: 2,
-          data_atualizacao: new Date().toISOString()
-        }
-      ]
-    };
-  }
-};
-
 // Listar atualizações
 exports.listarAtualizacoes = async (req, res) => {
   try {
+    if (!isDbAvailable()) {
+      return res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
+
     const { idprocesso, processo_id } = req.query;
     // Aceitar tanto idprocesso quanto processo_id para compatibilidade
     const processoIdFilter = idprocesso || processo_id;
-    let atualizacoes = [];
     
-    if (isDbAvailable()) {
-      const { atualizacaoProcessoModel: Atualizacao, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
-      const where = processoIdFilter ? { processo_id: processoIdFilter } : {};
-      
-      atualizacoes = await Atualizacao.findAll({
-        where,
-        include: [
-          { model: Usuario, as: 'usuario' },
-          { model: Processo, as: 'processo' }
-        ],
-        order: [['data_atualizacao', 'DESC']]
-      });
-    } else {
-      const mockData = getMockData();
-      atualizacoes = mockData.atualizacoes;
-      
-      if (processoIdFilter) {
-        atualizacoes = atualizacoes.filter(a => a.idprocesso == processoIdFilter || a.processo_id == processoIdFilter);
-      }
-    }
+    const { atualizacaoProcessoModel: Atualizacao, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
+    const where = processoIdFilter ? { processo_id: processoIdFilter } : {};
+    
+    const atualizacoes = await Atualizacao.findAll({
+      where,
+      include: [
+        { model: Usuario, as: 'usuario' },
+        { model: Processo, as: 'processo' }
+      ],
+      order: [['data_atualizacao', 'DESC']]
+    });
     
     res.json(atualizacoes);
     
@@ -77,21 +39,19 @@ exports.listarAtualizacoes = async (req, res) => {
 // Obter atualização por ID
 exports.obterAtualizacao = async (req, res) => {
   try {
-    const { id } = req.params;
-    let atualizacao = null;
-    
-    if (isDbAvailable()) {
-      const { atualizacaoProcessoModel: Atualizacao, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
-      atualizacao = await Atualizacao.findByPk(id, {
-        include: [
-          { model: Usuario, as: 'usuario' },
-          { model: Processo, as: 'processo' }
-        ]
-      });
-    } else {
-      const mockData = getMockData();
-      atualizacao = mockData.atualizacoes.find(a => a.id == id);
+    if (!isDbAvailable()) {
+      return res.status(503).json({ erro: 'Banco de dados não disponível' });
     }
+
+    const { id } = req.params;
+    
+    const { atualizacaoProcessoModel: Atualizacao, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
+    const atualizacao = await Atualizacao.findByPk(id, {
+      include: [
+        { model: Usuario, as: 'usuario' },
+        { model: Processo, as: 'processo' }
+      ]
+    });
     
     if (!atualizacao) {
       return res.status(404).json({ erro: 'Atualização não encontrada' });

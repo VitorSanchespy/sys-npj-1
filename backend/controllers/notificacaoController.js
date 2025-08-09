@@ -49,6 +49,10 @@ exports.listarNotificacoesUsuario = async (req, res) => {
 // Obter notificação por ID
 exports.obterNotificacao = async (req, res) => {
   try {
+    if (!isDbAvailable()) {
+      return res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
+
     const { id } = req.params;
     const { notificacaoModel: Notificacao, usuarioModel: Usuario } = require('../models/indexModel');
     const notificacao = await Notificacao.findByPk(id, {
@@ -142,6 +146,10 @@ exports.marcarComoLida = async (req, res) => {
 // Marcar todas as notificações do usuário como lidas
 exports.marcarTodasComoLidas = async (req, res) => {
   try {
+    if (!isDbAvailable()) {
+      return res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
+
     const userId = req.user.id;
     const { notificacaoModel: Notificacao } = require('../models/indexModel');
     await Notificacao.update(
@@ -166,6 +174,10 @@ exports.marcarTodasComoLidas = async (req, res) => {
 // Deletar notificação
 exports.deletarNotificacao = async (req, res) => {
   try {
+    if (!isDbAvailable()) {
+      return res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
+
     const { id } = req.params;
     const { notificacaoModel: Notificacao } = require('../models/indexModel');
     const notificacao = await Notificacao.findByPk(id);
@@ -205,6 +217,10 @@ exports.contarNaoLidas = async (req, res) => {
 // Obter configurações de notificação do usuário logado
 exports.obterConfiguracoesNotificacao = async (req, res) => {
   try {
+    if (!isDbAvailable()) {
+      return res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
+
     const userId = req.user.id;
     const { configuracaoNotificacaoModel: ConfiguracaoNotificacao } = require('../models/indexModel');
     let configuracao = await ConfiguracaoNotificacao.findOne({ where: { usuario_id: userId } });
@@ -224,6 +240,10 @@ exports.obterConfiguracoesNotificacao = async (req, res) => {
 // Atualizar configurações de notificação do usuário logado
 exports.atualizarConfiguracoesNotificacao = async (req, res) => {
   try {
+    if (!isDbAvailable()) {
+      return res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
+
     const userId = req.user.id;
     const { configuracaoNotificacaoModel: ConfiguracaoNotificacao } = require('../models/indexModel');
     let configuracao = await ConfiguracaoNotificacao.findOne({ where: { usuario_id: userId } });

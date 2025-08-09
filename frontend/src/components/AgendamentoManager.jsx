@@ -1,20 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { apiRequest } from '../api/apiRequest';
 import { useAuthContext } from '@/contexts/AuthContext';
-import { useQueryClient } from "@tanstack/react-query";
 import { getUserRole } from "../hooks/useApi";
-import { requestCache } from "../utils/requestCache";
 import GoogleCalendarConnect from './GoogleCalendarConnect';
+import { 
+  useAgendamentos, 
+  useCreateAgendamento, 
+  useUpdateAgendamento, 
+  useDeleteAgendamento,
+  useSincronizarGoogleCalendar,
+  useEstatisticasAgendamentos
+} from '../hooks/useAgendamentos';
+import { apiRequest } from '../api/apiRequest';
 
 const AgendamentoManager = ({ processoId = null }) => {
   const { user, token } = useAuthContext();
-  const queryClient = useQueryClient();
   const userRole = getUserRole(user);
-  const [agendamentos, setAgendamentos] = useState([]);
-  const [loading, setLoading] = useState(false);
+  
+  // Usar os novos hooks
+  const { data: agendamentos = [], isLoading: loading, error: queryError, refetch } = useAgendamentos();
+  const { data: estatisticas } = useEstatisticasAgendamentos();
+  const createAgendamento = useCreateAgendamento();
+  const updateAgendamento = useUpdateAgendamento();
+  const deleteAgendamento = useDeleteAgendamento();
+  const sincronizarGoogle = useSincronizarGoogleCalendar();
+  
   const [showForm, setShowForm] = useState(false);
   const [editando, setEditando] = useState(null);
   const [error, setError] = useState(null);
+  const [showStats, setShowStats] = useState(false);
   const [filtros, setFiltros] = useState({
     tipo_evento: '',
     status: '',
@@ -63,13 +76,17 @@ const AgendamentoManager = ({ processoId = null }) => {
   ];
 
   useEffect(() => {
-    carregarAgendamentos();
     carregarUsuarios();
-  }, [processoId, user, token]);
+  }, [user, token]);
 
+  // Atualizar erro quando houver erro da query
   useEffect(() => {
-    carregarAgendamentos();
-  }, [filtros]);
+    if (queryError) {
+      setError(queryError.message || 'Erro ao carregar agendamentos');
+    } else {
+      setError(null);
+    }
+  }, [queryError]);
 
   const carregarUsuarios = async () => {
     if (!user || !token) return;
@@ -86,20 +103,14 @@ const AgendamentoManager = ({ processoId = null }) => {
     }
   };
 
-  const carregarAgendamentos = async () => {
-    if (!user || !token) return;
-    setLoading(true);
-    setError(null);
+  const handleSincronizarGoogle = async (agendamentoId) => {
     try {
-      const response = await apiRequest('/api/agendamentos', {
-        method: 'GET',
-        token: token
-      });
-      setAgendamentos(Array.isArray(response) ? response : (response.data || []));
+      await sincronizarGoogle.mutateAsync(agendamentoId);
+      setError(null);
+      // Mostrar mensagem de sucesso
+      alert('Agendamento sincronizado com Google Calendar!');
     } catch (error) {
-      setError('Erro ao carregar agendamentos');
-    } finally {
-      setLoading(false);
+      setError('Erro ao sincronizar com Google Calendar: ' + error.message);
     }
   };
 
@@ -116,17 +127,10 @@ const AgendamentoManager = ({ processoId = null }) => {
     if (!user || !token) return;
     if (window.confirm('Tem certeza que deseja excluir este agendamento?')) {
       try {
-        await apiRequest(`/api/agendamentos/${id}`, { 
-          method: 'DELETE',
-          token: token
-        });
-        
-        // Atualização automática via React Query
-        requestCache.clear();
-        await queryClient.invalidateQueries({ queryKey: ['agendamentos'] });
-        await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        await deleteAgendamento.mutateAsync(id);
+        setError(null);
       } catch (error) {
-        console.error('Erro ao excluir agendamento:', error);
+        setError('Erro ao excluir agendamento: ' + error.message);
       }
     }
   };
@@ -152,7 +156,6 @@ const AgendamentoManager = ({ processoId = null }) => {
     if (!user || !token) return;
     
     try {
-      setLoading(true);
       setError(null);
 
       const dadosEnvio = {
@@ -166,35 +169,20 @@ const AgendamentoManager = ({ processoId = null }) => {
 
       if (editando) {
         // Editar agendamento existente
-        await apiRequest(`/api/agendamentos/${editando}`, {
-          method: 'PUT',
-          token: token,
-          body: dadosEnvio
-        });
+        await updateAgendamento.mutateAsync({ id: editando, agendamentoData: dadosEnvio });
       } else {
         // Criar novo agendamento
-        await apiRequest('/api/agendamentos', {
-          method: 'POST',
-          token: token,
-          body: dadosEnvio
-        });
+        await createAgendamento.mutateAsync(dadosEnvio);
       }
 
-      // Fechar o modal e recarregar a lista
+      // Fechar o modal e resetar form
       setShowForm(false);
       setEditando(null);
       resetForm();
       
-      // Atualização automática via React Query
-      requestCache.clear();
-      await queryClient.invalidateQueries({ queryKey: ['agendamentos'] });
-      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      
     } catch (error) {
       console.error('Erro ao salvar agendamento:', error);
       setError(error.message || 'Erro ao salvar agendamento');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -320,6 +308,69 @@ const AgendamentoManager = ({ processoId = null }) => {
     <div className="space-y-6">
       {/* Google Calendar Integration */}
       <GoogleCalendarConnect />
+      
+      {/* Estatísticas (apenas para Admin e Professor) */}
+      {(userRole === 'Admin' || userRole === 'Professor') && estatisticas && (
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Estatísticas dos Agendamentos</h3>
+            <button
+              onClick={() => setShowStats(!showStats)}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            >
+              {showStats ? 'Ocultar' : 'Mostrar'} Detalhes
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">{estatisticas.total}</div>
+              <div className="text-sm text-blue-600">Total</div>
+            </div>
+            <div className="bg-green-50 p-4 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">{estatisticas.proximosAgendamentos}</div>
+              <div className="text-sm text-green-600">Próximos 7 dias</div>
+            </div>
+            <div className="bg-red-50 p-4 rounded-lg">
+              <div className="text-2xl font-bold text-red-600">{estatisticas.vencidos}</div>
+              <div className="text-sm text-red-600">Vencidos</div>
+            </div>
+            <div className="bg-yellow-50 p-4 rounded-lg">
+              <div className="text-2xl font-bold text-yellow-600">
+                {estatisticas.porStatus?.agendado || 0}
+              </div>
+              <div className="text-sm text-yellow-600">Agendados</div>
+            </div>
+          </div>
+          
+          {showStats && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+              <div>
+                <h4 className="font-medium mb-2">Por Status</h4>
+                <div className="space-y-2">
+                  {Object.entries(estatisticas.porStatus || {}).map(([status, count]) => (
+                    <div key={status} className="flex justify-between">
+                      <span className="capitalize">{status}</span>
+                      <span className="font-medium">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Por Tipo</h4>
+                <div className="space-y-2">
+                  {Object.entries(estatisticas.porTipo || {}).map(([tipo, count]) => (
+                    <div key={tipo} className="flex justify-between">
+                      <span className="capitalize">{getTipoEventoLabel(tipo)}</span>
+                      <span className="font-medium">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       
       {/* Botão Novo Agendamento */}
       <div className="flex justify-end">
@@ -529,10 +580,13 @@ const AgendamentoManager = ({ processoId = null }) => {
                   </button>
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={createAgendamento.isLoading || updateAgendamento.isLoading}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                   >
-                    {loading ? 'Salvando...' : (editando ? 'Atualizar' : 'Criar')}
+                    {createAgendamento.isLoading || updateAgendamento.isLoading 
+                      ? 'Salvando...' 
+                      : (editando ? 'Atualizar' : 'Criar')
+                    }
                   </button>
                 </div>
               </form>
@@ -583,6 +637,11 @@ const AgendamentoManager = ({ processoId = null }) => {
                           <h3 className="text-lg font-medium text-gray-900 truncate">
                             {agendamento.titulo}
                           </h3>
+                          {agendamento.googleEventId && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800" title="Sincronizado com Google Calendar">
+                              📅 Google
+                            </span>
+                          )}
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(agendamento.status)}`}>
                             {getStatusLabel(agendamento.status)}
                           </span>
@@ -624,11 +683,25 @@ const AgendamentoManager = ({ processoId = null }) => {
                         >
                           Editar
                         </button>
+                        
+                        {/* Botão para sincronizar com Google Calendar */}
+                        {user?.googleCalendarConnected && (
+                          <button
+                            onClick={() => handleSincronizarGoogle(agendamento.id)}
+                            disabled={sincronizarGoogle.isLoading}
+                            className="inline-flex items-center px-3 py-1.5 border border-green-300 shadow-sm text-xs font-medium rounded text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                            title={agendamento.googleEventId ? 'Atualizar no Google Calendar' : 'Sincronizar com Google Calendar'}
+                          >
+                            {sincronizarGoogle.isLoading ? '...' : (agendamento.googleEventId ? '🔄' : '📅')}
+                          </button>
+                        )}
+                        
                         <button
                           onClick={() => handleDelete(agendamento.id)}
-                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                          disabled={deleteAgendamento.isLoading}
+                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
                         >
-                          Excluir
+                          {deleteAgendamento.isLoading ? '...' : 'Excluir'}
                         </button>
                       </div>
                     </div>
