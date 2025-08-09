@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from "@/api/apiRequest";
 import { tabelaAuxiliarService, processService } from "../../api/services";
 import { requestCache } from "@/utils/requestCache";
+import Button from "@/components/common/Button";
 
 export default function ProcessEditPage() {
   const { id } = useParams();
@@ -162,8 +163,8 @@ export default function ProcessEditPage() {
           <textarea name="observacoes" value={formData.observacoes} onChange={handleChange} rows={3} />
         </label>
         <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-          <button type="submit" style={{ background: '#2563eb', color: 'white', padding: '8px 16px', borderRadius: 6, border: 0, cursor: 'pointer' }}>Salvar</button>
-          <button type="button" onClick={() => navigate(`/processos/${id}`)} style={{ background: '#6b7280', color: 'white', padding: '8px 16px', borderRadius: 6, border: 0, cursor: 'pointer' }}>Cancelar</button>
+          <Button type="submit" variant="primary">Salvar</Button>
+          <Button type="button" variant="secondary" onClick={() => navigate(`/processos/${id}`)}>Cancelar</Button>
         </div>
       </form>
     </div>

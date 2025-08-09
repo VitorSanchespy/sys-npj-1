@@ -210,6 +210,22 @@ export const processService = {
       token,
       body: { usuario_id: usuarioId }
     });
+  },
+
+  // PUT /api/processos/:id/concluir
+  concludeProcess: async (token, processoId) => {
+    return await apiRequest(`/api/processos/${processoId}/concluir`, {
+      method: 'PUT',
+      token
+    });
+  },
+
+  // PUT /api/processos/:id/reabrir
+  reopenProcess: async (token, processoId) => {
+    return await apiRequest(`/api/processos/${processoId}/reabrir`, {
+      method: 'PUT',
+      token
+    });
   }
 };
 

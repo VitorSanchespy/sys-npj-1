@@ -8,6 +8,10 @@ function isDbAvailable() {
 // Listar notificações
 exports.listarNotificacoes = async (req, res) => {
   try {
+    if (!isDbAvailable()) {
+      return res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
+
     const { notificacaoModel: Notificacao, usuarioModel: Usuario } = require('../models/indexModel');
     const notificacoes = await Notificacao.findAll({
       include: [{ model: Usuario, as: 'usuario' }],
@@ -23,6 +27,10 @@ exports.listarNotificacoes = async (req, res) => {
 // Listar notificações do usuário com estatísticas
 exports.listarNotificacoesUsuario = async (req, res) => {
   try {
+    if (!isDbAvailable()) {
+      return res.status(503).json({ notificacoes: [], total: 0, naoLidas: 0 });
+    }
+
     const userId = req.user.id;
     const { notificacaoModel: Notificacao } = require('../models/indexModel');
     const notificacoes = await Notificacao.findAll({
@@ -59,6 +67,10 @@ exports.obterNotificacao = async (req, res) => {
 // Criar notificação
 exports.criarNotificacao = async (req, res) => {
   try {
+    if (!isDbAvailable()) {
+      return res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
+
     const {
       titulo,
       mensagem,
@@ -68,17 +80,21 @@ exports.criarNotificacao = async (req, res) => {
       processo_id,
       agendamento_id
     } = req.body;
+    
     // Aceita tanto usuario_id quanto idusuario para compatibilidade
     const userId = usuario_id || idusuario;
+    
     // Normalizar o tipo para valores aceitos
-    const tipoNormalizado = ['info', 'alerta', 'erro', 'sucesso', 'informacao'].includes(tipo) 
-      ? (tipo === 'info' ? 'informacao' : tipo) 
+    const tipoNormalizado = ['lembrete', 'alerta', 'informacao', 'sistema'].includes(tipo) 
+      ? tipo 
       : 'informacao';
+    
     if (!titulo || !mensagem || !userId) {
       return res.status(400).json({ 
         erro: 'Título, mensagem e ID do usuário são obrigatórios' 
       });
     }
+    
     const { notificacaoModel: Notificacao } = require('../models/indexModel');
     const novaNotificacao = await Notificacao.create({
       titulo,
@@ -87,8 +103,11 @@ exports.criarNotificacao = async (req, res) => {
       status: 'pendente',
       usuario_id: userId,
       processo_id,
-      agendamento_id
+      agendamento_id,
+      data_envio: new Date(),
+      criado_em: new Date()
     });
+    
     res.status(201).json(novaNotificacao);
   } catch (error) {
     console.error('Erro ao criar notificação:', error);
@@ -99,6 +118,10 @@ exports.criarNotificacao = async (req, res) => {
 // Marcar notificação como lida
 exports.marcarComoLida = async (req, res) => {
   try {
+    if (!isDbAvailable()) {
+      return res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
+
     const { id } = req.params;
     const { notificacaoModel: Notificacao } = require('../models/indexModel');
     const notificacao = await Notificacao.findByPk(id);
@@ -160,6 +183,10 @@ exports.deletarNotificacao = async (req, res) => {
 // Contar notificações não lidas do usuário
 exports.contarNaoLidas = async (req, res) => {
   try {
+    if (!isDbAvailable()) {
+      return res.json({ count: 0 });
+    }
+
     const userId = req.user.id;
     const { notificacaoModel: Notificacao } = require('../models/indexModel');
     const count = await Notificacao.count({

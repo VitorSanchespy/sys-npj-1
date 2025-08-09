@@ -3,6 +3,7 @@ import { arquivoService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import FileUploadForm from "../../components/arquivos/FileUploadForm";
 import { getFileUrl } from '../../utils/fileUrl';
+import Button from "@/components/common/Button";
 
 export default function ArquivosPage() {
   const { token, user } = useAuthContext();
@@ -75,11 +76,16 @@ export default function ArquivosPage() {
                     <td>{arquivo.criado_em ? new Date(arquivo.criado_em).toLocaleString() : "-"}</td>
                     <td>{arquivo.tamanho ? `${Math.round(arquivo.tamanho / 1024)} KB` : "-"}</td>
                     <td>
-                      <button onClick={() => window.open(getFileUrl(arquivo.caminho), "_blank")}>Abrir</button>
+                      <Button 
+                        variant="link" 
+                        onClick={() => window.open(getFileUrl(arquivo.caminho), "_blank")}
+                      >
+                        Abrir
+                      </Button>
                     </td>
                     <td>
-                      <button
-                        style={{ background: '#d32f2f', color: 'white', border: 0, borderRadius: 4, padding: '4px 10px', cursor: 'pointer' }}
+                      <Button
+                        variant="danger"
                         onClick={async () => {
                           if (window.confirm('Tem certeza que deseja excluir este arquivo?')) {
                             try {
@@ -90,7 +96,7 @@ export default function ArquivosPage() {
                             }
                           }
                         }}
-                      >Excluir</button>
+                      >Excluir</Button>
                     </td>
                   </tr>
                 );

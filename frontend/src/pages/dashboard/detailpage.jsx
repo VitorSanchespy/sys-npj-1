@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
+import Button from "@/components/common/Button";
 
 export default function ProcessDetailPage() {
   const { id } = useParams();
@@ -74,12 +75,12 @@ export default function ProcessDetailPage() {
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <h2 className="text-xl font-bold text-red-600 mb-2">Erro</h2>
           <p className="text-gray-700 mb-4">{error}</p>
-          <button
+          <Button
+            variant="primary"
             onClick={() => navigate('/processos')}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            ← Voltar para Lista de Processos
-          </button>
+            Voltar para Lista de Processos
+          </Button>
         </div>
       </div>
     );
@@ -91,12 +92,12 @@ export default function ProcessDetailPage() {
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
           <h2 className="text-xl font-bold text-gray-800 mb-2">Processo não encontrado</h2>
           <p className="text-gray-600 mb-4">ID: {id}</p>
-          <button
+          <Button
+            variant="primary"
             onClick={() => navigate('/processos')}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            ← Voltar para Lista de Processos
-          </button>
+            Voltar para Lista de Processos
+          </Button>
         </div>
       </div>
     );
@@ -113,12 +114,12 @@ export default function ProcessDetailPage() {
             </h1>
             <p className="text-gray-600">Detalhes do processo</p>
           </div>
-          <button
+          <Button
+            variant="secondary"
             onClick={() => navigate('/processos')}
-            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
           >
-            ← Voltar
-          </button>
+            Voltar
+          </Button>
         </div>
 
         {/* Informações básicas */}

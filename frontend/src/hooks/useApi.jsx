@@ -24,11 +24,11 @@ export const getUserRole = (user) => {
 
 // ===== HOOKS PARA PROCESSOS =====
 
-export function useProcessos(search = "", showMyProcesses = false, page = 1, limit = 4) {
+export function useProcessos(search = "", showMyProcesses = false, page = 1, limit = 4, showConcluidos = false) {
   const { token, user } = useAuthContext();
   
   return useQuery({
-    queryKey: ['processos', user?.id, getUserRole(user), search, showMyProcesses, page, limit],
+    queryKey: ['processos', user?.id, getUserRole(user), search, showMyProcesses, page, limit, showConcluidos],
     queryFn: async () => {
       const userRole = getUserRole(user);
       if (!token || !userRole) throw new Error('Token ou usuário não disponível');
@@ -40,6 +40,11 @@ export function useProcessos(search = "", showMyProcesses = false, page = 1, lim
       params.append('page', page.toString());
       params.append('limit', limit.toString());
       
+      // Adicionar filtro de processos concluídos
+      if (showConcluidos) {
+        params.append('concluidos', 'true');
+      }
+      
       if (userRole === "Aluno") {
         endpoint = "/api/processos/usuario";
       } else if (userRole === "Professor") {
@@ -48,7 +53,7 @@ export function useProcessos(search = "", showMyProcesses = false, page = 1, lim
         } else {
           endpoint = "/api/processos";
           // Para dashboard, buscar apenas os recentes
-          if (limit === 4 && page === 1 && !search.trim()) {
+          if (limit === 4 && page === 1 && !search.trim() && !showConcluidos) {
             params.append('recent', 'true');
           }
         }
@@ -58,7 +63,7 @@ export function useProcessos(search = "", showMyProcesses = false, page = 1, lim
         } else {
           endpoint = "/api/processos";
           // Para dashboard, buscar apenas os recentes
-          if (limit === 4 && page === 1 && !search.trim()) {
+          if (limit === 4 && page === 1 && !search.trim() && !showConcluidos) {
             params.append('recent', 'true');
           }
         }

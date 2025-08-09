@@ -8,12 +8,16 @@ import Button from "@/components/common/Button";
 import StatusBadge from "@/components/common/StatusBadge";
 import Loader from "@/components/layout/Loader";
 import { getUserRole, canCreateProcess, formatDate, renderValue } from "@/utils/commonUtils";
+import { processService } from "@/api/services";
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function ProcessListPage() {
   const navigate = useNavigate();
-  const { user } = useAuthContext();
+  const { user, token } = useAuthContext();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [showMyProcesses, setShowMyProcesses] = useState(() => getUserRole(user) === "Aluno");
+  const [showConcluidos, setShowConcluidos] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // Mudei de 4 para 10 processos por página
   
@@ -26,7 +30,7 @@ export default function ProcessListPage() {
     isLoading, 
     error, 
     refetch 
-  } = useProcessos(debouncedSearch, showMyProcesses, currentPage, itemsPerPage);
+  } = useProcessos(debouncedSearch, showMyProcesses, currentPage, itemsPerPage, showConcluidos);
 
   // Extrair dados da resposta paginada
   const processos = processosData?.processos || [];
@@ -54,7 +58,50 @@ export default function ProcessListPage() {
   // Reset página quando mudar filtros
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, showMyProcesses]);
+  }, [debouncedSearch, showMyProcesses, showConcluidos]);
+
+  // Funções de filtro
+  const handleMyProcessesToggle = () => {
+    setShowMyProcesses(!showMyProcesses);
+    setShowConcluidos(false); // Reset de concluídos quando muda filtro
+  };
+
+  const handleConcluidosToggle = () => {
+    setShowConcluidos(!showConcluidos);
+  };
+
+  // Funções para concluir/reabrir processos
+  const handleConcluirProcesso = async (processoId) => {
+    if (!window.confirm('Tem certeza que deseja concluir este processo?')) {
+      return;
+    }
+
+    try {
+      await processService.concludeProcess(token, processoId);
+      // Invalidar cache para atualizar a lista
+      queryClient.invalidateQueries(['processos']);
+      alert('Processo concluído com sucesso!');
+    } catch (error) {
+      console.error('Erro ao concluir processo:', error);
+      alert('Erro ao concluir processo: ' + (error.message || 'Erro desconhecido'));
+    }
+  };
+
+  const handleReabrirProcesso = async (processoId) => {
+    if (!window.confirm('Tem certeza que deseja reabrir este processo?')) {
+      return;
+    }
+
+    try {
+      await processService.reopenProcess(token, processoId);
+      // Invalidar cache para atualizar a lista
+      queryClient.invalidateQueries(['processos']);
+      alert('Processo reaberto com sucesso!');
+    } catch (error) {
+      console.error('Erro ao reabrir processo:', error);
+      alert('Erro ao reabrir processo: ' + (error.message || 'Erro desconhecido'));
+    }
+  };
 
   // Definir colunas da tabela otimizada
   const columns = useMemo(() => [
@@ -62,26 +109,18 @@ export default function ProcessListPage() {
       key: 'numero_processo',
       label: 'Número do Processo',
       render: (value, row) => (
-        <button
-          type="button"
+        <Button
+          variant="link"
           onClick={() => navigate(`/processos/${row.id}`)}
           style={{
-            color: '#007bff',
-            background: 'none',
-            border: 'none',
             padding: 0,
-            fontSize: '0.95rem',
-            fontWeight: 'bold',
-            textDecoration: 'underline',
-            boxShadow: 'none',
-            borderRadius: 0,
-            cursor: 'pointer',
-            transition: 'color 0.2s',
-            opacity: 1
+            fontSize: '14px',
+            fontWeight: '500',
+            textDecoration: 'underline'
           }}
         >
           {value || row.numero || "-"}
-        </button>
+        </Button>
       )
     },
     {
@@ -108,16 +147,29 @@ export default function ProcessListPage() {
       key: 'actions',
       label: 'Ações',
       render: (_, row) => (
-        <Button
-          variant="success"
-          onClick={() => navigate(`/processos/${row.id}`)}
-          style={{
-            padding: '8px 16px',
-            fontSize: '0.85rem'
-          }}
-        >
-          👁️ Ver Detalhes
-        </Button>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <Button
+            variant="primary"
+            onClick={() => navigate(`/processos/${row.id}`)}
+          >
+            Ver Detalhes
+          </Button>
+          {row.status === 'Concluído' ? (
+            <Button
+              variant="success"
+              onClick={() => handleReabrirProcesso(row.id)}
+            >
+              Reabrir
+            </Button>
+          ) : (
+            <Button
+              variant="success"
+              onClick={() => handleConcluirProcesso(row.id)}
+            >
+              Concluir
+            </Button>
+          )}
+        </div>
       )
     }
   ], [navigate]);
@@ -162,18 +214,35 @@ export default function ProcessListPage() {
             alignItems: 'center', 
             gap: '8px', 
             fontSize: '14px',
-            cursor: 'pointer',
-            marginRight: 'auto'
+            cursor: 'pointer'
           }}>
             <input
               type="checkbox"
               checked={showMyProcesses}
-              onChange={() => setShowMyProcesses(!showMyProcesses)}
+              onChange={handleMyProcessesToggle}
               style={{ transform: 'scale(1.1)' }}
             />
             Apenas meus processos
           </label>
         )}
+        
+        {/* Toggle processos concluídos */}
+        <label style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px', 
+          fontSize: '14px',
+          cursor: 'pointer',
+          marginRight: 'auto'
+        }}>
+          <input
+            type="checkbox"
+            checked={showConcluidos}
+            onChange={handleConcluidosToggle}
+            style={{ transform: 'scale(1.1)' }}
+          />
+          {showConcluidos ? 'Apenas concluídos' : 'Mostrar concluídos'}
+        </label>
         
         {/* Campo de busca */}
         <input
@@ -196,13 +265,8 @@ export default function ProcessListPage() {
             id="btn-add-process"
             variant="success"
             onClick={() => navigate('/processos/novo')}
-            style={{
-              padding: '10px 16px',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}
           >
-            ➕ Novo Processo
+            Novo Processo
           </Button>
         )}
       </div>
@@ -265,12 +329,8 @@ export default function ProcessListPage() {
             variant="outline"
             onClick={handlePrevPage}
             disabled={currentPage === 1}
-            style={{
-              padding: '8px 16px',
-              fontSize: '14px'
-            }}
           >
-            ← Anterior
+            Anterior
           </Button>
 
           {/* Números das páginas */}
@@ -288,21 +348,14 @@ export default function ProcessListPage() {
               }
 
               return (
-                <button
+                <Button
                   key={pageNum}
+                  variant={currentPage === pageNum ? "primary" : "light"}
                   onClick={() => handlePageChange(pageNum)}
-                  style={{
-                    padding: '8px 12px',
-                    border: '1px solid #ddd',
-                    backgroundColor: currentPage === pageNum ? '#007bff' : 'white',
-                    color: currentPage === pageNum ? 'white' : '#007bff',
-                    cursor: 'pointer',
-                    borderRadius: '4px',
-                    fontSize: '14px'
-                  }}
+                  style={{ margin: '0 2px' }}
                 >
                   {pageNum}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -311,12 +364,8 @@ export default function ProcessListPage() {
             variant="outline"
             onClick={handleNextPage}
             disabled={currentPage >= totalPages}
-            style={{
-              padding: '8px 16px',
-              fontSize: '14px'
-            }}
           >
-            Próxima →
+            Próxima
           </Button>
         </div>
       )}

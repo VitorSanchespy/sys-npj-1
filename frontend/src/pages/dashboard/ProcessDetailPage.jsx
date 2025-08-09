@@ -12,12 +12,14 @@ import ProcessAssignUserModal from "@/components/processos/ProcessAssignUserModa
 import ProcessUnassignUserModal from "@/components/processos/ProcessUnassignUserModal";
 import { getUserRole, hasRole, formatDate, renderValue } from "@/utils/commonUtils";
 import { requestCache } from "@/utils/requestCache";
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function ProcessDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { user, token } = useAuthContext();
+  const queryClient = useQueryClient();
   const [processo, setProcesso] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -131,6 +133,55 @@ export default function ProcessDetailPage() {
     }
   };
 
+  // Funções para concluir/reabrir processo
+  const handleConcluirProcesso = async () => {
+    if (!window.confirm('Tem certeza que deseja concluir este processo?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await processService.concludeProcess(token, id);
+      // Limpar cache e recarregar processo
+      requestCache.clear(`GET:/api/processos/${id}/detalhes:`);
+      queryClient.invalidateQueries(['processos']);
+      
+      // Recarregar dados do processo
+      const response = await apiRequest(`/api/processos/${id}/detalhes`, { method: "GET", token });
+      setProcesso(response);
+      alert('Processo concluído com sucesso!');
+    } catch (error) {
+      console.error('Erro ao concluir processo:', error);
+      alert('Erro ao concluir processo: ' + (error.message || 'Erro desconhecido'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReabrirProcesso = async () => {
+    if (!window.confirm('Tem certeza que deseja reabrir este processo?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await processService.reopenProcess(token, id);
+      // Limpar cache e recarregar processo
+      requestCache.clear(`GET:/api/processos/${id}/detalhes:`);
+      queryClient.invalidateQueries(['processos']);
+      
+      // Recarregar dados do processo
+      const response = await apiRequest(`/api/processos/${id}/detalhes`, { method: "GET", token });
+      setProcesso(response);
+      alert('Processo reaberto com sucesso!');
+    } catch (error) {
+      console.error('Erro ao reabrir processo:', error);
+      alert('Erro ao reabrir processo: ' + (error.message || 'Erro desconhecido'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return <Loader message="Carregando processo..." />;
   }
@@ -168,14 +219,22 @@ export default function ProcessDetailPage() {
           variant="outline"
           onClick={() => navigate('/processos')}
         >
-          ← Voltar à Lista
+          Voltar à Lista
         </Button>
         <Button
           variant="primary"
           onClick={() => navigate(`/processos/${id}/editar`)}
         >
-          ✏️ Editar
+          Editar
         </Button>
+        {processo.status !== 'Concluído' && (
+          <Button
+            variant="success"
+            onClick={handleConcluirProcesso}
+          >
+            Concluir Processo
+          </Button>
+        )}
       </div>
 
         {/* Informações Básicas */}
@@ -392,15 +451,14 @@ export default function ProcessDetailPage() {
               fontWeight: '600',
               color: '#495057'
             }}>
-              👥 Usuários Vinculados
+              Usuários Vinculados
             </h3>
             {hasRole(user, ['Admin', 'Professor']) && (
               <Button
                 variant="primary"
-                size="sm"
                 onClick={() => setShowAssignModal(true)}
               >
-                + Vincular Usuário
+                Vincular Usuário
               </Button>
             )}
           </div>
@@ -434,11 +492,10 @@ export default function ProcessDetailPage() {
                   </div>
                   {hasRole(user, ['Admin', 'Professor']) && (
                     <Button
-                      variant="outline"
-                      size="sm"
+                      variant="danger"
                       onClick={() => handleUnassignUser(aluno.id)}
                     >
-                      ✖
+                      Remover
                     </Button>
                   )}
                 </div>

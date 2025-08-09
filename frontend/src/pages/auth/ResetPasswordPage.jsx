@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { apiRequest } from "../../api/apiRequest";
+import Button from "@/components/common/Button";
 
 export default function ResetPasswordPage() {
   const [params] = useSearchParams();
@@ -60,9 +61,9 @@ export default function ResetPasswordPage() {
           minLength={6}
         />
       </div>
-      <button type="submit" disabled={loading}>
+      <Button type="submit" variant="primary" disabled={loading}>
         {loading ? "Alterando..." : "Alterar senha"}
-      </button>
+      </Button>
     </form>
   );
 }

@@ -31,17 +31,32 @@ const Button = ({
         case 'secondary':
           e.target.style.backgroundColor = '#545b62';
           break;
+        case 'outline':
+          e.target.style.backgroundColor = '#007bff';
+          e.target.style.color = 'white';
+          break;
+        case 'light':
+          e.target.style.backgroundColor = '#e2e6ea';
+          break;
+        case 'link':
+          e.target.style.color = '#0056b3';
+          break;
         default:
           e.target.style.backgroundColor = '#0056b3';
       }
-      e.target.style.transform = 'translateY(-2px)';
+      if (variant !== 'link') {
+        e.target.style.transform = 'translateY(-1px)';
+      }
     }
   };
 
   const handleMouseLeave = (e) => {
     if (!disabled) {
       e.target.style.backgroundColor = baseStyle.backgroundColor;
-      e.target.style.transform = 'translateY(0)';
+      e.target.style.color = baseStyle.color;
+      if (variant !== 'link') {
+        e.target.style.transform = 'translateY(0)';
+      }
     }
   };
 

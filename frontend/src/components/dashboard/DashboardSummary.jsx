@@ -1,5 +1,6 @@
 import React from "react";
 import useApi from '../../hooks/useApi.jsx';
+import Button from "@/components/common/Button";
 const { getUserRole } = useApi();
 
 // Helper function to safely render values that might be objects
@@ -228,12 +229,12 @@ function AlunosDashboard({ dashboardData, user }) {
     { label: "Arquivados", value: meusProcessos.filter(p => p.status === 'arquivado').length }
   ];
 
-  const processosRecentes = meusProcessos.slice(0, 4);
+  const processosRecentes = meusProcessos.slice(0, 3);
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
       {/* Resumo dos Processos */}
-      <Card title="📋 Meus Processos" color="#007bff">
+      <Card title="Meus Processos" color="#007bff">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 15, marginBottom: 20 }}>
           <StatItem 
             label="Total" 
@@ -266,12 +267,12 @@ function AlunosDashboard({ dashboardData, user }) {
       </Card>
 
       {/* Gráfico de Status */}
-      <Card title="📈 Status dos Processos" color="#17a2b8">
+      <Card title="Status dos Processos" color="#17a2b8">
         <PieChart data={statusData} />
       </Card>
 
-      {/* Processos Recentes - Limitados a 4 */}
-      <Card title="🕒 Processos Recentes (4 mais atualizados)" color="#ffc107">
+      {/* Processos Recentes */}
+      <Card title="🕒 Últimos Processos" color="#ffc107">
         {processosRecentes.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {processosRecentes.map((processo, index) => (
@@ -295,17 +296,6 @@ function AlunosDashboard({ dashboardData, user }) {
                 </div>
               </div>
             ))}
-            {meusProcessos.length > 4 && (
-              <div style={{
-                textAlign: 'center',
-                padding: '8px',
-                color: '#666',
-                fontSize: '12px',
-                fontStyle: 'italic'
-              }}>
-                ... e mais {meusProcessos.length - 4} processos
-              </div>
-            )}
           </div>
         ) : (
           <div style={{ textAlign: "center", color: "#666", padding: 20 }}>
@@ -334,7 +324,7 @@ function ProfessoresDashboard({ dashboardData, user }) {
     { label: "Arquivados", value: processosSupervisionados.filter(p => p.status === 'arquivado').length }
   ];
 
-  const processosRecentes = processosSupervisionados.slice(0, 4);
+  const processosRecentes = processosSupervisionados.slice(0, 3);
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
@@ -372,12 +362,12 @@ function ProfessoresDashboard({ dashboardData, user }) {
       </Card>
 
       {/* Distribuição de Status */}
-      <Card title="📊 Distribuição de Status" color="#6f42c1">
+      <Card title="Distribuição de Status" color="#6f42c1">
         <PieChart data={statusData} />
       </Card>
 
-      {/* Processos Supervisionados Recentes - Limitados a 4 */}
-      <Card title="🔍 Processos Supervisionados (4 mais atualizados)" color="#dc3545">
+      {/* Processos Supervisionados Recentes */}
+      <Card title="🔍 Processos Supervisionados" color="#dc3545">
         {processosRecentes.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {processosRecentes.map((processo, index) => (
@@ -401,17 +391,6 @@ function ProfessoresDashboard({ dashboardData, user }) {
                 </div>
               </div>
             ))}
-            {processosSupervisionados.length > 4 && (
-              <div style={{
-                textAlign: 'center',
-                padding: '8px',
-                color: '#666',
-                fontSize: '12px',
-                fontStyle: 'italic'
-              }}>
-                ... e mais {processosSupervisionados.length - 4} processos
-              </div>
-            )}
           </div>
         ) : (
           <div style={{ textAlign: "center", color: "#666", padding: 20 }}>
@@ -450,7 +429,7 @@ function AdminsDashboard({ dashboardData }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
       {/* Estatísticas Gerais do Sistema */}
-      <Card title="🏛️ Visão Geral do Sistema" color="#6f42c1">
+      <Card title="Visão Geral do Sistema" color="#6f42c1">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 15, marginBottom: 20 }}>
           <StatItem 
             label="Total Processos" 
@@ -495,54 +474,27 @@ function AdminsDashboard({ dashboardData }) {
       </Card>
 
       {/* Distribuição de Status dos Processos */}
-      <Card title="📊 Status dos Processos" color="#dc3545">
+      <Card title="Status dos Processos" color="#dc3545">
         <PieChart data={statusData} />
       </Card>
 
       {/* Distribuição de Usuários */}
-      <Card title="👥 Tipos de Usuários" color="#fd7e14">
+      <Card title="Tipos de Usuários" color="#fd7e14">
         <PieChart data={usuariosPorTipo} />
       </Card>
 
       {/* Ações Administrativas */}
-      <Card title="⚙️ Ações Administrativas" color="#20c997">
+      <Card title="Ações Administrativas" color="#20c997">
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <button style={{
-            padding: 12,
-            backgroundColor: "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: 8,
-            cursor: "pointer",
-            fontSize: 14,
-            fontWeight: "bold"
-          }}>
-            📊 Relatório Completo
-          </button>
-          <button style={{
-            padding: 12,
-            backgroundColor: "#28a745",
-            color: "white",
-            border: "none",
-            borderRadius: 8,
-            cursor: "pointer",
-            fontSize: 14,
-            fontWeight: "bold"
-          }}>
-            👤 Gerenciar Usuários
-          </button>
-          <button style={{
-            padding: 12,
-            backgroundColor: "#ffc107",
-            color: "#212529",
-            border: "none",
-            borderRadius: 8,
-            cursor: "pointer",
-            fontSize: 14,
-            fontWeight: "bold"
-          }}>
-            📋 Gerenciar Processos
-          </button>
+          <Button variant="primary">
+            Relatório Completo
+          </Button>
+          <Button variant="success">
+            Gerenciar Usuários
+          </Button>
+          <Button variant="secondary" style={{ backgroundColor: "#ffc107", color: "#212529" }}>
+            Gerenciar Processos
+          </Button>
         </div>
       </Card>
     </div>
@@ -588,7 +540,7 @@ export default function DashboardSummary({ dashboardData, user }) {
       )}
       
       {!["Aluno", "Professor", "Admin"].includes(userRole) && (
-        <Card title="⚠️ Acesso Restrito" color="#dc3545">
+        <Card title="Acesso Restrito" color="#dc3545">
           <div style={{ textAlign: "center", color: "#666", padding: 20 }}>
             <p>Papel de usuário não reconhecido: {userRole}</p>
             <p style={{ fontSize: 12, marginTop: 8 }}>

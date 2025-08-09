@@ -364,16 +364,24 @@ exports.deletarProcesso = async (req, res) => {
 exports.listarProcessosUsuario = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { page = 1, limit = 4, recent = 'false' } = req.query;
+    const { page = 1, limit = 4, recent = 'false', concluidos = 'false' } = req.query;
     let processos = [];
     
     if (isDbAvailable()) {
       const { processoModel: Processo, usuarioModel: Usuario, atualizacaoProcessoModel: AtualizacaoProcesso } = require('../models/indexModel');
       
+      // Definir filtro de status baseado no parâmetro concluidos
+      const statusFilter = concluidos === 'true' 
+        ? { status: 'Concluído' }
+        : { status: { [require('sequelize').Op.ne]: 'Concluído' } };
+      
       // Se recent=true, buscar apenas os 4 mais recentemente atualizados do usuário
       if (recent === 'true') {
         processos = await Processo.findAll({
-          where: { idusuario_responsavel: userId },
+          where: { 
+            idusuario_responsavel: userId,
+            ...statusFilter
+          },
           include: [
             { model: Usuario, as: 'responsavel' },
             { 
@@ -403,7 +411,10 @@ exports.listarProcessosUsuario = async (req, res) => {
       const offset = (pageNum - 1) * limitNum;
       
       const { rows: processos, count: totalItems } = await Processo.findAndCountAll({
-        where: { idusuario_responsavel: userId },
+        where: { 
+          idusuario_responsavel: userId,
+          ...statusFilter
+        },
         include: [{ model: Usuario, as: 'responsavel' }],
         order: [['updatedAt', 'DESC']],
         limit: limitNum,
@@ -432,14 +443,20 @@ exports.listarProcessosUsuario = async (req, res) => {
 // Listar todos os processos
 exports.listarProcessos = async (req, res) => {
   try {
-    const { page = 1, limit = 4, recent = 'false' } = req.query;
+    const { page = 1, limit = 4, recent = 'false', concluidos = 'false' } = req.query;
     
     if (isDbAvailable()) {
       const { processoModel: Processo, usuarioModel: Usuario, atualizacaoProcessoModel: AtualizacaoProcesso } = require('../models/indexModel');
       
+      // Definir filtro de status baseado no parâmetro concluidos
+      const statusFilter = concluidos === 'true' 
+        ? { status: 'Concluído' }
+        : { status: { [require('sequelize').Op.ne]: 'Concluído' } };
+      
       // Se recent=true, buscar apenas os 4 mais recentemente atualizados
       if (recent === 'true') {
         const processos = await Processo.findAll({
+          where: statusFilter,
           include: [
             { model: Usuario, as: 'responsavel' },
             { 
@@ -469,6 +486,7 @@ exports.listarProcessos = async (req, res) => {
       const offset = (pageNum - 1) * limitNum;
       
       const { rows: processos, count: totalItems } = await Processo.findAndCountAll({
+        where: statusFilter,
         include: [{ model: Usuario, as: 'responsavel' }],
         order: [['updatedAt', 'DESC']],
         limit: limitNum,
@@ -557,6 +575,116 @@ exports.vincularUsuario = async (req, res) => {
     
   } catch (error) {
     console.error('Erro ao vincular usuário ao processo:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Concluir processo
+exports.concluirProcesso = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const usuarioId = req.user.id;
+    
+    if (isDbAvailable()) {
+      const { 
+        processoModel: Processo, 
+        atualizacaoProcessoModel: AtualizacaoProcesso,
+        usuarioModel: Usuario
+      } = require('../models/indexModel');
+      
+      const processo = await Processo.findByPk(id);
+      if (!processo) {
+        return res.status(404).json({ erro: 'Processo não encontrado' });
+      }
+      
+      // Verificar se o processo já está concluído
+      if (processo.status === 'Concluído') {
+        return res.status(400).json({ erro: 'Processo já está concluído' });
+      }
+      
+      // Atualizar status para concluído e definir data de encerramento
+      await processo.update({
+        status: 'Concluído',
+        data_encerramento: new Date()
+      });
+      
+      // Buscar usuário que fez a alteração
+      const usuario = await Usuario.findByPk(usuarioId);
+      
+      // Registrar no histórico
+      await AtualizacaoProcesso.create({
+        usuario_id: usuarioId,
+        processo_id: id,
+        tipo_atualizacao: 'Conclusão do Processo',
+        descricao: `Processo concluído por ${usuario ? usuario.nome : 'Usuário'} (${usuario ? usuario.email : ''})`
+      });
+      
+      res.json({ 
+        message: 'Processo concluído com sucesso', 
+        processo: processo 
+      });
+      
+    } else {
+      res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
+    
+  } catch (error) {
+    console.error('Erro ao concluir processo:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Reabrir processo concluído
+exports.reabrirProcesso = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const usuarioId = req.user.id;
+    
+    if (isDbAvailable()) {
+      const { 
+        processoModel: Processo, 
+        atualizacaoProcessoModel: AtualizacaoProcesso,
+        usuarioModel: Usuario
+      } = require('../models/indexModel');
+      
+      const processo = await Processo.findByPk(id);
+      if (!processo) {
+        return res.status(404).json({ erro: 'Processo não encontrado' });
+      }
+      
+      // Verificar se o processo está concluído
+      if (processo.status !== 'Concluído') {
+        return res.status(400).json({ erro: 'Processo não está concluído' });
+      }
+      
+      // Atualizar status para em andamento e limpar data de encerramento
+      await processo.update({
+        status: 'Em andamento',
+        data_encerramento: null
+      });
+      
+      // Buscar usuário que fez a alteração
+      const usuario = await Usuario.findByPk(usuarioId);
+      
+      // Registrar no histórico
+      await AtualizacaoProcesso.create({
+        usuario_id: usuarioId,
+        processo_id: id,
+        tipo_atualizacao: 'Reabertura do Processo',
+        descricao: `Processo reaberto por ${usuario ? usuario.nome : 'Usuário'} (${usuario ? usuario.email : ''})`
+      });
+      
+      res.json({ 
+        message: 'Processo reaberto com sucesso', 
+        processo: processo 
+      });
+      
+    } else {
+      res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
+    
+  } catch (error) {
+    console.error('Erro ao reabrir processo:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
