@@ -4,6 +4,7 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { useQueryClient } from "@tanstack/react-query";
 import { getUserRole } from "../hooks/useApi";
 import { requestCache } from "../utils/requestCache";
+import GoogleCalendarConnect from './GoogleCalendarConnect';
 
 const AgendamentoManager = ({ processoId = null }) => {
   const { user, token } = useAuthContext();
@@ -317,6 +318,9 @@ const AgendamentoManager = ({ processoId = null }) => {
 
   return (
     <div className="space-y-6">
+      {/* Google Calendar Integration */}
+      <GoogleCalendarConnect />
+      
       {/* Botão Novo Agendamento */}
       <div className="flex justify-end">
         <button

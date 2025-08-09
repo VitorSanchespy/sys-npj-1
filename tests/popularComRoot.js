@@ -123,6 +123,13 @@ async function popularBancoDeTeste() {
         role_id: rolesIds[0] // Aluno
     },
     {
+        nome: 'vitor',
+        email: 'vitorhugosanchesyt@gmail.com',
+        senha: 'vitor123',
+        telefone: '(66) 99614-7125',
+        role_id: rolesIds[2] // Admin
+    },
+    {
         nome: 'João Silva',
         email: 'joao@teste.com',
         senha: 'joao123',

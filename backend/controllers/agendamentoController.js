@@ -1,5 +1,6 @@
 // Controller de Agendamentos
 const path = require('path');
+const googleCalendarService = require('../services/googleCalendarService');
 
 // Criar agendamento
 exports.criarAgendamento = async (req, res) => {
@@ -71,6 +72,33 @@ exports.criarAgendamento = async (req, res) => {
     const novoAgendamento = await Agendamento.create(dadosAgendamento);
     
     console.log('✅ Agendamento criado com sucesso, ID:', novoAgendamento.id);
+    
+    // Tentar criar no Google Calendar se usuário conectado
+    const usuario = await Usuario.findByPk(req.user.id);
+    if (usuario.googleCalendarConnected) {
+      try {
+        const tokens = {
+          access_token: usuario.googleAccessToken,
+          refresh_token: usuario.googleRefreshToken
+        };
+
+        const eventData = {
+          titulo: novoAgendamento.titulo,
+          descricao: novoAgendamento.descricao,
+          dataInicio: novoAgendamento.data_evento.toISOString(),
+          dataFim: new Date(new Date(novoAgendamento.data_evento).getTime() + 60 * 60 * 1000).toISOString() // 1 hora depois
+        };
+
+        const googleEvent = await googleCalendarService.createEvent(tokens, eventData);
+        
+        // Salvar ID do evento do Google no agendamento
+        await novoAgendamento.update({ googleEventId: googleEvent.id });
+        console.log('✅ Evento criado no Google Calendar:', googleEvent.id);
+      } catch (googleError) {
+        console.log('⚠️ Erro ao criar no Google Calendar:', googleError.message);
+        // Não falhamos a operação, apenas logamos
+      }
+    }
     
     // Buscar o agendamento criado com as associações
     const agendamentoCriado = await Agendamento.findByPk(novoAgendamento.id, {

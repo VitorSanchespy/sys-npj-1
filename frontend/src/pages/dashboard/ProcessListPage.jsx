@@ -113,6 +113,7 @@ export default function ProcessListPage() {
         fontWeight: '600',
         color: '#212529'
       }}>
+  <span style={{ fontSize: '24px', marginRight: '8px', verticalAlign: 'middle' }}>📋</span>
         Lista de Processos
       </h1>
       <p style={{ 

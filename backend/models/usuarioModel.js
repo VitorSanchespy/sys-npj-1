@@ -27,7 +27,19 @@ Usuario.init(
     role_id: { type: DataTypes.INTEGER, allowNull: false },
     criado_em: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
     ativo: { type: DataTypes.BOOLEAN, defaultValue: true },
-    telefone: { type: DataTypes.STRING(20) }
+    telefone: { type: DataTypes.STRING(20) },
+    googleAccessToken: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    googleRefreshToken: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    googleCalendarConnected: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    }
   },
   {
     sequelize,

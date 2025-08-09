@@ -24,6 +24,7 @@ import AgendamentosPage from "@/pages/AgendamentosPage";
 import NotificationPage from "@/pages/dashboard/NotificationPage";
 import NotificationSettingsPage from "@/pages/dashboard/NotificationSettingsPage";
 import NotFoundPage from "@/pages/NotFoundPage";
+import GoogleCallbackPage from "../pages/GoogleCallbackPage";
 import { hasRole } from "@/utils/permissions";
 
 function PrivateRoute({ children, roles }) {
@@ -76,6 +77,9 @@ export default function AppRouter() {
           <Route path="/registrar-completo" element={<FullRegisterPage />} />
           <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
           <Route path="/resetar-senha" element={<ResetPasswordPage />} />
+          
+          {/* Google Calendar Callback */}
+          <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
           
           {/* Protegido: Todos autenticados */}
           <Route

@@ -80,6 +80,11 @@ Agendamento.init({
     type: DataTypes.BOOLEAN,
     allowNull: true,
     defaultValue: false
+  },
+  googleEventId: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    comment: 'ID do evento no Google Calendar'
   }
 }, {
   sequelize,
