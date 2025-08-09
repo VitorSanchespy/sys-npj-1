@@ -55,7 +55,8 @@ class NotificationService {
   // Buscar notificações do usuário
   async getNotifications(token, limit = 50, offset = 0) {
     try {
-      const response = await apiRequest('/api/notificacoes', { method: 'GET', token });
+      const response = await apiRequest('/api/notificacoes/usuario', { method: 'GET', token });
+      // O backend retorna { notificacoes, total, naoLidas }
       return response;
     } catch (error) {
       console.error('❌ Erro ao buscar notificações:', error);

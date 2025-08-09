@@ -1,4 +1,5 @@
 // Controller de Processos simplificado
+const NotificacaoService = require('../services/notificacaoService');
 
 // Função utilitária para verificar disponibilidade do banco
 function isDbAvailable() {
@@ -198,6 +199,19 @@ exports.criarProcesso = async (req, res) => {
         tipo_atualizacao: 'Criação do Processo',
         descricao: `Processo "${numero_processo}" criado no sistema`
       });
+
+      // Notificar criação do processo
+      try {
+        const notificacaoService = new NotificacaoService();
+        const { usuarioModel: Usuario } = require('../models/indexModel');
+        const criador = await Usuario.findByPk(req.user.id);
+        
+        if (criador) {
+          await notificacaoService.notificarProcessoCriado(novoProcesso, criador, [criador]);
+        }
+      } catch (notificationError) {
+        console.error('⚠️ Erro ao enviar notificação de processo criado:', notificationError.message);
+      }
       
       res.status(201).json(novoProcesso);
     } 
@@ -323,6 +337,19 @@ exports.atualizarProcesso = async (req, res) => {
           descricao: `Processo editado. Alterações: ${alteracoes.join('; ')}`
         });
       }
+
+      // Notificar atualização do processo
+      try {
+        const notificacaoService = new NotificacaoService();
+        const { usuarioModel: Usuario } = require('../models/indexModel');
+        const atualizador = await Usuario.findByPk(req.user.id);
+        
+        if (atualizador && alteracoes.length > 0) {
+          await notificacaoService.notificarProcessoAtualizado(processo, atualizador, [atualizador], alteracoes);
+        }
+      } catch (notificationError) {
+        console.error('⚠️ Erro ao enviar notificação de processo atualizado:', notificationError.message);
+      }
       
       res.json(processo);
       
@@ -366,22 +393,32 @@ exports.listarProcessosUsuario = async (req, res) => {
     const userId = req.user.id;
     const { page = 1, limit = 4, recent = 'false', concluidos = 'false' } = req.query;
     let processos = [];
-    
     if (isDbAvailable()) {
-      const { processoModel: Processo, usuarioModel: Usuario, atualizacaoProcessoModel: AtualizacaoProcesso } = require('../models/indexModel');
-      
+      const { processoModel: Processo, usuarioModel: Usuario, atualizacaoProcessoModel: AtualizacaoProcesso, usuarioProcessoModel: UsuarioProcesso } = require('../models/indexModel');
+      const { Op } = require('sequelize');
       // Definir filtro de status baseado no parâmetro concluidos
       const statusFilter = concluidos === 'true' 
         ? { status: 'Concluído' }
-        : { status: { [require('sequelize').Op.ne]: 'Concluído' } };
-      
-      // Se recent=true, buscar apenas os 4 mais recentemente atualizados do usuário
+        : { status: { [Op.ne]: 'Concluído' } };
+
+      // Buscar todos os processos onde o usuário é responsável OU está vinculado via usuarios_processo
+      // 1. Buscar IDs de processos vinculados
+      const vinculos = await UsuarioProcesso.findAll({ where: { usuario_id: userId } });
+      const processosVinculadosIds = vinculos.map(v => v.processo_id);
+
+      // 2. Buscar processos onde o usuário é responsável ou está vinculado
+      const whereClause = {
+        [Op.or]: [
+          { idusuario_responsavel: userId },
+          { id: { [Op.in]: processosVinculadosIds } }
+        ],
+        ...statusFilter
+      };
+
+      // Se recent=true, buscar apenas os 4 mais recentemente atualizados
       if (recent === 'true') {
         processos = await Processo.findAll({
-          where: { 
-            idusuario_responsavel: userId,
-            ...statusFilter
-          },
+          where: whereClause,
           include: [
             { model: Usuario, as: 'responsavel' },
             { 
@@ -395,7 +432,6 @@ exports.listarProcessosUsuario = async (req, res) => {
           order: [['updatedAt', 'DESC']],
           limit: 4
         });
-        
         return res.json({
           processos,
           totalItems: processos.length,
@@ -404,28 +440,25 @@ exports.listarProcessosUsuario = async (req, res) => {
           hasMore: false
         });
       }
-      
+
       // Paginação normal
       const pageNum = parseInt(page);
       const limitNum = parseInt(limit);
       const offset = (pageNum - 1) * limitNum;
-      
-      const { rows: processos, count: totalItems } = await Processo.findAndCountAll({
-        where: { 
-          idusuario_responsavel: userId,
-          ...statusFilter
-        },
+
+      const { rows: processosRows, count: totalItems } = await Processo.findAndCountAll({
+        where: whereClause,
         include: [{ model: Usuario, as: 'responsavel' }],
         order: [['updatedAt', 'DESC']],
         limit: limitNum,
         offset: offset
       });
-      
+
       const totalPages = Math.ceil(totalItems / limitNum);
       const hasMore = pageNum < totalPages;
-      
+
       res.json({
-        processos,
+        processos: processosRows,
         totalItems,
         currentPage: pageNum,
         totalPages,

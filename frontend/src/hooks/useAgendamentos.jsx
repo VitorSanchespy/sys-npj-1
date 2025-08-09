@@ -13,8 +13,10 @@ export function useAgendamentos(filtros = {}) {
       return await agendamentoService.listAgendamentos(token);
     },
     enabled: !!token,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    cacheTime: 10 * 60 * 1000, // 10 minutos
+    staleTime: 10 * 1000, // 10 segundos
+    cacheTime: 2 * 60 * 1000, // 2 minutos
+    refetchInterval: 10 * 1000, // Atualiza a cada 10 segundos
+    refetchOnWindowFocus: true,
   });
 }
 

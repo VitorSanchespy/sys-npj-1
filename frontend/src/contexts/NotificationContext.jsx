@@ -53,11 +53,17 @@ export const NotificationProvider = ({ children }) => {
   // Carregar notificações do servidor
   const loadNotifications = async () => {
     if (!token) return;
-    
     try {
       setIsLoading(true);
       const data = await notificationService.getNotifications(token);
-      setNotifications(data.notificacoes || []);
+      // Suporte tanto para array direto quanto para objeto { notificacoes }
+      if (Array.isArray(data)) {
+        setNotifications(data);
+      } else if (data && Array.isArray(data.notificacoes)) {
+        setNotifications(data.notificacoes);
+      } else {
+        setNotifications([]);
+      }
     } catch (error) {
       console.error('❌ Erro ao carregar notificações:', error);
     } finally {

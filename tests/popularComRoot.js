@@ -85,6 +85,12 @@ const Agendamento = sequelize.define('Agendamento', {
     status: { type: Sequelize.ENUM('agendado', 'concluido', 'cancelado'), defaultValue: 'agendado' }
 }, { tableName: 'agendamentos', timestamps: false });
 
+const UsuarioProcesso = sequelize.define('UsuarioProcesso', {
+    id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+    usuario_id: { type: Sequelize.INTEGER, allowNull: false },
+    processo_id: { type: Sequelize.INTEGER, allowNull: false }
+}, { tableName: 'usuarios_processo', timestamps: false });
+
 async function popularBancoDeTeste() {
     try {
         await sequelize.authenticate();
@@ -381,21 +387,60 @@ async function popularBancoDeTeste() {
             }
         }
 
+        // 9. Criar vínculos entre usuários e processos (para que o Aluno veja processos no dashboard)
+        console.log('\n🔗 Criando vínculos usuário-processo...');
+        
+        const vinculos = [
+            {
+                usuario_id: usuariosIds[0], // Maria (Aluno) - vinculada ao primeiro processo
+                processo_id: processosIds[0]
+            },
+            {
+                usuario_id: usuariosIds[0], // Maria (Aluno) - vinculada ao segundo processo  
+                processo_id: processosIds[1]
+            },
+            {
+                usuario_id: usuariosIds[2], // João (Professor) - vinculado ao terceiro processo
+                processo_id: processosIds[2]
+            }
+        ];
+
+        for (const vinculo of vinculos) {
+            const [item, created] = await UsuarioProcesso.findOrCreate({
+                where: { 
+                    usuario_id: vinculo.usuario_id,
+                    processo_id: vinculo.processo_id 
+                },
+                defaults: vinculo
+            });
+            if (created) {
+                console.log(`✅ Vínculo criado: Usuário ${vinculo.usuario_id} -> Processo ${vinculo.processo_id}`);
+            } else {
+                console.log(`🔗 Vínculo já existe: Usuário ${vinculo.usuario_id} -> Processo ${vinculo.processo_id}`);
+            }
+        }
+
         console.log('\n🎉 Banco de dados populado com sucesso!');
         console.log('\n📊 Resumo dos dados criados:');
         console.log('   - 3 Roles');
-        console.log('   - 3 Usuários');
+        console.log('   - 4 Usuários');
         console.log('   - 3 Diligências');
         console.log('   - 3 Fases');
         console.log('   - 3 Matérias/Assuntos');
         console.log('   - 3 Locais de Tramitação');
         console.log('   - 3 Processos');
         console.log('   - 4 Agendamentos');
+        console.log('   - 3 Vínculos usuário-processo');
         
         console.log('\n🔑 Credenciais de acesso:');
         console.log('   Admin: admin@teste.com / admin123');
+        console.log('   Vitor: vitorhugosanchesyt@gmail.com / vitor123');
         console.log('   João: joao@teste.com / joao123');
         console.log('   Maria: maria@teste.com / maria123');
+        
+        console.log('\n📋 Vínculos criados:');
+        console.log('   - Maria (Aluno) tem acesso aos processos 1 e 2');
+        console.log('   - João (Professor) tem acesso ao processo 3');
 
     } catch (error) {
         console.error('❌ Erro ao popular banco:', error.message);

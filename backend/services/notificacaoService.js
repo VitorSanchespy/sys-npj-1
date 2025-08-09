@@ -313,6 +313,38 @@ class NotificacaoService {
     }
   }
 
+  // Notificar tentativa de login com senha incorreta
+  async notificarSenhaIncorreta(email, detalhesLogin = {}) {
+    try {
+      console.log(`🔒 Tentativa de login com senha incorreta para: ${email}`);
+      
+      // Buscar usuário pelo email
+      const usuario = await Usuario.findOne({ where: { email } });
+      if (!usuario) {
+        console.log('⚠️ Usuário não encontrado para notificação de senha incorreta');
+        return false;
+      }
+
+      await this.criarNotificacao(
+        usuario.id,
+        'senha_incorreta',
+        'Tentativa de Login - Senha Incorreta',
+        `Uma tentativa de login com senha incorreta foi detectada em sua conta.`,
+        {
+          ip: detalhesLogin.ip || 'N/A',
+          userAgent: detalhesLogin.userAgent || 'N/A',
+          timestamp: new Date().toISOString()
+        }
+      );
+
+      console.log('✅ Notificação de senha incorreta registrada para usuário:', usuario.nome);
+      return true;
+    } catch (error) {
+      console.error('❌ Erro ao notificar senha incorreta:', error);
+      return false;
+    }
+  }
+
   // Notificar conta bloqueada por tentativas excessivas
   async notificarContaBloqueada(usuario, detalhesLogin = {}) {
     try {

@@ -219,15 +219,25 @@ function PieChart({ data, title }) {
 // Dashboard específico para Alunos
 function AlunosDashboard({ dashboardData, user }) {
   const meusProcessos = dashboardData?.processos || [];
-  const processosAtivos = meusProcessos.filter(p => p.status !== 'arquivado').length;
-  const processosFinalizados = meusProcessos.filter(p => p.status === 'finalizado').length;
-  
+  // Normalização dos status para refletir o banco
+  const normalizaStatus = (status) => {
+    if (!status) return '';
+    const s = status.toLowerCase();
+    if (s.includes('andamento')) return 'em_andamento';
+    if (s.includes('aguardando')) return 'aguardando';
+    if (s.includes('conclu')) return 'finalizado';
+    if (s.includes('finaliz')) return 'finalizado';
+    if (s.includes('arquiv')) return 'arquivado';
+    return s;
+  };
+  const processosAtivos = meusProcessos.filter(p => normalizaStatus(p.status) !== 'arquivado').length;
+  const processosFinalizados = meusProcessos.filter(p => normalizaStatus(p.status) === 'finalizado').length;
   // Dados para o gráfico de status
   const statusData = [
-    { label: "Em Andamento", value: meusProcessos.filter(p => p.status === 'em_andamento').length },
-    { label: "Aguardando", value: meusProcessos.filter(p => p.status === 'aguardando').length },
-    { label: "Finalizados", value: processosFinalizados },
-    { label: "Arquivados", value: meusProcessos.filter(p => p.status === 'arquivado').length }
+    { label: "Em Andamento", value: meusProcessos.filter(p => normalizaStatus(p.status) === 'em_andamento').length },
+    { label: "Aguardando", value: meusProcessos.filter(p => normalizaStatus(p.status) === 'aguardando').length },
+    { label: "Finalizados", value: meusProcessos.filter(p => normalizaStatus(p.status) === 'finalizado').length },
+    { label: "Arquivados", value: meusProcessos.filter(p => normalizaStatus(p.status) === 'arquivado').length }
   ];
 
   const processosRecentes = meusProcessos.slice(0, 3);

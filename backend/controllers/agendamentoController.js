@@ -1,6 +1,7 @@
 // Controller de Agendamentos
 const path = require('path');
 const googleCalendarService = require('../services/googleCalendarService');
+const NotificacaoService = require('../services/notificacaoService');
 
 // Criar agendamento
 exports.criarAgendamento = async (req, res) => {
@@ -108,6 +109,23 @@ exports.criarAgendamento = async (req, res) => {
         { model: Processo, as: 'processo', attributes: ['id', 'numero_processo', 'descricao'] }
       ]
     });
+    
+    // Enviar notificações
+    try {
+      const notificacaoService = new NotificacaoService();
+      const criador = await Usuario.findByPk(req.user.id);
+      const destinatario = await Usuario.findByPk(dadosAgendamento.usuario_id);
+      
+      await notificacaoService.notificarAgendamentoCriado(
+        agendamentoCriado, 
+        criador, 
+        destinatario
+      );
+      console.log('✅ Notificações de agendamento enviadas');
+    } catch (notificationError) {
+      console.error('⚠️ Erro ao enviar notificações:', notificationError.message);
+      // Não falhamos a operação por causa das notificações
+    }
     
     res.status(201).json(agendamentoCriado);
     
@@ -226,6 +244,22 @@ exports.atualizarAgendamento = async (req, res) => {
     
     await agendamento.update(dadosAtualizacao);
     
+    // Enviar notificações de atualização
+    try {
+      const notificacaoService = new NotificacaoService();
+      const usuarioAtualizou = await Usuario.findByPk(req.user.id);
+      const destinatario = await Usuario.findByPk(agendamento.usuario_id);
+      
+      await notificacaoService.notificarAgendamentoAtualizado(
+        agendamento, 
+        usuarioAtualizou, 
+        destinatario
+      );
+      console.log('✅ Notificações de atualização enviadas');
+    } catch (notificationError) {
+      console.error('⚠️ Erro ao enviar notificações de atualização:', notificationError.message);
+    }
+    
     // Tentar atualizar no Google Calendar se existe googleEventId
     if (agendamento.googleEventId) {
       try {
@@ -315,6 +349,11 @@ exports.deletarAgendamento = async (req, res) => {
       return res.status(404).json({ erro: 'Agendamento não encontrado' });
     }
     
+    // Buscar dados antes de deletar para notificações
+    const usuarioCancelou = await Usuario.findByPk(req.user.id);
+    const destinatario = await Usuario.findByPk(agendamento.usuario_id);
+    const agendamentoData = { ...agendamento.toJSON() }; // Cópia dos dados
+    
     // Tentar remover do Google Calendar se existe googleEventId
     if (agendamento.googleEventId) {
       try {
@@ -336,6 +375,21 @@ exports.deletarAgendamento = async (req, res) => {
     
     await agendamento.destroy();
     
+    // Enviar notificações de cancelamento
+    try {
+      const notificacaoService = new NotificacaoService();
+      
+      await notificacaoService.notificarAgendamentoCancelado(
+        agendamentoData, 
+        usuarioCancelou, 
+        destinatario,
+        'Agendamento excluído pelo usuário'
+      );
+      console.log('✅ Notificações de cancelamento enviadas');
+    } catch (notificationError) {
+      console.error('⚠️ Erro ao enviar notificações de cancelamento:', notificationError.message);
+    }
+    
     res.json({ mensagem: 'Agendamento excluído com sucesso' });
     
   } catch (error) {
@@ -351,8 +405,14 @@ exports.listarAgendamentosUsuario = async (req, res) => {
     
     const { agendamentoModel: Agendamento, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
     
+    const { Op } = require('sequelize');
     const agendamentos = await Agendamento.findAll({
-      where: { usuario_id: userId },
+      where: {
+        [Op.or]: [
+          { usuario_id: userId },
+          { criado_por: userId }
+        ]
+      },
       include: [
         { model: Usuario, as: 'destinatario', attributes: ['id', 'nome', 'email'] },
         { model: Usuario, as: 'criador', attributes: ['id', 'nome', 'email'] },
