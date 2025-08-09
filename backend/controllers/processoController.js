@@ -364,19 +364,65 @@ exports.deletarProcesso = async (req, res) => {
 exports.listarProcessosUsuario = async (req, res) => {
   try {
     const userId = req.user.id;
+    const { page = 1, limit = 4, recent = 'false' } = req.query;
     let processos = [];
     
     if (isDbAvailable()) {
-      const { processoModel: Processo, usuarioModel: Usuario } = require('../models/indexModel');
-      processos = await Processo.findAll({
+      const { processoModel: Processo, usuarioModel: Usuario, atualizacaoProcessoModel: AtualizacaoProcesso } = require('../models/indexModel');
+      
+      // Se recent=true, buscar apenas os 4 mais recentemente atualizados do usuário
+      if (recent === 'true') {
+        processos = await Processo.findAll({
+          where: { idusuario_responsavel: userId },
+          include: [
+            { model: Usuario, as: 'responsavel' },
+            { 
+              model: AtualizacaoProcesso, 
+              as: 'atualizacoes', 
+              required: false,
+              order: [['data_atualizacao', 'DESC']],
+              limit: 1
+            }
+          ],
+          order: [['updatedAt', 'DESC']],
+          limit: 4
+        });
+        
+        return res.json({
+          processos,
+          totalItems: processos.length,
+          currentPage: 1,
+          totalPages: 1,
+          hasMore: false
+        });
+      }
+      
+      // Paginação normal
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+      const offset = (pageNum - 1) * limitNum;
+      
+      const { rows: processos, count: totalItems } = await Processo.findAndCountAll({
         where: { idusuario_responsavel: userId },
         include: [{ model: Usuario, as: 'responsavel' }],
-        order: [['criado_em', 'DESC']]
+        order: [['updatedAt', 'DESC']],
+        limit: limitNum,
+        offset: offset
       });
-    } 
-    
-    res.json(processos);
-    
+      
+      const totalPages = Math.ceil(totalItems / limitNum);
+      const hasMore = pageNum < totalPages;
+      
+      res.json({
+        processos,
+        totalItems,
+        currentPage: pageNum,
+        totalPages,
+        hasMore
+      });
+    } else {
+      res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
   } catch (error) {
     console.error('Erro ao listar processos do usuário:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
@@ -386,12 +432,62 @@ exports.listarProcessosUsuario = async (req, res) => {
 // Listar todos os processos
 exports.listarProcessos = async (req, res) => {
   try {
-    const { processoModel: Processo, usuarioModel: Usuario } = require('../models/indexModel');
-    const processos = await Processo.findAll({
-      include: [{ model: Usuario, as: 'responsavel' }],
-      order: [['criado_em', 'DESC']]
-    });
-    res.json(processos);
+    const { page = 1, limit = 4, recent = 'false' } = req.query;
+    
+    if (isDbAvailable()) {
+      const { processoModel: Processo, usuarioModel: Usuario, atualizacaoProcessoModel: AtualizacaoProcesso } = require('../models/indexModel');
+      
+      // Se recent=true, buscar apenas os 4 mais recentemente atualizados
+      if (recent === 'true') {
+        const processos = await Processo.findAll({
+          include: [
+            { model: Usuario, as: 'responsavel' },
+            { 
+              model: AtualizacaoProcesso, 
+              as: 'atualizacoes', 
+              required: false,
+              order: [['data_atualizacao', 'DESC']],
+              limit: 1
+            }
+          ],
+          order: [['updatedAt', 'DESC']],
+          limit: 4
+        });
+        
+        return res.json({
+          processos,
+          totalItems: processos.length,
+          currentPage: 1,
+          totalPages: 1,
+          hasMore: false
+        });
+      }
+      
+      // Paginação normal
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+      const offset = (pageNum - 1) * limitNum;
+      
+      const { rows: processos, count: totalItems } = await Processo.findAndCountAll({
+        include: [{ model: Usuario, as: 'responsavel' }],
+        order: [['updatedAt', 'DESC']],
+        limit: limitNum,
+        offset: offset
+      });
+      
+      const totalPages = Math.ceil(totalItems / limitNum);
+      const hasMore = pageNum < totalPages;
+      
+      res.json({
+        processos,
+        totalItems,
+        currentPage: pageNum,
+        totalPages,
+        hasMore
+      });
+    } else {
+      res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
   } catch (error) {
     console.error('Erro ao listar processos:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });

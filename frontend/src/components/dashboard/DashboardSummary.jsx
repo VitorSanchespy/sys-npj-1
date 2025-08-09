@@ -228,7 +228,7 @@ function AlunosDashboard({ dashboardData, user }) {
     { label: "Arquivados", value: meusProcessos.filter(p => p.status === 'arquivado').length }
   ];
 
-  const processosRecentes = meusProcessos.slice(0, 3);
+  const processosRecentes = meusProcessos.slice(0, 4);
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
@@ -270,8 +270,8 @@ function AlunosDashboard({ dashboardData, user }) {
         <PieChart data={statusData} />
       </Card>
 
-      {/* Processos Recentes */}
-      <Card title="🕒 Últimos Processos" color="#ffc107">
+      {/* Processos Recentes - Limitados a 4 */}
+      <Card title="🕒 Processos Recentes (4 mais atualizados)" color="#ffc107">
         {processosRecentes.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {processosRecentes.map((processo, index) => (
@@ -295,6 +295,17 @@ function AlunosDashboard({ dashboardData, user }) {
                 </div>
               </div>
             ))}
+            {meusProcessos.length > 4 && (
+              <div style={{
+                textAlign: 'center',
+                padding: '8px',
+                color: '#666',
+                fontSize: '12px',
+                fontStyle: 'italic'
+              }}>
+                ... e mais {meusProcessos.length - 4} processos
+              </div>
+            )}
           </div>
         ) : (
           <div style={{ textAlign: "center", color: "#666", padding: 20 }}>
@@ -323,7 +334,7 @@ function ProfessoresDashboard({ dashboardData, user }) {
     { label: "Arquivados", value: processosSupervisionados.filter(p => p.status === 'arquivado').length }
   ];
 
-  const processosRecentes = processosSupervisionados.slice(0, 3);
+  const processosRecentes = processosSupervisionados.slice(0, 4);
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
@@ -365,8 +376,8 @@ function ProfessoresDashboard({ dashboardData, user }) {
         <PieChart data={statusData} />
       </Card>
 
-      {/* Processos Supervisionados Recentes */}
-      <Card title="🔍 Processos Supervisionados" color="#dc3545">
+      {/* Processos Supervisionados Recentes - Limitados a 4 */}
+      <Card title="🔍 Processos Supervisionados (4 mais atualizados)" color="#dc3545">
         {processosRecentes.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {processosRecentes.map((processo, index) => (
@@ -390,6 +401,17 @@ function ProfessoresDashboard({ dashboardData, user }) {
                 </div>
               </div>
             ))}
+            {processosSupervisionados.length > 4 && (
+              <div style={{
+                textAlign: 'center',
+                padding: '8px',
+                color: '#666',
+                fontSize: '12px',
+                fontStyle: 'italic'
+              }}>
+                ... e mais {processosSupervisionados.length - 4} processos
+              </div>
+            )}
           </div>
         ) : (
           <div style={{ textAlign: "center", color: "#666", padding: 20 }}>

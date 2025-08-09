@@ -263,3 +263,6 @@ const OptimizedTable = memo(({
 OptimizedTable.displayName = 'OptimizedTable';
 
 export default OptimizedTable;
+
+// Se quiser desabilitar a paginação local, basta passar itemsPerPage={data.length} na chamada do componente
+// Assim, todos os dados recebidos serão exibidos sem paginação local

@@ -24,52 +24,113 @@ export const getUserRole = (user) => {
 
 // ===== HOOKS PARA PROCESSOS =====
 
-export function useProcessos(search = "", showMyProcesses = false) {
+export function useProcessos(search = "", showMyProcesses = false, page = 1, limit = 4) {
   const { token, user } = useAuthContext();
   
   return useQuery({
-    queryKey: ['processos', user?.id, getUserRole(user), search, showMyProcesses],
+    queryKey: ['processos', user?.id, getUserRole(user), search, showMyProcesses, page, limit],
     queryFn: async () => {
       const userRole = getUserRole(user);
       if (!token || !userRole) throw new Error('Token ou usuário não disponível');
       
-      let data = [];
+      let endpoint = "";
+      let params = new URLSearchParams();
+      
+      // Configurar parâmetros de paginação
+      params.append('page', page.toString());
+      params.append('limit', limit.toString());
       
       if (userRole === "Aluno") {
-        data = await apiRequest("/api/processos/usuario", { token });
+        endpoint = "/api/processos/usuario";
       } else if (userRole === "Professor") {
-        if (search.trim()) {
-          data = await apiRequest("/api/processos", { token });
-        } else if (showMyProcesses) {
-          data = await apiRequest("/api/processos/usuario", { token });
+        if (showMyProcesses) {
+          endpoint = "/api/processos/usuario";
         } else {
-          const allProcesses = await apiRequest("/api/processos", { token });
-          data = allProcesses
-            .sort((a, b) => new Date(b.updatedAt || b.criado_em) - new Date(a.updatedAt || a.criado_em))
-            .slice(0, 4);
+          endpoint = "/api/processos";
+          // Para dashboard, buscar apenas os recentes
+          if (limit === 4 && page === 1 && !search.trim()) {
+            params.append('recent', 'true');
+          }
         }
       } else if (userRole === "Admin") {
         if (showMyProcesses) {
-          data = await apiRequest("/api/processos/usuario", { token });
+          endpoint = "/api/processos/usuario";
         } else {
-          data = await apiRequest("/api/processos", { token });
+          endpoint = "/api/processos";
+          // Para dashboard, buscar apenas os recentes
+          if (limit === 4 && page === 1 && !search.trim()) {
+            params.append('recent', 'true');
+          }
         }
       }
 
+      const response = await apiRequest(`${endpoint}?${params.toString()}`, { token });
+      
+      // Se a resposta é um array simples (compatibilidade com versão antiga)
+      if (Array.isArray(response)) {
+        let data = response;
+        
+        // Filtrar por termo de busca se fornecido
+        if (search.trim()) {
+          data = data.filter(proc => 
+            proc.numero_processo?.toLowerCase().includes(search.toLowerCase()) ||
+            proc.numero?.toLowerCase().includes(search.toLowerCase())
+          );
+        }
+        
+        // Aplicar paginação manual se necessário
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const paginatedData = data.slice(startIndex, endIndex);
+        
+        return {
+          processos: paginatedData,
+          totalItems: data.length,
+          currentPage: page,
+          totalPages: Math.ceil(data.length / limit),
+          hasMore: endIndex < data.length
+        };
+      }
+      
+      // Se a resposta já tem estrutura de paginação
+      let data = response.processos || [];
+      
       // Filtrar por termo de busca se fornecido
       if (search.trim()) {
         data = data.filter(proc => 
           proc.numero_processo?.toLowerCase().includes(search.toLowerCase()) ||
           proc.numero?.toLowerCase().includes(search.toLowerCase())
         );
+        
+        // Recalcular paginação após filtro
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        const paginatedData = data.slice(startIndex, endIndex);
+        
+        return {
+          processos: paginatedData,
+          totalItems: data.length,
+          currentPage: page,
+          totalPages: Math.ceil(data.length / limit),
+          hasMore: endIndex < data.length
+        };
       }
 
-      return data;
+      return response;
     },
     enabled: !!(token && user),
     staleTime: 1000 * 60 * 5, // 5 minutos
     gcTime: 1000 * 60 * 30, // 30 minutos (substituiu cacheTime)
   });
+}
+
+// Hook simples para compatibilidade (sem paginação)
+export function useProcessosSimple(search = "", showMyProcesses = false) {
+  const result = useProcessos(search, showMyProcesses, 1, 1000); // Buscar muitos itens
+  return {
+    ...result,
+    data: result.data?.processos || [] // Retornar apenas o array para compatibilidade
+  };
 }
 
 // ===== HOOKS GEOGRAFIA =====
@@ -122,7 +183,7 @@ export function useDashboardData() {
       try {
         // Usar cache para requisições simultâneas
         const requests = [
-          { key: 'processos', url: '/api/processos' },
+          { key: 'processos', url: '/api/processos?recent=true&limit=4' },
           { key: 'agendamentos', url: '/api/agendamentos' }
         ];
 
@@ -151,12 +212,22 @@ export function useDashboardData() {
           return acc;
         }, {});
 
+        // Garantir que processos é sempre um array
+        let processos = [];
+        if (data.processos) {
+          if (Array.isArray(data.processos)) {
+            processos = data.processos;
+          } else if (data.processos.processos && Array.isArray(data.processos.processos)) {
+            processos = data.processos.processos;
+          }
+        }
+
         // Estruturar dados do dashboard
         const dashboardData = {
-          processos: data.processos || [],
-          processosRecentes: (data.processos || []).slice(0, 5), // Pegar os 5 primeiros como recentes
-          agendamentos: data.agendamentos || [],
-          usuarios: data.usuarios || []
+          processos: processos,
+          processosRecentes: processos.slice(0, 4), // Agora garantimos que é array
+          agendamentos: Array.isArray(data.agendamentos) ? data.agendamentos : [],
+          usuarios: Array.isArray(data.usuarios) ? data.usuarios : []
         };
 
         // Calcular estatísticas baseadas nos dados disponíveis
@@ -178,9 +249,17 @@ export function useDashboardData() {
         };
 
         if (userRole === "Admin") {
-          dashboardData.totalUsuarios = data.usuariosCount?.total || 0;
-          dashboardData.usuariosAtivos = data.usuariosCount?.total || 0;
-          dashboardData.usuariosPorTipo = data.usuariosCount?.porTipo || {};
+          dashboardData.totalUsuarios = data.usuarios?.length || 0;
+          dashboardData.usuariosAtivos = data.usuarios?.filter(u => u.ativo)?.length || 0;
+          
+          // Calcular usuários por tipo
+          const usuariosPorTipo = data.usuarios?.reduce((acc, user) => {
+            const role = getUserRole(user) || 'Outros';
+            acc[role] = (acc[role] || 0) + 1;
+            return acc;
+          }, {}) || {};
+          
+          dashboardData.usuariosPorTipo = usuariosPorTipo;
         }
 
         return dashboardData;
