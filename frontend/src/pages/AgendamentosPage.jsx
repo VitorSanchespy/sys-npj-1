@@ -3,26 +3,25 @@ import AgendamentoManager from '../components/AgendamentoManager';
 
 const AgendamentosPage = () => {
   return (
-    <>
-      <div style={{ marginBottom: '20px' }}>
-        <h1 style={{ 
-          margin: 0, 
-          fontSize: '24px', 
-          fontWeight: '600',
-          color: '#343a40'
-        }}>
-          📅 Agendamentos
-        </h1>
-        <p style={{ 
-          margin: '8px 0 0 0', 
-          fontSize: '14px', 
-          color: '#6c757d' 
-        }}>
-          Gerencie seus compromissos, prazos e audiências.
-        </p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                📅 Agendamentos
+              </h1>
+              <p className="mt-2 text-sm text-gray-600">
+                Gerencie seus compromissos, prazos e audiências.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-      <AgendamentoManager />
-    </>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <AgendamentoManager />
+      </div>
+    </div>
   );
 };
 

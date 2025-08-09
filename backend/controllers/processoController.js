@@ -41,6 +41,7 @@ exports.obterProcessoDetalhes = async (req, res) => {
       const { 
         processoModel: Processo, 
         usuarioModel: Usuario,
+        usuarioProcessoModel: UsuarioProcesso,
         atualizacaoProcessoModel: AtualizacaoProcesso,
         arquivoModel: Arquivo,
         materiaAssuntoModel: MateriaAssunto,
@@ -48,7 +49,7 @@ exports.obterProcessoDetalhes = async (req, res) => {
         diligenciaModel: Diligencia,
         localTramitacaoModel: LocalTramitacao
       } = require('../models/indexModel');
-      
+
       processo = await Processo.findByPk(id, {
         include: [
           { model: Usuario, as: 'responsavel' },
@@ -65,12 +66,32 @@ exports.obterProcessoDetalhes = async (req, res) => {
           { model: LocalTramitacao, as: 'localTramitacao' }
         ]
       });
+
+      // Buscar o primeiro usuário vinculado ao processo (quem criou ou o primeiro da tabela de ligação)
+      let responsavelVinculado = null;
+      const usuariosProcesso = await UsuarioProcesso.findAll({
+        where: { processo_id: id },
+        include: [{ model: Usuario, as: 'usuario' }],
+        order: [['id', 'ASC']]
+      });
+      if (usuariosProcesso.length > 0) {
+        const usuario = usuariosProcesso[0].usuario;
+        responsavelVinculado = usuario ? {
+          id: usuario.id,
+          nome: usuario.nome,
+          email: usuario.email,
+          telefone: usuario.telefone
+        } : null;
+      }
+      // Adiciona ao objeto de resposta
+      const processoObj = processo.toJSON();
+      processoObj.responsavelVinculado = responsavelVinculado;
+      res.json(processoObj);
+      return;
     }
-    
     if (!processo) {
       return res.status(404).json({ erro: 'Processo não encontrado' });
     }
-    
     res.json(processo);
     
   } catch (error) {
@@ -194,6 +215,49 @@ exports.atualizarProcesso = async (req, res) => {
     const dadosAtualizacao = req.body;
     const usuarioId = req.user.id; // ID do usuário que está fazendo a atualização
     
+    console.log('🔍 Debug atualização processo:', {
+      processId: id,
+      usuarioId,
+      dadosRecebidos: JSON.stringify(dadosAtualizacao, null, 2),
+      userAgent: req.headers['user-agent'],
+      contentType: req.headers['content-type']
+    });
+    
+    // Validar se os dados necessários existem
+    if (!dadosAtualizacao || Object.keys(dadosAtualizacao).length === 0) {
+      console.log('❌ Dados de atualização vazios');
+      return res.status(400).json({ erro: 'Dados de atualização não fornecidos' });
+    }
+    
+    // Converter strings para integers nos campos de FK
+    if (dadosAtualizacao.materia_assunto_id && typeof dadosAtualizacao.materia_assunto_id === 'string') {
+      dadosAtualizacao.materia_assunto_id = parseInt(dadosAtualizacao.materia_assunto_id);
+    }
+    if (dadosAtualizacao.fase_id && typeof dadosAtualizacao.fase_id === 'string') {
+      dadosAtualizacao.fase_id = parseInt(dadosAtualizacao.fase_id);
+    }
+    if (dadosAtualizacao.diligencia_id && typeof dadosAtualizacao.diligencia_id === 'string') {
+      dadosAtualizacao.diligencia_id = parseInt(dadosAtualizacao.diligencia_id);
+    }
+    if (dadosAtualizacao.local_tramitacao_id && typeof dadosAtualizacao.local_tramitacao_id === 'string') {
+      dadosAtualizacao.local_tramitacao_id = parseInt(dadosAtualizacao.local_tramitacao_id);
+    }
+    // Corrigir idusuario_responsavel: se string vazia, vira null; se string numérica, vira inteiro
+    if (typeof dadosAtualizacao.idusuario_responsavel === 'string') {
+      if (dadosAtualizacao.idusuario_responsavel.trim() === '') {
+        dadosAtualizacao.idusuario_responsavel = null;
+      } else {
+        dadosAtualizacao.idusuario_responsavel = parseInt(dadosAtualizacao.idusuario_responsavel);
+      }
+    }
+    
+    // Tratar data_encerramento vazia
+    if (dadosAtualizacao.data_encerramento === '') {
+      dadosAtualizacao.data_encerramento = null;
+    }
+    
+    console.log('🔧 Dados após processamento:', JSON.stringify(dadosAtualizacao, null, 2));
+    
     if (isDbAvailable()) {
       const { 
         processoModel: Processo, 
@@ -209,7 +273,17 @@ exports.atualizarProcesso = async (req, res) => {
       const valoresAntigos = processo.toJSON();
       
       // Atualizar processo
-      await processo.update(dadosAtualizacao);
+      try {
+        await processo.update(dadosAtualizacao);
+        console.log('✅ Processo atualizado com sucesso');
+      } catch (updateError) {
+        console.error('❌ Erro específico na atualização do processo:', updateError);
+        console.error('❌ Detalhes do erro Sequelize:', updateError.message);
+        if (updateError.errors) {
+          console.error('❌ Erros de validação:', updateError.errors);
+        }
+        throw updateError;
+      }
       
       // Registrar histórico de alterações
       const alteracoes = [];
@@ -370,12 +444,14 @@ exports.vincularUsuario = async (req, res) => {
         processo_id: id
       });
       
+      // Buscar usuário que fez a alteração
+      const usuarioAlteracao = await Usuario.findByPk(usuarioLogado);
       // Registrar no histórico
       await AtualizacaoProcesso.create({
         usuario_id: usuarioLogado,
         processo_id: id,
         tipo_atualizacao: 'Vinculação de Usuário',
-        descricao: `Usuário "${usuario.nome}" (${usuario.email}) foi vinculado ao processo`
+        descricao: `Usuário "${usuario.nome}" (${usuario.email}) foi vinculado ao processo\nPor: ${usuarioAlteracao ? usuarioAlteracao.nome : 'Desconhecido'} (${usuarioAlteracao ? usuarioAlteracao.email : ''})`
       });
       
       res.status(201).json({ mensagem: 'Usuário vinculado ao processo com sucesso' });
@@ -422,13 +498,15 @@ exports.desvincularUsuario = async (req, res) => {
       // Remover vinculação
       await vinculo.destroy();
       
+      // Buscar usuário que fez a alteração
+      const usuarioAlteracao = await Usuario.findByPk(usuarioLogado);
       // Registrar no histórico se conseguiu obter dados do usuário
       if (usuario) {
         await AtualizacaoProcesso.create({
           usuario_id: usuarioLogado,
           processo_id: id,
           tipo_atualizacao: 'Desvinculação de Usuário',
-          descricao: `Usuário "${usuario.nome}" (${usuario.email}) foi desvinculado do processo`
+          descricao: `Usuário "${usuario.nome}" (${usuario.email}) foi desvinculado do processo\nPor: ${usuarioAlteracao ? usuarioAlteracao.nome : 'Desconhecido'} (${usuarioAlteracao ? usuarioAlteracao.email : ''})`
         });
       }
       

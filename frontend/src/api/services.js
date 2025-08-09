@@ -160,6 +160,10 @@ export const processService = {
 
   // PUT /api/processos/:id
   updateProcess: async (token, id, processData) => {
+    console.log('🔍 DEBUG services.js: Dados recebidos para atualização:', processData);
+    console.log('🔍 DEBUG services.js: Token:', token);
+    console.log('🔍 DEBUG services.js: ID:', id);
+    
     return await apiRequest(`/api/processos/${id}`, {
       method: 'PUT',
       token,

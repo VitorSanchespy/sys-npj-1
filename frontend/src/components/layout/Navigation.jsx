@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { getUserRole } from "../../hooks/useApi";
 import { hasRole } from "../../utils/permissions";
 
 const Navigation = () => {
@@ -30,20 +31,6 @@ const Navigation = () => {
   );
 
   const isActive = (path) => location.pathname === path;
-
-  // Melhorar tratamento do role para evitar duplicidade
-  const getRoleText = () => {
-    if (!user?.role) return 'Usuário';
-    if (typeof user.role === 'string') return user.role;
-    if (typeof user.role === 'object' && user.role !== null) {
-      return user.role.nome || user.role.name || 'Usuário';
-    }
-    // Fallback para role_id
-    if (user?.role_id === 1) return 'Admin';
-    if (user?.role_id === 2) return 'Professor';
-    if (user?.role_id === 3) return 'Aluno';
-    return 'Usuário';
-  };
 
   return (
     <div 
@@ -82,7 +69,7 @@ const Navigation = () => {
           {user?.nome || 'Usuário'}
         </div>
         <div style={{ fontSize: '12px', color: '#6c757d' }}>
-          {getRoleText()}
+          {getUserRole(user) || 'Usuário'}
         </div>
       </div>
 

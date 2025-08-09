@@ -29,12 +29,16 @@ export default function ProcessEditPage() {
           assistido: proc.assistido || '',
           descricao: proc.descricao || '',
           status: proc.status || '',
+          tipo_processo: proc.tipo_processo || '',
+          sistema: proc.sistema || 'Físico',
           materia_assunto_id: proc.materiaAssunto?.id || '',
           local_tramitacao_id: proc.localTramitacao?.id || '',
-          sistema: proc.sistema || '',
           fase_id: proc.fase?.id || '',
           diligencia_id: proc.diligencia?.id || '',
           contato_assistido: proc.contato_assistido || '',
+          observacoes: proc.observacoes || '',
+          data_encerramento: proc.data_encerramento ? new Date(proc.data_encerramento).toISOString().slice(0, 16) : '',
+          idusuario_responsavel: proc.usuario_responsavel?.id || ''
         });
         const [materiasRes, fasesRes, diligenciasRes, localTramitacoesRes] = await Promise.all([
           tabelaAuxiliarService.getMateriaAssunto(token),
@@ -62,6 +66,10 @@ export default function ProcessEditPage() {
   const handleSubmit = async e => {
     e.preventDefault();
     try {
+      console.log('🔍 DEBUG: Dados do formulário antes do envio:', formData);
+      console.log('🔍 DEBUG: Token sendo usado:', token);
+      console.log('🔍 DEBUG: ID do processo:', id);
+      
       await processService.updateProcess(token, id, formData);
       
       // Limpa o cache de forma mais agressiva
@@ -85,10 +93,10 @@ export default function ProcessEditPage() {
     <div style={{ maxWidth: 600, margin: '0 auto', background: '#f3f4f6', padding: 24, borderRadius: 8 }}>
       <h2>Editar Processo</h2>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <label>Número do Processo
+        <label>Número do Processo*
           <input name="numero_processo" value={formData.numero_processo} onChange={handleChange} required />
         </label>
-        <label>Num/Processo/Sei
+        <label>Num/Processo/SEI
           <input name="num_processo_sei" value={formData.num_processo_sei} onChange={handleChange} />
         </label>
         <label>Assistido/a
@@ -97,40 +105,61 @@ export default function ProcessEditPage() {
         <label>Contato/Assistido
           <input name="contato_assistido" value={formData.contato_assistido} onChange={handleChange} />
         </label>
-        <label>Descrição
+        <label>Descrição*
           <textarea name="descricao" value={formData.descricao} onChange={handleChange} required />
         </label>
-        <label>Status
-          <select name="status" value={formData.status} onChange={handleChange} required>
-            <option value="">Selecione o status</option>
-            <option value="Em andamento">Em andamento</option>
-            <option value="Concluído">Concluído</option>
-            <option value="Suspenso">Suspenso</option>
-          </select>
+        <label>Tipo do Processo
+          <input name="tipo_processo" value={formData.tipo_processo} onChange={handleChange} placeholder="Ex: Cível, Criminal, Trabalhista" />
         </label>
-        <label>Matéria/Assunto
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <label>Status*
+            <select name="status" value={formData.status} onChange={handleChange} required>
+              <option value="">Selecione o status</option>
+              <option value="Em andamento">Em andamento</option>
+              <option value="Concluído">Concluído</option>
+              <option value="Suspenso">Suspenso</option>
+              <option value="Arquivado">Arquivado</option>
+            </select>
+          </label>
+          <label>Sistema*
+            <select name="sistema" value={formData.sistema} onChange={handleChange} required>
+              <option value="Físico">Físico</option>
+              <option value="PEA">PEA</option>
+              <option value="PJE">PJE</option>
+            </select>
+          </label>
+        </div>
+        <label>Matéria/Assunto*
           <select name="materia_assunto_id" value={formData.materia_assunto_id} onChange={handleChange} required>
             <option value="">Selecione a matéria/assunto</option>
             {materias.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
           </select>
         </label>
-        <label>Fase
-          <select name="fase_id" value={formData.fase_id} onChange={handleChange} required>
-            <option value="">Selecione a fase</option>
-            {fases.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-          </select>
-        </label>
-        <label>Diligência
-          <select name="diligencia_id" value={formData.diligencia_id} onChange={handleChange} required>
-            <option value="">Selecione a diligência</option>
-            {diligencias.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
-          </select>
-        </label>
-        <label>Local de Tramitação
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <label>Fase*
+            <select name="fase_id" value={formData.fase_id} onChange={handleChange} required>
+              <option value="">Selecione a fase</option>
+              {fases.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+            </select>
+          </label>
+          <label>Diligência*
+            <select name="diligencia_id" value={formData.diligencia_id} onChange={handleChange} required>
+              <option value="">Selecione a diligência</option>
+              {diligencias.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
+            </select>
+          </label>
+        </div>
+        <label>Local de Tramitação*
           <select name="local_tramitacao_id" value={formData.local_tramitacao_id} onChange={handleChange} required>
             <option value="">Selecione o local</option>
             {localTramitacoes.map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
           </select>
+        </label>
+        <label>Data de Encerramento
+          <input type="datetime-local" name="data_encerramento" value={formData.data_encerramento} onChange={handleChange} />
+        </label>
+        <label>Observações
+          <textarea name="observacoes" value={formData.observacoes} onChange={handleChange} rows={3} />
         </label>
         <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
           <button type="submit" style={{ background: '#2563eb', color: 'white', padding: '8px 16px', borderRadius: 6, border: 0, cursor: 'pointer' }}>Salvar</button>

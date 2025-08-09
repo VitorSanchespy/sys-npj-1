@@ -36,7 +36,7 @@ const SelectWithAdd = ({
         <button
           type="button"
           onClick={() => onToggleAddForm(true)}
-          className="mt-2 text-xs font-medium text-blue-600 hover:text-blue-800"
+          className="mt-2 text-xs font-medium bg-blue-700 text-white hover:bg-blue-800 border border-blue-800 rounded px-2 py-1"
         >
           Adicionar Novo
         </button>

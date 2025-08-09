@@ -1,7 +1,7 @@
 {
   "development": {
     "username": "root",
-    "password": "12345678@",
+    "password": "1234",
     "database": "npjdatabase",
     "host": "localhost",
     "port": 3306,
@@ -9,7 +9,7 @@
   },
   "test": {
     "username": "root",
-    "password": "12345678@",
+    "password": "1234",
     "database": "npjdatabase_test",
     "host": "localhost",
     "port": 3306,
@@ -17,7 +17,7 @@
   },
   "production": {
     "username": "root",
-    "password": "12345678@",
+    "password": "1234",
     "database": "npjdatabase",
     "host": "sistema-npj-db-1",
     "port": 3306,

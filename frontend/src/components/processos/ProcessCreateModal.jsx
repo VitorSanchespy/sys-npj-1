@@ -2,29 +2,67 @@ import React, { useState, useEffect } from "react";
 import { apiRequest } from "@/api/apiRequest";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { getUserRole } from "../../hooks/useApi";
+import { tabelaAuxiliarService } from "../../api/services";
 
 export default function CreateProcessModal({ onCreated, onClose }) {
   const { token, user } = useAuthContext();
   const [usuarios, setUsuarios] = useState([]);
+  const [materias, setMaterias] = useState([]);
+  const [fases, setFases] = useState([]);
+  const [diligencias, setDiligencias] = useState([]);
+  const [localTramitacoes, setLocalTramitacoes] = useState([]);
   const [form, setForm] = useState({
     numero_processo: "",
     descricao: "",
-    status: "Aberto",
+    status: "Em andamento",
     tipo_processo: "",
     idusuario_responsavel: "",
     data_encerramento: "",
-    observacoes: ""
+    observacoes: "",
+    sistema: "Físico",
+    materia_assunto_id: "",
+    fase_id: "",
+    diligencia_id: "",
+    num_processo_sei: "",
+    assistido: "",
+    contato_assistido: "",
+    local_tramitacao_id: ""
   });
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
 
   useEffect(() => {
-    // Busca usuários conforme o papel
-    let url = "/api/usuarios";
-    if (getUserRole(user) === "Professor") url = "/api/usuarios/alunos";
-    apiRequest(url, { token })
-      .then(data => setUsuarios(data))
-      .catch(() => setUsuarios([]));
+    async function fetchData() {
+      try {
+        // Busca usuários conforme o papel
+        let url = "/api/usuarios";
+        if (getUserRole(user) === "Professor") url = "/api/usuarios/alunos";
+        const usuariosData = await apiRequest(url, { token });
+        setUsuarios(usuariosData);
+
+        // Busca dados auxiliares
+        const [materiasRes, fasesRes, diligenciasRes, localTramitacoesRes] = await Promise.all([
+          tabelaAuxiliarService.getMateriaAssunto(token),
+          tabelaAuxiliarService.getFase(token),
+          tabelaAuxiliarService.getDiligencia(token),
+          tabelaAuxiliarService.getLocalTramitacao(token),
+        ]);
+
+        setMaterias(Array.isArray(materiasRes) ? materiasRes : []);
+        setFases(Array.isArray(fasesRes) ? fasesRes : []);
+        setDiligencias(Array.isArray(diligenciasRes) ? diligenciasRes : []);
+        setLocalTramitacoes(Array.isArray(localTramitacoesRes) ? localTramitacoesRes : []);
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        setUsuarios([]);
+        setMaterias([]);
+        setFases([]);
+        setDiligencias([]);
+        setLocalTramitacoes([]);
+      }
+    }
+    
+    fetchData();
   }, [token, user]);
 
   function handleClose() {
@@ -50,11 +88,19 @@ export default function CreateProcessModal({ onCreated, onClose }) {
       setForm({
         numero_processo: "",
         descricao: "",
-        status: "Aberto",
+        status: "Em andamento",
         tipo_processo: "",
         idusuario_responsavel: "",
         data_encerramento: "",
-        observacoes: ""
+        observacoes: "",
+        sistema: "Físico",
+        materia_assunto_id: "",
+        fase_id: "",
+        diligencia_id: "",
+        num_processo_sei: "",
+        assistido: "",
+        contato_assistido: "",
+        local_tramitacao_id: ""
       });
       if (onCreated) onCreated();
       handleClose();
@@ -84,7 +130,7 @@ export default function CreateProcessModal({ onCreated, onClose }) {
           backgroundColor: 'white',
           padding: 30,
           borderRadius: 8,
-          maxWidth: 500,
+          maxWidth: 700,
           width: '90%',
           maxHeight: '90vh',
           overflowY: 'auto'
@@ -107,6 +153,7 @@ export default function CreateProcessModal({ onCreated, onClose }) {
         </div>
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
+          {/* Campos principais */}
           <div>
             <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
               Número do Processo*:
@@ -117,6 +164,21 @@ export default function CreateProcessModal({ onCreated, onClose }) {
               value={form.numero_processo}
               onChange={handleChange}
               required
+              placeholder="Ex: 0001234-56.2024.8.07.0001"
+              style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
+              Número/Processo/SEI:
+            </label>
+            <input
+              type="text"
+              name="num_processo_sei"
+              value={form.num_processo_sei}
+              onChange={handleChange}
+              placeholder="Número do processo no SEI"
               style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
             />
           </div>
@@ -131,24 +193,76 @@ export default function CreateProcessModal({ onCreated, onClose }) {
               onChange={handleChange}
               required
               rows={3}
+              placeholder="Descrição detalhada do processo"
               style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4, resize: 'vertical' }}
             />
           </div>
-          
+
+          {/* Informações do Assistido */}
           <div>
             <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
-              Status:
+              Assistido:
             </label>
-            <select
-              name="status"
-              value={form.status}
+            <input
+              type="text"
+              name="assistido"
+              value={form.assistido}
               onChange={handleChange}
+              placeholder="Nome do assistido"
               style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-            >
-              <option value="Aberto">Aberto</option>
-              <option value="Em andamento">Em andamento</option>
-              <option value="Finalizado">Finalizado</option>
-            </select>
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
+              Contato do Assistido:
+            </label>
+            <input
+              type="text"
+              name="contato_assistido"
+              value={form.contato_assistido}
+              onChange={handleChange}
+              placeholder="Telefone ou email do assistido"
+              style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+            />
+          </div>
+          
+          {/* Campos de status e classificação */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15 }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
+                Status*:
+              </label>
+              <select
+                name="status"
+                value={form.status}
+                onChange={handleChange}
+                required
+                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              >
+                <option value="Em andamento">Em andamento</option>
+                <option value="Concluído">Concluído</option>
+                <option value="Suspenso">Suspenso</option>
+                <option value="Arquivado">Arquivado</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
+                Sistema*:
+              </label>
+              <select
+                name="sistema"
+                value={form.sistema}
+                onChange={handleChange}
+                required
+                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              >
+                <option value="Físico">Físico</option>
+                <option value="PEA">PEA</option>
+                <option value="PJE">PJE</option>
+              </select>
+            </div>
           </div>
           
           <div>
@@ -160,8 +274,92 @@ export default function CreateProcessModal({ onCreated, onClose }) {
               name="tipo_processo"
               value={form.tipo_processo}
               onChange={handleChange}
+              placeholder="Ex: Cível, Criminal, Trabalhista"
               style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
             />
+          </div>
+
+          {/* Campos auxiliares */}
+          <div>
+            <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
+              Matéria/Assunto*:
+            </label>
+            <select
+              name="materia_assunto_id"
+              value={form.materia_assunto_id}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+            >
+              <option value="">Selecione a matéria/assunto</option>
+              {materias.map(materia => (
+                <option key={materia.id} value={materia.id}>
+                  {materia.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15 }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
+                Fase*:
+              </label>
+              <select
+                name="fase_id"
+                value={form.fase_id}
+                onChange={handleChange}
+                required
+                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              >
+                <option value="">Selecione a fase</option>
+                {fases.map(fase => (
+                  <option key={fase.id} value={fase.id}>
+                    {fase.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
+                Diligência*:
+              </label>
+              <select
+                name="diligencia_id"
+                value={form.diligencia_id}
+                onChange={handleChange}
+                required
+                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              >
+                <option value="">Selecione a diligência</option>
+                {diligencias.map(diligencia => (
+                  <option key={diligencia.id} value={diligencia.id}>
+                    {diligencia.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
+              Local de Tramitação*:
+            </label>
+            <select
+              name="local_tramitacao_id"
+              value={form.local_tramitacao_id}
+              onChange={handleChange}
+              required
+              style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+            >
+              <option value="">Selecione o local de tramitação</option>
+              {localTramitacoes.map(local => (
+                <option key={local.id} value={local.id}>
+                  {local.nome}
+                </option>
+              ))}
+            </select>
           </div>
           
           <div>
@@ -205,6 +403,7 @@ export default function CreateProcessModal({ onCreated, onClose }) {
               value={form.observacoes}
               onChange={handleChange}
               rows={3}
+              placeholder="Observações adicionais sobre o processo"
               style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4, resize: 'vertical' }}
             />
           </div>

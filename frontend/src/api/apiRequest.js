@@ -23,6 +23,14 @@ const logRequest = (url, options, response = null, error = null) => {
 export async function apiRequest(url, options = {}) {
   const { token, method = 'GET', body, headers = {}, ...fetchOptions } = options;
 
+  // Log de debug para PUT requests
+  if (method === 'PUT' && url.includes('/processos/')) {
+    console.log('🔍 DEBUG apiRequest.js: URL:', url);
+    console.log('🔍 DEBUG apiRequest.js: Method:', method);
+    console.log('🔍 DEBUG apiRequest.js: Body:', body);
+    console.log('🔍 DEBUG apiRequest.js: Token:', token);
+  }
+
   // Headers padrão otimizados
   const requestHeaders = {
     'Content-Type': 'application/json',

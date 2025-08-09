@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { atualizacaoProcessoService, tabelaAuxiliarService as auxTablesService } from "../../api/services";
@@ -27,13 +26,11 @@ export default function UpdateList({ processoId, showDeleteButton = true }) {
   const queryClient = useQueryClient();
   const [updates, setUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
   const [auxData, setAuxData] = useState({ materias: [], fases: [], diligencias: [], localTramitacoes: [] });
 
   useEffect(() => {
     async function fetchUpdates() {
       try {
-        // Usar processo_id como query parameter
         const url = processoId ? `?processo_id=${processoId}` : '';
         const data = await atualizacaoProcessoService.listAtualizacoes(token, url);
         setUpdates(data);
@@ -43,9 +40,8 @@ export default function UpdateList({ processoId, showDeleteButton = true }) {
       setLoading(false);
     }
     fetchUpdates();
-  }, [processoId, token, showForm]);
+  }, [processoId, token]);
 
-  // Carregar dados auxiliares para mapear ids para nomes
   useEffect(() => {
     async function fetchAux() {
       try {
@@ -64,35 +60,33 @@ export default function UpdateList({ processoId, showDeleteButton = true }) {
   }, [token]);
 
   if (loading) return <div>Carregando atualizações...</div>;
-  
+
   const userRole = getUserRole(user);
-  
+
   return (
     <div>
-      {["admin", "professor", "aluno"].includes(userRole?.toLowerCase()) && (
-        <button onClick={() => setShowForm(v => !v)}>
-          {showForm ? "Fechar" : "Nova Atualização"}
-        </button>
-      )}
-      {showForm && (
-        <UpdateForm
-          processoId={processoId}
-          onSuccess={async () => {
-            setShowForm(false);
-            
-            // Atualização automática via React Query
-            requestCache.clear();
-            await queryClient.invalidateQueries({ queryKey: ['atualizacoes'] });
-            await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-          }}
-        />
-      )}
       <ul>
         {updates.length === 0 && <li>Nenhuma atualização encontrada.</li>}
         {updates.map(upd => (
           <li key={upd.id}>
             {upd.tipo && <b>[{upd.tipo}] </b>}
-            {formatDescricao(upd.descricao, auxData)}
+            {(() => {
+              // Remove conteúdo desnecessário e garante que 'Por @nome_usuario' sempre tenha o nome do usuário, se disponível
+              let desc = (upd.descricao || '')
+                .replace(/^.*?\)\s*/, '')
+                .replace(/\{?Por:.*?\}?/gi, '')
+                .replace(/\{[^}]*\}/g, '')
+                .replace(/\[[^\]]*\]/g, '')
+                .replace(/\n+/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+              // Se a descrição contém 'Por @ :', substituir por 'Por @nome_usuario :'
+              // Sempre garantir que "Por @" seja seguido do nome do usuário
+              if (/Por @\s*:?/i.test(desc) && upd.usuario && upd.usuario.nome) {
+                desc = desc.replace(/Por @\s*:?/gi, `Por @${upd.usuario.nome} :`);
+              }
+              return formatDescricao(desc, auxData);
+            })()}
             {upd.anexo && (
               <>
                 <br />
@@ -100,7 +94,9 @@ export default function UpdateList({ processoId, showDeleteButton = true }) {
               </>
             )}
             <br />
-            <small>Por: {upd.usuario_nome} em {new Date(upd.data_atualizacao).toLocaleString()}</small>
+            <small>
+              Por <b>@{upd.usuario && upd.usuario.nome ? upd.usuario.nome : (upd.usuario_nome || 'Usuário')}</b> : em {new Date(upd.data_atualizacao).toLocaleString()}
+            </small>
             {userRole && ['professor', 'admin'].includes(userRole.toLowerCase()) && showDeleteButton && (
               <button
                 style={{ marginLeft: 12, color: '#fff', background: '#d32f2f', border: 'none', borderRadius: 4, padding: '2px 10px', fontWeight: 500, cursor: 'pointer' }}
@@ -108,13 +104,9 @@ export default function UpdateList({ processoId, showDeleteButton = true }) {
                   if(window.confirm('Tem certeza que deseja excluir esta atualização?')) {
                     try {
                       await atualizacaoProcessoService.deleteAtualizacao(token, upd.id);
-                      
-                      // Atualização automática via React Query
                       requestCache.clear();
                       await queryClient.invalidateQueries({ queryKey: ['atualizacoes'] });
                       await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-                      
-                      // Atualizar estado local
                       setUpdates(updates.filter(u => u.id !== upd.id));
                     } catch (error) {
                       console.error('Erro ao excluir atualização:', error);

@@ -230,6 +230,14 @@ export default function ProcessDetailPage() {
                   {formatDate(processo.criado_em)}
                 </p>
               </div>
+              {processo.atualizado_em && (
+                <div>
+                  <strong>Última Atualização:</strong>
+                  <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                    {formatDate(processo.atualizado_em)}
+                  </p>
+                </div>
+              )}
               {processo.data_encerramento && (
                 <div>
                   <strong>Data de Encerramento:</strong>
@@ -337,19 +345,19 @@ export default function ProcessDetailPage() {
               <div>
                 <strong>Nome:</strong>
                 <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
-                  {processo.responsavel?.nome || 'Não atribuído'}
+                  {processo.responsavelVinculado?.nome || processo.responsavel?.nome || 'Não atribuído'}
                 </p>
               </div>
               <div>
                 <strong>Email:</strong>
                 <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
-                  {processo.responsavel?.email || 'Não informado'}
+                  {processo.responsavelVinculado?.email || processo.responsavel?.email || 'Não informado'}
                 </p>
               </div>
               <div>
                 <strong>Telefone:</strong>
                 <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
-                  {processo.responsavel?.telefone || 'Não informado'}
+                  {processo.responsavelVinculado?.telefone || processo.responsavel?.telefone || 'Não informado'}
                 </p>
               </div>
               {processo.observacoes && (
