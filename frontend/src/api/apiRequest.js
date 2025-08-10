@@ -1,18 +1,18 @@
+// API Request Handler - Centraliza todas as requisições HTTP do sistema
 import { interceptedRequest } from '../utils/requestInterceptor';
 import { NPJ_CONFIG } from '../config/npjConfig';
 
 const API_BASE_URL = NPJ_CONFIG.API.BASE_URL;
 
-// Cache para requisições frequentes
+// Cache para requisições frequentes otimizado
 const requestCache = new Map();
 const CACHE_DURATION = NPJ_CONFIG.CACHE.DEFAULT_TTL;
 
-// Função utilitária para logs detalhados
+// Função utilitária para logs detalhados - apenas em desenvolvimento
 const logRequest = (url, options, response = null, error = null) => {
-  if (NPJ_CONFIG.DEV.ENABLE_LOGS) {
+  if (NPJ_CONFIG.DEV.ENABLE_LOGS && process.env.NODE_ENV === 'development') {
     if (error) {
-      console.log('❌ API Error Details:', error);
-      console.log('❌ API Request Failed:', { url, error: error.message || error });
+      console.error('❌ API Request Failed:', { url, error: error.message || error });
     } else if (response) {
       console.log('✅ API Success:', { url, status: response.status });
     }
@@ -23,12 +23,9 @@ const logRequest = (url, options, response = null, error = null) => {
 export async function apiRequest(url, options = {}) {
   const { token, method = 'GET', body, headers = {}, ...fetchOptions } = options;
 
-  // Log de debug para PUT requests
-  if (method === 'PUT' && url.includes('/processos/')) {
-    console.log('🔍 DEBUG apiRequest.js: URL:', url);
-    console.log('🔍 DEBUG apiRequest.js: Method:', method);
-    console.log('🔍 DEBUG apiRequest.js: Body:', body);
-    console.log('🔍 DEBUG apiRequest.js: Token:', token);
+  // Log de debug apenas em desenvolvimento para PUT requests
+  if (method === 'PUT' && url.includes('/processos/') && process.env.NODE_ENV === 'development') {
+    console.log('🔍 DEBUG Process Update:', { url, method, body, hasToken: !!token });
   }
 
   // Headers padrão otimizados

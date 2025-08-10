@@ -100,13 +100,23 @@ exports.login = async (req, res) => {
   }
 };
 
-// Registro
+// Registro - sempre cria usuários com role "Aluno" por padrão
 exports.registro = async (req, res) => {
   try {
-    const { nome, email, senha, role_id = 3 } = req.body;
+    const { nome, email, senha, role_id = 3 } = req.body; // Padrão: role_id = 3 (Aluno)
     
     if (!nome || !email || !senha) {
       return res.status(400).json({ erro: 'Nome, email e senha são obrigatórios' });
+    }
+    
+    // Validação de email
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ erro: 'Formato de email inválido' });
+    }
+    
+    // Validação de senha
+    if (senha.length < 6) {
+      return res.status(400).json({ erro: 'Senha deve ter pelo menos 6 caracteres' });
     }
     
     if (isDbAvailable()) {
@@ -114,7 +124,7 @@ exports.registro = async (req, res) => {
       
       const usuarioExistente = await Usuario.findOne({ where: { email } });
       if (usuarioExistente) {
-        return res.status(400).json({ erro: 'Email já cadastrado' });
+        return res.status(400).json({ erro: 'Este email já está cadastrado no sistema' });
       }
       
       const senhaHash = await bcrypt.hash(senha, 10);
@@ -123,18 +133,19 @@ exports.registro = async (req, res) => {
         nome,
         email,
         senha: senhaHash,
-        role_id,
+        role_id: 3, // Forçar sempre como Aluno (role_id = 3)
         ativo: true
       });
       
       res.status(201).json({
         success: true,
-        message: 'Usuário criado com sucesso',
+        message: 'Usuário criado com sucesso como Aluno',
         usuario: {
           id: novoUsuario.id,
           nome: novoUsuario.nome,
           email: novoUsuario.email,
-          role_id: novoUsuario.role_id
+          role_id: novoUsuario.role_id,
+          role: 'Aluno'
         }
       });
       
@@ -146,7 +157,7 @@ exports.registro = async (req, res) => {
           id: Date.now(),
           nome,
           email,
-          role_id
+          role_id: 3 // Forçar como Aluno mesmo em modo desenvolvimento
         }
       });
     }

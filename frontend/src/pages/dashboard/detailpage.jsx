@@ -1,3 +1,4 @@
+// Página de detalhes do processo - exibe informações completas de um processo específico
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -12,22 +13,31 @@ export default function ProcessDetailPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    console.log('🔍 ProcessDetailPage - Estado de autenticação:', {
-      isAuthenticated,
-      hasToken: !!token,
-      hasUser: !!user,
-      processId: id
-    });
+    // Log de desenvolvimento para debug de autenticação
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 ProcessDetailPage - Estado de autenticação:', {
+        isAuthenticated,
+        hasToken: !!token,
+        hasUser: !!user,
+        processId: id
+      });
+    }
 
+    // Redirecionamento se não autenticado
     if (!isAuthenticated || !token) {
-      console.log('❌ Usuário não autenticado, redirecionando para login');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('❌ Usuário não autenticado, redirecionando para login');
+      }
       navigate('/login');
       return;
     }
 
+    // Função para buscar dados do processo
     const fetchProcesso = async () => {
       try {
-        console.log('🔍 Buscando processo ID:', id);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔍 Buscando processo ID:', id);
+        }
         
         const response = await fetch(`http://localhost:3001/api/processos/${id}`, {
           headers: {
@@ -36,15 +46,23 @@ export default function ProcessDetailPage() {
           }
         });
 
-        console.log('📡 Response status:', response.status);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('📡 Response status:', response.status);
+        }
 
         if (response.ok) {
           const data = await response.json();
-          console.log('✅ Processo carregado:', data);
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.log('✅ Processo carregado:', data);
+          }
+          
           setProcesso(data);
           setError(null);
         } else {
-          console.log('❌ Erro HTTP:', response.status);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('❌ Erro HTTP:', response.status);
+          }
           setError(`Erro ${response.status}: Não foi possível carregar o processo`);
         }
       } catch (err) {

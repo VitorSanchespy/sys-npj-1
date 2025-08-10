@@ -27,9 +27,12 @@ export const NotificationProvider = ({ children }) => {
     if (user && token) {
       notificationService.connect(user.id, token);
       
-      // Configurar handler para novas notificações
+      // Configurar handler para novas notificações via WebSocket
       notificationService.setNotificationHandler((notification) => {
-        console.log('🔔 Nova notificação via WebSocket:', notification);
+        // Log de desenvolvimento para debug de notificações
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔔 Nova notificação via WebSocket:', notification);
+        }
         
         // Adicionar nova notificação à lista
         setNotifications(prev => [notification, ...prev]);

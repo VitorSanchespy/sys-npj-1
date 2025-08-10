@@ -1,42 +1,62 @@
+// Formulário de login com feedback visual melhorado
 import React, { useState } from "react";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useGlobalToast } from "../../contexts/ToastContext";
 
 export default function LoginForm({ onSuccess }) {
   const { login, loading } = useAuthContext();
+  const { showSuccess, showError, showWarning } = useGlobalToast();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  // Validação de campos
+  const validateForm = () => {
+    if (!email.trim()) {
+      showWarning("E-mail é obrigatório", "validation");
+      return false;
+    }
+    if (!senha.trim()) {
+      showWarning("Senha é obrigatória", "validation");
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showWarning("E-mail deve ter um formato válido", "validation");
+      return false;
+    }
+    return true;
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
-    setError("");
+    
+    // Validar formulário antes de enviar
+    if (!validateForm()) {
+      return;
+    }
+
     const res = await login(email, senha);
+    
     if (res.success) {
+      showSuccess("🎉 Login realizado com sucesso! Bem-vindo(a) de volta!");
       if (onSuccess) onSuccess();
     } else {
-      setError(res.message || "E-mail ou senha inválidos");
+      // Mostrar erro específico baseado na resposta
+      if (res.message?.includes('Credenciais inválidas') || res.message?.includes('senha')) {
+        showError("❌ E-mail ou senha incorretos. Verifique seus dados e tente novamente.");
+      } else if (res.message?.includes('email') || res.message?.includes('encontrado')) {
+        showError("❌ E-mail não encontrado. Verifique se está digitado corretamente ou faça seu cadastro.");
+      } else if (res.message?.includes('inativo')) {
+        showError("❌ Sua conta está inativa. Entre em contato com o administrador.");
+      } else {
+        showError(`❌ Falha no login: ${res.message || "Erro inesperado. Tente novamente."}`);
+      }
     }
   };
 
   return (
     <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-      {error && (
-        <div style={{
-          backgroundColor: '#fee',
-          border: '1px solid #fcc',
-          color: '#c33',
-          padding: '12px',
-          borderRadius: '8px',
-          marginBottom: '20px',
-          fontSize: '0.9rem',
-          textAlign: 'center'
-        }}>
-          ⚠️ {error}
-        </div>
-      )}
-      
       <div style={{ marginBottom: '20px' }}>
         <label style={{
           display: 'block',

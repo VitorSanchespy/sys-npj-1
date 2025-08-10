@@ -1,3 +1,4 @@
+// Context de Autenticação - Gerencia estado de login e usuário logado
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { authService } from "../api/services";
 import Loader from "../components/common/Loader"; 
@@ -43,7 +44,10 @@ export function AuthProvider({ children }) {
           const profileData = await authService.getProfile(token);
           setUser(profileData);
         } catch (error) {
-          console.error('Token inválido na inicialização:', error);
+          // Log apenas em desenvolvimento
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Token inválido na inicialização:', error);
+          }
           // Tentar renovar o token primeiro
           const refreshed = await tryRefreshToken();
           if (!refreshed) {
@@ -96,7 +100,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const register = async (nome, email, senha, role_id = 2) => {
+  const register = async (nome, email, senha, role_id = 3) => {
     setLoading(true);
     try {
       await authService.register(nome, email, senha, role_id);

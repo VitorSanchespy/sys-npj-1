@@ -64,12 +64,16 @@ export default function ProcessEditPage() {
     setFormData(f => ({ ...f, [name]: value }));
   };
 
+  // Função para atualizar processo - com logs de desenvolvimento
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      console.log('🔍 DEBUG: Dados do formulário antes do envio:', formData);
-      console.log('🔍 DEBUG: Token sendo usado:', token);
-      console.log('🔍 DEBUG: ID do processo:', id);
+      // Logs de desenvolvimento para debug
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 DEBUG: Dados do formulário antes do envio:', formData);
+        console.log('🔍 DEBUG: Token sendo usado:', token);
+        console.log('🔍 DEBUG: ID do processo:', id);
+      }
       
       await processService.updateProcess(token, id, formData);
       

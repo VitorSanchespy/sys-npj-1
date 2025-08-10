@@ -1,3 +1,4 @@
+// API Services - Camada de serviços que centraliza todas as chamadas para o backend
 import { apiRequest, uploadFile } from './apiRequest.js';
 import { API_BASE_URL } from '../utils/constants.js';
 
@@ -158,11 +159,12 @@ export const processService = {
     });
   },
 
-  // PUT /api/processos/:id
+  // PUT /api/processos/:id - Atualizar dados do processo
   updateProcess: async (token, id, processData) => {
-    console.log('🔍 DEBUG services.js: Dados recebidos para atualização:', processData);
-    console.log('🔍 DEBUG services.js: Token:', token);
-    console.log('🔍 DEBUG services.js: ID:', id);
+    // Log apenas em desenvolvimento
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 DEBUG Process Update:', { id, processData, hasToken: !!token });
+    }
     
     return await apiRequest(`/api/processos/${id}`, {
       method: 'PUT',
@@ -524,7 +526,10 @@ export const arquivoService = {
       }
       return await response.json();
     } catch (error) {
-      console.error('Erro no upload:', error);
+      // Log apenas em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Erro no upload:', error);
+      }
       throw error;
     }
   },

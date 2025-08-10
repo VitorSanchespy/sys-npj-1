@@ -88,6 +88,7 @@ const AgendamentoManager = ({ processoId = null }) => {
     }
   }, [queryError]);
 
+  // Função para carregar usuários disponíveis para agendamento
   const carregarUsuarios = async () => {
     if (!user || !token) return;
     if (userRole === 'Aluno') return;
@@ -96,7 +97,12 @@ const AgendamentoManager = ({ processoId = null }) => {
         method: 'GET',
         token: token
       });
-      console.log('Usuários carregados:', response);
+      
+      // Log de desenvolvimento para debug
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Usuários carregados:', response);
+      }
+      
       setUsuarios(Array.isArray(response) ? response : (response.data || []));
     } catch (error) {
       console.error('Erro ao carregar usuários:', error);
@@ -158,14 +164,18 @@ const AgendamentoManager = ({ processoId = null }) => {
     try {
       setError(null);
 
+      // Preparação dos dados para envio ao backend
       const dadosEnvio = {
         ...formData,
         usuario_id: formData.usuario_id || user.id,
         data_evento: new Date(formData.data_evento).toISOString()
       };
 
-      console.log('📤 Dados sendo enviados:', dadosEnvio);
-      console.log('👤 Usuário atual:', user);
+      // Logs de desenvolvimento para debug de agendamento
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📤 Dados sendo enviados:', dadosEnvio);
+        console.log('👤 Usuário atual:', user);
+      }
 
       if (editando) {
         // Editar agendamento existente

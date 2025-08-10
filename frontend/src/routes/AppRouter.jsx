@@ -1,3 +1,4 @@
+// Roteador principal da aplicação - gerencia navegação e permissões
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -27,28 +28,41 @@ import NotFoundPage from "@/pages/NotFoundPage";
 import GoogleCallbackPage from "../pages/GoogleCallbackPage";
 import { hasRole } from "@/utils/permissions";
 
+// Componente de rota privada - controla acesso baseado em autenticação e papéis
 function PrivateRoute({ children, roles }) {
   const { isAuthenticated, user, loading } = useAuthContext();
   
+  // Exibe loading enquanto verifica autenticação
   if (loading) return <div>Carregando...</div>;
   
+  // Redireciona para home se não autenticado
   if (!isAuthenticated) {
-    console.log('Usuário não autenticado, redirecionando para home');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Usuário não autenticado, redirecionando para home');
+    }
     return <Navigate to="/" replace />;
   }
   
+  // Verifica permissões baseadas em papéis se especificado
   if (roles) {
     const hasPermission = hasRole(user, roles);
-    console.log('Verificando permissões:', {
-      user: user,
-      requiredRoles: roles,
-      hasPermission: hasPermission,
-      userRole: user?.role,
-      userRoleId: user?.role_id
-    });
     
+    // Log de desenvolvimento para debug de permissões
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Verificando permissões:', {
+        user: user,
+        requiredRoles: roles,
+        hasPermission: hasPermission,
+        userRole: user?.role,
+        userRoleId: user?.role_id
+      });
+    }
+    
+    // Redireciona para dashboard se sem permissão
     if (!hasPermission) {
-      console.log('Usuário sem permissão, redirecionando para home');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Usuário sem permissão, redirecionando para home');
+      }
       return <Navigate to="/dashboard" replace />;
     }
   }
@@ -56,10 +70,12 @@ function PrivateRoute({ children, roles }) {
   return <MainLayout>{children}</MainLayout>;
 }
 
+// Utilitário para compatibilidade de URL entre frontend e backend
 function frontendToBackendUrl(url) {
   return url.replace('localhost:5173', process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace(/https?:\/\//, '') : 'localhost:3001');
 }
 
+// Componente principal do roteador - define todas as rotas da aplicação
 export default function AppRouter() {
   return (
     <Router 

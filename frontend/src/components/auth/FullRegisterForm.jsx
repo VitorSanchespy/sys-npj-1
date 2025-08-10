@@ -1,19 +1,21 @@
 
-
+// Formulário de cadastro completo - sempre cria usuários com role "Aluno"
 import React, { useState } from "react";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useGlobalToast } from "../../contexts/ToastContext";
 
 export default function FullRegisterForm() {
   const { register } = useAuthContext();
   const navigate = useNavigate();
+  const { showSuccess, showError, showWarning } = useGlobalToast();
+  
   const [form, setForm] = useState({
     nome: "",
     email: "",
     senha: "",
     telefone: "",
   });
-  const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
   function handleChange(e) {
@@ -21,17 +23,70 @@ export default function FullRegisterForm() {
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
+  // Validação de campos
+  const validateForm = () => {
+    if (!form.nome.trim()) {
+      showWarning("Nome é obrigatório", "validation");
+      return false;
+    }
+    if (!form.email.trim()) {
+      showWarning("E-mail é obrigatório", "validation");
+      return false;
+    }
+    if (!form.senha || form.senha.length < 6) {
+      showWarning("Senha deve ter pelo menos 6 caracteres", "validation");
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      showWarning("E-mail deve ter um formato válido", "validation");
+      return false;
+    }
+    return true;
+  };
+
   async function handleSubmit(e) {
     e.preventDefault();
-    setMsg("");
-    setLoading(true);
-    const res = await register(form.nome, form.email, form.senha, 2); // Default to student role
-    if (res.success) {
-      setMsg("Usuário cadastrado com sucesso! Redirecionando...");
-      setTimeout(() => navigate("/login"), 1500);
-    } else {
-      setMsg(res.message || "Erro ao cadastrar usuário.");
+    
+    // Validar formulário antes de enviar
+    if (!validateForm()) {
+      return;
     }
+
+    setLoading(true);
+    
+    try {
+      // SEMPRE criar usuário com role_id = 3 (Aluno)
+      const res = await register(form.nome, form.email, form.senha, 3);
+      
+      if (res.success) {
+        showSuccess(`🎉 Cadastro realizado com sucesso! Bem-vindo(a), ${form.nome}! Redirecionando para o login...`);
+        
+        // Limpar formulário
+        setForm({
+          nome: "",
+          email: "",
+          senha: "",
+          telefone: "",
+        });
+        
+        // Redirecionar após 2 segundos
+        setTimeout(() => navigate("/login"), 2000);
+      } else {
+        // Mostrar erro específico baseado na resposta
+        if (res.message?.includes('email')) {
+          showError("❌ Este e-mail já está cadastrado. Tente fazer login ou use outro e-mail.");
+        } else if (res.message?.includes('senha')) {
+          showError("❌ Senha muito fraca. Use pelo menos 6 caracteres com letras e números.");
+        } else if (res.message?.includes('nome')) {
+          showError("❌ Nome inválido. Use apenas letras e espaços.");
+        } else {
+          showError(`❌ Falha no cadastro: ${res.message || "Erro inesperado. Tente novamente."}`);
+        }
+      }
+    } catch (error) {
+      showError("❌ Erro de conexão. Verifique sua internet e tente novamente.");
+    }
+    
     setLoading(false);
   }
 
@@ -42,19 +97,7 @@ export default function FullRegisterForm() {
       flexDirection: 'column',
       gap: '18px'
     }}>
-      {msg && <div style={{
-        backgroundColor: msg.includes('sucesso') ? '#d4edda' : '#f8d7da',
-        color: msg.includes('sucesso') ? '#155724' : '#721c24',
-        border: `1px solid ${msg.includes('sucesso') ? '#c3e6cb' : '#f5c6cb'}`,
-        borderRadius: '8px',
-        padding: '12px',
-        marginBottom: '10px',
-        textAlign: 'center',
-        fontWeight: 'bold',
-        fontSize: '1rem'
-      }}>{msg}</div>}
-
-      {/* ...campos do formulário e botões... */}
+      {/* Campos do formulário */}
       <div style={{ marginBottom: '10px' }}>
         <label style={{
           display: 'block',
@@ -201,8 +244,21 @@ export default function FullRegisterForm() {
           }
         }}
       >
-        {loading ? "🔄 Cadastrando..." : "🚀 Criar Conta"}
+        {loading ? "🔄 Cadastrando como Aluno..." : "🎓 Criar Conta de Aluno"}
       </button>
+      
+      <div style={{
+        textAlign: 'center',
+        padding: '8px',
+        backgroundColor: '#e3f2fd',
+        borderRadius: '6px',
+        fontSize: '0.85rem',
+        color: '#1976d2',
+        marginBottom: '10px'
+      }}>
+        ℹ️ Sua conta será criada com perfil de <strong>Aluno</strong>
+      </div>
+      
       <button
         type="button"
         onClick={() => navigate('/login')}
