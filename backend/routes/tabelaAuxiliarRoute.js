@@ -7,11 +7,12 @@ const tabelaController = require('../controllers/tabelaAuxiliarController');
 // Aplicar autenticação a todas as rotas
 router.use(verificarToken);
 
-// Rotas básicas
+// Rotas para tabelas auxiliares do sistema
 router.get('/roles', tabelaController.listarRoles);
 router.get('/status', tabelaController.listarStatus);
 router.get('/tipos-acao', tabelaController.listarTiposAcao);
 router.get('/materia-assunto', tabelaController.listarMateriaAssunto);
+router.get('/materias-assuntos', tabelaController.listarMateriaAssunto); // Alias para compatibilidade
 router.post('/materia-assunto', tabelaController.criarMateriaAssunto);
 router.get('/fases', tabelaController.listarFases);
 router.post('/fases', tabelaController.criarFase);

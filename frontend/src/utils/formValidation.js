@@ -1,7 +1,8 @@
 import React from 'react';
 
-// Utilitário para validações de formulário
+// Validações comuns para todos os formulários do sistema
 export const validators = {
+  // Validação de campo obrigatório
   required: (value, fieldName = 'Campo') => {
     if (!value || (typeof value === 'string' && value.trim() === '')) {
       return `${fieldName} é obrigatório`;
@@ -9,6 +10,7 @@ export const validators = {
     return null;
   },
 
+  // Validação de formato de email
   email: (value) => {
     if (!value) return null;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

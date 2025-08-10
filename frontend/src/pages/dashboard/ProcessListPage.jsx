@@ -163,7 +163,7 @@ export default function ProcessListPage() {
             </Button>
           ) : (
             <Button
-              variant="success"
+              variant="blueWhite"
               onClick={() => handleConcluirProcesso(row.id)}
             >
               Concluir

@@ -1,9 +1,9 @@
-// Controller de Usuários
+// Controller de Usuários - Gerencia operações de usuários do sistema
 const bcrypt = require('bcrypt');
 const { usuarioModel: Usuario, roleModel: Role } = require('../models/indexModel');
 const NotificacaoService = require('../services/notificacaoService');
 
-// Obter perfil do usuário autenticado
+// Obter perfil do usuário autenticado - endpoint: GET /api/usuarios/me
 exports.me = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -26,7 +26,7 @@ exports.me = async (req, res) => {
   }
 };
 
-// Atualizar perfil do usuário autenticado
+// Atualizar perfil do usuário autenticado - endpoint: PUT /api/usuarios/me
 exports.updateMe = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -69,7 +69,7 @@ exports.updateMe = async (req, res) => {
   }
 };
 
-// Alterar senha do usuário autenticado
+// Alterar senha do usuário autenticado - endpoint: PUT /api/usuarios/me/senha
 exports.changePassword = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -100,7 +100,7 @@ exports.changePassword = async (req, res) => {
   }
 };
 
-// Inativar conta do usuário autenticado
+// Inativar conta do usuário autenticado - endpoint: DELETE /api/usuarios/me
 exports.deleteMe = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -123,7 +123,7 @@ exports.deleteMe = async (req, res) => {
   }
 };
 
-// Listar usuários
+// Listar todos os usuários do sistema - endpoint: GET /api/usuarios
 exports.listarUsuarios = async (req, res) => {
   try {
     const usuarios = await Usuario.findAll({
@@ -139,7 +139,7 @@ exports.listarUsuarios = async (req, res) => {
   }
 };
 
-// Obter usuário por ID
+// Obter usuário específico por ID - endpoint: GET /api/usuarios/:id
 exports.obterUsuario = async (req, res) => {
   try {
     const { id } = req.params;
@@ -161,7 +161,7 @@ exports.obterUsuario = async (req, res) => {
   }
 };
 
-// Criar usuário
+// Criar novo usuário no sistema - endpoint: POST /api/usuarios
 exports.criarUsuario = async (req, res) => {
   try {
     const { nome, email, senha, role_id = 3, telefone } = req.body;
@@ -212,7 +212,7 @@ exports.criarUsuario = async (req, res) => {
   }
 };
 
-// Atualizar usuário
+// Atualizar dados de usuário específico - endpoint: PUT /api/usuarios/:id
 exports.atualizarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
@@ -240,7 +240,7 @@ exports.atualizarUsuario = async (req, res) => {
   }
 };
 
-// Deletar usuário (desativar)
+// Deletar/desativar usuário específico - endpoint: DELETE /api/usuarios/:id
 exports.deletarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
@@ -260,7 +260,7 @@ exports.deletarUsuario = async (req, res) => {
   }
 };
 
-// Buscar usuários para vinculação (apenas alunos e professores ativos)
+// Buscar usuários para vinculação a processos - endpoint: GET /api/usuarios/para-vinculacao
 exports.buscarUsuariosParaVinculacao = async (req, res) => {
   try {
     const { search } = req.query;
@@ -293,7 +293,7 @@ exports.buscarUsuariosParaVinculacao = async (req, res) => {
   }
 };
 
-// Reativar usuário
+// Reativar usuário previamente desativado - endpoint: PUT /api/usuarios/:id/reativar
 exports.reativarUsuario = async (req, res) => {
   try {
     const { id } = req.params;

@@ -107,7 +107,17 @@ const NotificationBell = () => {
                   markAllAsRead();
                   setIsOpen(false);
                 }}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                style={{
+                  background: '#007bff',
+                  color: 'white',
+                  border: '1px solid #007bff',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  fontWeight: 500,
+                  fontSize: '14px',
+                  transition: 'all 0.2s',
+                  cursor: 'pointer'
+                }}
               >
                 Marcar todas como lidas
               </button>
@@ -170,7 +180,17 @@ const NotificationBell = () => {
             <div className="px-4 py-3 border-t border-gray-200 text-center">
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                style={{
+                  background: '#007bff',
+                  color: 'white',
+                  border: '1px solid #007bff',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  fontWeight: 500,
+                  fontSize: '14px',
+                  transition: 'all 0.2s',
+                  cursor: 'pointer'
+                }}
               >
                 Ver todas as notificações
               </button>

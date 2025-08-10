@@ -1,4 +1,4 @@
-// Controller de Processos simplificado
+// Controller de Processos - Gerencia operações de processos jurídicos
 const NotificacaoService = require('../services/notificacaoService');
 
 // Função utilitária para verificar disponibilidade do banco
@@ -7,7 +7,7 @@ function isDbAvailable() {
 }
 
 
-// Obter processo por ID
+// Obter processo por ID - endpoint: GET /api/processos/:id
 exports.obterProcesso = async (req, res) => {
   try {
     const { id } = req.params;
@@ -32,7 +32,7 @@ exports.obterProcesso = async (req, res) => {
   }
 };
 
-// Obter processo com detalhes completos
+// Obter processo com detalhes completos - endpoint: GET /api/processos/:id/detalhes
 exports.obterProcessoDetalhes = async (req, res) => {
   try {
     const { id } = req.params;
@@ -101,7 +101,7 @@ exports.obterProcessoDetalhes = async (req, res) => {
   }
 };
 
-// Listar usuários vinculados ao processo
+// Listar usuários vinculados ao processo - endpoint: GET /api/processos/:id/usuarios
 exports.listarUsuariosProcesso = async (req, res) => {
   try {
     const { id } = req.params;
@@ -143,7 +143,7 @@ exports.listarUsuariosProcesso = async (req, res) => {
   }
 };
 
-// Criar processo
+// Criar novo processo - endpoint: POST /api/processos
 exports.criarProcesso = async (req, res) => {
   try {
     const {
@@ -161,22 +161,12 @@ exports.criarProcesso = async (req, res) => {
       idusuario_responsavel
     } = req.body;
 
-    if (!numero_processo) {
-      return res.status(400).json({ 
-        erro: 'Número do processo é obrigatório' 
-      });
-    }
-    
     if (isDbAvailable()) {
       const { 
         processoModel: Processo,
         atualizacaoProcessoModel: AtualizacaoProcesso
       } = require('../models/indexModel');
-      // Verificar se número do processo já existe
-      const processoExistente = await Processo.findOne({ where: { numero_processo } });
-      if (processoExistente) {
-        return res.status(400).json({ erro: 'Número do processo já cadastrado' });
-      }
+      
       const novoProcesso = await Processo.create({
         numero_processo,
         num_processo_sei,
@@ -222,7 +212,7 @@ exports.criarProcesso = async (req, res) => {
   }
 };
 
-// Atualizar processo
+// Atualizar dados do processo - endpoint: PUT /api/processos/:id
 exports.atualizarProcesso = async (req, res) => {
   try {
     const { id } = req.params;
@@ -363,7 +353,7 @@ exports.atualizarProcesso = async (req, res) => {
   }
 };
 
-// Deletar processo
+// Deletar processo do sistema - endpoint: DELETE /api/processos/:id
 exports.deletarProcesso = async (req, res) => {
   try {
     const { id } = req.params;
@@ -387,7 +377,7 @@ exports.deletarProcesso = async (req, res) => {
   }
 };
 
-// Listar processos do usuário
+// Listar processos do usuário logado - endpoint: GET /api/processos/usuario
 exports.listarProcessosUsuario = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -397,9 +387,12 @@ exports.listarProcessosUsuario = async (req, res) => {
       const { processoModel: Processo, usuarioModel: Usuario, atualizacaoProcessoModel: AtualizacaoProcesso, usuarioProcessoModel: UsuarioProcesso } = require('../models/indexModel');
       const { Op } = require('sequelize');
       // Definir filtro de status baseado no parâmetro concluidos
-      const statusFilter = concluidos === 'true' 
-        ? { status: 'Concluído' }
-        : { status: { [Op.ne]: 'Concluído' } };
+      let statusFilter = {};
+      if (concluidos === 'true') {
+        statusFilter = { status: 'Concluído' };
+      } else if (concluidos === 'false') {
+        statusFilter = { status: { [Op.ne]: 'Concluído' } };
+      } // Se não passar o parâmetro, não filtra status (traz todos)
 
       // Buscar todos os processos onde o usuário é responsável OU está vinculado via usuarios_processo
       // 1. Buscar IDs de processos vinculados
@@ -473,7 +466,7 @@ exports.listarProcessosUsuario = async (req, res) => {
   }
 };
 
-// Listar todos os processos
+// Listar todos os processos do sistema - endpoint: GET /api/processos
 exports.listarProcessos = async (req, res) => {
   try {
     const { page = 1, limit = 4, recent = 'false', concluidos = 'false' } = req.query;
@@ -545,7 +538,7 @@ exports.listarProcessos = async (req, res) => {
   }
 };
 
-// Vincular usuário ao processo
+// Vincular usuário ao processo - endpoint: POST /api/processos/:id/vincular-usuario
 exports.vincularUsuario = async (req, res) => {
   try {
     const { id } = req.params; // ID do processo
@@ -621,7 +614,7 @@ exports.vincularUsuario = async (req, res) => {
   }
 };
 
-// Concluir processo
+// Marcar processo como concluído - endpoint: PUT /api/processos/:id/concluir
 exports.concluirProcesso = async (req, res) => {
   try {
     const { id } = req.params;
@@ -676,7 +669,7 @@ exports.concluirProcesso = async (req, res) => {
   }
 };
 
-// Reabrir processo concluído
+// Reabrir processo concluído - endpoint: PUT /api/processos/:id/reabrir
 exports.reabrirProcesso = async (req, res) => {
   try {
     const { id } = req.params;
@@ -731,7 +724,7 @@ exports.reabrirProcesso = async (req, res) => {
   }
 };
 
-// Desvincular usuário do processo
+// Desvincular usuário do processo - endpoint: DELETE /api/processos/:id/desvincular-usuario
 exports.desvincularUsuario = async (req, res) => {
   try {
     const { id } = req.params; // ID do processo

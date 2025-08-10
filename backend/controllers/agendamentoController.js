@@ -1,13 +1,16 @@
-// Controller de Agendamentos
+// Controller de Agendamentos - Gerencia operações de agendamentos e eventos
 const path = require('path');
 const googleCalendarService = require('../services/googleCalendarService');
 const NotificacaoService = require('../services/notificacaoService');
 
-// Criar agendamento
+// Criar novo agendamento - endpoint: POST /api/agendamentos
 exports.criarAgendamento = async (req, res) => {
   try {
-    console.log('📅 Dados recebidos para criar agendamento:', req.body);
-    console.log('👤 Usuário autenticado:', req.user);
+    // Logs apenas em desenvolvimento
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📅 Dados recebidos para criar agendamento:', req.body);
+      console.log('👤 Usuário autenticado:', req.user);
+    }
     
     const {
       titulo,
@@ -23,20 +26,22 @@ exports.criarAgendamento = async (req, res) => {
       lembrete_1_semana = false
     } = req.body;
     
-    console.log('📝 Dados processados:', {
-      titulo,
-      descricao,
-      data_evento,
-      tipo_evento,
-      status,
-      local,
-      processo_id,
-      usuario_id,
-      usuario_req: req.user?.id
-    });
+    // Logs apenas em desenvolvimento
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Dados processados:', {
+        titulo,
+        descricao,
+        data_evento,
+        tipo_evento,
+        status,
+        local,
+        processo_id,
+        usuario_id,
+        usuario_req: req.user?.id
+      });
+    }
     
     if (!titulo || !titulo.trim() || !data_evento) {
-      console.log('❌ Validação falhou: título ou data ausente');
       return res.status(400).json({ 
         erro: 'Título e data do evento são obrigatórios' 
       });
@@ -45,7 +50,6 @@ exports.criarAgendamento = async (req, res) => {
     // Validar tipo_evento
     const tiposValidos = ['audiencia', 'prazo', 'reuniao', 'diligencia', 'outro'];
     if (!tiposValidos.includes(tipo_evento)) {
-      console.log('❌ Tipo de evento inválido:', tipo_evento);
       return res.status(400).json({ 
         erro: `Tipo de evento inválido. Valores aceitos: ${tiposValidos.join(', ')}` 
       });

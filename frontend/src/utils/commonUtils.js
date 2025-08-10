@@ -1,3 +1,4 @@
+
 // Utilitários para gerenciamento de usuários e roles
 export const getUserRole = (user) => {
   if (!user) return null;
@@ -89,6 +90,22 @@ export const renderValue = (value) => {
 
 // Estilos comuns para botões - Padronizados para harmonia visual
 export const buttonStyles = {
+    blueWhite: {
+    padding: '10px 20px',
+    backgroundColor: '#007bff',
+    color: 'white',
+    border: '1px solid #007bff',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '500',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 2px 4px rgba(0, 123, 255, 0.15)',
+    minHeight: '38px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
   primary: {
     padding: '10px 20px',
     backgroundColor: '#007bff',
@@ -201,7 +218,23 @@ export const buttonStyles = {
     display: 'inline',
     alignItems: 'center',
     justifyContent: 'center'
-  }
+  },
+    blueWhite: {
+      padding: '10px 20px',
+      backgroundColor: '#007bff',
+      color: 'white',
+      border: '1px solid #007bff',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      fontSize: '14px',
+      fontWeight: '500',
+      transition: 'all 0.2s ease',
+      boxShadow: '0 2px 4px rgba(0, 123, 255, 0.15)',
+      minHeight: '38px',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
 };
 
 // Status colors para processos

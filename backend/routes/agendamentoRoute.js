@@ -2,18 +2,20 @@ const express = require('express');
 const router = express.Router();
 const agendamentoController = require('../controllers/agendamentoController');
 const verificarToken = require('../middleware/authMiddleware');
+const { preveniDuplicacaoAgendamento } = require('../middleware/antiDuplicacaoMiddleware');
+const { validate, handleValidation } = require('../middleware/validationMiddleware');
 
 // Aplicar autenticação a todas as rotas
 router.use(verificarToken);
 
-// Rotas básicas
+// Rotas básicas - com validação e anti-duplicação
 router.get('/', agendamentoController.listarAgendamentos);
-router.post('/', agendamentoController.criarAgendamento);
+router.post('/', preveniDuplicacaoAgendamento, agendamentoController.criarAgendamento);
 router.get('/usuario', agendamentoController.listarAgendamentosUsuario);
 router.get('/periodo', agendamentoController.listarAgendamentosPeriodo);
 router.get('/estatisticas', agendamentoController.obterEstatisticas);
 router.get('/:id', agendamentoController.obterAgendamento);
-router.put('/:id', agendamentoController.atualizarAgendamento);
+router.put('/:id', preveniDuplicacaoAgendamento, agendamentoController.atualizarAgendamento);
 router.delete('/:id', agendamentoController.deletarAgendamento);
 router.post('/:id/sincronizar-google', agendamentoController.sincronizarGoogleCalendar);
 

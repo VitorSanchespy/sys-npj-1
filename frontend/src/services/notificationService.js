@@ -1,4 +1,4 @@
-// Serviço de notificações para o frontend
+// Serviço de notificações para o frontend - gerencia comunicação de notificações em tempo real
 import { apiRequest } from '../api/apiRequest';
 
 class NotificationService {
@@ -12,8 +12,6 @@ class NotificationService {
   // Conectar polling para notificações (temporário até WebSocket funcionar)
   connect(userId, token) {
     try {
-      // log removido
-      
       // Polling a cada 30 segundos para verificar novas notificações
       this.pollInterval = setInterval(() => {
         this.checkForNewNotifications(token);
@@ -25,16 +23,19 @@ class NotificationService {
     }
   }
 
-  // Verificar novas notificações
+  // Verificar novas notificações via polling
   async checkForNewNotifications(token) {
     try {
       const count = await this.getUnreadCount(token);
-      // Por enquanto apenas logamos, depois podemos implementar lógica de notificação
-      if (count > 0) {
+      // Notificar interface apenas se houver notificações não lidas
+      if (count > 0 && process.env.NODE_ENV === 'development') {
         console.log(`🔔 ${count} notificações não lidas`);
       }
     } catch (error) {
-      console.error('❌ Erro ao verificar notificações:', error);
+      // Log apenas em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        console.error('❌ Erro ao verificar notificações:', error);
+      }
     }
   }
 
@@ -52,12 +53,11 @@ class NotificationService {
     this.onNotificationReceived = callback;
   }
 
-  // Buscar notificações do usuário
+  // Buscar notificações do usuário com paginação
   async getNotifications(token, limit = 50, offset = 0) {
     try {
       const response = await apiRequest('/api/notificacoes/usuario', { method: 'GET', token });
-      // O backend retorna { notificacoes, total, naoLidas }
-      return response;
+      return response; // Backend retorna { notificacoes, total, naoLidas }
     } catch (error) {
       console.error('❌ Erro ao buscar notificações:', error);
       throw error;

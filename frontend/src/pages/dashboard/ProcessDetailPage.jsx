@@ -229,7 +229,7 @@ export default function ProcessDetailPage() {
         </Button>
         {processo.status !== 'Concluído' && (
           <Button
-            variant="success"
+            variant="blueWhite"
             onClick={handleConcluirProcesso}
           >
             Concluir Processo

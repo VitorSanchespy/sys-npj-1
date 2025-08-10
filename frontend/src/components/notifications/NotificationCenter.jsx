@@ -115,7 +115,17 @@ const NotificationCenter = () => {
           {stats.unread > 0 && (
             <button
               onClick={markAllAsRead}
-              className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors"
+              style={{
+                background: '#007bff',
+                color: 'white',
+                border: '1px solid #007bff',
+                borderRadius: '6px',
+                padding: '8px 16px',
+                fontWeight: 500,
+                fontSize: '14px',
+                transition: 'all 0.2s',
+                cursor: 'pointer'
+              }}
             >
               Marcar todas como lidas
             </button>

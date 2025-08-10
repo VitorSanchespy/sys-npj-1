@@ -3,6 +3,71 @@ const router = express.Router();
 const { Op } = require('sequelize');
 const { processoModel: Processo, usuarioModel: Usuario } = require('../models/indexModel');
 const PDFDocument = require('pdfkit');
+const verificarToken = require('../middleware/authMiddleware');
+
+// Aplicar autenticação a todas as rotas
+router.use(verificarToken);
+
+// Endpoint para estatísticas gerais do sistema (alias para /stats)
+router.get('/estatisticas', async (req, res) => {
+  try {
+    // Processos
+    const totalProcessos = await Processo.count();
+    const processosAtivos = await Processo.count({ 
+      where: { 
+        status: { 
+          [Op.notIn]: ['arquivado', 'Concluído', 'concluído', 'Finalizado', 'finalizado'] 
+        } 
+      } 
+    });
+    const processosPorStatus = await Processo.findAll({
+      attributes: ['status', [require('sequelize').fn('COUNT', require('sequelize').col('status')), 'count']],
+      group: ['status']
+    });
+    
+    // Mapeamento flexível de status (ignora maiúsculas/minúsculas e acentos)
+    const normalize = s => s && s.normalize('NFD').replace(/[^\w\s]/g, '').toLowerCase();
+    const statusMap = { em_andamento: 0, aguardando: 0, finalizado: 0, arquivado: 0, outros: 0 };
+    processosPorStatus.forEach(row => {
+      const raw = row.status || '';
+      const n = normalize(raw);
+      if (n.includes('andamento')) statusMap.em_andamento += parseInt(row.get('count'));
+      else if (n.includes('aguard')) statusMap.aguardando += parseInt(row.get('count'));
+      else if (n.includes('finaliz') || n.includes('conclu')) statusMap.finalizado += parseInt(row.get('count'));
+      else if (n.includes('arquiv')) statusMap.arquivado += parseInt(row.get('count'));
+      else statusMap.outros += parseInt(row.get('count'));
+    });
+
+    // Usuários
+    const totalUsuarios = await Usuario.count();
+    const usuariosAtivos = await Usuario.count({ where: { ativo: true } });
+    const usuarios = await Usuario.findAll({ attributes: ['role_id'], raw: true });
+    const usuariosPorTipo = { aluno: 0, professor: 0, admin: 0 };
+    usuarios.forEach(u => {
+      if (u.role_id === 1) usuariosPorTipo.admin++;
+      else if (u.role_id === 2) usuariosPorTipo.professor++;
+      else if (u.role_id === 3) usuariosPorTipo.aluno++;
+    });
+
+    res.json({
+      totalProcessos,
+      processosAtivos,
+      processosPorStatus: {
+        em_andamento: statusMap['em_andamento'] || 0,
+        aguardando: statusMap['aguardando'] || 0,
+        finalizado: statusMap['finalizado'] || 0,
+        arquivado: statusMap['arquivado'] || 0,
+        outros: statusMap['outros'] || 0
+      },
+      totalUsuarios,
+      usuariosAtivos,
+      usuariosPorTipo
+    });
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas do dashboard:', error);
+    res.status(500).json({ erro: 'Erro ao buscar estatísticas do dashboard' });
+  }
+});
 
 // Endpoint para estatísticas gerais do sistema (processos e usuários)
 router.get('/stats', async (req, res) => {
