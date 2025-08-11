@@ -17,7 +17,9 @@ const AgendamentoManager = ({ processoId = null }) => {
   const userRole = getUserRole(user);
   
   // Usar os novos hooks
-  const { data: agendamentos = [], isLoading: loading, error: queryError, refetch } = useAgendamentos();
+  // data is the full response object, agendamentos is the array inside it
+  const { data, isLoading: loading, error: queryError, refetch } = useAgendamentos();
+  const agendamentos = (data && Array.isArray(data.agendamentos)) ? data.agendamentos : [];
   const { data: estatisticas } = useEstatisticasAgendamentos();
   const createAgendamento = useCreateAgendamento();
   const updateAgendamento = useUpdateAgendamento();
@@ -74,19 +76,25 @@ const AgendamentoManager = ({ processoId = null }) => {
     }
   };
 
+  // Google Calendar compatible fields only
   const [formData, setFormData] = useState({
     titulo: '',
     descricao: '',
-    data_evento: '',
-    tipo_evento: 'reuniao',
-    processo_id: processoId || '',
-    usuario_id: '',
+    data_inicio: '',
+    data_fim: '',
     local: '',
-    lembrete_1_dia: true,
-    lembrete_2_dias: true,
-    lembrete_1_semana: false,
-    status: 'agendado'
+    convidados: '',
   });
+
+  // Ensure all form fields are always strings (never undefined/null)
+  const safeFormData = {
+    titulo: formData.titulo || '',
+    descricao: formData.descricao || '',
+    data_inicio: formData.data_inicio || '',
+    data_fim: formData.data_fim || '',
+    local: formData.local || '',
+    convidados: formData.convidados || '',
+  };
 
   const [usuarios, setUsuarios] = useState([]);
 
@@ -190,39 +198,46 @@ const AgendamentoManager = ({ processoId = null }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user || !token) return;
-    
     try {
       setError(null);
-
-      // Preparação dos dados para envio ao backend
+      // Prepare Google Calendar event data
       const dadosEnvio = {
-        ...formData,
-        usuario_id: formData.usuario_id || user.id,
-        data_evento: new Date(formData.data_evento).toISOString()
+        // For backend compatibility
+        titulo: safeFormData.titulo,
+        descricao: safeFormData.descricao,
+        data_inicio: safeFormData.data_inicio,
+        data_fim: safeFormData.data_fim,
+        local: safeFormData.local,
+        convidados: safeFormData.convidados,
+        data_evento: safeFormData.data_inicio ? new Date(safeFormData.data_inicio).toISOString() : undefined, // Necessário para o backend
+        // For Google Calendar compatibility
+        summary: safeFormData.titulo,
+        description: safeFormData.descricao,
+        start: safeFormData.data_inicio ? new Date(safeFormData.data_inicio).toISOString() : undefined,
+        end: safeFormData.data_fim ? new Date(safeFormData.data_fim).toISOString() : undefined,
+        location: safeFormData.local,
+        attendees: safeFormData.convidados
+          ? safeFormData.convidados.split(',').map(email => ({ email: email.trim() }))
+          : [],
       };
-
-      // Logs de desenvolvimento para debug de agendamento
       if (process.env.NODE_ENV === 'development') {
-        console.log('📤 Dados sendo enviados:', dadosEnvio);
-        console.log('👤 Usuário atual:', user);
+        console.log('📤 Dados Google Calendar:', dadosEnvio);
       }
-
       if (editando) {
-        // Editar agendamento existente
         await updateAgendamento.mutateAsync({ id: editando, agendamentoData: dadosEnvio });
       } else {
-        // Criar novo agendamento
         await createAgendamento.mutateAsync(dadosEnvio);
       }
-
-      // Fechar o modal e resetar form
       setShowForm(false);
       setEditando(null);
       resetForm();
-      
     } catch (error) {
       console.error('Erro ao salvar agendamento:', error);
-      setError(error.message || 'Erro ao salvar agendamento');
+      if (error?.message?.includes('Google Calendar')) {
+        setError('Erro ao criar/editar evento: Google Calendar não conectado ou permissão negada.');
+      } else {
+        setError(error.message || 'Erro ao salvar agendamento');
+      }
     }
   };
 
@@ -533,85 +548,73 @@ const AgendamentoManager = ({ processoId = null }) => {
                     <input
                       type="text"
                       required
-                      value={formData.titulo}
+                      value={safeFormData.titulo}
                       onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
                       className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Digite o título do agendamento"
+                      placeholder="Digite o título do evento"
                     />
                   </div>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tipo de Evento <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      required
-                      value={formData.tipo_evento}
-                      onChange={(e) => setFormData({ ...formData, tipo_evento: e.target.value })}
-                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      {tiposEvento.map(tipo => (
-                        <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Data e Hora <span className="text-red-500">*</span>
+                      Data e Hora de Início <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="datetime-local"
                       required
-                      value={formData.data_evento}
-                      onChange={(e) => setFormData({ ...formData, data_evento: e.target.value })}
+                      value={safeFormData.data_inicio}
+                      onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
                       className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Status
+                      Data e Hora de Fim <span className="text-red-500">*</span>
                     </label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    <input
+                      type="datetime-local"
+                      required
+                      value={safeFormData.data_fim}
+                      onChange={(e) => setFormData({ ...formData, data_fim: e.target.value })}
                       className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      {statusOptions.map(status => (
-                        <option key={status.value} value={status.value}>{status.label}</option>
-                      ))}
-                    </select>
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Local
+                    </label>
+                    <input
+                      type="text"
+                      value={safeFormData.local}
+                      onChange={(e) => setFormData({ ...formData, local: e.target.value })}
+                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Local do evento"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Convidados (e-mails separados por vírgula)
+                    </label>
+                    <input
+                      type="text"
+                      value={safeFormData.convidados}
+                      onChange={(e) => setFormData({ ...formData, convidados: e.target.value })}
+                      className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="exemplo@email.com, outro@email.com"
+                    />
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Local
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.local}
-                    onChange={(e) => setFormData({ ...formData, local: e.target.value })}
-                    className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Local do evento"
-                  />
-                </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Descrição
                   </label>
                   <textarea
-                    value={formData.descricao}
+                    value={safeFormData.descricao}
                     onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
                     rows={3}
                     className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Descrição detalhada do agendamento"
+                    placeholder="Descrição detalhada do evento"
                   />
                 </div>
-
-                {/* Botões */}
                 <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                   <button
                     type="button"

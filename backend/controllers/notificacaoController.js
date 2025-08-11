@@ -81,24 +81,23 @@ exports.criarNotificacao = async (req, res) => {
       tipo = 'informacao',
       usuario_id,
       idusuario, // suporte para formato alternativo
-      processo_id,
-      agendamento_id
+      processo_id
     } = req.body;
-    
+
     // Aceita tanto usuario_id quanto idusuario para compatibilidade
     const userId = usuario_id || idusuario;
-    
+
     // Normalizar o tipo para valores aceitos
     const tipoNormalizado = ['lembrete', 'alerta', 'informacao', 'sistema'].includes(tipo) 
       ? tipo 
       : 'informacao';
-    
+
     if (!titulo || !mensagem || !userId) {
       return res.status(400).json({ 
         erro: 'Título, mensagem e ID do usuário são obrigatórios' 
       });
     }
-    
+
     const { notificacaoModel: Notificacao } = require('../models/indexModel');
     const novaNotificacao = await Notificacao.create({
       titulo,
@@ -107,11 +106,10 @@ exports.criarNotificacao = async (req, res) => {
       status: 'pendente',
       usuario_id: userId,
       processo_id,
-      agendamento_id,
       data_envio: new Date(),
       criado_em: new Date()
     });
-    
+
     res.status(201).json(novaNotificacao);
   } catch (error) {
     console.error('Erro ao criar notificação:', error);

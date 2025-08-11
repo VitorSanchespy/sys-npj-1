@@ -16,6 +16,7 @@ router.put('/me/senha', validate('updateSenha'), handleValidation, usuarioContro
 router.delete('/me', usuarioController.deleteMe);
 router.get('/', usuarioController.listarUsuarios);
 router.post('/', validate('registrarUsuario'), handleValidation, preveniDuplicacaoUsuario, usuarioController.criarUsuario);
+router.get('/alunos', usuarioController.listarAlunos);
 router.get('/para-vinculacao', usuarioController.buscarUsuariosParaVinculacao);
 router.get('/:id', validate('getUsuario'), handleValidation, usuarioController.obterUsuario);
 router.put('/:id', validate('updateUsuario'), handleValidation, preveniDuplicacaoUsuario, usuarioController.atualizarUsuario);

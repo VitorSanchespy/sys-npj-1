@@ -14,12 +14,14 @@ exports.listarAgendamentos = async (req, res) => {
     // Buscar dados completos do usuário
     const usuario = await Usuario.findByPk(req.user.id);
     if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado' });
+      const resp = { agendamentos: [], erro: 'Usuário não encontrado' };
+      console.log('🔴 /api/agendamentos response:', resp);
+      return res.status(404).json(resp);
     }
 
     // Verificar se tem Google Calendar conectado
     if (!agendamentoGoogleService.verificarConexaoGoogle(usuario)) {
-      return res.json({
+      const resp = {
         agendamentos: [],
         total: 0,
         offset: parseInt(offset),
@@ -28,7 +30,9 @@ exports.listarAgendamentos = async (req, res) => {
         aviso: 'Google Calendar não conectado. Conecte sua conta para ver agendamentos.',
         individual: true,
         fonte: 'Não conectado'
-      });
+      };
+      console.log('🟡 /api/agendamentos response:', resp);
+      return res.json(resp);
     }
 
     // Montar filtros para Google Calendar
@@ -44,14 +48,16 @@ exports.listarAgendamentos = async (req, res) => {
     const agendamentos = await agendamentoGoogleService.listarAgendamentos(usuario, filtros);
 
     // Aplicar paginação manual (Google Calendar não suporta offset)
-    const agendamentosPaginados = agendamentos.slice(parseInt(offset), parseInt(offset) + parseInt(limit));
-    
+    const agendamentosPaginados = Array.isArray(agendamentos)
+      ? agendamentos.slice(parseInt(offset), parseInt(offset) + parseInt(limit))
+      : [];
+
     const resultado = {
       agendamentos: agendamentosPaginados,
-      total: agendamentos.length,
+      total: Array.isArray(agendamentos) ? agendamentos.length : 0,
       offset: parseInt(offset),
       limit: parseInt(limit),
-      hasMore: (parseInt(offset) + parseInt(limit)) < agendamentos.length,
+      hasMore: (parseInt(offset) + parseInt(limit)) < (Array.isArray(agendamentos) ? agendamentos.length : 0),
       fonte: 'Google Calendar',
       individual: true,
       usuario: {
@@ -62,15 +68,19 @@ exports.listarAgendamentos = async (req, res) => {
     };
 
     console.log(`✅ ${agendamentosPaginados.length} agendamentos encontrados para usuário ${req.user.id}`);
-    console.log('📊 Total no Google Calendar:', agendamentos.length);
+    console.log('📊 Total no Google Calendar:', Array.isArray(agendamentos) ? agendamentos.length : 0);
 
-    res.json(resultado);
+  console.log('🟢 /api/agendamentos response:', resultado);
+  res.json(resultado);
   } catch (error) {
     console.error('❌ Erro ao listar agendamentos:', error);
-    res.status(500).json({
+    const resp = {
+      agendamentos: [],
       erro: 'Erro interno do servidor',
       detalhes: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    };
+    console.log('🔴 /api/agendamentos response:', resp);
+    res.status(500).json(resp);
   }
 };
 

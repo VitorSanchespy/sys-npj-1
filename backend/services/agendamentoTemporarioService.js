@@ -8,6 +8,9 @@ class AgendamentoTemporarioService {
    * Verificar se usuário tem Google Calendar conectado
    */
   verificarConexaoGoogle(usuario) {
+    if (process.env.NODE_ENV === 'development') {
+      return true;
+    }
     return !!(usuario && usuario.googleAccessToken && usuario.googleCalendarConnected);
   }
 
@@ -20,10 +23,18 @@ class AgendamentoTemporarioService {
   }
 
   /**
-   * Criar novo agendamento (temporariamente desabilitado)
+   * Criar novo agendamento (simulação para desenvolvimento)
    */
   async criarAgendamento(usuario, dadosAgendamento) {
-    throw new Error('Google Calendar não configurado. Configure as credenciais primeiro.');
+    // Simula a criação de um agendamento fake
+    console.log('⚠️ [DEV MODE] Simulando criação de agendamento:', dadosAgendamento);
+    return {
+      id: 'fake-' + Date.now(),
+      ...dadosAgendamento,
+      usuarioId: usuario.id,
+      criadoEm: new Date().toISOString(),
+      mensagem: '[DEV MODE] Agendamento simulado com sucesso.'
+    };
   }
 
   /**

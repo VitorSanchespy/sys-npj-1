@@ -1,3 +1,17 @@
+// Listar apenas alunos - endpoint: GET /api/usuarios/alunos
+exports.listarAlunos = async (req, res) => {
+  try {
+    const alunos = await Usuario.findAll({
+      where: { ativo: true, role_id: 3 },
+      attributes: ['id', 'nome', 'email', 'role_id', 'ativo', 'criado_em', 'telefone'],
+      order: [['nome', 'ASC']]
+    });
+    res.json(alunos);
+  } catch (error) {
+    console.error('Erro ao listar alunos:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
 // Controller de Usuários - Gerencia operações de usuários do sistema
 const bcrypt = require('bcrypt');
 const { usuarioModel: Usuario, roleModel: Role } = require('../models/indexModel');
