@@ -1,0 +1,319 @@
+{
+  "summary": {
+    "totalTests": 72,
+    "passed": 56,
+    "failed": 16,
+    "successRate": "77.78%"
+  },
+  "byUserType": {
+    "admin": {
+      "passed": 20,
+      "failed": 4
+    },
+    "professor": {
+      "passed": 19,
+      "failed": 5
+    },
+    "aluno": {
+      "passed": 17,
+      "failed": 7
+    }
+  },
+  "endpointDetails": {
+    "/auth/registro": {
+      "admin": {
+        "status": "PASS",
+        "details": "POST /auth/registro - Status: 201"
+      },
+      "professor": {
+        "status": "PASS",
+        "details": "POST /auth/registro - Status: 201"
+      },
+      "aluno": {
+        "status": "PASS",
+        "details": "POST /auth/registro - Status: 201"
+      }
+    },
+    "/auth/refresh": {
+      "admin": {
+        "status": "FAIL",
+        "details": "POST /auth/refresh - Status: 404"
+      },
+      "professor": {
+        "status": "FAIL",
+        "details": "POST /auth/refresh - Status: 404"
+      },
+      "aluno": {
+        "status": "FAIL",
+        "details": "POST /auth/refresh - Status: 404"
+      }
+    },
+    "/usuarios": {
+      "admin": {
+        "status": "PASS",
+        "details": "POST /usuarios - Status: 201"
+      },
+      "professor": {
+        "status": "FAIL",
+        "details": "POST /usuarios - Status: 409"
+      },
+      "aluno": {
+        "status": "FAIL",
+        "details": "POST /usuarios - Status: 409"
+      }
+    },
+    "/usuarios/perfil": {
+      "admin": {
+        "status": "FAIL",
+        "details": "GET /usuarios/perfil - Status: 400"
+      },
+      "professor": {
+        "status": "FAIL",
+        "details": "GET /usuarios/perfil - Status: 400"
+      },
+      "aluno": {
+        "status": "FAIL",
+        "details": "GET /usuarios/perfil - Status: 400"
+      }
+    },
+    "/processos": {
+      "admin": {
+        "status": "FAIL",
+        "details": "POST /processos - Status: 400"
+      },
+      "professor": {
+        "status": "FAIL",
+        "details": "POST /processos - Status: 400"
+      },
+      "aluno": {
+        "status": "FAIL",
+        "details": "POST /processos - Status: 400"
+      }
+    },
+    "/processos/usuario": {
+      "admin": {
+        "status": "PASS",
+        "details": "GET /processos/usuario - Status: 200"
+      },
+      "professor": {
+        "status": "PASS",
+        "details": "GET /processos/usuario - Status: 200"
+      },
+      "aluno": {
+        "status": "PASS",
+        "details": "GET /processos/usuario - Status: 200"
+      }
+    },
+    "/agendamentos": {
+      "admin": {
+        "status": "FAIL",
+        "details": "POST /agendamentos - Status: 400"
+      },
+      "professor": {
+        "status": "FAIL",
+        "details": "POST /agendamentos - Status: 400"
+      },
+      "aluno": {
+        "status": "FAIL",
+        "details": "POST /agendamentos - Status: 400"
+      }
+    },
+    "/agendamentos/usuario": {
+      "admin": {
+        "status": "PASS",
+        "details": "GET /agendamentos/usuario - Status: 200"
+      },
+      "professor": {
+        "status": "PASS",
+        "details": "GET /agendamentos/usuario - Status: 200"
+      },
+      "aluno": {
+        "status": "PASS",
+        "details": "GET /agendamentos/usuario - Status: 200"
+      }
+    },
+    "/agendamentos/estatisticas": {
+      "admin": {
+        "status": "PASS",
+        "details": "GET /agendamentos/estatisticas - Status: 200"
+      },
+      "professor": {
+        "status": "PASS",
+        "details": "GET /agendamentos/estatisticas - Status: 200"
+      },
+      "aluno": {
+        "status": "PASS",
+        "details": "GET /agendamentos/estatisticas - Status: 200"
+      }
+    },
+    "/dashboard/estatisticas": {
+      "admin": {
+        "status": "PASS",
+        "details": "GET /dashboard/estatisticas - Status: 200"
+      },
+      "professor": {
+        "status": "PASS",
+        "details": "GET /dashboard/estatisticas - Status: 200"
+      },
+      "aluno": {
+        "status": "PASS",
+        "details": "GET /dashboard/estatisticas - Status: 200"
+      }
+    },
+    "/dashboard/stats": {
+      "admin": {
+        "status": "PASS",
+        "details": "GET /dashboard/stats - Status: 200"
+      },
+      "professor": {
+        "status": "PASS",
+        "details": "GET /dashboard/stats - Status: 200"
+      },
+      "aluno": {
+        "status": "PASS",
+        "details": "GET /dashboard/stats - Status: 200"
+      }
+    },
+    "/dashboard/exportar": {
+      "admin": {
+        "status": "PASS",
+        "details": "GET /dashboard/exportar - Status: 200"
+      },
+      "professor": {
+        "status": "PASS",
+        "details": "GET /dashboard/exportar - Status: 200"
+      },
+      "aluno": {
+        "status": "PASS",
+        "details": "GET /dashboard/exportar - Status: 200"
+      }
+    },
+    "/dashboard/status-detalhado": {
+      "admin": {
+        "status": "PASS",
+        "details": "GET /dashboard/status-detalhado - Status: 200"
+      },
+      "professor": {
+        "status": "PASS",
+        "details": "GET /dashboard/status-detalhado - Status: 200"
+      },
+      "aluno": {
+        "status": "PASS",
+        "details": "GET /dashboard/status-detalhado - Status: 200"
+      }
+    },
+    "/arquivos": {
+      "admin": {
+        "status": "PASS",
+        "details": "GET /arquivos - Status: 200"
+      },
+      "professor": {
+        "status": "PASS",
+        "details": "GET /arquivos - Status: 200"
+      },
+      "aluno": {
+        "status": "PASS",
+        "details": "GET /arquivos - Status: 200"
+      }
+    },
+    "/arquivos/usuario/1": {
+      "admin": {
+        "status": "PASS",
+        "details": "GET /arquivos/usuario/1 - Status: 200"
+      },
+      "professor": {
+        "status": "PASS",
+        "details": "GET /arquivos/usuario/1 - Status: 200"
+      },
+      "aluno": {
+        "status": "FAIL",
+        "details": "GET /arquivos/usuario/1 - Status: 200"
+      }
+    },
+    "/notificacoes": {
+      "admin": {
+        "status": "PASS",
+        "details": "GET /notificacoes - Status: 200"
+      },
+      "professor": {
+        "status": "PASS",
+        "details": "GET /notificacoes - Status: 200"
+      },
+      "aluno": {
+        "status": "PASS",
+        "details": "GET /notificacoes - Status: 200"
+      }
+    },
+    "/notificacoes/1/lida": {
+      "admin": {
+        "status": "PASS",
+        "details": "PUT /notificacoes/1/lida - Status: 200"
+      },
+      "professor": {
+        "status": "PASS",
+        "details": "PUT /notificacoes/1/lida - Status: 200"
+      },
+      "aluno": {
+        "status": "PASS",
+        "details": "PUT /notificacoes/1/lida - Status: 200"
+      }
+    },
+    "/tabelas/roles": {
+      "admin": {
+        "status": "PASS",
+        "details": "GET /tabelas/roles - Status: 200"
+      },
+      "professor": {
+        "status": "PASS",
+        "details": "GET /tabelas/roles - Status: 200"
+      },
+      "aluno": {
+        "status": "PASS",
+        "details": "GET /tabelas/roles - Status: 200"
+      }
+    },
+    "/tabelas/fases": {
+      "admin": {
+        "status": "PASS",
+        "details": "GET /tabelas/fases - Status: 200"
+      },
+      "professor": {
+        "status": "PASS",
+        "details": "GET /tabelas/fases - Status: 200"
+      },
+      "aluno": {
+        "status": "PASS",
+        "details": "GET /tabelas/fases - Status: 200"
+      }
+    },
+    "/tabelas/materias": {
+      "admin": {
+        "status": "PASS",
+        "details": "GET /tabelas/materias - Status: 404"
+      },
+      "professor": {
+        "status": "PASS",
+        "details": "GET /tabelas/materias - Status: 404"
+      },
+      "aluno": {
+        "status": "PASS",
+        "details": "GET /tabelas/materias - Status: 404"
+      }
+    },
+    "/tabelas/locais": {
+      "admin": {
+        "status": "PASS",
+        "details": "GET /tabelas/locais - Status: 404"
+      },
+      "professor": {
+        "status": "PASS",
+        "details": "GET /tabelas/locais - Status: 404"
+      },
+      "aluno": {
+        "status": "PASS",
+        "details": "GET /tabelas/locais - Status: 404"
+      }
+    }
+  },
+  "timestamp": "2025-08-11T20:32:33.452Z"
+}
