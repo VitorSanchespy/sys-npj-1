@@ -11,10 +11,11 @@ class Notificacao extends Model {
       foreignKey: 'processo_id', 
       as: 'processo' 
     });
-    Notificacao.belongsTo(models.agendamentoModel, { 
-      foreignKey: 'agendamento_id', 
-      as: 'agendamento' 
-    });
+    // Removido: associação com agendamentoModel (agora usa Google Calendar)
+    // Notificacao.belongsTo(models.agendamentoModel, { 
+    //   foreignKey: 'agendamento_id', 
+    //   as: 'agendamento' 
+    // });
   }
 }
 
@@ -23,7 +24,8 @@ Notificacao.init(
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     usuario_id: { type: DataTypes.INTEGER, allowNull: false },
     processo_id: { type: DataTypes.INTEGER, allowNull: true },
-    agendamento_id: { type: DataTypes.INTEGER, allowNull: true },
+    // agendamento_id removido - agora usa evento_externo_id
+    evento_externo_id: { type: DataTypes.STRING(255), allowNull: true, comment: 'ID do evento em sistema externo (Google Calendar, etc)' },
     tipo: { 
       type: DataTypes.ENUM('lembrete', 'alerta', 'informacao', 'sistema'), 
       allowNull: false 

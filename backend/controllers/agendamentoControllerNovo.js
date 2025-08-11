@@ -1,5 +1,5 @@
 // Controller de Agendamentos Individuais - Baseado apenas no Google Calendar
-const agendamentoGoogleService = require('../services/agendamentoTemporarioService');
+const agendamentoGoogleService = require('../services/agendamentoGoogleService');
 const Usuario = require('../models/usuarioModel');
 
 // Listar agendamentos do usuário logado (individuais via Google Calendar)
