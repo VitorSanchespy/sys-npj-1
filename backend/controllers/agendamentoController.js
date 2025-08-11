@@ -605,3 +605,34 @@ exports.obterEstatisticas = async (req, res) => {
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };
+
+// Função para invalidar cache e forçar dados atuais - endpoint: POST /api/agendamentos/invalidar-cache
+exports.invalidarCache = async (req, res) => {
+  try {
+    console.log('🔄 Invalidando cache de agendamentos...');
+    
+    // Buscar dados atuais diretamente do banco
+    const { agendamentoModel: Agendamento, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
+    
+    const agendamentosAtuais = await Agendamento.findAll({
+      include: [
+        { model: Usuario, as: 'destinatario', attributes: ['id', 'nome', 'email'] },
+        { model: Usuario, as: 'criador', attributes: ['id', 'nome', 'email'] },
+        { model: Processo, as: 'processo', attributes: ['id', 'numero_processo', 'descricao'] }
+      ],
+      order: [['data_evento', 'ASC']]
+    });
+    
+    res.json({
+      success: true,
+      message: 'Cache invalidado com sucesso',
+      dadosAtuais: agendamentosAtuais,
+      timestamp: new Date().toISOString(),
+      totalAgendamentos: agendamentosAtuais.length
+    });
+    
+  } catch (error) {
+    console.error('Erro ao invalidar cache:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};

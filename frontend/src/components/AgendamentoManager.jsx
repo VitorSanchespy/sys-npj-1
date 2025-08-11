@@ -35,13 +35,43 @@ const AgendamentoManager = ({ processoId = null }) => {
     data_fim: ''
   });
 
-  // Helper function to safely get role name
-  const getRoleName = (role) => {
-    if (!role) return 'Usuário';
-    if (typeof role === 'string') return role;
-    if (typeof role === 'object' && role.nome) return role.nome;
-    if (typeof role === 'object' && role.name) return role.name;
-    return 'Usuário';
+  // Função para invalidar cache e buscar dados atuais
+  const handleAtualizarDados = async () => {
+    try {
+      setError(null);
+      console.log('🔄 Forçando atualização dos dados...');
+      
+      // Limpar cache local se disponível
+      if (window.clearCache) {
+        window.clearCache();
+      }
+      
+      // Chamar endpoint para invalidar cache
+      const response = await fetch('/api/agendamentos/invalidar-cache', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Cache invalidado:', result);
+        
+        // Forçar recarregamento dos dados
+        refetch();
+        
+        // Feedback visual
+        setError(null);
+        alert('Dados atualizados com sucesso! Agendamentos agora refletem o banco de dados.');
+      } else {
+        throw new Error('Erro ao atualizar dados');
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar dados:', error);
+      setError('Erro ao atualizar dados. Tente recarregar a página.');
+    }
   };
 
   const [formData, setFormData] = useState({
@@ -382,8 +412,14 @@ const AgendamentoManager = ({ processoId = null }) => {
         </div>
       )}
       
-      {/* Botão Novo Agendamento */}
-      <div className="flex justify-end">
+      {/* Botões de Ação */}
+      <div className="flex justify-end space-x-3">
+        <button
+          onClick={handleAtualizarDados}
+          className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+        >
+          🔄 Atualizar Dados
+        </button>
         <button
           onClick={handleNovoAgendamento}
           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"

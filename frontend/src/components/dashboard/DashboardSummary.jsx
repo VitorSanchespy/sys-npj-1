@@ -65,6 +65,7 @@ function StatusBadge({ status }) {
       case "aguardando": return "#fd7e14";
       case "finalizado": return "#28a745";
       case "arquivado": return "#6c757d";
+      case "suspenso": return "#dc3545";
       default: return "#007bff";
     }
   };
@@ -75,6 +76,7 @@ function StatusBadge({ status }) {
       case "aguardando": return "Aguardando";
       case "finalizado": return "Finalizado";
       case "arquivado": return "Arquivado";
+      case "suspenso": return "Suspenso";
       default: return status || "Não Definido";
     }
   };
@@ -228,6 +230,7 @@ function AlunosDashboard({ dashboardData, user }) {
     if (s.includes('conclu')) return 'finalizado';
     if (s.includes('finaliz')) return 'finalizado';
     if (s.includes('arquiv')) return 'arquivado';
+    if (s.includes('suspen')) return 'suspenso';
     return s;
   };
   const processosAtivos = meusProcessos.filter(p => normalizaStatus(p.status) !== 'arquivado').length;
@@ -444,6 +447,7 @@ function AdminsDashboard({ dashboardData }) {
     { label: "Aguardando", value: dashboardData?.processosPorStatus?.aguardando || 0 },
     { label: "Finalizados", value: dashboardData?.processosPorStatus?.finalizado || 0 },
     { label: "Arquivados", value: dashboardData?.processosPorStatus?.arquivado || 0 },
+    { label: "Suspensos", value: dashboardData?.processosPorStatus?.suspenso || 0 },
     { label: "Outros", value: dashboardData?.processosPorStatus?.outros || 0 }
   ];
 

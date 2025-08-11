@@ -14,6 +14,7 @@ router.post('/', preveniDuplicacaoAgendamento, agendamentoController.criarAgenda
 router.get('/usuario', agendamentoController.listarAgendamentosUsuario);
 router.get('/periodo', agendamentoController.listarAgendamentosPeriodo);
 router.get('/estatisticas', agendamentoController.obterEstatisticas);
+router.post('/invalidar-cache', agendamentoController.invalidarCache);
 router.get('/:id', agendamentoController.obterAgendamento);
 router.put('/:id', preveniDuplicacaoAgendamento, agendamentoController.atualizarAgendamento);
 router.delete('/:id', agendamentoController.deletarAgendamento);

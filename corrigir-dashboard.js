@@ -7,42 +7,39 @@ const sequelize = new Sequelize({
   host: 'localhost',
   port: 3306,
   username: 'root',
-  password: 'admin123',
-  database: 'sistema_npj',
+  password: '1234',
+  database: 'npjdatabase',
   logging: false
 });
 
 // Modelo Processo
-const Processo = sequelize.define('processo', {
-  idprocesso: {
+const Processo = sequelize.define('Processo', {
+  id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true
   },
   numero_processo: {
     type: DataTypes.STRING(255),
-    allowNull: false,
-    unique: true
+    allowNull: false
   },
-  tipo: DataTypes.STRING(100),
-  autor: DataTypes.STRING(255),
-  reu: DataTypes.STRING(255),
-  comarca: DataTypes.STRING(255),
-  vara: DataTypes.STRING(255),
-  juiz: DataTypes.STRING(255),
-  data_distribuicao: DataTypes.DATE,
-  valor_da_causa: DataTypes.DECIMAL(15, 2),
+  descricao: DataTypes.TEXT,
   status: {
     type: DataTypes.STRING(100),
     allowNull: false
   },
+  tipo_processo: DataTypes.STRING,
+  idusuario_responsavel: DataTypes.INTEGER,
+  data_encerramento: DataTypes.DATE,
   observacoes: DataTypes.TEXT,
+  sistema: {
+    type: DataTypes.ENUM('Físico','PEA','PJE'),
+    defaultValue: 'Físico'
+  },
   materia_assunto_id: DataTypes.INTEGER,
   fase_id: DataTypes.INTEGER,
   diligencia_id: DataTypes.INTEGER,
   local_tramitacao_id: DataTypes.INTEGER,
-  idusuario_responsavel: DataTypes.INTEGER,
-  descricao: DataTypes.TEXT,
   prioridade: {
     type: DataTypes.ENUM('baixa', 'media', 'alta', 'urgente'),
     defaultValue: 'media'
@@ -57,17 +54,16 @@ const Processo = sequelize.define('processo', {
   proximo_compromisso: DataTypes.DATE,
   valor_condenacao: DataTypes.DECIMAL(15, 2),
   observacao_interna: DataTypes.TEXT,
-  created_at: {
+  criado_em: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
   },
-  updated_at: {
+  atualizado_em: {
     type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
-    onUpdate: DataTypes.NOW
+    defaultValue: DataTypes.NOW
   }
 }, {
-  tableName: 'processo',
+  tableName: 'processos',
   timestamps: false
 });
 
@@ -78,7 +74,7 @@ async function analisarDashboard() {
 
     // 1. Buscar todos os processos e status reais
     const processos = await Processo.findAll({
-      attributes: ['idprocesso', 'status', 'numero_processo'],
+      attributes: ['id', 'status', 'numero_processo'],
       raw: true
     });
 
