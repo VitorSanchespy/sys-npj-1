@@ -1,65 +1,101 @@
-// Controller de Agendamentos Individuais - Baseado apenas no Google Calendar
-const agendamentoGoogleService = require('../services/agendamentoTemporarioService');
-const Usuario = require('../models/usuarioModel');
-
-// Listar agendamentos do usuário logado (individuais via Google Calendar)
-exports.listarAgendamentos = async (req, res) => {
+/**
+ * Verificar status da conexão Google Calendar
+ * GET /api/agendamentos/conexao
+ */
+exports.verificarConexao = async (req, res) => {
   try {
-    console.log('\n📋 LISTANDO AGENDAMENTOS INDIVIDUAIS');
-    console.log('User ID:', req.user.id);
-    console.log('User Role:', req.user.role);
-
-    const { offset = 0, limit = 50, busca, dataInicio, dataFim } = req.query;
-
-    // Buscar dados completos do usuário
+    // Buscar usuário
     const usuario = await Usuario.findByPk(req.user.id);
     if (!usuario) {
-      const resp = { agendamentos: [], erro: 'Usuário não encontrado' };
-      console.log('🔴 /api/agendamentos response:', resp);
-      return res.status(404).json(resp);
+      return res.status(404).json({ success: false, connected: false, error: 'Usuário não encontrado' });
     }
 
-    // Verificar se tem Google Calendar conectado
+    // Verificar conexão com Google Calendar
+    const conectado = agendamentoGoogleService.verificarConexaoGoogle(usuario);
+    res.json({ success: true, connected: conectado });
+  } catch (error) {
+    console.error('❌ Erro ao verificar conexão Google Calendar:', error);
+    res.status(500).json({ success: false, connected: false, error: 'Erro ao verificar conexão' });
+  }
+};
+
+// Controller de Agendamentos - Google Calendar Integration
+const agendamentoGoogleService = require('../services/agendamentoGoogleService');
+const Usuario = require('../models/usuarioModel');
+
+/**
+ * Listar agendamentos do usuário logado
+ * GET /api/agendamentos
+ */
+exports.listarAgendamentos = async (req, res) => {
+  try {
+    console.log('\n📋 LISTANDO AGENDAMENTOS');
+    console.log('🔑 User ID:', req.user?.id);
+    console.log('📊 Query params:', req.query);
+
+    const { offset = 0, limit = 50, busca, dataInicio, dataFim, tipoEvento } = req.query;
+
+    // Buscar usuário
+    const usuario = await Usuario.findByPk(req.user.id);
+    if (!usuario) {
+      return res.status(404).json({ 
+        success: false,
+        agendamentos: [], 
+        error: 'Usuário não encontrado' 
+      });
+    }
+
+    // Verificar conexão com Google Calendar
     if (!agendamentoGoogleService.verificarConexaoGoogle(usuario)) {
-      const resp = {
-        agendamentos: [],
+      return res.json({ 
+        success: true,
+        agendamentos: [], 
         total: 0,
         offset: parseInt(offset),
         limit: parseInt(limit),
         hasMore: false,
-        aviso: 'Google Calendar não conectado. Conecte sua conta para ver agendamentos.',
-        individual: true,
-        fonte: 'Não conectado'
-      };
-      console.log('🟡 /api/agendamentos response:', resp);
-      return res.json(resp);
+        message: 'Google Calendar não conectado. Conecte sua conta para ver agendamentos.',
+        connected: false
+      });
     }
 
-    // Montar filtros para Google Calendar
+    // Montar filtros
     const filtros = {
-      busca,
-      dataInicio,
-      dataFim,
-      limite: parseInt(limit),
-      offset: parseInt(offset)
+      busca: busca || undefined,
+      dataInicio: dataInicio || undefined,
+      dataFim: dataFim || undefined,
+      tipoEvento: tipoEvento || undefined,
+      limite: parseInt(limit) || 50,
+      offset: parseInt(offset) || 0
     };
 
     // Buscar agendamentos do Google Calendar
     const agendamentos = await agendamentoGoogleService.listarAgendamentos(usuario, filtros);
 
-    // Aplicar paginação manual (Google Calendar não suporta offset)
-    const agendamentosPaginados = Array.isArray(agendamentos)
-      ? agendamentos.slice(parseInt(offset), parseInt(offset) + parseInt(limit))
-      : [];
+    // Aplicar filtros adicionais
+    let agendamentosFiltrados = Array.isArray(agendamentos) ? agendamentos : [];
+    
+    if (tipoEvento && tipoEvento !== '') {
+      agendamentosFiltrados = agendamentosFiltrados.filter(a => 
+        a.tipoEvento === tipoEvento || a.tipo_evento === tipoEvento
+      );
+    }
+
+    // Aplicar paginação
+    const totalItens = agendamentosFiltrados.length;
+    const offsetNum = parseInt(offset);
+    const limitNum = parseInt(limit);
+    const agendamentosPaginados = agendamentosFiltrados.slice(offsetNum, offsetNum + limitNum);
 
     const resultado = {
+      success: true,
       agendamentos: agendamentosPaginados,
-      total: Array.isArray(agendamentos) ? agendamentos.length : 0,
-      offset: parseInt(offset),
-      limit: parseInt(limit),
-      hasMore: (parseInt(offset) + parseInt(limit)) < (Array.isArray(agendamentos) ? agendamentos.length : 0),
+      total: totalItens,
+      offset: offsetNum,
+      limit: limitNum,
+      hasMore: (offsetNum + limitNum) < totalItens,
+      connected: true,
       fonte: 'Google Calendar',
-      individual: true,
       usuario: {
         id: usuario.id,
         nome: usuario.nome,
@@ -67,109 +103,161 @@ exports.listarAgendamentos = async (req, res) => {
       }
     };
 
-    console.log(`✅ ${agendamentosPaginados.length} agendamentos encontrados para usuário ${req.user.id}`);
-    console.log('📊 Total no Google Calendar:', Array.isArray(agendamentos) ? agendamentos.length : 0);
+    console.log(`✅ ${agendamentosPaginados.length} de ${totalItens} agendamentos retornados`);
+    res.json(resultado);
 
-  console.log('🟢 /api/agendamentos response:', resultado);
-  res.json(resultado);
   } catch (error) {
     console.error('❌ Erro ao listar agendamentos:', error);
-    const resp = {
-      agendamentos: [],
-      erro: 'Erro interno do servidor',
-      detalhes: process.env.NODE_ENV === 'development' ? error.message : undefined
-    };
-    console.log('🔴 /api/agendamentos response:', resp);
-    res.status(500).json(resp);
+    res.status(500).json({ 
+      success: false,
+      agendamentos: [], 
+      error: 'Erro interno do servidor',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
-// Criar novo agendamento individual
+
+/**
+ * Criar novo agendamento
+ * POST /api/agendamentos
+ */
 exports.criarAgendamento = async (req, res) => {
   try {
-    console.log('\n📅 CRIANDO AGENDAMENTO INDIVIDUAL');
-    console.log('Dados recebidos:', req.body);
-    console.log('Usuário:', req.user.id);
+    console.log('\n📅 CRIANDO AGENDAMENTO');
+    console.log('📝 Dados recebidos:', req.body);
 
+    // Extrair e normalizar dados do request
     const {
-      titulo,
-      descricao,
-      data_evento: dataEvento,
-      tipo_evento: tipoEvento = 'outro',
-      local,
-      processo_id: processoId,
-      lembrete_1_dia: lembrete1Dia = true,
-      lembrete_2_dias: lembrete2Dias = false,
-      lembrete_1_semana: lembrete1Semana = false
+      titulo, descricao, local,
+      data_evento, data_inicio, dataEvento, dataInicio,
+      data_fim, dataFim,
+      tipo_evento, tipoEvento,
+      processo_id, processoId,
+      lembrete_1_dia, lembrete1Dia,
+      lembrete_2_dias, lembrete2Dias,
+      lembrete_1_semana, lembrete1Semana
     } = req.body;
 
-    // Validações básicas
-    if (!titulo || !titulo.trim()) {
-      return res.status(400).json({ erro: 'Título é obrigatório' });
+    // Normalizar campos (aceitar tanto snake_case quanto camelCase)
+    const dadosNormalizados = {
+      titulo: titulo?.trim(),
+      descricao: descricao || '',
+      local: local || '',
+      dataEvento: data_evento || data_inicio || dataEvento || dataInicio,
+      dataFim: data_fim || dataFim,
+      tipoEvento: tipo_evento || tipoEvento || 'outro',
+      processoId: processo_id || processoId || null,
+      lembrete1Dia: lembrete_1_dia !== undefined ? lembrete_1_dia : 
+                   lembrete1Dia !== undefined ? lembrete1Dia : true,
+      lembrete2Dias: lembrete_2_dias !== undefined ? lembrete_2_dias : 
+                    lembrete2Dias !== undefined ? lembrete2Dias : false,
+      lembrete1Semana: lembrete_1_semana !== undefined ? lembrete_1_semana : 
+                      lembrete1Semana !== undefined ? lembrete1Semana : false
+    };
+
+    // Validações
+    if (!dadosNormalizados.titulo) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Título é obrigatório' 
+      });
     }
 
-    if (!dataEvento) {
-      return res.status(400).json({ erro: 'Data do evento é obrigatória' });
+    if (!dadosNormalizados.dataEvento) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Data do evento é obrigatória' 
+      });
     }
 
-    // Verificar se a data é válida
-    const dataEventoObj = new Date(dataEvento);
+    // Validar formato da data
+    const dataEventoObj = new Date(dadosNormalizados.dataEvento);
     if (isNaN(dataEventoObj.getTime())) {
-      return res.status(400).json({ erro: 'Data do evento inválida' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Data do evento inválida' 
+      });
     }
 
-    // Verificar se não é no passado
-    if (dataEventoObj < new Date()) {
-      return res.status(400).json({ erro: 'Não é possível criar agendamento no passado' });
+    // Verificar se não é no passado (com tolerância de 1 minuto)
+    const agora = new Date();
+    if (dataEventoObj < new Date(agora.getTime() - 60000)) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Não é possível criar agendamento no passado' 
+      });
     }
 
     // Buscar usuário
     const usuario = await Usuario.findByPk(req.user.id);
     if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado' });
+      return res.status(404).json({ 
+        success: false,
+        error: 'Usuário não encontrado' 
+      });
     }
 
     // Verificar conexão com Google Calendar
     if (!agendamentoGoogleService.verificarConexaoGoogle(usuario)) {
       return res.status(400).json({ 
-        erro: 'Google Calendar não conectado. Conecte sua conta primeiro.',
-        redirecionarPara: '/conectar-google'
+        success: false,
+        error: 'Google Calendar não conectado. Conecte sua conta primeiro.',
+        action: 'connect_google'
       });
     }
 
-    // Dados para criar agendamento
-    const dadosAgendamento = {
-      titulo: titulo.trim(),
-      descricao: descricao || '',
-      dataEvento: dataEventoObj.toISOString(),
-      tipoEvento,
-      local: local || '',
-      processoId,
-      lembrete1Dia,
-      lembrete2Dias,
-      lembrete1Semana
-    };
+    // Preparar dados para criação
+    dadosNormalizados.dataEvento = dataEventoObj.toISOString();
+    
+    // Se não tem data fim, calcular 1 hora após o início
+    if (dadosNormalizados.dataFim) {
+      const dataFimObj = new Date(dadosNormalizados.dataFim);
+      if (!isNaN(dataFimObj.getTime())) {
+        dadosNormalizados.dataFim = dataFimObj.toISOString();
+      } else {
+        dadosNormalizados.dataFim = new Date(dataEventoObj.getTime() + (60 * 60 * 1000)).toISOString();
+      }
+    } else {
+      dadosNormalizados.dataFim = new Date(dataEventoObj.getTime() + (60 * 60 * 1000)).toISOString();
+    }
 
     // Criar agendamento no Google Calendar
-    const agendamentoCriado = await agendamentoGoogleService.criarAgendamento(usuario, dadosAgendamento);
+    console.log('📡 Criando no Google Calendar...');
+    const agendamentoCriado = await agendamentoGoogleService.criarAgendamento(usuario, dadosNormalizados);
+
+    // Tentar enviar notificação (não crítico)
+    try {
+      const NotificacaoService = require('../services/notificacaoService');
+      const notificacaoService = new NotificacaoService();
+      await notificacaoService.notificarAgendamentoCriado(agendamentoCriado, usuario, usuario);
+      console.log('📧 Notificação enviada com sucesso');
+    } catch (notifError) {
+      console.log('⚠️ Erro ao enviar notificação (não crítico):', notifError.message);
+    }
 
     console.log('✅ Agendamento criado com sucesso:', agendamentoCriado.id);
 
     res.status(201).json({
-      ...agendamentoCriado,
-      mensagem: 'Agendamento criado com sucesso no seu Google Calendar'
+      success: true,
+      agendamento: agendamentoCriado,
+      message: 'Agendamento criado com sucesso no seu Google Calendar'
     });
 
   } catch (error) {
     console.error('❌ Erro ao criar agendamento:', error);
     res.status(500).json({
-      erro: 'Erro interno do servidor',
-      detalhes: process.env.NODE_ENV === 'development' ? error.message : undefined
+      success: false,
+      error: 'Erro interno do servidor',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Buscar agendamento específico
+/**
+ * Buscar agendamento específico
+ * GET /api/agendamentos/:id
+ */
 exports.obterAgendamento = async (req, res) => {
   try {
     const { id } = req.params;
@@ -178,121 +266,205 @@ exports.obterAgendamento = async (req, res) => {
     // Buscar usuário
     const usuario = await Usuario.findByPk(req.user.id);
     if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado' });
+      return res.status(404).json({ 
+        success: false,
+        error: 'Usuário não encontrado' 
+      });
     }
 
     // Verificar conexão com Google Calendar
     if (!agendamentoGoogleService.verificarConexaoGoogle(usuario)) {
-      return res.status(400).json({ erro: 'Google Calendar não conectado' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Google Calendar não conectado' 
+      });
     }
 
     // Buscar agendamento
     const agendamento = await agendamentoGoogleService.buscarAgendamento(usuario, id);
 
-    res.json(agendamento);
+    res.json({
+      success: true,
+      agendamento
+    });
 
   } catch (error) {
     console.error('❌ Erro ao buscar agendamento:', error);
     if (error.message.includes('não encontrado')) {
-      res.status(404).json({ erro: 'Agendamento não encontrado' });
+      res.status(404).json({ 
+        success: false,
+        error: 'Agendamento não encontrado' 
+      });
     } else {
       res.status(500).json({
-        erro: 'Erro interno do servidor',
-        detalhes: process.env.NODE_ENV === 'development' ? error.message : undefined
+        success: false,
+        error: 'Erro interno do servidor',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   }
 };
 
-// Atualizar agendamento
+
+/**
+ * Atualizar agendamento existente
+ * PUT /api/agendamentos/:id
+ */
 exports.atualizarAgendamento = async (req, res) => {
   try {
     const { id } = req.params;
     console.log('\n🔄 ATUALIZANDO AGENDAMENTO:', id);
-    console.log('Dados recebidos:', req.body);
+    console.log('📝 Dados recebidos:', req.body);
 
     // Buscar usuário
     const usuario = await Usuario.findByPk(req.user.id);
     if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado' });
+      return res.status(404).json({ 
+        success: false,
+        error: 'Usuário não encontrado' 
+      });
     }
 
     // Verificar conexão com Google Calendar
     if (!agendamentoGoogleService.verificarConexaoGoogle(usuario)) {
-      return res.status(400).json({ erro: 'Google Calendar não conectado' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Google Calendar não conectado' 
+      });
     }
 
+    // Normalizar dados de atualização
     const dadosAtualizacao = { ...req.body };
 
-    // Validar data se fornecida
-    if (dadosAtualizacao.data_evento) {
-      const dataEventoObj = new Date(dadosAtualizacao.data_evento);
+    // Converter data_evento para dataEvento se fornecida
+    if (dadosAtualizacao.data_evento || dadosAtualizacao.data_inicio) {
+      const dataEvento = dadosAtualizacao.data_evento || dadosAtualizacao.data_inicio;
+      const dataEventoObj = new Date(dataEvento);
+      
       if (isNaN(dataEventoObj.getTime())) {
-        return res.status(400).json({ erro: 'Data do evento inválida' });
+        return res.status(400).json({ 
+          success: false,
+          error: 'Data do evento inválida' 
+        });
       }
+      
       dadosAtualizacao.dataEvento = dataEventoObj.toISOString();
-      delete dadosAtualizacao.data_evento; // Remover o campo antigo
+      delete dadosAtualizacao.data_evento;
+      delete dadosAtualizacao.data_inicio;
     }
 
-    // Atualizar agendamento
+    // Converter data_fim para dataFim se fornecida
+    if (dadosAtualizacao.data_fim) {
+      const dataFim = new Date(dadosAtualizacao.data_fim);
+      if (!isNaN(dataFim.getTime())) {
+        dadosAtualizacao.dataFim = dataFim.toISOString();
+      }
+      delete dadosAtualizacao.data_fim;
+    }
+
+    // Normalizar outros campos
+    if (dadosAtualizacao.tipo_evento) {
+      dadosAtualizacao.tipoEvento = dadosAtualizacao.tipo_evento;
+      delete dadosAtualizacao.tipo_evento;
+    }
+
+    if (dadosAtualizacao.processo_id !== undefined) {
+      dadosAtualizacao.processoId = dadosAtualizacao.processo_id;
+      delete dadosAtualizacao.processo_id;
+    }
+
+    // Atualizar no Google Calendar
+    console.log('📡 Atualizando no Google Calendar...');
     const agendamentoAtualizado = await agendamentoGoogleService.atualizarAgendamento(usuario, id, dadosAtualizacao);
 
     console.log('✅ Agendamento atualizado com sucesso');
 
     res.json({
-      ...agendamentoAtualizado,
-      mensagem: 'Agendamento atualizado com sucesso'
+      success: true,
+      agendamento: agendamentoAtualizado,
+      message: 'Agendamento atualizado com sucesso'
     });
 
   } catch (error) {
     console.error('❌ Erro ao atualizar agendamento:', error);
+    
     if (error.message.includes('não encontrado')) {
-      res.status(404).json({ erro: 'Agendamento não encontrado' });
+      res.status(404).json({ 
+        success: false,
+        error: 'Agendamento não encontrado' 
+      });
     } else if (error.message.includes('permissão')) {
-      res.status(403).json({ erro: error.message });
+      res.status(403).json({ 
+        success: false,
+        error: error.message 
+      });
     } else {
-      res.status(500).json({
-        erro: 'Erro interno do servidor',
-        detalhes: process.env.NODE_ENV === 'development' ? error.message : undefined
+      res.status(500).json({ 
+        success: false,
+        error: 'Erro interno do servidor', 
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined 
       });
     }
   }
 };
 
-// Excluir agendamento
+
+/**
+ * Deletar agendamento
+ * DELETE /api/agendamentos/:id
+ */
 exports.deletarAgendamento = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('\n🗑️ EXCLUINDO AGENDAMENTO:', id);
+    console.log('\n🗑️ DELETANDO AGENDAMENTO:', id);
 
     // Buscar usuário
     const usuario = await Usuario.findByPk(req.user.id);
     if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado' });
+      return res.status(404).json({ 
+        success: false,
+        error: 'Usuário não encontrado' 
+      });
     }
 
     // Verificar conexão com Google Calendar
     if (!agendamentoGoogleService.verificarConexaoGoogle(usuario)) {
-      return res.status(400).json({ erro: 'Google Calendar não conectado' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Google Calendar não conectado' 
+      });
     }
 
-    // Excluir agendamento
+    // Deletar do Google Calendar
+    console.log('📡 Deletando do Google Calendar...');
     const resultado = await agendamentoGoogleService.excluirAgendamento(usuario, id);
 
-    console.log('✅ Agendamento excluído com sucesso');
+    console.log('✅ Agendamento deletado com sucesso');
 
-    res.json(resultado);
+    res.json({
+      success: true,
+      message: 'Agendamento deletado com sucesso',
+      ...resultado
+    });
 
   } catch (error) {
-    console.error('❌ Erro ao excluir agendamento:', error);
+    console.error('❌ Erro ao deletar agendamento:', error);
+    
     if (error.message.includes('não encontrado')) {
-      res.status(404).json({ erro: 'Agendamento não encontrado' });
+      res.status(404).json({ 
+        success: false,
+        error: 'Agendamento não encontrado' 
+      });
     } else if (error.message.includes('permissão')) {
-      res.status(403).json({ erro: error.message });
+      res.status(403).json({ 
+        success: false,
+        error: error.message 
+      });
     } else {
-      res.status(500).json({
-        erro: 'Erro interno do servidor',
-        detalhes: process.env.NODE_ENV === 'development' ? error.message : undefined
+      res.status(500).json({ 
+        success: false,
+        error: 'Erro interno do servidor', 
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined 
       });
     }
   }
@@ -301,28 +473,10 @@ exports.deletarAgendamento = async (req, res) => {
 // Listar agendamentos do usuário (alias para listarAgendamentos)
 exports.listarAgendamentosUsuario = exports.listarAgendamentos;
 
-// Listar agendamentos por período
-exports.listarAgendamentosPeriodo = async (req, res) => {
-  try {
-    const { inicio, fim } = req.query;
-    
-    if (!inicio || !fim) {
-      return res.status(400).json({ erro: 'Período de início e fim são obrigatórios' });
-    }
-
-    // Usar a função principal com filtros de data
-    req.query.dataInicio = inicio;
-    req.query.dataFim = fim;
-    
-    return exports.listarAgendamentos(req, res);
-    
-  } catch (error) {
-    console.error('Erro ao listar agendamentos por período:', error);
-    res.status(500).json({ erro: 'Erro interno do servidor' });
-  }
-};
-
-// Obter estatísticas do usuário
+/**
+ * Obter estatísticas dos agendamentos
+ * GET /api/agendamentos/estatisticas
+ */
 exports.obterEstatisticas = async (req, res) => {
   try {
     console.log('\n📊 OBTENDO ESTATÍSTICAS DE AGENDAMENTOS');
@@ -330,17 +484,24 @@ exports.obterEstatisticas = async (req, res) => {
     // Buscar usuário
     const usuario = await Usuario.findByPk(req.user.id);
     if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado' });
+      return res.status(404).json({ 
+        success: false,
+        error: 'Usuário não encontrado' 
+      });
     }
 
     // Verificar conexão com Google Calendar
     if (!agendamentoGoogleService.verificarConexaoGoogle(usuario)) {
       return res.json({
-        total: 0,
-        proximaSeamana: 0,
-        hoje: 0,
-        porTipo: {},
-        aviso: 'Google Calendar não conectado'
+        success: true,
+        estatisticas: {
+          total: 0,
+          proximaSeamana: 0,
+          hoje: 0,
+          porTipo: {},
+          porStatus: {}
+        },
+        message: 'Google Calendar não conectado'
       });
     }
 
@@ -348,7 +509,8 @@ exports.obterEstatisticas = async (req, res) => {
     const estatisticas = await agendamentoGoogleService.obterEstatisticas(usuario);
 
     res.json({
-      ...estatisticas,
+      success: true,
+      estatisticas,
       usuario: {
         id: usuario.id,
         nome: usuario.nome,
@@ -360,21 +522,28 @@ exports.obterEstatisticas = async (req, res) => {
   } catch (error) {
     console.error('❌ Erro ao obter estatísticas:', error);
     res.status(500).json({
-      erro: 'Erro interno do servidor',
-      detalhes: process.env.NODE_ENV === 'development' ? error.message : undefined
+      success: false,
+      error: 'Erro interno do servidor',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Invalidar cache e forçar atualização
+/**
+ * Invalidar cache e forçar atualização
+ * POST /api/agendamentos/invalidar-cache
+ */
 exports.invalidarCache = async (req, res) => {
   try {
-    console.log('\n🔄 INVALIDANDO CACHE DE AGENDAMENTOS INDIVIDUAIS');
+    console.log('\n🔄 INVALIDANDO CACHE DE AGENDAMENTOS');
 
     // Buscar usuário
     const usuario = await Usuario.findByPk(req.user.id);
     if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado' });
+      return res.status(404).json({ 
+        success: false,
+        error: 'Usuário não encontrado' 
+      });
     }
 
     // Invalidar cache do usuário
@@ -389,11 +558,10 @@ exports.invalidarCache = async (req, res) => {
     res.json({
       success: true,
       message: 'Cache invalidado com sucesso',
-      dadosAtuais,
+      agendamentos: dadosAtuais,
       timestamp: new Date().toISOString(),
-      totalAgendamentos: dadosAtuais.length,
+      total: dadosAtuais.length,
       fonte: 'Google Calendar',
-      individual: true,
       usuario: {
         id: usuario.id,
         nome: usuario.nome,
@@ -404,55 +572,105 @@ exports.invalidarCache = async (req, res) => {
   } catch (error) {
     console.error('❌ Erro ao invalidar cache:', error);
     res.status(500).json({
-      erro: 'Erro interno do servidor',
-      detalhes: process.env.NODE_ENV === 'development' ? error.message : undefined
+      success: false,
+      error: 'Erro interno do servidor',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Verificar status da conexão Google Calendar
+/**
+ * Verificar status da conexão Google Calendar
+ * GET /api/agendamentos/conexao
+ */
 exports.verificarConexao = async (req, res) => {
   try {
     const usuario = await Usuario.findByPk(req.user.id);
     if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado' });
+      return res.status(404).json({ 
+        success: false,
+        error: 'Usuário não encontrado' 
+      });
     }
 
     const conectado = agendamentoGoogleService.verificarConexaoGoogle(usuario);
 
     res.json({
-      conectado,
+      success: true,
+      connected: conectado,
       usuario: {
         id: usuario.id,
         nome: usuario.nome,
         email: usuario.email
       },
-      detalhes: {
-        temAccessToken: !!usuario.googleAccessToken,
-        temRefreshToken: !!usuario.googleRefreshToken,
-        calendarConectado: !!usuario.googleCalendarConnected
+      details: {
+        hasAccessToken: !!usuario.googleAccessToken,
+        hasRefreshToken: !!usuario.googleRefreshToken,
+        calendarConnected: !!usuario.googleCalendarConnected
       }
     });
 
   } catch (error) {
     console.error('❌ Erro ao verificar conexão:', error);
     res.status(500).json({
-      erro: 'Erro interno do servidor',
-      detalhes: process.env.NODE_ENV === 'development' ? error.message : undefined
+      success: false,
+      error: 'Erro interno do servidor',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Sincronizar com Google Calendar (não necessário agora, mas mantido para compatibilidade)
+// Aliases para compatibilidade
+exports.listarAgendamentosUsuario = exports.listarAgendamentos;
+
+/**
+ * Listar agendamentos por período
+ * GET /api/agendamentos/periodo?inicio=YYYY-MM-DD&fim=YYYY-MM-DD
+ */
+exports.listarAgendamentosPeriodo = async (req, res) => {
+  try {
+    const { inicio, fim } = req.query;
+    
+    if (!inicio || !fim) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Período de início e fim são obrigatórios' 
+      });
+    }
+
+    // Usar a função principal com filtros de data
+    req.query.dataInicio = inicio;
+    req.query.dataFim = fim;
+    
+    return exports.listarAgendamentos(req, res);
+    
+  } catch (error) {
+    console.error('❌ Erro ao listar agendamentos por período:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Erro interno do servidor',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
+ * Sincronizar com Google Calendar (endpoint de compatibilidade)
+ * POST /api/agendamentos/sincronizar
+ */
 exports.sincronizarGoogleCalendar = async (req, res) => {
   try {
     res.json({
-      mensagem: 'Sincronização automática ativa. Todos os agendamentos são gerenciados diretamente no Google Calendar.',
-      individual: true,
+      success: true,
+      message: 'Sincronização automática ativa. Todos os agendamentos são gerenciados diretamente no Google Calendar.',
       fonte: 'Google Calendar'
     });
   } catch (error) {
-    console.error('Erro ao sincronizar:', error);
-    res.status(500).json({ erro: 'Erro interno do servidor' });
+    console.error('❌ Erro ao sincronizar:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Erro interno do servidor',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };

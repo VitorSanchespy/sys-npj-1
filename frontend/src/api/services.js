@@ -231,22 +231,51 @@ export const processService = {
   }
 };
 
-// ===== SCHEDULING SERVICES =====
+// ===== AGENDAMENTO SERVICES - Refatorado para sincronização com Google Calendar =====
 export const agendamentoService = {
-  // GET /api/agendamentos
-  listAgendamentos: async (token) => {
-    return await apiRequest('/api/agendamentos', {
+  // GET /api/agendamentos - Listar agendamentos com filtros
+  listAgendamentos: async (token, filtros = {}) => {
+    const queryParams = new URLSearchParams();
+    
+    // Adicionar filtros opcionais
+    if (filtros.offset !== undefined) queryParams.append('offset', filtros.offset);
+    if (filtros.limit !== undefined) queryParams.append('limit', filtros.limit);
+    if (filtros.busca) queryParams.append('busca', filtros.busca);
+    if (filtros.dataInicio) queryParams.append('dataInicio', filtros.dataInicio);
+    if (filtros.dataFim) queryParams.append('dataFim', filtros.dataFim);
+    if (filtros.tipoEvento) queryParams.append('tipoEvento', filtros.tipoEvento);
+
+    const url = queryParams.toString() ? `/api/agendamentos?${queryParams}` : '/api/agendamentos';
+    
+    return await apiRequest(url, {
       method: 'GET',
       token
     });
   },
 
-  // POST /api/agendamentos
+  // POST /api/agendamentos - Criar agendamento
   createAgendamento: async (token, agendamentoData) => {
+    // Normalizar dados antes de enviar
+    const dadosNormalizados = {
+      titulo: agendamentoData.titulo,
+      descricao: agendamentoData.descricao || '',
+      local: agendamentoData.local || '',
+      data_inicio: agendamentoData.data_inicio || agendamentoData.dataEvento,
+      data_fim: agendamentoData.data_fim || agendamentoData.dataFim,
+      tipo_evento: agendamentoData.tipo_evento || agendamentoData.tipoEvento || 'outro',
+      processo_id: agendamentoData.processo_id || agendamentoData.processoId || null,
+      lembrete_1_dia: agendamentoData.lembrete_1_dia !== undefined ? agendamentoData.lembrete_1_dia : 
+                     agendamentoData.lembrete1Dia !== undefined ? agendamentoData.lembrete1Dia : true,
+      lembrete_2_dias: agendamentoData.lembrete_2_dias !== undefined ? agendamentoData.lembrete_2_dias : 
+                      agendamentoData.lembrete2Dias !== undefined ? agendamentoData.lembrete2Dias : false,
+      lembrete_1_semana: agendamentoData.lembrete_1_semana !== undefined ? agendamentoData.lembrete_1_semana : 
+                        agendamentoData.lembrete1Semana !== undefined ? agendamentoData.lembrete1Semana : false
+    };
+
     return await apiRequest('/api/agendamentos', {
       method: 'POST',
       token,
-      body: agendamentoData
+      body: dadosNormalizados
     });
   },
 
@@ -260,9 +289,36 @@ export const agendamentoService = {
 
   // GET /api/agendamentos/periodo
   listAgendamentosPeriodo: async (token, dataInicio, dataFim) => {
-    const queryParams = new URLSearchParams({ dataInicio, dataFim }).toString();
+    const queryParams = new URLSearchParams({ 
+      inicio: dataInicio, 
+      fim: dataFim 
+    }).toString();
     return await apiRequest(`/api/agendamentos/periodo?${queryParams}`, {
       method: 'GET',
+      token
+    });
+  },
+
+  // GET /api/agendamentos/estatisticas
+  getEstatisticas: async (token) => {
+    return await apiRequest('/api/agendamentos/estatisticas', {
+      method: 'GET',
+      token
+    });
+  },
+
+  // GET /api/agendamentos/conexao
+  checkConnection: async (token) => {
+    return await apiRequest('/api/agendamentos/conexao', {
+      method: 'GET',
+      token
+    });
+  },
+
+  // POST /api/agendamentos/invalidar-cache
+  invalidateCache: async (token) => {
+    return await apiRequest('/api/agendamentos/invalidar-cache', {
+      method: 'POST',
       token
     });
   },
@@ -277,10 +333,24 @@ export const agendamentoService = {
 
   // PUT /api/agendamentos/:id
   updateAgendamento: async (token, id, agendamentoData) => {
+    // Normalizar dados antes de enviar
+    const dadosNormalizados = {
+      titulo: agendamentoData.titulo,
+      descricao: agendamentoData.descricao,
+      local: agendamentoData.local,
+      data_evento: agendamentoData.data_evento || agendamentoData.data_inicio || agendamentoData.dataEvento,
+      data_fim: agendamentoData.data_fim || agendamentoData.dataFim,
+      tipo_evento: agendamentoData.tipo_evento || agendamentoData.tipoEvento,
+      processo_id: agendamentoData.processo_id || agendamentoData.processoId,
+      lembrete_1_dia: agendamentoData.lembrete_1_dia !== undefined ? agendamentoData.lembrete_1_dia : agendamentoData.lembrete1Dia,
+      lembrete_2_dias: agendamentoData.lembrete_2_dias !== undefined ? agendamentoData.lembrete_2_dias : agendamentoData.lembrete2Dias,
+      lembrete_1_semana: agendamentoData.lembrete_1_semana !== undefined ? agendamentoData.lembrete_1_semana : agendamentoData.lembrete1Semana
+    };
+
     return await apiRequest(`/api/agendamentos/${id}`, {
       method: 'PUT',
       token,
-      body: agendamentoData
+      body: dadosNormalizados
     });
   },
 
@@ -292,17 +362,17 @@ export const agendamentoService = {
     });
   },
 
-  // GET /api/agendamentos/estatisticas
-  getEstatisticas: async (token) => {
-    return await apiRequest('/api/agendamentos/estatisticas', {
-      method: 'GET',
+  // POST /api/agendamentos/sincronizar
+  sincronizar: async (token) => {
+    return await apiRequest('/api/agendamentos/sincronizar', {
+      method: 'POST',
       token
     });
   },
 
-  // POST /api/agendamentos/:id/sincronizar-google
-  sincronizarGoogleCalendar: async (token, id) => {
-    return await apiRequest(`/api/agendamentos/${id}/sincronizar-google`, {
+  // POST /api/agendamentos/sincronizar
+  sincronizar: async (token) => {
+    return await apiRequest('/api/agendamentos/sincronizar', {
       method: 'POST',
       token
     });

@@ -67,7 +67,11 @@ const NotificationBell = () => {
 
   // Notificações recentes (máximo 10)
   const recentNotifications = notifications.slice(0, 10);
-  const unreadNotifications = recentNotifications.filter(n => !n.lida);
+  const unreadNotifications = recentNotifications.filter(n => {
+    // Verifica múltiplos critérios para determinar se está lida
+    const isRead = n.lida === true || n.status === 'lido' || n.data_leitura;
+    return !isRead;
+  });
 
   return (
     <div className="relative">
@@ -87,7 +91,7 @@ const NotificationBell = () => {
         
         {/* Badge de contador */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full min-w-[20px]">
+          <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full min-w-[20px] animate-pulse">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
@@ -137,10 +141,11 @@ const NotificationBell = () => {
                   <div
                     key={notification.id}
                     className={`px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors ${
-                      !notification.lida ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                      !(notification.lida === true || notification.status === 'lido' || notification.data_leitura) ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
                     }`}
                     onClick={() => {
-                      if (!notification.lida) {
+                      const isRead = notification.lida === true || notification.status === 'lido' || notification.data_leitura;
+                      if (!isRead) {
                         markAsRead(notification.id);
                       }
                     }}
@@ -154,14 +159,14 @@ const NotificationBell = () => {
                       {/* Conteúdo */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className={`text-sm font-medium ${!notification.lida ? 'text-gray-900' : 'text-gray-700'}`}>
+                          <p className={`text-sm font-medium ${!(notification.lida === true || notification.status === 'lido' || notification.data_leitura) ? 'text-gray-900' : 'text-gray-700'}`}>
                             {notification.titulo}
                           </p>
-                          {!notification.lida && (
+                          {!(notification.lida === true || notification.status === 'lido' || notification.data_leitura) && (
                             <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
                           )}
                         </div>
-                        <p className={`text-sm mt-1 ${!notification.lida ? 'text-gray-700' : 'text-gray-500'}`}>
+                        <p className={`text-sm mt-1 ${!(notification.lida === true || notification.status === 'lido' || notification.data_leitura) ? 'text-gray-700' : 'text-gray-500'}`}>
                           {notification.mensagem}
                         </p>
                         <p className="text-xs text-gray-400 mt-1">

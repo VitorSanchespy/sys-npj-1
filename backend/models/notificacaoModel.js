@@ -17,6 +17,11 @@ class Notificacao extends Model {
     //   as: 'agendamento' 
     // });
   }
+
+  // Propriedade virtual para frontend
+  get lida() {
+    return this.status === 'lido';
+  }
 }
 
 Notificacao.init(

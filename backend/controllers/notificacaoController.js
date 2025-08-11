@@ -17,7 +17,14 @@ exports.listarNotificacoes = async (req, res) => {
       include: [{ model: Usuario, as: 'usuario' }],
       order: [['criado_em', 'DESC']]
     });
-    res.json(notificacoes);
+    // Adiciona tipo_evento igual ao campo tipo original (antes do mapeamento)
+    const notificacoesComTipoEvento = notificacoes.map(n => {
+      const nObj = n.toJSON();
+      nObj.tipo_evento = nObj.tipo_evento || nObj.tipo_original || nObj.tipo || null;
+      nObj.lida = nObj.status === 'lido'; // Adicionar campo lida baseado no status
+      return nObj;
+    });
+    res.json(notificacoesComTipoEvento);
   } catch (error) {
     console.error('Erro ao listar notificações:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
@@ -37,9 +44,16 @@ exports.listarNotificacoesUsuario = async (req, res) => {
       where: { usuario_id: userId },
       order: [['criado_em', 'DESC']]
     });
-    const total = notificacoes.length;
-    const naoLidas = notificacoes.filter(n => ['pendente', 'enviado'].includes(n.status)).length;
-    res.json({ notificacoes, total, naoLidas });
+    // Adiciona tipo_evento igual ao campo tipo original (antes do mapeamento)
+    const notificacoesComTipoEvento = notificacoes.map(n => {
+      const nObj = n.toJSON();
+      nObj.tipo_evento = nObj.tipo_evento || nObj.tipo_original || nObj.tipo || null;
+      nObj.lida = nObj.status === 'lido'; // Adicionar campo lida baseado no status
+      return nObj;
+    });
+    const total = notificacoesComTipoEvento.length;
+    const naoLidas = notificacoesComTipoEvento.filter(n => !n.lida).length;
+    res.json({ notificacoes: notificacoesComTipoEvento, total, naoLidas });
   } catch (error) {
     console.error('Erro ao listar notificações do usuário:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });

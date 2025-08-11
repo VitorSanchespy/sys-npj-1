@@ -91,16 +91,9 @@ export const NotificationProvider = ({ children }) => {
     try {
       await notificationService.markAsRead(token, notificationId);
       
-      // Atualizar estado local
-      setNotifications(prev => 
-        prev.map(n => 
-          n.id === notificationId 
-            ? { ...n, lida: true, data_leitura: new Date() }
-            : n
-        )
-      );
-      
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      // Recarregar dados do servidor para garantir sincronização
+      await loadNotifications();
+      await loadUnreadCount();
     } catch (error) {
       console.error('❌ Erro ao marcar como lida:', error);
     }
@@ -111,12 +104,9 @@ export const NotificationProvider = ({ children }) => {
     try {
       await notificationService.markAllAsRead(token);
       
-      // Atualizar estado local
-      setNotifications(prev => 
-        prev.map(n => ({ ...n, lida: true, data_leitura: new Date() }))
-      );
-      
-      setUnreadCount(0);
+      // Recarregar dados do servidor para garantir sincronização
+      await loadNotifications();
+      await loadUnreadCount();
     } catch (error) {
       console.error('❌ Erro ao marcar todas como lidas:', error);
     }
@@ -148,12 +138,17 @@ export const NotificationProvider = ({ children }) => {
 
   // Filtrar notificações por tipo
   const getNotificationsByType = (type) => {
-    return notifications.filter(n => n.tipo === type);
+    // Usa tipo_evento se existir, senão cai no tipo antigo
+    return notifications.filter(n => (n.tipo_evento || n.tipo) === type);
   };
 
   // Obter notificações não lidas
   const getUnreadNotifications = () => {
-    return notifications.filter(n => !n.lida);
+    return notifications.filter(n => {
+      // Verifica múltiplos critérios para determinar se está lida
+      const isRead = n.lida === true || n.status === 'lido' || n.data_leitura;
+      return !isRead;
+    });
   };
 
   // Remover notificação temporária

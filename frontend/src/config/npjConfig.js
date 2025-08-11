@@ -29,7 +29,7 @@ export const NPJ_CONFIG = {
 
   // Configurações de UI
   UI: {
-    DEBOUNCE_DELAY: 300,     // 300ms para busca
+  DEBOUNCE_DELAY: 800,     // 800ms para busca (menos sensível)
     LOADING_MIN_TIME: 500,   // Mostrar loading por pelo menos 500ms
     TOAST_DURATION: 4000,    // 4 segundos para toasts
     PAGINATION_SIZE: 20      // 20 items por página

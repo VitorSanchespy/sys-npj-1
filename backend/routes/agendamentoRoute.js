@@ -16,6 +16,8 @@ router.get('/periodo', agendamentoController.listarAgendamentosPeriodo);
 router.get('/estatisticas', agendamentoController.obterEstatisticas);
 router.post('/invalidar-cache', agendamentoController.invalidarCache);
 router.get('/verificar-conexao', agendamentoController.verificarConexao);
+// Compatibilidade: rota /conexao para frontend
+router.get('/conexao', agendamentoController.verificarConexao);
 router.get('/:id', agendamentoController.obterAgendamento);
 router.put('/:id', preveniDuplicacaoAgendamento, agendamentoController.atualizarAgendamento);
 router.delete('/:id', agendamentoController.deletarAgendamento);

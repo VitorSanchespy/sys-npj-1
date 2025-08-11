@@ -393,9 +393,9 @@ export function useCreateProcesso() {
       });
     },
     onSuccess: () => {
-      // Invalidar cache de processos
       queryClient.invalidateQueries({ queryKey: ['processos'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      window.location.reload();
     }
   });
 }
@@ -413,10 +413,10 @@ export function useUpdateProcesso() {
       });
     },
     onSuccess: (data, variables) => {
-      // Invalidar cache específico do processo e lista geral
       queryClient.invalidateQueries({ queryKey: ['processo', variables.id] });
       queryClient.invalidateQueries({ queryKey: ['processos'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      window.location.reload();
     }
   });
 }

@@ -10,7 +10,9 @@ const NotificationCenter = () => {
     markAsRead, 
     markAllAsRead, 
     getNotificationsByType,
-    getUnreadNotifications 
+    getUnreadNotifications,
+    loadNotifications,
+    loadUnreadCount
   } = useNotificationContext();
   
   const [filter, setFilter] = useState('todas'); // todas, nao_lidas, agendamentos, autenticacao, processos
@@ -22,7 +24,10 @@ const NotificationCenter = () => {
 
     switch (filter) {
       case 'nao_lidas':
-        filtered = getUnreadNotifications();
+        filtered = notifications.filter(n => {
+          const isRead = n.lida === true || n.status === 'lido' || n.data_leitura;
+          return !isRead;
+        });
         break;
       case 'agendamentos':
         filtered = notifications.filter(n => n.tipo.includes('agendamento'));
@@ -61,7 +66,10 @@ const NotificationCenter = () => {
   // Obter estatísticas
   const getStats = () => {
     const total = notifications.length;
-    const unread = getUnreadNotifications().length;
+    const unread = notifications.filter(n => {
+      const isRead = n.lida === true || n.status === 'lido' || n.data_leitura;
+      return !isRead;
+    }).length;
     const agendamentos = getNotificationsByType('agendamento').length;
     const autenticacao = notifications.filter(n => 
       n.tipo.includes('login') || n.tipo.includes('senha')
@@ -114,7 +122,12 @@ const NotificationCenter = () => {
           </h2>
           {stats.unread > 0 && (
             <button
-              onClick={markAllAsRead}
+              onClick={async () => {
+                await markAllAsRead();
+                // Forçar atualização visual
+                await loadNotifications();
+                await loadUnreadCount();
+              }}
               style={{
                 background: '#007bff',
                 color: 'white',
@@ -207,9 +220,12 @@ const NotificationCenter = () => {
             <div
               key={notification.id}
               className={`px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                !notification.lida ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                !(notification.lida === true || notification.status === 'lido' || notification.data_leitura) ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
               }`}
-              onClick={() => !notification.lida && markAsRead(notification.id)}
+              onClick={() => {
+                const isRead = notification.lida === true || notification.status === 'lido' || notification.data_leitura;
+                if (!isRead) markAsRead(notification.id);
+              }}
             >
               <div className="flex items-start space-x-4">
                 {/* Ícone */}
@@ -223,12 +239,12 @@ const NotificationCenter = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <h4 className={`text-sm font-medium ${
-                      !notification.lida ? 'text-gray-900' : 'text-gray-700'
+                      !(notification.lida === true || notification.status === 'lido' || notification.data_leitura) ? 'text-gray-900' : 'text-gray-700'
                     }`}>
                       {notification.titulo}
                     </h4>
                     <div className="flex items-center space-x-2">
-                      {!notification.lida && (
+                      {!(notification.lida === true || notification.status === 'lido' || notification.data_leitura) && (
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           Nova
                         </span>
@@ -240,7 +256,7 @@ const NotificationCenter = () => {
                   </div>
                   
                   <p className={`mt-1 text-sm ${
-                    !notification.lida ? 'text-gray-700' : 'text-gray-500'
+                    !(notification.lida === true || notification.status === 'lido' || notification.data_leitura) ? 'text-gray-700' : 'text-gray-500'
                   }`}>
                     {notification.mensagem}
                   </p>

@@ -1,5 +1,5 @@
 import React from "react";
-import DashboardSummary from "@/components/dashboard/DashboardSummary";
+import DashboardSummaryImproved from "@/components/dashboard/DashboardSummaryImproved";
 import { useDashboardData } from "@/hooks/useApi.jsx";
 import { useAuthContext } from "@/contexts/AuthContext";
 import Loader from "@/components/layout/Loader";
@@ -32,18 +32,18 @@ export default function DashboardPage() {
           fontWeight: '600',
           color: '#212529'
         }}>
-          🏠 Dashboard
+          Dashboard NPJ
         </h1>
         <p style={{ 
           margin: '8px 0 0 0', 
           fontSize: '14px', 
           color: '#6c757d' 
         }}>
-          Visão geral do sistema NPJ
+          Painel de controle personalizado
         </p>
       </div>
       
-      <DashboardSummary dashboardData={dashboardData} user={user} />
+      <DashboardSummaryImproved dashboardData={dashboardData} user={user} />
     </>
   );
 }

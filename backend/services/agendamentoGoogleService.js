@@ -36,47 +36,40 @@ class AgendamentoGoogleService {
    */
   async listarAgendamentos(usuario, filtros = {}) {
     try {
-      // Verificar cache primeiro
-      const cacheKey = `agendamentos_${usuario.id}_${JSON.stringify(filtros)}`;
-      const cacheDados = requestCache.get(cacheKey);
+      console.log(`📋 Listando agendamentos para usuário: ${usuario.nome} (ID: ${usuario.id})`);
       
-      if (cacheDados) {
-        console.log('📋 Agendamentos retornados do cache');
-        return cacheDados;
-      }
-
       const calendar = await this.configurarClienteUsuario(usuario);
 
-      // Configurar filtros de data
+      // Configurar filtros de data - buscar dos últimos 30 dias até próximos 90 dias
       const agora = new Date();
-      const timeMin = filtros.dataInicio || agora.toISOString();
-      const timeMax = filtros.dataFim || new Date(agora.getTime() + (90 * 24 * 60 * 60 * 1000)).toISOString(); // 90 dias
+      const timeMin = filtros.dataInicio || new Date(agora.getTime() - (30 * 24 * 60 * 60 * 1000)).toISOString();
+      const timeMax = filtros.dataFim || new Date(agora.getTime() + (90 * 24 * 60 * 60 * 1000)).toISOString();
+
+      console.log(`📅 Buscando eventos entre ${timeMin} e ${timeMax}`);
 
       // Buscar eventos no Google Calendar
       const response = await calendar.events.list({
         calendarId: 'primary',
         timeMin: timeMin,
         timeMax: timeMax,
-        maxResults: filtros.limite || 50,
+        maxResults: filtros.limite || 100,
         singleEvents: true,
         orderBy: 'startTime',
         q: filtros.busca || undefined
       });
 
       const eventos = response.data.items || [];
+      console.log(`📋 ${eventos.length} eventos encontrados no Google Calendar`);
       
-      // Transformar eventos do Google Calendar para formato do sistema
+      // Transformar todos os eventos (não filtrar por sistema)
       const agendamentos = eventos.map(evento => this.transformarEventoParaAgendamento(evento, usuario));
 
-      // Armazenar no cache por 5 minutos
-      requestCache.set(cacheKey, agendamentos, 5 * 60 * 1000);
-
-      console.log(`📅 ${agendamentos.length} agendamentos encontrados para usuário ${usuario.nome}`);
+      console.log(`✅ ${agendamentos.length} agendamentos processados para usuário ${usuario.nome}`);
       return agendamentos;
 
     } catch (error) {
       console.error('❌ Erro ao listar agendamentos:', error);
-      throw new Error('Erro ao buscar agendamentos do Google Calendar');
+      throw new Error(`Erro ao buscar agendamentos: ${error.message}`);
     }
   }
 
@@ -85,18 +78,28 @@ class AgendamentoGoogleService {
    */
   async criarAgendamento(usuario, dadosAgendamento) {
     try {
+      console.log('📅 Criando agendamento no Google Calendar para:', usuario.nome);
+      console.log('📝 Dados:', dadosAgendamento);
+
+      // Sempre usar Google Calendar real
       const calendar = await this.configurarClienteUsuario(usuario);
+
+      // Calcular data de fim (1 hora após início se não especificada)
+      const dataInicio = new Date(dadosAgendamento.dataEvento);
+      const dataFim = dadosAgendamento.dataFim ? 
+        new Date(dadosAgendamento.dataFim) : 
+        new Date(dataInicio.getTime() + (60 * 60 * 1000));
 
       // Montar evento do Google Calendar
       const evento = {
         summary: dadosAgendamento.titulo,
-        description: this.montarDescricaoEvento(dadosAgendamento, usuario),
+        description: dadosAgendamento.descricao || '',
         start: {
-          dateTime: new Date(dadosAgendamento.dataEvento).toISOString(),
+          dateTime: dataInicio.toISOString(),
           timeZone: 'America/Sao_Paulo'
         },
         end: {
-          dateTime: new Date(new Date(dadosAgendamento.dataEvento).getTime() + (60 * 60 * 1000)).toISOString(), // 1 hora de duração padrão
+          dateTime: dataFim.toISOString(),
           timeZone: 'America/Sao_Paulo'
         },
         location: dadosAgendamento.local || undefined,
@@ -104,38 +107,53 @@ class AgendamentoGoogleService {
           useDefault: false,
           overrides: this.montarLembretes(dadosAgendamento)
         },
+        attendees: [
+          {
+            email: usuario.email,
+            displayName: usuario.nome,
+            responseStatus: 'accepted'
+          },
+          // Adiciona convidados extras (se houver)
+          ...((dadosAgendamento.convidados || '')
+            .split(',')
+            .map(email => email.trim())
+            .filter(email => email && email !== usuario.email)
+            .map(email => ({ email, responseStatus: 'needsAction' })))
+        ],
         extendedProperties: {
           private: {
             sistemaId: `npj_${usuario.id}_${Date.now()}`,
             tipoEvento: dadosAgendamento.tipoEvento || 'outro',
-            processoId: dadosAgendamento.processoId || '',
+            processoId: (dadosAgendamento.processoId || '').toString(),
             criadoPor: usuario.id.toString(),
-            sistemaOrigem: 'NPJ'
+            sistemaOrigem: 'NPJ',
+            lembrete1Dia: (dadosAgendamento.lembrete1Dia || false).toString(),
+            lembrete2Dias: (dadosAgendamento.lembrete2Dias || false).toString(),
+            lembrete1Semana: (dadosAgendamento.lembrete1Semana || false).toString()
           }
         }
       };
 
-      // Criar evento no Google Calendar
+      console.log('📡 Enviando evento para Google Calendar...');
       const response = await calendar.events.insert({
         calendarId: 'primary',
         resource: evento
       });
 
+      console.log('✅ Evento criado no Google Calendar:', response.data.id);
+
       const agendamentoCriado = this.transformarEventoParaAgendamento(response.data, usuario);
 
-      // Invalidar cache do usuário
+      // Invalidar cache
       this.invalidarCacheUsuario(usuario.id);
 
-      console.log(`✅ Agendamento criado para usuário ${usuario.nome}: ${dadosAgendamento.titulo}`);
       return agendamentoCriado;
 
     } catch (error) {
       console.error('❌ Erro ao criar agendamento:', error);
-      throw new Error('Erro ao criar agendamento no Google Calendar');
+      throw new Error(`Erro ao criar agendamento: ${error.message}`);
     }
-  }
-
-  /**
+  }  /**
    * Atualizar agendamento existente
    */
   async atualizarAgendamento(usuario, googleEventId, dadosAtualizacao) {
@@ -251,25 +269,48 @@ class AgendamentoGoogleService {
   transformarEventoParaAgendamento(evento, usuario) {
     const props = evento.extendedProperties?.private || {};
     
+    // Extrair datas
+    const dataInicio = evento.start?.dateTime || evento.start?.date;
+    const dataFim = evento.end?.dateTime || evento.end?.date;
+    
     return {
       id: evento.id,
       googleEventId: evento.id,
       titulo: evento.summary || 'Sem título',
       descricao: evento.description || '',
-      dataEvento: evento.start?.dateTime || evento.start?.date,
+      dataEvento: dataInicio,
+      dataInicio: dataInicio,
+      data_evento: dataInicio,
+      data_inicio: dataInicio,
+      dataFim: dataFim,
+      data_fim: dataFim,
       local: evento.location || '',
       status: evento.status === 'cancelled' ? 'cancelado' : 'agendado',
       tipoEvento: props.tipoEvento || 'outro',
-      processoId: props.processoId || null,
+      tipo_evento: props.tipoEvento || 'outro',
+      processoId: props.processoId ? parseInt(props.processoId) : null,
+      processo_id: props.processoId ? parseInt(props.processoId) : null,
       usuarioId: usuario.id,
+      usuario_id: usuario.id,
       criadoPor: parseInt(props.criadoPor) || usuario.id,
+      criado_por: parseInt(props.criadoPor) || usuario.id,
       sistemaOrigem: props.sistemaOrigem || 'Google',
+      lembrete1Dia: props.lembrete1Dia === 'true',
+      lembrete_1_dia: props.lembrete1Dia === 'true',
+      lembrete2Dias: props.lembrete2Dias === 'true',
+      lembrete_2_dias: props.lembrete2Dias === 'true',
+      lembrete1Semana: props.lembrete1Semana === 'true',
+      lembrete_1_semana: props.lembrete1Semana === 'true',
       criadoEm: evento.created,
+      criado_em: evento.created,
       atualizadoEm: evento.updated,
+      atualizado_em: evento.updated,
       // Dados específicos do Google Calendar
       linkGoogleCalendar: evento.htmlLink,
       organizador: evento.organizer?.email,
-      participantes: evento.attendees || []
+      participantes: evento.attendees || [],
+      // Campos para compatibilidade frontend
+      fonte: 'Google Calendar'
     };
   }
 
@@ -277,19 +318,8 @@ class AgendamentoGoogleService {
    * Montar descrição do evento
    */
   montarDescricaoEvento(dados, usuario) {
-    let descricao = dados.descricao || '';
-    
-    descricao += `\n\n--- Informações do Sistema NPJ ---`;
-    descricao += `\nCriado por: ${usuario.nome} (${usuario.email})`;
-    descricao += `\nTipo: ${dados.tipoEvento || 'Outro'}`;
-    
-    if (dados.processoId) {
-      descricao += `\nProcesso ID: ${dados.processoId}`;
-    }
-    
-    descricao += `\nCriado em: ${new Date().toLocaleString('pt-BR')}`;
-    
-    return descricao;
+    // Apenas a descrição fornecida pelo usuário, sem informações extras
+    return dados.descricao || '';
   }
 
   /**
@@ -347,29 +377,51 @@ class AgendamentoGoogleService {
    */
   async obterEstatisticas(usuario) {
     try {
+      // Buscar todos os agendamentos do usuário (últimos 90 dias e próximos 90 dias)
+      const agora = new Date();
+      const dataInicio = new Date(agora.getTime() - (90 * 24 * 60 * 60 * 1000)).toISOString();
+      const dataFim = new Date(agora.getTime() + (90 * 24 * 60 * 60 * 1000)).toISOString();
       const agendamentos = await this.listarAgendamentos(usuario, {
-        dataInicio: new Date().toISOString(),
-        dataFim: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString() // próximos 30 dias
+        dataInicio,
+        dataFim
       });
 
       const hoje = new Date();
-      const proximaSeamana = new Date(hoje.getTime() + (7 * 24 * 60 * 60 * 1000));
+      const hojeStr = hoje.toISOString().slice(0, 10);
+      const prox7dias = new Date(hoje.getTime() + (7 * 24 * 60 * 60 * 1000));
+
+      let total = 0, proximos7 = 0, vencidos = 0, agendados = 0, hojeCount = 0;
+      const porTipo = {};
+
+      agendamentos.forEach(a => {
+        const dataEvento = new Date(a.dataEvento || a.data_inicio || a.dataInicio);
+        total++;
+        if (dataEvento < hoje) {
+          vencidos++;
+        } else {
+          agendados++;
+        }
+        if (dataEvento >= hoje && dataEvento <= prox7dias) {
+          proximos7++;
+        }
+        if (dataEvento.toISOString().slice(0, 10) === hojeStr) {
+          hojeCount++;
+        }
+        const tipo = a.tipoEvento || a.tipo_evento || 'outro';
+        porTipo[tipo] = (porTipo[tipo] || 0) + 1;
+      });
 
       return {
-        total: agendamentos.length,
-        proximaSeamana: agendamentos.filter(a => new Date(a.dataEvento) <= proximaSeamana).length,
-        hoje: agendamentos.filter(a => {
-          const dataEvento = new Date(a.dataEvento);
-          return dataEvento.toDateString() === hoje.toDateString();
-        }).length,
-        porTipo: agendamentos.reduce((acc, a) => {
-          acc[a.tipoEvento] = (acc[a.tipoEvento] || 0) + 1;
-          return acc;
-        }, {})
+        total,
+        proximos7,
+        vencidos,
+        agendados,
+        hoje: hojeCount,
+        porTipo
       };
     } catch (error) {
       console.error('❌ Erro ao obter estatísticas:', error);
-      return { total: 0, proximaSeamana: 0, hoje: 0, porTipo: {} };
+      return { total: 0, proximos7: 0, vencidos: 0, agendados: 0, hoje: 0, porTipo: {} };
     }
   }
 }

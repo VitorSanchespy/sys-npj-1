@@ -17,19 +17,29 @@ class NotificacaoService {
 
   // Notifica todos inscritos em um canal de processo
   enviarParaProcesso(processoId, mensagem) {
-    this.io.to(`processo_${processoId}`).emit('notificacao', {
-      processoId,
-      mensagem,
-      data: new Date()
-    });
+    if (this.io) {
+      this.io.to(`processo_${processoId}`).emit('notificacao', {
+        processoId,
+        mensagem,
+        data: new Date()
+      });
+    } else {
+      // Em dev, apenas loga
+      console.log(`[DEV] Notificação processo ${processoId}:`, mensagem);
+    }
   }
 
   // Notifica um usuário específico
   enviarParaUsuario(usuarioId, mensagem) {
-    this.io.to(`usuario_${usuarioId}`).emit('notificacao_pessoal', {
-      mensagem,
-      data: new Date()
-    });
+    if (this.io) {
+      this.io.to(`usuario_${usuarioId}`).emit('notificacao_pessoal', {
+        mensagem,
+        data: new Date()
+      });
+    } else {
+      // Em dev, apenas loga
+      console.log(`[DEV] Notificação pessoal para usuário ${usuarioId}:`, mensagem);
+    }
   }
 
   // Criar notificação no banco de dados
@@ -48,7 +58,7 @@ class NotificacaoService {
       const notificacao = await Notificacao.create({
         usuario_id: usuarioId,
         processo_id: dadosAdicionais.processo_id || null,
-        agendamento_id: dadosAdicionais.agendamento_id || null,
+        // agendamento_id removido - agora usa Google Calendar
         tipo: tipoMapeado,
         titulo,
         mensagem,
@@ -56,7 +66,10 @@ class NotificacaoService {
         status: 'pendente',
         data_envio: new Date(),
         tentativas: 0,
-        criado_em: new Date()
+        criado_em: new Date(),
+        // Dados adicionais do Google Calendar
+        google_event_id: dadosAdicionais.google_event_id || null,
+        evento_data: dadosAdicionais.evento_data || null
       });
 
       // Enviar notificação em tempo real
@@ -117,7 +130,7 @@ class NotificacaoService {
     return mapeamento[tipo] || 'informacao';
   }
 
-  // Notificações específicas para agendamentos
+  // Notificações específicas para agendamentos Google Calendar
   async notificarAgendamentoCriado(agendamento, criador, destinatario) {
     try {
       console.log('📧 Enviando notificações para agendamento criado...');
@@ -128,18 +141,20 @@ class NotificacaoService {
           destinatario.id,
           'agendamento_criado',
           'Novo Agendamento',
-          `${criador.nome} criou um agendamento para você: ${agendamento.titulo}`,
+          `${criador.nome} criou um agendamento para você: ${agendamento.titulo || agendamento.summary}`,
           {
-            agendamento_id: agendamento.id,
+            google_event_id: agendamento.id,
             processo_id: agendamento.processo_id,
             criador_id: criador.id,
-            data_evento: agendamento.data_evento
+            evento_data: agendamento.dataEvento || agendamento.start
           }
         );
 
-        // Enviar email para o destinatário
-        if (destinatario.email) {
+        // Enviar email para o destinatario (apenas se não for dev)
+        if (destinatario.email && process.env.NODE_ENV !== 'development') {
           await enviarEmailAgendamentoCriado(destinatario.email, agendamento, criador);
+        } else if (destinatario.email) {
+          console.log(`[DEV] Simulando envio de email para ${destinatario.email}`);
         }
       }
 
@@ -148,17 +163,19 @@ class NotificacaoService {
         criador.id,
         'agendamento_criado',
         'Agendamento Criado',
-        `Seu agendamento "${agendamento.titulo}" foi criado com sucesso`,
+        `Seu agendamento "${agendamento.titulo || agendamento.summary}" foi criado com sucesso`,
         {
-          agendamento_id: agendamento.id,
+          google_event_id: agendamento.id,
           processo_id: agendamento.processo_id,
-          data_evento: agendamento.data_evento
+          evento_data: agendamento.dataEvento || agendamento.start
         }
       );
 
-      // Email de confirmação para o criador
-      if (criador.email) {
+      // Email de confirmação para o criador (apenas se não for dev)
+      if (criador.email && process.env.NODE_ENV !== 'development') {
         await enviarEmailAgendamentoConfirmado(criador.email, agendamento);
+      } else if (criador.email) {
+        console.log(`[DEV] Simulando envio de email para ${criador.email}`);
       }
 
       console.log('✅ Notificações de agendamento enviadas com sucesso');
@@ -169,7 +186,7 @@ class NotificacaoService {
     }
   }
 
-  // Notificar cancelamento de agendamento
+  // Notificar cancelamento de agendamento Google Calendar
   async notificarAgendamentoCancelado(agendamento, usuarioCancelou, destinatario, motivo = '') {
     try {
       console.log('📧 Enviando notificações para agendamento cancelado...');
@@ -180,9 +197,9 @@ class NotificacaoService {
           destinatario.id,
           'agendamento_cancelado',
           'Agendamento Cancelado',
-          `${usuarioCancelou.nome} cancelou o agendamento: ${agendamento.titulo}`,
+          `${usuarioCancelou.nome} cancelou o agendamento: ${agendamento.titulo || agendamento.summary}`,
           {
-            agendamento_id: agendamento.id,
+            google_event_id: agendamento.id,
             cancelado_por: usuarioCancelou.id,
             motivo
           }
@@ -199,9 +216,9 @@ class NotificacaoService {
         usuarioCancelou.id,
         'agendamento_cancelado',
         'Cancelamento Confirmado',
-        `Agendamento "${agendamento.titulo}" foi cancelado com sucesso`,
+        `Agendamento "${agendamento.titulo || agendamento.summary}" foi cancelado com sucesso`,
         {
-          agendamento_id: agendamento.id,
+          google_event_id: agendamento.id,
           motivo
         }
       );
@@ -214,7 +231,7 @@ class NotificacaoService {
     }
   }
 
-  // Notificar atualização de agendamento
+  // Notificar atualização de agendamento Google Calendar
   async notificarAgendamentoAtualizado(agendamento, usuarioAtualizou, destinatario) {
     try {
       console.log('📧 Enviando notificações para agendamento atualizado...');
@@ -225,11 +242,11 @@ class NotificacaoService {
           destinatario.id,
           'agendamento_atualizado',
           'Agendamento Atualizado',
-          `${usuarioAtualizou.nome} atualizou o agendamento: ${agendamento.titulo}`,
+          `${usuarioAtualizou.nome} atualizou o agendamento: ${agendamento.titulo || agendamento.summary}`,
           {
-            agendamento_id: agendamento.id,
+            google_event_id: agendamento.id,
             atualizado_por: usuarioAtualizou.id,
-            data_evento: agendamento.data_evento
+            evento_data: agendamento.dataEvento || agendamento.start
           }
         );
       }
@@ -239,9 +256,9 @@ class NotificacaoService {
         usuarioAtualizou.id,
         'agendamento_atualizado',
         'Atualização Confirmada',
-        `Agendamento "${agendamento.titulo}" foi atualizado com sucesso`,
+        `Agendamento "${agendamento.titulo || agendamento.summary}" foi atualizado com sucesso`,
         {
-          agendamento_id: agendamento.id
+          google_event_id: agendamento.id
         }
       );
 

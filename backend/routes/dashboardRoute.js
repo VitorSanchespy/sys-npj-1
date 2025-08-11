@@ -29,14 +29,21 @@ router.get('/estatisticas', async (req, res) => {
     const normalize = s => s && s.normalize('NFD').replace(/[^\w\s]/g, '').toLowerCase();
     const statusMap = { em_andamento: 0, aguardando: 0, finalizado: 0, arquivado: 0, suspenso: 0, outros: 0 };
     processosPorStatus.forEach(row => {
+      if (!row) return;
       const raw = row.status || '';
       const n = normalize(raw);
-      if (n.includes('andamento')) statusMap.em_andamento += parseInt(row.get('count'));
-      else if (n.includes('aguard')) statusMap.aguardando += parseInt(row.get('count'));
-      else if (n.includes('finaliz') || n.includes('conclu')) statusMap.finalizado += parseInt(row.get('count'));
-      else if (n.includes('arquiv')) statusMap.arquivado += parseInt(row.get('count'));
-      else if (n.includes('suspen')) statusMap.suspenso += parseInt(row.get('count'));
-      else statusMap.outros += parseInt(row.get('count'));
+      let count = 0;
+      if (typeof row.get === 'function') {
+        count = parseInt(row.get('count')) || 0;
+      } else if (row.count !== undefined) {
+        count = parseInt(row.count) || 0;
+      }
+      if (n.includes('andamento')) statusMap.em_andamento += count;
+      else if (n.includes('aguard')) statusMap.aguardando += count;
+      else if (n.includes('finaliz') || n.includes('conclu')) statusMap.finalizado += count;
+      else if (n.includes('arquiv')) statusMap.arquivado += count;
+      else if (n.includes('suspen')) statusMap.suspenso += count;
+      else statusMap.outros += count;
     });
 
     // Usuários
@@ -74,62 +81,85 @@ router.get('/estatisticas', async (req, res) => {
 // Endpoint para estatísticas gerais do sistema (processos e usuários)
 router.get('/stats', async (req, res) => {
   try {
-    // Processos
-    const totalProcessos = await Processo.count();
-    const processosAtivos = await Processo.count({ 
-      where: { 
-        status: { 
-          [Op.notIn]: ['arquivado', 'Concluído', 'concluído', 'Finalizado', 'finalizado'] 
-        } 
-      } 
-    });
-    const processosPorStatus = await Processo.findAll({
-      attributes: ['status', [require('sequelize').fn('COUNT', require('sequelize').col('status')), 'count']],
-      group: ['status']
-    });
+    // Processos - com proteção contra erros
+    let totalProcessos = 0;
+    let processosAtivos = 0;
+    let statusMap = { em_andamento: 0, aguardando: 0, finalizado: 0, arquivado: 0, suspenso: 0, outros: 0 };
     
-    // Mapeamento flexível de status (ignora maiúsculas/minúsculas e acentos)
-    const normalize = s => s && s.normalize('NFD').replace(/[^\w\s]/g, '').toLowerCase();
-    const statusMap = { em_andamento: 0, aguardando: 0, finalizado: 0, arquivado: 0, suspenso: 0, outros: 0 };
-    processosPorStatus.forEach(row => {
-      const raw = row.status || '';
-      const n = normalize(raw);
-      if (n.includes('andamento')) statusMap.em_andamento += parseInt(row.get('count'));
-      else if (n.includes('aguard')) statusMap.aguardando += parseInt(row.get('count'));
-      else if (n.includes('finaliz') || n.includes('conclu')) statusMap.finalizado += parseInt(row.get('count'));
-      else if (n.includes('arquiv')) statusMap.arquivado += parseInt(row.get('count'));
-      else if (n.includes('suspen')) statusMap.suspenso += parseInt(row.get('count'));
-      else statusMap.outros += parseInt(row.get('count'));
-    });
+    try {
+      totalProcessos = await Processo.count() || 0;
+      processosAtivos = await Processo.count({ 
+        where: { 
+          status: { 
+            [Op.notIn]: ['arquivado', 'Concluído', 'concluído', 'Finalizado', 'finalizado'] 
+          } 
+        } 
+      }) || 0;
+      
+      // Buscar processos com raw: true para evitar problemas com .get()
+      const processosPorStatus = await Processo.findAll({
+        attributes: ['status', [require('sequelize').fn('COUNT', require('sequelize').col('status')), 'count']],
+        group: ['status'],
+        raw: true
+      });
+      
+      // Mapeamento flexível de status (ignora maiúsculas/minúsculas e acentos)
+      const normalize = s => s && s.normalize('NFD').replace(/[^\w\s]/g, '').toLowerCase();
+      
+      if (processosPorStatus && Array.isArray(processosPorStatus)) {
+        processosPorStatus.forEach(row => {
+          if (row && typeof row === 'object') {
+            const raw = row.status || '';
+            const n = normalize(raw);
+            const count = parseInt(row.count) || 0;
+            
+            if (n.includes('andamento')) statusMap.em_andamento += count;
+            else if (n.includes('aguard')) statusMap.aguardando += count;
+            else if (n.includes('finaliz') || n.includes('conclu')) statusMap.finalizado += count;
+            else if (n.includes('arquiv')) statusMap.arquivado += count;
+            else if (n.includes('suspen')) statusMap.suspenso += count;
+            else statusMap.outros += count;
+          }
+        });
+      }
+    } catch (processError) {
+      console.error('Erro ao buscar dados de processos:', processError);
+    }
 
-    // Usuários
-    const totalUsuarios = await Usuario.count();
-    const usuariosAtivos = await Usuario.count({ where: { ativo: true } });
-    const usuarios = await Usuario.findAll({ attributes: ['role_id'], raw: true });
-    const usuariosPorTipo = { aluno: 0, professor: 0, admin: 0 };
-    usuarios.forEach(u => {
-      if (u.role_id === 1) usuariosPorTipo.admin++;
-      else if (u.role_id === 2) usuariosPorTipo.aluno++;
-      else if (u.role_id === 3) usuariosPorTipo.professor++;
-    });
+    // Usuários - com proteção contra erros
+    let totalUsuarios = 0;
+    let usuariosAtivos = 0;
+    let usuariosPorTipo = { aluno: 0, professor: 0, admin: 0, outros: 0 };
+    
+    try {
+      totalUsuarios = await Usuario.count() || 0;
+      usuariosAtivos = await Usuario.count({ where: { ativo: true } }) || 0;
+      const usuarios = await Usuario.findAll({ attributes: ['role_id'], raw: true });
+      
+      if (usuarios && Array.isArray(usuarios)) {
+        usuarios.forEach(u => {
+          if (u && typeof u === 'object') {
+            if (u.role_id === 1) usuariosPorTipo.admin++;
+            else if (u.role_id === 2) usuariosPorTipo.professor++;
+            else if (u.role_id === 3) usuariosPorTipo.aluno++;
+            else usuariosPorTipo.outros++;
+          }
+        });
+      }
+    } catch (userError) {
+      console.error('Erro ao buscar dados de usuários:', userError);
+    }
 
     res.json({
       totalProcessos,
       processosAtivos,
-      processosPorStatus: {
-        em_andamento: statusMap['em_andamento'] || 0,
-        aguardando: statusMap['aguardando'] || 0,
-        finalizado: statusMap['finalizado'] || 0,
-        arquivado: statusMap['arquivado'] || 0,
-        suspenso: statusMap['suspenso'] || 0,
-        outros: statusMap['outros'] || 0
-      },
+      processosPorStatus: statusMap,
       totalUsuarios,
       usuariosAtivos,
       usuariosPorTipo
     });
   } catch (error) {
-    console.error('Erro ao buscar estatísticas:', error);
+    console.error('Erro geral ao buscar estatísticas:', error);
     res.status(500).json({ erro: 'Erro interno do servidor', detalhes: error.message });
   }
 });

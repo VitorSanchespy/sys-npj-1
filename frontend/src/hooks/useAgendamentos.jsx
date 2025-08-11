@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { agendamentoService } from '../api/services';
 import { useAuthContext } from '../contexts/AuthContext';
 
-// Hook para listar agendamentos
+// Hook para listar agendamentos com filtros
 export function useAgendamentos(filtros = {}) {
   const { token } = useAuthContext();
   
@@ -10,13 +10,14 @@ export function useAgendamentos(filtros = {}) {
     queryKey: ['agendamentos', filtros],
     queryFn: async () => {
       if (!token) throw new Error('Token não disponível');
-      return await agendamentoService.listAgendamentos(token);
+      return await agendamentoService.listAgendamentos(token, filtros);
     },
     enabled: !!token,
-    staleTime: 10 * 1000, // 10 segundos
+    staleTime: 30 * 1000, // 30 segundos
     cacheTime: 2 * 60 * 1000, // 2 minutos
-    refetchInterval: 10 * 1000, // Atualiza a cada 10 segundos
+    refetchInterval: 30 * 1000, // Atualiza a cada 30 segundos
     refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 }
 
@@ -31,8 +32,9 @@ export function useAgendamentosUsuario() {
       return await agendamentoService.listAgendamentosUsuario(token);
     },
     enabled: !!token,
-    staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    staleTime: 1 * 60 * 1000, // 1 minuto
+    cacheTime: 5 * 60 * 1000, // 5 minutos
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -43,12 +45,13 @@ export function useAgendamento(id) {
   return useQuery({
     queryKey: ['agendamentos', id],
     queryFn: async () => {
-      if (!token) throw new Error('Token não disponível');
-      return await agendamentoService.getAgendamentoById(token, id);
+      if (!token || !id) throw new Error('Token ou ID não disponível');
+      const response = await agendamentoService.getAgendamentoById(token, id);
+      return response.success ? response.agendamento : response;
     },
     enabled: !!token && !!id,
-    staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    staleTime: 30 * 1000, // 30 segundos
+    cacheTime: 5 * 60 * 1000, // 5 minutos
   });
 }
 
@@ -60,18 +63,27 @@ export function useEstatisticasAgendamentos() {
     queryKey: ['agendamentos', 'estatisticas'],
     queryFn: async () => {
       if (!token) throw new Error('Token não disponível');
-      // Usando apiRequest diretamente para nova rota de estatísticas
-      const response = await fetch('/api/agendamentos/estatisticas', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!response.ok) throw new Error('Erro ao buscar estatísticas');
-      return await response.json();
+      const response = await agendamentoService.getEstatisticas(token);
+      return response.success ? response.estatisticas : response;
     },
     enabled: !!token,
     staleTime: 2 * 60 * 1000, // 2 minutos
+    cacheTime: 5 * 60 * 1000, // 5 minutos
+  });
+}
+
+// Hook para verificar conexão Google Calendar
+export function useConnectionStatus() {
+  const { token } = useAuthContext();
+  
+  return useQuery({
+    queryKey: ['agendamentos', 'conexao'],
+    queryFn: async () => {
+      if (!token) throw new Error('Token não disponível');
+      return await agendamentoService.checkConnection(token);
+    },
+    enabled: !!token,
+    staleTime: 1 * 60 * 1000, // 1 minuto
     cacheTime: 5 * 60 * 1000, // 5 minutos
   });
 }
@@ -80,17 +92,19 @@ export function useEstatisticasAgendamentos() {
 export function useCreateAgendamento() {
   const { token } = useAuthContext();
   const queryClient = useQueryClient();
-  
   return useMutation({
     mutationFn: async (agendamentoData) => {
       if (!token) throw new Error('Token não disponível');
       return await agendamentoService.createAgendamento(token, agendamentoData);
     },
     onSuccess: () => {
-      // Invalidar cache dos agendamentos
       queryClient.invalidateQueries({ queryKey: ['agendamentos'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      window.location.reload();
     },
+    onError: (error) => {
+      console.error('❌ Erro ao criar agendamento:', error);
+    }
   });
 }
 
@@ -98,18 +112,19 @@ export function useCreateAgendamento() {
 export function useUpdateAgendamento() {
   const { token } = useAuthContext();
   const queryClient = useQueryClient();
-  
   return useMutation({
     mutationFn: async ({ id, agendamentoData }) => {
       if (!token) throw new Error('Token não disponível');
       return await agendamentoService.updateAgendamento(token, id, agendamentoData);
     },
-    onSuccess: (data, variables) => {
-      // Invalidar cache específico do agendamento e da lista
-      queryClient.invalidateQueries({ queryKey: ['agendamentos', variables.id] });
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['agendamentos'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      window.location.reload();
     },
+    onError: (error) => {
+      console.error('❌ Erro ao atualizar agendamento:', error);
+    }
   });
 }
 
@@ -117,42 +132,65 @@ export function useUpdateAgendamento() {
 export function useDeleteAgendamento() {
   const { token } = useAuthContext();
   const queryClient = useQueryClient();
-  
   return useMutation({
     mutationFn: async (id) => {
       if (!token) throw new Error('Token não disponível');
       return await agendamentoService.deleteAgendamento(token, id);
     },
     onSuccess: () => {
-      // Invalidar cache dos agendamentos
       queryClient.invalidateQueries({ queryKey: ['agendamentos'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      window.location.reload();
     },
+    onError: (error) => {
+      console.error('❌ Erro ao deletar agendamento:', error);
+    }
   });
 }
 
-// Hook para sincronizar com Google Calendar
+// Hook para invalidar cache
+export function useInvalidateCache() {
+  const { token } = useAuthContext();
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async () => {
+      if (!token) throw new Error('Token não disponível');
+      return await agendamentoService.invalidateCache(token);
+    },
+    onSuccess: (data) => {
+  // console.log('✅ Cache invalidado:', data);
+      // Invalidar cache local também
+      queryClient.invalidateQueries({ queryKey: ['agendamentos'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+    onError: (error) => {
+      // console.error('❌ Erro ao invalidar cache:', error);
+      // Não propagar erros de throttle/debounce para não quebrar a UI
+      if (!error.message.includes('protegendo contra requisições duplicadas')) {
+        console.error('❌ Erro ao invalidar cache:', error);
+      }
+    }
+  });
+}
+
+// Hook para sincronizar com Google Calendar (compatibilidade)
 export function useSincronizarGoogleCalendar() {
   const { token } = useAuthContext();
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (id) => {
+    mutationFn: async () => {
       if (!token) throw new Error('Token não disponível');
-      const response = await fetch(`/api/agendamentos/${id}/sincronizar-google`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!response.ok) throw new Error('Erro ao sincronizar com Google Calendar');
-      return await response.json();
+      return await agendamentoService.sincronizar(token);
     },
-    onSuccess: (data, variables) => {
-      // Invalidar cache do agendamento específico
-      queryClient.invalidateQueries({ queryKey: ['agendamentos', variables] });
+    onSuccess: () => {
+  // console.log('✅ Sincronização realizada');
+      // Invalidar cache dos agendamentos
       queryClient.invalidateQueries({ queryKey: ['agendamentos'] });
     },
+    onError: (error) => {
+      console.error('❌ Erro ao sincronizar:', error);
+    }
   });
 }

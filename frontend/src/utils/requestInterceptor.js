@@ -14,8 +14,14 @@ class RequestInterceptor {
     const config = getRouteConfig(url);
     const requestId = `${options.method || 'GET'}:${url}:${JSON.stringify(options.body || {})}`;
 
-    // Evitar requisições duplicadas simultâneas
-    if (this.activeRequests.has(requestId)) {
+    // Pular proteção para endpoints de cache e únicos
+    const skipDuplicateCheck = url.includes('/invalidar-cache') || 
+                               url.includes('/sincronizar') ||
+                               url.includes('/conexao') ||
+                               (options.method === 'DELETE');
+
+    // Evitar requisições duplicadas simultâneas (exceto para endpoints especiais)
+    if (!skipDuplicateCheck && this.activeRequests.has(requestId)) {
       return await this.waitForActiveRequest(requestId);
     }
 
@@ -251,7 +257,7 @@ export async function interceptedRequest(url, options = {}) {
       return cached;
     }
     // Se ainda não houver nada, lançar um erro mais claro.
-    throw new Error('A requisição foi interrompida pelo throttle/debounce e não houve resposta.');
+  throw new Error('Aguarde um momento antes de tentar novamente. O sistema está protegendo contra requisições duplicadas rápidas.');
   }
   
   // Se já é um objeto (dados do cache), retornar diretamente
