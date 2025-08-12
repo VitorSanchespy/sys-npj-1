@@ -26,6 +26,7 @@ export default function ProcessEditPage() {
         const proc = await apiRequest(`/api/processos/${id}/detalhes`, { token });
         setFormData({
           numero_processo: proc.numero_processo || '',
+          titulo: proc.titulo || '',
           num_processo_sei: proc.num_processo_sei || '',
           assistido: proc.assistido || '',
           descricao: proc.descricao || '',
@@ -100,6 +101,9 @@ export default function ProcessEditPage() {
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <label>Número do Processo*
           <input name="numero_processo" value={formData.numero_processo} onChange={handleChange} required />
+        </label>
+        <label>Título*
+          <input name="titulo" value={formData.titulo} onChange={handleChange} required />
         </label>
         <label>Num/Processo/SEI
           <input name="num_processo_sei" value={formData.num_processo_sei} onChange={handleChange} />

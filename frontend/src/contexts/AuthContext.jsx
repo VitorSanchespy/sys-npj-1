@@ -100,10 +100,10 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const register = async (nome, email, senha, role_id = 3) => {
+  const register = async (nome, email, senha, telefone, role_id = 3) => {
     setLoading(true);
     try {
-      await authService.register(nome, email, senha, role_id);
+      await authService.register(nome, email, senha, telefone, role_id);
       setLoading(false);
       return { success: true };
     } catch (err) {

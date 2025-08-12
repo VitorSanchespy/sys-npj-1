@@ -13,6 +13,7 @@ export default function CreateProcessModal({ onCreated, onClose }) {
   const [localTramitacoes, setLocalTramitacoes] = useState([]);
   const [form, setForm] = useState({
     numero_processo: "",
+    titulo: "",
     descricao: "",
     status: "Em andamento",
     tipo_processo: "",
@@ -87,6 +88,7 @@ export default function CreateProcessModal({ onCreated, onClose }) {
       });
       setForm({
         numero_processo: "",
+        titulo: "",
         descricao: "",
         status: "Em andamento",
         tipo_processo: "",
@@ -165,6 +167,21 @@ export default function CreateProcessModal({ onCreated, onClose }) {
               onChange={handleChange}
               required
               placeholder="Ex: 0001234-56.2024.8.07.0001"
+              style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
+              Título*:
+            </label>
+            <input
+              type="text"
+              name="titulo"
+              value={form.titulo}
+              onChange={handleChange}
+              required
+              placeholder="Título do processo"
               style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
             />
           </div>

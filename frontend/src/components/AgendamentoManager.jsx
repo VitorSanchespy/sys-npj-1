@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '../contexts/AuthContext';
 import GoogleCalendarConnect from './GoogleCalendarConnect';
+import { useAgendamentoAutoRefresh } from '../hooks/useAutoRefresh';
 import {
   useAgendamentos,
   useEstatisticasAgendamentos,
@@ -15,6 +16,9 @@ import {
 const AgendamentoManager = ({ processoId = null }) => {
   const { user, token } = useAuthContext();
   const userRole = user?.role?.nome || user?.Role?.nome || 'Aluno';
+  
+  // Auto-refresh hook para agendamentos
+  const { afterCreateAgendamento, afterUpdateAgendamento, afterDeleteAgendamento } = useAgendamentoAutoRefresh();
   
   // Usar os novos hooks refatorados
   const { data, isLoading: loading, error: queryError, refetch } = useAgendamentos({ limit: 1000 });
@@ -282,7 +286,8 @@ const AgendamentoManager = ({ processoId = null }) => {
       try {
         await deleteAgendamento.mutateAsync(id);
         setError(null);
-        setTimeout(() => refetch(), 500);
+        afterDeleteAgendamento(); // Auto-refresh após exclusão
+        console.log('📅 Agendamento excluído - dados atualizados automaticamente');
       } catch (error) {
         setError('Erro ao excluir agendamento: ' + error.message);
       }
@@ -338,13 +343,16 @@ const AgendamentoManager = ({ processoId = null }) => {
       
       if (editando) {
         await updateAgendamento.mutateAsync({ id: editando, agendamentoData: dadosEnvio });
+        afterUpdateAgendamento(); // Auto-refresh após atualização
+        console.log('📅 Agendamento atualizado - dados atualizados automaticamente');
       } else {
         await createAgendamento.mutateAsync(dadosEnvio);
+        afterCreateAgendamento(); // Auto-refresh após criação
+        console.log('📅 Agendamento criado - dados atualizados automaticamente');
       }
       
       setShowForm(false);
       resetForm();
-      setTimeout(() => refetch(), 500);
       
       alert(editando ? 'Agendamento atualizado com sucesso!' : 'Agendamento criado com sucesso!');
     } catch (error) {
@@ -357,6 +365,8 @@ const AgendamentoManager = ({ processoId = null }) => {
     try {
       await sincronizarGoogle.mutateAsync(agendamentoId);
       setError(null);
+      afterUpdateAgendamento(); // Auto-refresh após sincronização
+      console.log('📅 Agendamento sincronizado - dados atualizados automaticamente');
       alert('Agendamento sincronizado com Google Calendar!');
     } catch (error) {
       setError('Erro ao sincronizar: ' + error.message);

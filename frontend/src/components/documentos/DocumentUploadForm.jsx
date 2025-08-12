@@ -65,7 +65,7 @@ export default function DocumentUploadForm({ processoId, onSuccess, onCancel }) 
           <input
             type="file"
             onChange={handleFileChange}
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt,.xls,.xlsx"
             required
             style={{
               width: '100%',
@@ -75,7 +75,7 @@ export default function DocumentUploadForm({ processoId, onSuccess, onCancel }) 
             }}
           />
           <small style={{ color: '#6c757d' }}>
-            Formatos aceitos: PDF, DOC, DOCX, JPG, JPEG, PNG, TXT (máx. 10MB)
+            Formatos aceitos: PDF, DOC, DOCX, JPG, JPEG, PNG, TXT, XLS, XLSX (máx. 10MB)
           </small>
         </div>
 

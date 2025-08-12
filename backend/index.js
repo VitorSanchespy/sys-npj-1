@@ -45,6 +45,7 @@ app.use('/api/auth', require('./routes/autorizacaoRoute'));
 app.use('/api/usuarios', require('./routes/usuarioRoute'));
 app.use('/api/processos', require('./routes/processoRoute'));
 app.use('/api/agendamentos', require('./routes/agendamentoRoute'));
+app.use('/api/agendamentos-local', require('./routes/agendamentoLocalRoute')); // TEMPORÁRIO PARA TESTES
 app.use('/api/notificacoes', require('./routes/notificacaoRoute'));
 app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoute'));
 app.use('/api/tabelas', require('./routes/tabelaAuxiliarRoute'));
@@ -54,8 +55,13 @@ app.use('/api/google-calendar', require('./routes/googleCalendarRoute'));
 
 // Rotas de compatibilidade (sem /api)
 app.use('/auth', require('./routes/autorizacaoRoute'));
+app.use('/usuarios', require('./routes/usuarioRoute'));
 app.use('/processos', require('./routes/processoRoute'));
+app.use('/agendamentos', require('./routes/agendamentoRoute'));
 app.use('/notificacoes', require('./routes/notificacaoRoute'));
+app.use('/tabelas', require('./routes/tabelaAuxiliarRoute'));
+app.use('/arquivos', require('./routes/arquivoRoute'));
+app.use('/dashboard', require('./routes/dashboardRoute'));
 
 // Rota de teste
 app.get('/test', (req, res) => {

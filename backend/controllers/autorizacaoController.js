@@ -72,7 +72,7 @@ exports.login = async (req, res) => {
       return res.status(401).json({ erro: 'Credenciais inválidas' });
     }
     
-    // Gerar token
+    // Gerar token principal e refresh token
     const token = jwt.sign(
       { 
         id: usuario.id,
@@ -82,11 +82,36 @@ exports.login = async (req, res) => {
       process.env.JWT_SECRET || 'seuSegredoSuperSecreto4321',
       { expiresIn: '24h' }
     );
-    
+
+    // Gerar refresh token
+    const refreshToken = jwt.sign(
+      { 
+        id: usuario.id,
+        type: 'refresh'
+      },
+      process.env.JWT_REFRESH_SECRET || 'refreshSecretoSuperSecreto9876',
+      { expiresIn: '7d' }
+    );
+
+    // Salvar refresh token no banco (se disponível)
+    if (isDbAvailable()) {
+      try {
+        const { refreshTokenModel: RefreshToken } = require('../models/indexModel');
+        await RefreshToken.create({
+          token: refreshToken,
+          usuario_id: usuario.id,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 dias
+        });
+      } catch (error) {
+        console.error('⚠️ Erro ao salvar refresh token:', error.message);
+      }
+    }
+
     res.json({
       success: true,
       message: 'Login realizado com sucesso',
       token,
+      refreshToken,
       usuario: {
         id: usuario.id,
         nome: usuario.nome,
@@ -103,7 +128,7 @@ exports.login = async (req, res) => {
 // Registro - sempre cria usuários com role "Aluno" por padrão
 exports.registro = async (req, res) => {
   try {
-    const { nome, email, senha, role_id = 3 } = req.body; // Padrão: role_id = 3 (Aluno)
+    const { nome, email, senha, telefone, role_id = 3 } = req.body; // Padrão: role_id = 3 (Aluno)
     
     if (!nome || !email || !senha) {
       return res.status(400).json({ erro: 'Nome, email e senha são obrigatórios' });
@@ -133,6 +158,7 @@ exports.registro = async (req, res) => {
         nome,
         email,
         senha: senhaHash,
+        telefone,
         role_id: 3, // Forçar sempre como Aluno (role_id = 3)
         ativo: true
       });
@@ -194,6 +220,7 @@ exports.perfil = async (req, res) => {
       id: usuario.id,
       nome: usuario.nome,
       email: usuario.email,
+      telefone: usuario.telefone,
       role: usuario.role,
       ativo: usuario.ativo
     });
@@ -218,6 +245,87 @@ exports.esqueciSenha = async (req, res) => {
     });
     
   } catch (error) {
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Refresh Token
+exports.refresh = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+      return res.status(400).json({ erro: 'Refresh token é obrigatório' });
+    }
+    
+    // Verificar o refresh token
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'refreshSecretoSuperSecreto9876');
+    } catch (jwtError) {
+      return res.status(401).json({ erro: 'Refresh token inválido ou expirado' });
+    }
+    
+    if (decoded.type !== 'refresh') {
+      return res.status(401).json({ erro: 'Token inválido' });
+    }
+    
+    // Verificar se o refresh token existe no banco e ainda é válido
+    if (isDbAvailable()) {
+      try {
+        const { refreshTokenModel: RefreshToken } = require('../models/indexModel');
+        const storedToken = await RefreshToken.findOne({
+          where: { 
+            token: refreshToken,
+            usuario_id: decoded.id
+          }
+        });
+        
+        if (!storedToken || new Date() > storedToken.expires_at) {
+          return res.status(401).json({ erro: 'Refresh token expirado ou inválido' });
+        }
+      } catch (error) {
+        console.error('⚠️ Erro ao verificar refresh token no banco:', error.message);
+      }
+    }
+    
+    // Buscar usuário
+    let usuario = null;
+    if (isDbAvailable()) {
+      const { usuarioModel: Usuario, roleModel: Role } = require('../models/indexModel');
+      usuario = await Usuario.findOne({
+        where: { id: decoded.id, ativo: true },
+        include: [{ model: Role, as: 'role' }]
+      });
+      
+      if (usuario && usuario.role) {
+        usuario.role = usuario.role.nome;
+      }
+    }
+    
+    if (!usuario) {
+      return res.status(401).json({ erro: 'Usuário não encontrado ou inativo' });
+    }
+    
+    // Gerar novo token
+    const newToken = jwt.sign(
+      { 
+        id: usuario.id,
+        email: usuario.email,
+        role: usuario.role
+      },
+      process.env.JWT_SECRET || 'seuSegredoSuperSecreto4321',
+      { expiresIn: '24h' }
+    );
+    
+    res.json({
+      success: true,
+      message: 'Token renovado com sucesso',
+      token: newToken
+    });
+    
+  } catch (error) {
+    console.error('Erro ao renovar token:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };

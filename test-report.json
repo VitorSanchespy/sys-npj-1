@@ -1,22 +1,22 @@
 {
   "summary": {
     "totalTests": 72,
-    "passed": 56,
-    "failed": 16,
-    "successRate": "77.78%"
+    "passed": 49,
+    "failed": 23,
+    "successRate": "68.06%"
   },
   "byUserType": {
     "admin": {
-      "passed": 20,
-      "failed": 4
+      "passed": 1,
+      "failed": 23
     },
     "professor": {
-      "passed": 19,
-      "failed": 5
+      "passed": 24,
+      "failed": 0
     },
     "aluno": {
-      "passed": 17,
-      "failed": 7
+      "passed": 24,
+      "failed": 0
     }
   },
   "endpointDetails": {
@@ -37,63 +37,63 @@
     "/auth/refresh": {
       "admin": {
         "status": "FAIL",
-        "details": "POST /auth/refresh - Status: 404"
+        "details": "POST /auth/refresh - Status: 200"
       },
       "professor": {
-        "status": "FAIL",
-        "details": "POST /auth/refresh - Status: 404"
+        "status": "PASS",
+        "details": "POST /auth/refresh - Status: 200"
       },
       "aluno": {
-        "status": "FAIL",
-        "details": "POST /auth/refresh - Status: 404"
+        "status": "PASS",
+        "details": "POST /auth/refresh - Status: 200"
       }
     },
     "/usuarios": {
       "admin": {
+        "status": "FAIL",
+        "details": "POST /usuarios - Status: 401"
+      },
+      "professor": {
         "status": "PASS",
         "details": "POST /usuarios - Status: 201"
       },
-      "professor": {
-        "status": "FAIL",
-        "details": "POST /usuarios - Status: 409"
-      },
       "aluno": {
-        "status": "FAIL",
-        "details": "POST /usuarios - Status: 409"
+        "status": "PASS",
+        "details": "POST /usuarios - Status: 403"
       }
     },
     "/usuarios/perfil": {
       "admin": {
         "status": "FAIL",
-        "details": "GET /usuarios/perfil - Status: 400"
+        "details": "GET /usuarios/perfil - Status: 401"
       },
       "professor": {
-        "status": "FAIL",
-        "details": "GET /usuarios/perfil - Status: 400"
+        "status": "PASS",
+        "details": "GET /usuarios/perfil - Status: 200"
       },
       "aluno": {
-        "status": "FAIL",
-        "details": "GET /usuarios/perfil - Status: 400"
+        "status": "PASS",
+        "details": "GET /usuarios/perfil - Status: 200"
       }
     },
     "/processos": {
       "admin": {
         "status": "FAIL",
-        "details": "POST /processos - Status: 400"
+        "details": "POST /processos - Status: 401"
       },
       "professor": {
-        "status": "FAIL",
-        "details": "POST /processos - Status: 400"
+        "status": "PASS",
+        "details": "POST /processos - Status: 201"
       },
       "aluno": {
-        "status": "FAIL",
-        "details": "POST /processos - Status: 400"
+        "status": "PASS",
+        "details": "POST /processos - Status: 403"
       }
     },
     "/processos/usuario": {
       "admin": {
-        "status": "PASS",
-        "details": "GET /processos/usuario - Status: 200"
+        "status": "FAIL",
+        "details": "GET /processos/usuario - Status: 401"
       },
       "professor": {
         "status": "PASS",
@@ -107,21 +107,21 @@
     "/agendamentos": {
       "admin": {
         "status": "FAIL",
-        "details": "POST /agendamentos - Status: 400"
+        "details": "POST /agendamentos - Status: 401"
       },
       "professor": {
-        "status": "FAIL",
-        "details": "POST /agendamentos - Status: 400"
+        "status": "PASS",
+        "details": "POST /agendamentos - Status: 201"
       },
       "aluno": {
-        "status": "FAIL",
-        "details": "POST /agendamentos - Status: 400"
+        "status": "PASS",
+        "details": "POST /agendamentos - Status: 201"
       }
     },
     "/agendamentos/usuario": {
       "admin": {
-        "status": "PASS",
-        "details": "GET /agendamentos/usuario - Status: 200"
+        "status": "FAIL",
+        "details": "GET /agendamentos/usuario - Status: 401"
       },
       "professor": {
         "status": "PASS",
@@ -134,8 +134,8 @@
     },
     "/agendamentos/estatisticas": {
       "admin": {
-        "status": "PASS",
-        "details": "GET /agendamentos/estatisticas - Status: 200"
+        "status": "FAIL",
+        "details": "GET /agendamentos/estatisticas - Status: 401"
       },
       "professor": {
         "status": "PASS",
@@ -148,8 +148,8 @@
     },
     "/dashboard/estatisticas": {
       "admin": {
-        "status": "PASS",
-        "details": "GET /dashboard/estatisticas - Status: 200"
+        "status": "FAIL",
+        "details": "GET /dashboard/estatisticas - Status: 401"
       },
       "professor": {
         "status": "PASS",
@@ -162,8 +162,8 @@
     },
     "/dashboard/stats": {
       "admin": {
-        "status": "PASS",
-        "details": "GET /dashboard/stats - Status: 200"
+        "status": "FAIL",
+        "details": "GET /dashboard/stats - Status: 401"
       },
       "professor": {
         "status": "PASS",
@@ -176,8 +176,8 @@
     },
     "/dashboard/exportar": {
       "admin": {
-        "status": "PASS",
-        "details": "GET /dashboard/exportar - Status: 200"
+        "status": "FAIL",
+        "details": "GET /dashboard/exportar - Status: 401"
       },
       "professor": {
         "status": "PASS",
@@ -190,8 +190,8 @@
     },
     "/dashboard/status-detalhado": {
       "admin": {
-        "status": "PASS",
-        "details": "GET /dashboard/status-detalhado - Status: 200"
+        "status": "FAIL",
+        "details": "GET /dashboard/status-detalhado - Status: 401"
       },
       "professor": {
         "status": "PASS",
@@ -204,8 +204,8 @@
     },
     "/arquivos": {
       "admin": {
-        "status": "PASS",
-        "details": "GET /arquivos - Status: 200"
+        "status": "FAIL",
+        "details": "GET /arquivos - Status: 401"
       },
       "professor": {
         "status": "PASS",
@@ -218,22 +218,22 @@
     },
     "/arquivos/usuario/1": {
       "admin": {
-        "status": "PASS",
-        "details": "GET /arquivos/usuario/1 - Status: 200"
+        "status": "FAIL",
+        "details": "GET /arquivos/usuario/1 - Status: 401"
       },
       "professor": {
         "status": "PASS",
         "details": "GET /arquivos/usuario/1 - Status: 200"
       },
       "aluno": {
-        "status": "FAIL",
-        "details": "GET /arquivos/usuario/1 - Status: 200"
+        "status": "PASS",
+        "details": "GET /arquivos/usuario/1 - Status: 403"
       }
     },
     "/notificacoes": {
       "admin": {
-        "status": "PASS",
-        "details": "GET /notificacoes - Status: 200"
+        "status": "FAIL",
+        "details": "GET /notificacoes - Status: 401"
       },
       "professor": {
         "status": "PASS",
@@ -246,8 +246,8 @@
     },
     "/notificacoes/1/lida": {
       "admin": {
-        "status": "PASS",
-        "details": "PUT /notificacoes/1/lida - Status: 200"
+        "status": "FAIL",
+        "details": "PUT /notificacoes/1/lida - Status: 401"
       },
       "professor": {
         "status": "PASS",
@@ -260,8 +260,8 @@
     },
     "/tabelas/roles": {
       "admin": {
-        "status": "PASS",
-        "details": "GET /tabelas/roles - Status: 200"
+        "status": "FAIL",
+        "details": "GET /tabelas/roles - Status: 401"
       },
       "professor": {
         "status": "PASS",
@@ -274,8 +274,8 @@
     },
     "/tabelas/fases": {
       "admin": {
-        "status": "PASS",
-        "details": "GET /tabelas/fases - Status: 200"
+        "status": "FAIL",
+        "details": "GET /tabelas/fases - Status: 401"
       },
       "professor": {
         "status": "PASS",
@@ -288,8 +288,8 @@
     },
     "/tabelas/materias": {
       "admin": {
-        "status": "PASS",
-        "details": "GET /tabelas/materias - Status: 404"
+        "status": "FAIL",
+        "details": "GET /tabelas/materias - Status: 401"
       },
       "professor": {
         "status": "PASS",
@@ -302,8 +302,8 @@
     },
     "/tabelas/locais": {
       "admin": {
-        "status": "PASS",
-        "details": "GET /tabelas/locais - Status: 404"
+        "status": "FAIL",
+        "details": "GET /tabelas/locais - Status: 401"
       },
       "professor": {
         "status": "PASS",
@@ -315,5 +315,5 @@
       }
     }
   },
-  "timestamp": "2025-08-11T20:32:33.452Z"
+  "timestamp": "2025-08-12T00:20:17.962Z"
 }

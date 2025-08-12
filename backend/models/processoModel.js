@@ -19,6 +19,7 @@ Processo.init(
   {
     id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     numero_processo: { type: DataTypes.STRING, allowNull: false },
+    titulo: { type: DataTypes.STRING, allowNull: false },
     descricao: { type: DataTypes.TEXT },
     criado_em: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
     status: { type: DataTypes.STRING },

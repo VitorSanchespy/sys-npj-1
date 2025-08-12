@@ -32,7 +32,7 @@ export default function RegisterForm() {
         return;
       }
       // Aluno ou não logado só pode criar Aluno
-      const res = await register(nome, email, senha, finalRoleId);
+      const res = await register(nome, email, senha, "", finalRoleId);
       if (res.success) {
         setSuccess(true);
         setTimeout(() => navigate("/login"), 2000);

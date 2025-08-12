@@ -178,7 +178,23 @@ exports.obterUsuario = async (req, res) => {
 // Criar novo usuário no sistema - endpoint: POST /api/usuarios
 exports.criarUsuario = async (req, res) => {
   try {
+    const userRole = req.user.role;
+    
+    // Verificar permissões - apenas Admin e Professor podem criar usuários
+    if (userRole === 'Aluno') {
+      return res.status(403).json({ 
+        erro: 'Acesso negado. Alunos não podem criar usuários.' 
+      });
+    }
+    
     const { nome, email, senha, role_id = 3, telefone } = req.body;
+    
+    // Professor só pode criar Aluno (role_id: 3) e Professor (role_id: 2)
+    if (userRole === 'Professor' && role_id === 1) {
+      return res.status(403).json({ 
+        erro: 'Professores não podem criar usuários com perfil Admin.' 
+      });
+    }
     
     // Validações básicas
     if (!nome || !email || !senha) {
@@ -331,6 +347,41 @@ exports.reativarUsuario = async (req, res) => {
     
   } catch (error) {
     console.error('Erro ao reativar usuário:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor' });
+  }
+};
+
+// Listar usuários com base nas permissões - endpoint: GET /api/usuarios
+exports.listarUsuarios = async (req, res) => {
+  try {
+    const userRole = req.user.role;
+    
+    // Verificar permissões
+    if (userRole === 'Aluno') {
+      return res.status(403).json({ 
+        erro: 'Acesso negado. Alunos não podem listar usuários.' 
+      });
+    }
+    
+    let whereClause = { ativo: true };
+    
+    // Professor pode ver apenas Alunos e outros Professores
+    if (userRole === 'Professor') {
+      whereClause.role_id = [2, 3]; // Professor e Aluno
+    }
+    // Admin pode ver todos (sem restrição adicional)
+    
+    const usuarios = await Usuario.findAll({
+      where: whereClause,
+      include: [{ model: Role, as: 'role' }],
+      attributes: ['id', 'nome', 'email', 'role_id', 'ativo', 'criado_em', 'telefone'],
+      order: [['nome', 'ASC']]
+    });
+    
+    res.json(usuarios);
+    
+  } catch (error) {
+    console.error('Erro ao listar usuários:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };

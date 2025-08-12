@@ -184,6 +184,23 @@ class AgendamentoGoogleService {
         location: dadosAtualizacao.local !== undefined ? dadosAtualizacao.local : eventoAtual.data.location
       };
 
+      // Atualizar convidados se fornecidos
+      if (dadosAtualizacao.convidados !== undefined) {
+        eventoAtualizado.attendees = [
+          {
+            email: usuario.email,
+            displayName: usuario.nome,
+            responseStatus: 'accepted'
+          },
+          // Adiciona convidados extras (se houver)
+          ...((dadosAtualizacao.convidados || '')
+            .split(',')
+            .map(email => email.trim())
+            .filter(email => email && email !== usuario.email)
+            .map(email => ({ email, responseStatus: 'needsAction' })))
+        ];
+      }
+
       if (dadosAtualizacao.dataEvento) {
         eventoAtualizado.start.dateTime = new Date(dadosAtualizacao.dataEvento).toISOString();
         eventoAtualizado.end.dateTime = new Date(new Date(dadosAtualizacao.dataEvento).getTime() + (60 * 60 * 1000)).toISOString();
@@ -309,6 +326,10 @@ class AgendamentoGoogleService {
       linkGoogleCalendar: evento.htmlLink,
       organizador: evento.organizer?.email,
       participantes: evento.attendees || [],
+      convidados: (evento.attendees || [])
+        .filter(attendee => attendee.email !== usuario.email)
+        .map(attendee => attendee.email)
+        .join(', '),
       // Campos para compatibilidade frontend
       fonte: 'Google Calendar'
     };

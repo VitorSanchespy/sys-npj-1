@@ -1,0 +1,149 @@
+{
+  "timestamp": "2025-08-12T00:27:19.598Z",
+  "problemas": [
+    "PROBLEMA: Agendamentos professor - Request failed with status code 400",
+    "PROBLEMA: Agendamentos aluno - Request failed with status code 400"
+  ],
+  "resultados": {
+    "autenticacao": {
+      "Login professor": {
+        "status": "SUCESSO",
+        "detalhes": {
+          "token": "eyJhbGciOiJIUzI1NiIs...",
+          "usuario": "Professor NPJ"
+        },
+        "timestamp": "2025-08-12T00:27:19.422Z"
+      },
+      "Login aluno": {
+        "status": "SUCESSO",
+        "detalhes": {
+          "token": "eyJhbGciOiJIUzI1NiIs...",
+          "usuario": "Aluno NPJ"
+        },
+        "timestamp": "2025-08-12T00:27:19.482Z"
+      }
+    },
+    "processos": {
+      "Listagem professor": {
+        "status": "SUCESSO",
+        "detalhes": {},
+        "timestamp": "2025-08-12T00:27:19.495Z"
+      },
+      "Operação professor": {
+        "status": "ERRO",
+        "detalhes": {
+          "status": 400,
+          "message": "Validação falhou"
+        },
+        "timestamp": "2025-08-12T00:27:19.502Z"
+      },
+      "Listagem aluno": {
+        "status": "SUCESSO",
+        "detalhes": {},
+        "timestamp": "2025-08-12T00:27:19.510Z"
+      }
+    },
+    "dashboard": {
+      "Estatísticas professor": {
+        "status": "SUCESSO",
+        "detalhes": {
+          "temPorcentagens": false
+        },
+        "timestamp": "2025-08-12T00:27:19.521Z"
+      },
+      "Exportação PDF professor - não é PDF": {
+        "status": "ERRO",
+        "detalhes": {
+          "contentType": "application/json; charset=utf-8"
+        },
+        "timestamp": "2025-08-12T00:27:19.528Z"
+      },
+      "Estatísticas aluno": {
+        "status": "SUCESSO",
+        "detalhes": {
+          "temPorcentagens": false
+        },
+        "timestamp": "2025-08-12T00:27:19.537Z"
+      },
+      "Exportação PDF aluno - não é PDF": {
+        "status": "ERRO",
+        "detalhes": {
+          "contentType": "application/json; charset=utf-8"
+        },
+        "timestamp": "2025-08-12T00:27:19.544Z"
+      }
+    },
+    "agendamentos": {
+      "Listagem professor": {
+        "status": "SUCESSO",
+        "detalhes": {},
+        "timestamp": "2025-08-12T00:27:19.552Z"
+      },
+      "Operação professor": {
+        "status": "ERRO",
+        "detalhes": {
+          "status": 400,
+          "message": "Request failed with status code 400"
+        },
+        "timestamp": "2025-08-12T00:27:19.560Z"
+      },
+      "Listagem aluno": {
+        "status": "SUCESSO",
+        "detalhes": {},
+        "timestamp": "2025-08-12T00:27:19.566Z"
+      },
+      "Operação aluno": {
+        "status": "ERRO",
+        "detalhes": {
+          "status": 400,
+          "message": "Request failed with status code 400"
+        },
+        "timestamp": "2025-08-12T00:27:19.573Z"
+      }
+    },
+    "perfil": {
+      "Obter perfil professor": {
+        "status": "SUCESSO",
+        "detalhes": {
+          "id": 109,
+          "nome": "Professor NPJ",
+          "email": "professor@npj.com"
+        },
+        "timestamp": "2025-08-12T00:27:19.581Z"
+      },
+      "Perfil professor": {
+        "status": "ERRO",
+        "detalhes": {
+          "status": 400,
+          "message": "Validação falhou"
+        },
+        "timestamp": "2025-08-12T00:27:19.587Z"
+      },
+      "Obter perfil aluno": {
+        "status": "SUCESSO",
+        "detalhes": {
+          "id": 110,
+          "nome": "Aluno NPJ",
+          "email": "aluno@npj.com"
+        },
+        "timestamp": "2025-08-12T00:27:19.592Z"
+      },
+      "Perfil aluno": {
+        "status": "ERRO",
+        "detalhes": {
+          "status": 400,
+          "message": "Validação falhou"
+        },
+        "timestamp": "2025-08-12T00:27:19.597Z"
+      }
+    },
+    "problemas": [
+      "PROBLEMA: Agendamentos professor - Request failed with status code 400",
+      "PROBLEMA: Agendamentos aluno - Request failed with status code 400"
+    ]
+  },
+  "resumo": {
+    "totalTestes": 18,
+    "problemasEncontrados": 2
+  }
+}

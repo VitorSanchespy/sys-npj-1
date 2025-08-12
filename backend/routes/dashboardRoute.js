@@ -11,6 +11,50 @@ const router = express.Router();
 // Aplicar middleware de autenticação a todas as rotas
 router.use(authMiddleware);
 
+// Endpoint principal do dashboard
+router.get('/', async (req, res) => {
+  try {
+    // Verificar se os modelos estão disponíveis
+    if (!Processo || !Usuario) {
+      return res.status(500).json({ erro: 'Modelos não disponíveis' });
+    }
+
+    // Buscar estatísticas básicas
+    const totalProcessos = await Processo.count() || 0;
+    const totalUsuarios = await Usuario.count() || 0;
+    
+    // Processos por status
+    const processosAtivos = await Processo.count({ 
+      where: { 
+        status: { 
+          [Op.notIn]: ['arquivado', 'Concluído', 'concluído', 'Finalizado', 'finalizado'] 
+        } 
+      } 
+    }) || 0;
+    
+    const usuariosAtivos = await Usuario.count({ where: { ativo: true } }) || 0;
+
+    const dashboard = {
+      resumo: {
+        totalProcessos,
+        processosAtivos,
+        totalUsuarios, 
+        usuariosAtivos
+      },
+      estatisticas: {
+        taxaProcessosAtivos: totalProcessos > 0 ? ((processosAtivos / totalProcessos) * 100).toFixed(1) + '%' : '0%',
+        taxaUsuariosAtivos: totalUsuarios > 0 ? ((usuariosAtivos / totalUsuarios) * 100).toFixed(1) + '%' : '0%'
+      },
+      ultimaAtualizacao: new Date().toISOString()
+    };
+
+    res.json(dashboard);
+  } catch (error) {
+    console.error('Erro no dashboard principal:', error);
+    res.status(500).json({ erro: 'Erro interno do servidor', detalhes: error.message });
+  }
+});
+
 // Endpoint para estatísticas gerais do sistema (alias para /stats)
 router.get('/estatisticas', async (req, res) => {
   try {
@@ -191,32 +235,75 @@ router.get('/status-detalhado', async (req, res) => {
   }
 });
 
-// Endpoint simplificado para exportar
+// Endpoint para exportar relatório em PDF
 router.get('/exportar', async (req, res) => {
   try {
-    // Simular exportação de relatório
-    const dadosExportacao = {
-      titulo: 'Relatório do Sistema NPJ',
-      dataGeracao: new Date().toISOString(),
-      resumo: {
-        totalProcessos: 0,
-        totalUsuarios: 0,
-        totalAgendamentos: 0
-      }
-    };
+    const PDFDocument = require('pdfkit');
+    
+    // Buscar dados reais para o relatório
+    let totalProcessos = 0;
+    let totalUsuarios = 0;
+    let processosAtivos = 0;
+    let usuariosAtivos = 0;
 
-    // Tentar buscar dados reais
     try {
-      dadosExportacao.resumo.totalProcessos = await Processo.count() || 0;
-      dadosExportacao.resumo.totalUsuarios = await Usuario.count() || 0;
+      totalProcessos = await Processo.count() || 0;
+      totalUsuarios = await Usuario.count() || 0;
+      processosAtivos = await Processo.count({ 
+        where: { 
+          status: { 
+            [Op.notIn]: ['arquivado', 'Concluído', 'concluído', 'Finalizado', 'finalizado'] 
+          } 
+        } 
+      }) || 0;
+      usuariosAtivos = await Usuario.count({ where: { ativo: true } }) || 0;
     } catch (dataError) {
       console.log('Erro ao buscar dados para exportação:', dataError.message);
     }
 
-    res.json(dadosExportacao);
+    // Criar documento PDF
+    const doc = new PDFDocument();
+    
+    // Configurar headers para download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="relatorio-sistema-npj.pdf"');
+    
+    // Pipe o PDF para a resposta
+    doc.pipe(res);
+    
+    // Conteúdo do PDF
+    doc.fontSize(20);
+    doc.text('Relatório do Sistema NPJ', 100, 100);
+    
+    doc.fontSize(14);
+    doc.text(`Data de Geração: ${new Date().toLocaleDateString('pt-BR')}`, 100, 140);
+    
+    doc.fontSize(16);
+    doc.text('Resumo do Sistema:', 100, 180);
+    
+    doc.fontSize(12);
+    doc.text(`• Total de Processos: ${totalProcessos}`, 120, 210);
+    doc.text(`• Processos Ativos: ${processosAtivos}`, 120, 230);
+    doc.text(`• Total de Usuários: ${totalUsuarios}`, 120, 250);
+    doc.text(`• Usuários Ativos: ${usuariosAtivos}`, 120, 270);
+    
+    // Calcular taxas
+    const taxaProcessosAtivos = totalProcessos > 0 ? ((processosAtivos / totalProcessos) * 100).toFixed(1) : 0;
+    const taxaUsuariosAtivos = totalUsuarios > 0 ? ((usuariosAtivos / totalUsuarios) * 100).toFixed(1) : 0;
+    
+    doc.fontSize(14);
+    doc.text('Indicadores:', 100, 310);
+    
+    doc.fontSize(12);
+    doc.text(`• Taxa de Processos Ativos: ${taxaProcessosAtivos}%`, 120, 340);
+    doc.text(`• Taxa de Usuários Ativos: ${taxaUsuariosAtivos}%`, 120, 360);
+    
+    // Finalizar o documento
+    doc.end();
+    
   } catch (error) {
     console.error('Erro no exportar:', error);
-    res.status(500).json({ erro: 'Erro interno do servidor' });
+    res.status(500).json({ erro: 'Erro ao gerar PDF', detalhes: error.message });
   }
 });
 

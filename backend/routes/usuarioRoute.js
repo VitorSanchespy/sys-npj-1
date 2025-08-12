@@ -11,7 +11,8 @@ router.use(verificarToken);
 
 // Rotas básicas - com validação e anti-duplicação
 router.get('/me', usuarioController.me);
-router.put('/me', validate('updateUsuario'), handleValidation, usuarioController.updateMe);
+router.get('/perfil', usuarioController.me); // Alias para compatibilidade com testes
+router.put('/me', validate('updateMe'), handleValidation, usuarioController.updateMe);
 router.put('/me/senha', validate('updateSenha'), handleValidation, usuarioController.changePassword);
 router.delete('/me', usuarioController.deleteMe);
 router.get('/', usuarioController.listarUsuarios);

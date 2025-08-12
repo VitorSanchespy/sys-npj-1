@@ -6,11 +6,14 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { hasRole } from "@/utils/commonUtils";
 import UserCreateForm from "./UserCreateForm";
 import { useUsuarios } from "../../hooks/useApi.jsx";
+import { useUsuarioAutoRefresh } from "../../hooks/useAutoRefresh";
 import { useQueryClient } from "@tanstack/react-query";
 import { requestCache } from "../../utils/requestCache";
 
 export default function UserList() {
   const { token, user } = useAuthContext();
+  const { afterUpdateUsuario, afterDeleteUsuario, afterReativarUsuario } = useUsuarioAutoRefresh();
+  
   const [search, setSearch] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -95,9 +98,8 @@ export default function UserList() {
       
       setSelectedUser({ ...userData });
       
-  // Atualização automática via React Query
-  requestCache.clear();
-  await queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+      // Auto-refresh com hook otimizado
+      afterUpdateUsuario();
       
       setTimeout(() => setActionMsg(''), 3000);
     } catch (error) {
@@ -117,11 +119,8 @@ export default function UserList() {
       setSelectedUser(prev => ({ ...prev, ativo: false }));
       setEditingUser(prev => ({ ...prev, ativo: false }));
       
-  // Atualização automática via React Query
-      
-  // Atualização automática via React Query
-  requestCache.clear();
-  await queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+      // Auto-refresh com hook otimizado
+      afterDeleteUsuario();
       
       setTimeout(() => setActionMsg(''), 3000);
     } catch (error) {
@@ -141,11 +140,8 @@ export default function UserList() {
       setSelectedUser(prev => ({ ...prev, ativo: true }));
       setEditingUser(prev => ({ ...prev, ativo: true }));
       
-  // Atualização automática via React Query
-      
-  // Atualização automática via React Query
-  requestCache.clear();
-  await queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+      // Auto-refresh com hook otimizado
+      afterReativarUsuario();
       
       setTimeout(() => setActionMsg(''), 3000);
     } catch (error) {

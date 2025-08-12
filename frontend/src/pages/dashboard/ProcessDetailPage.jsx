@@ -205,14 +205,14 @@ export default function ProcessDetailPage() {
         fontWeight: '600',
         color: '#212529'
       }}>
-        Processo Nº {processo.numero_processo || processo.numero}
+        {processo.titulo || `Processo Nº ${processo.numero_processo || processo.numero}`}
       </h1>
       <p style={{
         margin: '8px 0 0 0',
         fontSize: '14px',
         color: '#6c757d'
       }}>
-        Detalhes completos do processo
+        {processo.titulo ? `Nº ${processo.numero_processo || processo.numero}` : 'Detalhes completos do processo'}
       </p>
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center', margin: '20px 0' }}>
         <Button
@@ -259,6 +259,18 @@ export default function ProcessDetailPage() {
               📊 Status e Informações
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <strong>Número do Processo:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {renderValue(processo.numero_processo)}
+                </p>
+              </div>
+              <div>
+                <strong>Título:</strong>
+                <p style={{ margin: '4px 0 0 0', color: '#6c757d' }}>
+                  {renderValue(processo.titulo)}
+                </p>
+              </div>
               <div>
                 <strong>Status:</strong>
                 <div style={{ marginTop: '4px' }}>

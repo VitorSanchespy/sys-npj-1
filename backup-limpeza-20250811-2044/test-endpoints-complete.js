@@ -26,6 +26,13 @@ let TOKENS = {
   aluno: null
 };
 
+// Refresh tokens de autenticação
+let REFRESH_TOKENS = {
+  admin: null,
+  professor: null,
+  aluno: null
+};
+
 // IDs de dados de teste (serão preenchidos durante execução)
 let TEST_IDS = {
   processos: [],
@@ -135,7 +142,10 @@ async function makeRequest(method, endpoint, data = null, token = null, expected
     const config = {
       method,
       url: `${BASE_URL}${endpoint}`,
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: { 
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        'x-test-mode': 'true' // Header para modo teste
+      },
       timeout: 10000
     };
 
@@ -169,6 +179,7 @@ async function loginAllUsers() {
       const response = await makeRequest('POST', '/auth/login', credentials);
       if (response.success && response.data.token) {
         TOKENS[userType] = response.data.token;
+        REFRESH_TOKENS[userType] = response.data.refreshToken;
         log(`✓ Login ${userType} realizado com sucesso`, 'green');
       } else {
         log(`✗ Falha no login ${userType}`, 'red');
@@ -213,7 +224,12 @@ async function testAuthEndpoints() {
 
   // Teste de refresh token
   for (const userType of ['admin', 'professor', 'aluno']) {
-    await testEndpoint('/auth/refresh', 'POST', userType, null, [200, 401]);
+    const refreshToken = REFRESH_TOKENS[userType];
+    if (refreshToken) {
+      await testEndpoint('/auth/refresh', 'POST', userType, { refreshToken }, [200, 401]);
+    } else {
+      await testEndpoint('/auth/refresh', 'POST', userType, { refreshToken: 'token_invalido' }, [400, 401]);
+    }
     await delay(300);
   }
 }
@@ -234,16 +250,31 @@ async function testUserEndpoints() {
   }
   
   // Criar usuário (teste de permissão)
-  const novoUsuario = {
-    nome: 'Usuário Teste',
-    email: `teste-criacao-${Date.now()}@teste.com`,
+  const timestamp = Date.now();
+  const novoUsuarioAdmin = {
+    nome: 'Usuário Teste Admin',
+    email: `teste-admin-${timestamp}@teste.com`,
     senha: '123456',
     role_id: 3
   };
   
-  await testEndpoint('/usuarios', 'POST', 'admin', novoUsuario, [200, 201]);
-  await testEndpoint('/usuarios', 'POST', 'professor', novoUsuario, [200, 201, 403]);
-  await testEndpoint('/usuarios', 'POST', 'aluno', novoUsuario, [403]); // Aluno não pode criar
+  const novoUsuarioProf = {
+    nome: 'Usuário Teste Professor',
+    email: `teste-prof-${timestamp}@teste.com`,
+    senha: '123456',
+    role_id: 3
+  };
+  
+  const novoUsuarioAluno = {
+    nome: 'Usuário Teste Aluno',
+    email: `teste-aluno-${timestamp}@teste.com`,
+    senha: '123456',
+    role_id: 3
+  };
+  
+  await testEndpoint('/usuarios', 'POST', 'admin', novoUsuarioAdmin, [200, 201]);
+  await testEndpoint('/usuarios', 'POST', 'professor', novoUsuarioProf, [200, 201, 403]);
+  await testEndpoint('/usuarios', 'POST', 'aluno', novoUsuarioAluno, [403]); // Aluno não pode criar
 }
 
 // Testes dos endpoints de processos
@@ -263,11 +294,12 @@ async function testProcessEndpoints() {
   
   // Criar processo
   const novoProcesso = {
-    numero: `PROC-TEST-${Date.now()}`,
+    numero_processo: `PROC-TEST-${Date.now()}`,
     titulo: 'Processo de Teste',
     descricao: 'Descrição do processo de teste',
     data_abertura: new Date().toISOString().split('T')[0],
-    status: 'Ativo'
+    status: 'Ativo',
+    contato_assistido: 'contato@teste.com'
   };
   
   const adminProcesso = await testEndpoint('/processos', 'POST', 'admin', novoProcesso, [200, 201]);
@@ -275,8 +307,8 @@ async function testProcessEndpoints() {
     TEST_IDS.processos.push(adminProcesso.data.id);
   }
   
-  await testEndpoint('/processos', 'POST', 'professor', { ...novoProcesso, numero: `PROF-${Date.now()}` }, [200, 201]);
-  await testEndpoint('/processos', 'POST', 'aluno', { ...novoProcesso, numero: `ALUNO-${Date.now()}` }, [403]); // Aluno não pode criar
+  await testEndpoint('/processos', 'POST', 'professor', { ...novoProcesso, numero_processo: `PROF-${Date.now()}` }, [200, 201]);
+  await testEndpoint('/processos', 'POST', 'aluno', { ...novoProcesso, numero_processo: `ALUNO-${Date.now()}` }, [403]); // Aluno não pode criar
   
   // Testar vinculação de usuário (se temos processo criado)
   if (TEST_IDS.processos.length > 0) {
@@ -319,7 +351,7 @@ async function testAgendamentoEndpoints() {
   const novoAgendamento = {
     titulo: 'Agendamento de Teste',
     descricao: 'Descrição do agendamento',
-    data_hora: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Amanhã
+    dataEvento: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Amanhã
     local: 'Sala de Reuniões',
     tipo: 'Reunião'
   };

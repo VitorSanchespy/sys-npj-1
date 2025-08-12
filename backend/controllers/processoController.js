@@ -146,8 +146,22 @@ exports.listarUsuariosProcesso = async (req, res) => {
 // Criar novo processo - endpoint: POST /api/processos
 exports.criarProcesso = async (req, res) => {
   try {
+    const userRole = req.user.role;
+    
+    // Verificar permissões - apenas Admin e Professor podem criar processos
+    if (userRole === 'Aluno') {
+      return res.status(403).json({ 
+        erro: 'Acesso negado. Alunos não podem criar processos.' 
+      });
+    }
+    
+    if (!isDbAvailable()) {
+      return res.status(503).json({ erro: 'Banco de dados não disponível' });
+    }
+
     const {
       numero_processo,
+      titulo,
       num_processo_sei,
       assistido,
       descricao,
@@ -158,53 +172,68 @@ exports.criarProcesso = async (req, res) => {
       fase_id,
       diligencia_id,
       contato_assistido,
-      idusuario_responsavel
+      idusuario_responsavel,
+      tipo_processo,
+      observacoes
     } = req.body;
 
-    if (isDbAvailable()) {
-      const { 
-        processoModel: Processo,
-        atualizacaoProcessoModel: AtualizacaoProcesso
-      } = require('../models/indexModel');
-      
-      const novoProcesso = await Processo.create({
-        numero_processo,
-        num_processo_sei,
-        assistido,
-        descricao,
-        status,
-        materia_assunto_id,
-        local_tramitacao_id,
-        sistema,
-        fase_id,
-        diligencia_id,
-        contato_assistido,
-        idusuario_responsavel
+    // Validações básicas
+    if (!numero_processo || !titulo || !contato_assistido) {
+      return res.status(400).json({ 
+        erro: 'Número do processo, título e contato assistido são obrigatórios' 
       });
-      
-      // Registrar criação no histórico
-      await AtualizacaoProcesso.create({
-        usuario_id: req.user.id,
-        processo_id: novoProcesso.id,
-        tipo_atualizacao: 'Criação do Processo',
-        descricao: `Processo "${numero_processo}" criado no sistema`
-      });
+    }
 
-      // Notificar criação do processo
-      try {
-        const notificacaoService = new NotificacaoService();
-        const { usuarioModel: Usuario } = require('../models/indexModel');
-        const criador = await Usuario.findByPk(req.user.id);
-        
-        if (criador) {
-          await notificacaoService.notificarProcessoCriado(novoProcesso, criador, [criador]);
-        }
-      } catch (notificationError) {
-        console.error('⚠️ Erro ao enviar notificação de processo criado:', notificationError.message);
-      }
+    const { 
+      processoModel: Processo,
+      atualizacaoProcessoModel: AtualizacaoProcesso
+    } = require('../models/indexModel');
+    
+    // Criar processo com todos os campos disponíveis
+    const novoProcesso = await Processo.create({
+      numero_processo,
+      titulo,
+      num_processo_sei,
+      assistido,
+      descricao: descricao || '',
+      status,
+      materia_assunto_id,
+      local_tramitacao_id,
+      sistema,
+      fase_id,
+      diligencia_id,
+      contato_assistido,
+      idusuario_responsavel: idusuario_responsavel || req.user.id,
+      tipo_processo,
+      observacoes
+    });
+    
+    // Registrar criação no histórico
+    await AtualizacaoProcesso.create({
+      usuario_id: req.user.id,
+      processo_id: novoProcesso.id,
+      tipo_atualizacao: 'Criação do Processo',
+      descricao: `Processo "${titulo}" (${numero_processo}) criado no sistema`
+    });
+
+    // Notificar criação do processo
+    try {
+      const notificacaoService = new NotificacaoService();
+      const { usuarioModel: Usuario } = require('../models/indexModel');
+      const criador = await Usuario.findByPk(req.user.id);
       
-      res.status(201).json(novoProcesso);
-    } 
+      if (criador) {
+        await notificacaoService.notificarProcessoCriado(novoProcesso, criador, [criador]);
+      }
+    } catch (notificationError) {
+      console.error('⚠️ Erro ao enviar notificação de processo criado:', notificationError.message);
+    }
+    
+    res.status(201).json({
+      success: true,
+      processo: novoProcesso,
+      message: 'Processo criado com sucesso'
+    });
     
   } catch (error) {
     console.error('Erro ao criar processo:', error);
@@ -293,6 +322,7 @@ exports.atualizarProcesso = async (req, res) => {
       const alteracoes = [];
       const camposMonitorados = {
         'numero_processo': 'Número do Processo',
+        'titulo': 'Título',
         'descricao': 'Descrição',
         'status': 'Status',
         'tipo_processo': 'Tipo do Processo',

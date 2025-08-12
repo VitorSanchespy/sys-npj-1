@@ -2,6 +2,16 @@
 exports.listarArquivosPorUsuario = async (req, res) => {
   try {
     const { id } = req.params;
+    const userRole = req.user.role;
+    const userId = req.user.id;
+    
+    // Verificar permissões: Aluno só pode ver seus próprios arquivos
+    if (userRole === 'Aluno' && parseInt(id) !== userId) {
+      return res.status(403).json({ 
+        erro: 'Acesso negado. Alunos só podem visualizar seus próprios arquivos.' 
+      });
+    }
+    
     const { arquivoModel: Arquivo, usuarioModel: Usuario } = require('../models/indexModel');
     const arquivos = await Arquivo.findAll({
       where: { usuario_id: id, ativo: true },
@@ -29,6 +39,7 @@ exports.uploadArquivo = async (req, res) => {
     const arquivoData = {
       nome: nome || req.file.originalname,
       nome_original: req.file.originalname,
+      descricao: descricao || null,
       caminho: `/uploads/${req.file.filename}`,
       tamanho: req.file.size,
       tipo: req.file.mimetype,

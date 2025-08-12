@@ -56,7 +56,7 @@ export default function FullRegisterForm() {
     
     try {
       // SEMPRE criar usuário com role_id = 3 (Aluno)
-      const res = await register(form.nome, form.email, form.senha, 3);
+      const res = await register(form.nome, form.email, form.senha, form.telefone, 3);
       
       if (res.success) {
         showSuccess(`🎉 Cadastro realizado com sucesso! Bem-vindo(a), ${form.nome}! Redirecionando para o login...`);

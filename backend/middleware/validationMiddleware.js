@@ -38,6 +38,16 @@ const validate = (method) => {
           .normalizeEmail(),
         check('role_id').optional().isInt({ min: 1 }).withMessage('ID de perfil inválido')
       ];
+
+    case 'updateMe':
+      return [
+        check('nome').optional().isLength({ min: 3 }).withMessage('Nome deve ter pelo menos 3 caracteres')
+          .trim(),
+        check('email').optional().isEmail().withMessage('Email inválido')
+          .normalizeEmail(),
+        check('telefone').optional().isString().withMessage('Telefone deve ser texto')
+          .trim()
+      ];
       
     case 'updateSenha':
       return [

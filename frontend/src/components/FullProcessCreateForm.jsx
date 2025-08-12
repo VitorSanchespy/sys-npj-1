@@ -9,23 +9,25 @@ const FullProcessCreateForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    numero_processo: '',
-    num_processo_sei: '',
-    assistido: '',
-    descricao: '',
-    status: 'Em andamento',
-    materia_assunto_id: '',
-    local_tramitacao_id: '',
-    sistema: 'Físico',
-    fase_id: '',
-    diligencia_id: '',
+  numero_processo: '',
+  titulo: '',
+  num_processo_sei: '',
+  assistido: '',
+  contato_assistido: '',
+  descricao: '',
+  status: 'Em andamento',
+  materia_assunto_id: '',
+  local_tramitacao_id: '',
+  sistema: 'Físico',
+  fase_id: '',
+  diligencia_id: '',
   });
 
   const [materias, setMaterias] = useState([]);
   const [fases, setFases] = useState([]);
   const [diligencias, setDiligencias] = useState([]);
   const [localTramitacoes, setLocalTramitacoes] = useState([]);
-  const [contatoAssistido, setContatoAssistido] = useState('');
+  // Removido: contatoAssistido, agora faz parte do formData
 
   const [newValues, setNewValues] = useState({
     materiaAssunto: '',
@@ -120,16 +122,13 @@ const FullProcessCreateForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
-    
     try {
       setLoading(true);
       const userId = user?.id || null;
-      await processService.createProcess(token, { 
-        ...formData, 
-        contato_assistido: contatoAssistido, 
-        idusuario_responsavel: userId 
+      await processService.createProcess(token, {
+        ...formData,
+        idusuario_responsavel: userId
       });
-      
       alert('Processo criado com sucesso!');
       navigate('/processos');
     } catch (error) {
@@ -155,8 +154,8 @@ const FullProcessCreateForm = () => {
         <input
           type={type}
           name={name}
-          value={name === 'contatoAssistido' ? contatoAssistido : formData[name]}
-          onChange={name === 'contatoAssistido' ? (e) => setContatoAssistido(e.target.value) : handleChange}
+          value={formData[name] || ''}
+          onChange={handleChange}
           placeholder={placeholder}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-sm"
           required={required}
@@ -164,7 +163,7 @@ const FullProcessCreateForm = () => {
       ) : (
         <textarea
           name={name}
-          value={formData[name]}
+          value={formData[name] || ''}
           onChange={handleChange}
           placeholder={placeholder}
           rows={rows}
@@ -209,9 +208,10 @@ const FullProcessCreateForm = () => {
                 Informações Básicas
               </h3>
               {renderField('Número do Processo', 'numero_processo', 'Ex: 0001234-56.2025.8.11.0001', true)}
+              {renderField('Título', 'titulo', 'Título do processo', true)}
               {renderField('Número SEI', 'num_processo_sei', 'Ex: SEI-23085.012345/2025-67')}
               {renderField('Assistido/a', 'assistido', 'Nome completo do assistido')}
-              {renderField('Contato do Assistido', 'contatoAssistido', 'Telefone ou e-mail')}
+              {renderField('Contato do Assistido', 'contato_assistido', 'Telefone ou e-mail', true)}
               {renderField('Descrição', 'descricao', 'Descreva o caso ou a situação jurídica', true, 'textarea')}
               <div className="grid grid-cols-2 gap-4">
                 {renderSelect('Status', 'status', [

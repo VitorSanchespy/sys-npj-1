@@ -5,19 +5,13 @@ import { useAuthContext } from '../../contexts/AuthContext';
 const NotificationSettings = () => {
   const { token } = useAuthContext();
   const [settings, setSettings] = useState({
-    email_lembretes: true,
-    email_alertas: true,
     email_agendamentos: true,
     email_processos: true,
-    email_autenticacao: true,
-    push_lembretes: true,
-    push_alertas: true,
-    push_agendamentos: true,
-    push_processos: true,
-    push_autenticacao: true,
-    horario_inicio: '08:00',
-    horario_fim: '18:00',
-    dias_antecedencia_lembrete: 1
+    email_sistema: true,
+    email_atualizacoes: true,
+    sistema_agendamentos: true,
+    sistema_processos: true,
+    sistema_sistema: true
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -103,11 +97,11 @@ const NotificationSettings = () => {
                 <input
                   type="checkbox"
                   className="sr-only"
-                  checked={settings.email_lembretes}
-                  onChange={(e) => handleChange('email_lembretes', e.target.checked)}
+                  checked={settings.email_agendamentos}
+                  onChange={(e) => handleChange('email_agendamentos', e.target.checked)}
                 />
-                <div className={`w-11 h-6 rounded-full ${settings.email_lembretes ? 'bg-blue-600' : 'bg-gray-200'} peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 transition-colors`}>
-                  <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${settings.email_lembretes ? 'translate-x-5' : 'translate-x-0'} mt-0.5 ml-0.5`}></div>
+                <div className={`w-11 h-6 rounded-full ${settings.email_agendamentos ? 'bg-blue-600' : 'bg-gray-200'} peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 transition-colors`}>
+                  <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${settings.email_agendamentos ? 'translate-x-5' : 'translate-x-0'} mt-0.5 ml-0.5`}></div>
                 </div>
               </label>
             </div>
@@ -125,11 +119,11 @@ const NotificationSettings = () => {
                 <input
                   type="checkbox"
                   className="sr-only"
-                  checked={settings.email_alertas}
-                  onChange={(e) => handleChange('email_alertas', e.target.checked)}
+                  checked={settings.email_sistema}
+                  onChange={(e) => handleChange('email_sistema', e.target.checked)}
                 />
-                <div className={`w-11 h-6 rounded-full ${settings.email_alertas ? 'bg-blue-600' : 'bg-gray-200'} transition-colors`}>
-                  <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${settings.email_alertas ? 'translate-x-5' : 'translate-x-0'} mt-0.5 ml-0.5`}></div>
+                <div className={`w-11 h-6 rounded-full ${settings.email_sistema ? 'bg-blue-600' : 'bg-gray-200'} transition-colors`}>
+                  <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${settings.email_sistema ? 'translate-x-5' : 'translate-x-0'} mt-0.5 ml-0.5`}></div>
                 </div>
               </label>
             </div>
@@ -191,11 +185,11 @@ const NotificationSettings = () => {
                 <input
                   type="checkbox"
                   className="sr-only"
-                  checked={settings.email_autenticacao}
-                  onChange={(e) => handleChange('email_autenticacao', e.target.checked)}
+                  checked={settings.email_atualizacoes}
+                  onChange={(e) => handleChange('email_atualizacoes', e.target.checked)}
                 />
-                <div className={`w-11 h-6 rounded-full ${settings.email_autenticacao ? 'bg-blue-600' : 'bg-gray-200'} transition-colors`}>
-                  <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${settings.email_autenticacao ? 'translate-x-5' : 'translate-x-0'} mt-0.5 ml-0.5`}></div>
+                <div className={`w-11 h-6 rounded-full ${settings.email_atualizacoes ? 'bg-blue-600' : 'bg-gray-200'} transition-colors`}>
+                  <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${settings.email_atualizacoes ? 'translate-x-5' : 'translate-x-0'} mt-0.5 ml-0.5`}></div>
                 </div>
               </label>
             </div>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useProcessos } from "@/hooks/useApi.jsx";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useProcessoAutoRefresh } from "@/hooks/useAutoRefresh";
 import OptimizedTable from "@/components/common/OptimizedTable";
 import Button from "@/components/common/Button";
 import StatusBadge from "@/components/common/StatusBadge";
@@ -15,6 +16,8 @@ export default function ProcessListPage() {
   const navigate = useNavigate();
   const { user, token } = useAuthContext();
   const queryClient = useQueryClient();
+  const { afterConcluirProcesso, afterReabrirProcesso, refreshProcessos } = useProcessoAutoRefresh();
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [showMyProcesses, setShowMyProcesses] = useState(() => getUserRole(user) === "Aluno");
   const [showConcluidos, setShowConcluidos] = useState(false);
@@ -70,7 +73,7 @@ export default function ProcessListPage() {
     setShowConcluidos(!showConcluidos);
   };
 
-  // Funções para concluir/reabrir processos
+  // Funções para concluir/reabrir processos com auto-refresh
   const handleConcluirProcesso = async (processoId) => {
     if (!window.confirm('Tem certeza que deseja concluir este processo?')) {
       return;
@@ -78,8 +81,7 @@ export default function ProcessListPage() {
 
     try {
       await processService.concludeProcess(token, processoId);
-      // Invalidar cache para atualizar a lista
-      queryClient.invalidateQueries(['processos']);
+      afterConcluirProcesso(); // Auto-refresh após concluir
       alert('Processo concluído com sucesso!');
     } catch (error) {
       console.error('Erro ao concluir processo:', error);
@@ -94,8 +96,7 @@ export default function ProcessListPage() {
 
     try {
       await processService.reopenProcess(token, processoId);
-      // Invalidar cache para atualizar a lista
-      queryClient.invalidateQueries(['processos']);
+      afterReabrirProcesso(); // Auto-refresh após reabrir
       alert('Processo reaberto com sucesso!');
     } catch (error) {
       console.error('Erro ao reabrir processo:', error);
@@ -122,6 +123,11 @@ export default function ProcessListPage() {
           {value || row.numero || "-"}
         </Button>
       )
+    },
+    {
+      key: 'titulo',
+      label: 'Título',
+      render: (value) => renderValue(value)
     },
     {
       key: 'descricao',
@@ -307,8 +313,8 @@ export default function ProcessListPage() {
             data={processos}
             columns={columns}
             itemsPerPage={processos.length} // Mostra todos os dados recebidos, sem paginação local
-            searchableColumns={['numero_processo', 'numero', 'descricao', 'assistido']}
-            sortableColumns={['numero_processo', 'descricao', 'status', 'assistido', 'updatedAt']}
+            searchableColumns={['numero_processo', 'titulo', 'descricao', 'assistido']}
+            sortableColumns={['numero_processo', 'titulo', 'descricao', 'status', 'assistido', 'updatedAt']}
             onRowClick={(row) => navigate(`/processos/${row.id}`)}
             loading={isLoading}
             emptyMessage="Nenhum processo encontrado"

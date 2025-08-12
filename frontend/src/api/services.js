@@ -13,10 +13,10 @@ export const authService = {
   },
 
   // POST /auth/registro (corrigido endpoint)
-  register: async (nome, email, senha, role_id = 2) => {
+  register: async (nome, email, senha, telefone, role_id = 2) => {
     return await apiRequest('/auth/registro', {
       method: 'POST',
-      body: { nome, email, senha, role_id }
+      body: { nome, email, senha, telefone, role_id }
     });
   },
 

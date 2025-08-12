@@ -333,9 +333,11 @@ export function useCreateUsuario() {
       });
     },
     onSuccess: () => {
-      // Invalidar cache de usuários
+      // Auto-refresh sem reload
       queryClient.invalidateQueries({ queryKey: ['usuarios'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      
+      console.log('✅ Usuário criado - dados atualizados automaticamente');
     }
   });
 }
@@ -353,10 +355,12 @@ export function useUpdateUsuario() {
       });
     },
     onSuccess: (data, variables) => {
-      // Invalidar cache específico do usuário e lista geral
+      // Auto-refresh sem reload
       queryClient.invalidateQueries({ queryKey: ['usuario', variables.id] });
       queryClient.invalidateQueries({ queryKey: ['usuarios'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      
+      console.log('✅ Usuário atualizado - dados atualizados automaticamente');
     }
   });
 }
@@ -373,9 +377,11 @@ export function useDeleteUsuario() {
       });
     },
     onSuccess: () => {
-      // Invalidar cache de usuários
+      // Auto-refresh sem reload
       queryClient.invalidateQueries({ queryKey: ['usuarios'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      
+      console.log('✅ Usuário removido - dados atualizados automaticamente');
     }
   });
 }
@@ -393,9 +399,12 @@ export function useCreateProcesso() {
       });
     },
     onSuccess: () => {
+      // Auto-refresh sem reload completo
       queryClient.invalidateQueries({ queryKey: ['processos'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      window.location.reload();
+      
+      // Mostrar feedback de sucesso
+      console.log('✅ Processo criado - dados atualizados automaticamente');
     }
   });
 }
@@ -413,10 +422,13 @@ export function useUpdateProcesso() {
       });
     },
     onSuccess: (data, variables) => {
+      // Auto-refresh sem reload completo
       queryClient.invalidateQueries({ queryKey: ['processo', variables.id] });
       queryClient.invalidateQueries({ queryKey: ['processos'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      window.location.reload();
+      
+      // Mostrar feedback de sucesso
+      console.log('✅ Processo atualizado - dados atualizados automaticamente');
     }
   });
 }

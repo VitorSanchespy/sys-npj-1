@@ -1,0 +1,29 @@
+{
+  "timestamp": "2025-08-11T22:08:00.105Z",
+  "checklistResults": {},
+  "testResults": {
+    "admin": {
+      "error": "Waiting for selector `input[type=\"email\"]` failed: Waiting failed: 10000ms exceeded"
+    },
+    "professor": {
+      "error": "Waiting for selector `input[type=\"email\"]` failed: Waiting failed: 10000ms exceeded"
+    },
+    "aluno": {
+      "error": "Waiting for selector `input[type=\"email\"]` failed: Protocol error (Runtime.callFunctionOn): Target closed"
+    }
+  },
+  "summary": {
+    "totalChecks": 24,
+    "successfulChecks": 0,
+    "successRate": 0
+  },
+  "recommendations": [
+    "Corrigir CRUD de processos para Admin/Professor",
+    "Implementar restrições corretas para Aluno em processos",
+    "Corrigir gerenciamento de usuários para Admin",
+    "Implementar restrições de usuários para Professor",
+    "Implementar auto-refresh pós-CRUD em todas as telas",
+    "Corrigir diferenciação de dashboard por perfil",
+    "Implementar gerenciamento completo de arquivos"
+  ]
+}

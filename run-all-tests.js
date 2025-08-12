@@ -10,8 +10,8 @@
  * - Relatório consolidado
  */
 
-const { runAllTests: runBackendTests } = require('./test-endpoints-complete');
-const FrontendTestSuite = require('./test-frontend-e2e');
+const { runAllTests: runBackendTests } = require('./tests/legacy/test-endpoints-complete');
+const FrontendTestSuite = require('./tests/legacy/test-frontend-e2e');
 const fs = require('fs');
 const path = require('path');
 
