@@ -208,6 +208,14 @@ exports.criarProcesso = async (req, res) => {
       observacoes
     });
     
+
+    // Vincular automaticamente o criador ao processo
+    const { usuarioProcessoModel: UsuarioProcesso } = require('../models/indexModel');
+    await UsuarioProcesso.create({
+      usuario_id: req.user.id,
+      processo_id: novoProcesso.id
+    });
+
     // Registrar criação no histórico
     await AtualizacaoProcesso.create({
       usuario_id: req.user.id,
@@ -246,6 +254,15 @@ exports.atualizarProcesso = async (req, res) => {
   try {
     const { id } = req.params;
     const dadosAtualizacao = req.body;
+    // Bloquear alteração se processo estiver concluído
+    const { processoModel: Processo } = require('../models/indexModel');
+    const processo = await Processo.findByPk(id);
+    if (!processo) {
+      return res.status(404).json({ erro: 'Processo não encontrado' });
+    }
+    if (processo.status === 'Concluído') {
+      return res.status(403).json({ erro: 'Processo concluído não pode ser alterado. Reabra para modificar.' });
+    }
     const usuarioId = req.user.id; // ID do usuário que está fazendo a atualização
     
     console.log('🔍 Debug atualização processo:', {
@@ -603,6 +620,9 @@ exports.vincularUsuario = async (req, res) => {
       if (!processo) {
         return res.status(404).json({ erro: 'Processo não encontrado' });
       }
+      if (processo.status === 'Concluído') {
+        return res.status(403).json({ erro: 'Processo concluído não pode ser alterado. Reabra para modificar.' });
+      }
 
       // Verificar se usuário existe
       const usuario = await Usuario.findByPk(usuario_id);
@@ -770,7 +790,8 @@ exports.desvincularUsuario = async (req, res) => {
         usuarioProcessoModel: UsuarioProcesso,
         usuarioModel: Usuario,
         atualizacaoProcessoModel: AtualizacaoProcesso,
-        roleModel: Role
+        roleModel: Role,
+        processoModel: Processo
       } = require('../models/indexModel');
 
       // Buscar usuário logado e verificar permissão
@@ -783,9 +804,16 @@ exports.desvincularUsuario = async (req, res) => {
         return res.status(403).json({ erro: 'Apenas usuários com perfil Professor ou Admin podem desvincular usuários de processos.' });
       }
       
+      // Verificar se processo existe e status
+      const processo = await Processo.findByPk(id);
+      if (!processo) {
+        return res.status(404).json({ erro: 'Processo não encontrado' });
+      }
+      if (processo.status === 'Concluído') {
+        return res.status(403).json({ erro: 'Processo concluído não pode ser alterado. Reabra para modificar.' });
+      }
       // Buscar usuário para obter informações antes de desvincular
       const usuario = await Usuario.findByPk(usuario_id);
-      
       // Buscar vinculação
       const vinculo = await UsuarioProcesso.findOne({
         where: { usuario_id, processo_id: id }

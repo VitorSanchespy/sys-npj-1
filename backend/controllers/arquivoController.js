@@ -36,6 +36,14 @@ exports.uploadArquivo = async (req, res) => {
       return res.status(400).json({ erro: 'Nenhum arquivo foi enviado' });
     }
     const { processo_id, usuario_id, nome, descricao } = req.body;
+    // Bloquear upload se processo estiver concluído
+    if (processo_id) {
+      const { processoModel: Processo } = require('../models/indexModel');
+      const processo = await Processo.findByPk(processo_id);
+      if (processo && processo.status === 'Concluído') {
+        return res.status(403).json({ erro: 'Processo concluído não pode receber novos documentos. Reabra para modificar.' });
+      }
+    }
     const arquivoData = {
       nome: nome || req.file.originalname,
       nome_original: req.file.originalname,
@@ -121,10 +129,17 @@ exports.downloadArquivo = async (req, res) => {
 exports.deletarArquivo = async (req, res) => {
   try {
     const { id } = req.params;
-    const { arquivoModel: Arquivo } = require('../models/indexModel');
+    const { arquivoModel: Arquivo, processoModel: Processo } = require('../models/indexModel');
     const arquivo = await Arquivo.findByPk(id);
     if (!arquivo) {
       return res.status(404).json({ erro: 'Arquivo não encontrado' });
+    }
+    // Bloquear exclusão se processo estiver concluído
+    if (arquivo.processo_id) {
+      const processo = await Processo.findByPk(arquivo.processo_id);
+      if (processo && processo.status === 'Concluído') {
+        return res.status(403).json({ erro: 'Processo concluído não pode ser alterado. Reabra para modificar.' });
+      }
     }
     await arquivo.update({ ativo: false });
     if (!arquivo.processo_id) {

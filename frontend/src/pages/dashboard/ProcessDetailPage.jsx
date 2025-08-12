@@ -221,12 +221,14 @@ export default function ProcessDetailPage() {
         >
           Voltar à Lista
         </Button>
-        <Button
-          variant="primary"
-          onClick={() => navigate(`/processos/${id}/editar`)}
-        >
-          Editar
-        </Button>
+        {processo.status !== 'Concluído' && (
+          <Button
+            variant="primary"
+            onClick={() => navigate(`/processos/${id}/editar`)}
+          >
+            Editar
+          </Button>
+        )}
         {processo.status !== 'Concluído' && (
           <Button
             variant="blueWhite"
@@ -465,7 +467,7 @@ export default function ProcessDetailPage() {
             }}>
               Usuários Vinculados
             </h3>
-            {hasRole(user, ['Admin', 'Professor']) && (
+            {hasRole(user, ['Admin', 'Professor']) && processo.status !== 'Concluído' && (
               <Button
                 variant="primary"
                 onClick={() => setShowAssignModal(true)}
@@ -502,7 +504,7 @@ export default function ProcessDetailPage() {
                       </p>
                     )}
                   </div>
-                  {hasRole(user, ['Admin', 'Professor']) && (
+                  {hasRole(user, ['Admin', 'Professor']) && processo.status !== 'Concluído' && (
                     <Button
                       variant="danger"
                       onClick={() => handleUnassignUser(aluno.id)}
@@ -548,7 +550,7 @@ export default function ProcessDetailPage() {
           <p style={{ fontSize: '14px', color: '#6c757d', marginBottom: '16px' }}>
             Anexe documentos relacionados ao processo como despachos, atas, petições, etc.
           </p>
-          <DocumentList processoId={id} showInactive={true} />
+          <DocumentList processoId={id} showInactive={true} status={processo.status} />
         </div>
 
         {/* Histórico de Atualizações do Processo */}
@@ -569,11 +571,11 @@ export default function ProcessDetailPage() {
           <p style={{ fontSize: '14px', color: '#6c757d', marginBottom: '16px' }}>
             Registro de todas as alterações feitas nos dados do processo.
           </p>
-          <UpdateList processoId={id} />
+          <UpdateList processoId={id} status={processo.status} />
         </div>
 
         {/* Modais */}
-        {showAssignModal && (
+  {showAssignModal && (
           <div 
             style={{
               position: 'fixed',
@@ -597,11 +599,12 @@ export default function ProcessDetailPage() {
               processoId={id}
               onClose={() => setShowAssignModal(false)}
               onAssigned={handleAssignUser}
+              status={processo.status}
             />
           </div>
         )}
 
-        {showUnassignModal && (
+  {showUnassignModal && (
           <div 
             style={{
               position: 'fixed',
@@ -626,6 +629,7 @@ export default function ProcessDetailPage() {
               alunos={alunos}
               onClose={() => setShowUnassignModal(false)}
               onUnassigned={handleUnassignUser}
+              status={processo.status}
             />
           </div>
         )}

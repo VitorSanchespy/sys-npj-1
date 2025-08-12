@@ -250,21 +250,6 @@ export default function ProcessListPage() {
           {showConcluidos ? 'Apenas concluídos' : 'Mostrar concluídos'}
         </label>
         
-        {/* Campo de busca */}
-        <input
-          type="text"
-          placeholder="Buscar por número ou descrição..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            padding: '8px 12px',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            fontSize: '14px',
-            width: '250px'
-          }}
-        />
-        
         {/* Botão novo processo */}
         {canCreateProcess(user) && (
           <Button

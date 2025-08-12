@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { userService, processService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 
-export default function ProcessAssignUserModal({ processoId, onClose, onAssigned }) {
+export default function ProcessAssignUserModal({ processoId, onClose, onAssigned, status }) {
   const { token } = useAuthContext();
   const [usuarios, setUsuarios] = useState([]);
   const [search, setSearch] = useState("");
@@ -65,25 +65,29 @@ export default function ProcessAssignUserModal({ processoId, onClose, onAssigned
     <div style={{ background: '#fff', borderRadius: 8, padding: 24, boxShadow: '0 2px 8px #0002', maxWidth: 400 }}>
       <h3>Vincular Usuário ao Processo</h3>
       {msg && <div style={{ marginBottom: 8 }}>{msg}</div>}
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Buscar usuário por nome (mín. 3 letras)"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{ width: '100%', marginBottom: 8, padding: 6, borderRadius: 4, border: '1px solid #ccc' }}
-        />
-        <select value={selected} onChange={e => setSelected(e.target.value)} required style={{ width: '100%', marginBottom: 8 }}>
-          <option value="">Selecione um usuário</option>
-          {usuarios.map(u => (
-            <option key={u.id} value={u.id}>{u.nome} ({u.email})</option>
-          ))}
-        </select>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="submit" disabled={!selected || loading} style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 4, padding: '6px 16px', fontWeight: 500, fontSize: 15, cursor: 'pointer' }}>Vincular</button>
-          <button type="button" onClick={onClose} style={{ background: '#aaa', color: '#fff', border: 'none', borderRadius: 4, padding: '6px 16px', fontWeight: 500, fontSize: 15, cursor: 'pointer' }}>Cancelar</button>
-        </div>
-      </form>
+      {status !== 'Concluído' ? (
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            placeholder="Buscar usuário por nome (mín. 3 letras)"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ width: '100%', marginBottom: 8, padding: 6, borderRadius: 4, border: '1px solid #ccc' }}
+          />
+          <select value={selected} onChange={e => setSelected(e.target.value)} required style={{ width: '100%', marginBottom: 8 }}>
+            <option value="">Selecione um usuário</option>
+            {usuarios.map(u => (
+              <option key={u.id} value={u.id}>{u.nome} ({u.email})</option>
+            ))}
+          </select>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="submit" disabled={!selected || loading} style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 4, padding: '6px 16px', fontWeight: 500, fontSize: 15, cursor: 'pointer' }}>Vincular</button>
+            <button type="button" onClick={onClose} style={{ background: '#aaa', color: '#fff', border: 'none', borderRadius: 4, padding: '6px 16px', fontWeight: 500, fontSize: 15, cursor: 'pointer' }}>Cancelar</button>
+          </div>
+        </form>
+      ) : (
+        <div style={{ color: '#d32f2f', marginTop: 16 }}>Processo concluído. Não é possível vincular usuários.</div>
+      )}
     </div>
   );
 }

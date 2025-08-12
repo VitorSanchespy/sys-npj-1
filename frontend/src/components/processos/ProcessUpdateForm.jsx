@@ -9,14 +9,18 @@ const ProcessUpdateForm = ({ process, onSubmit }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <textarea
-        value={details}
-        onChange={e => setDetails(e.target.value)}
-        placeholder="Atualize os detalhes do processo"
-      />
-      <button type="submit">Salvar Atualização</button>
-    </form>
+    process?.status === 'Concluído' ? (
+      <div style={{ color: '#d32f2f', marginTop: 16 }}>Processo concluído. Não é possível editar ou salvar atualizações.</div>
+    ) : (
+      <form onSubmit={handleSubmit}>
+        <textarea
+          value={details}
+          onChange={e => setDetails(e.target.value)}
+          placeholder="Atualize os detalhes do processo"
+        />
+        <button type="submit">Salvar Atualização</button>
+      </form>
+    )
   );
 };
 

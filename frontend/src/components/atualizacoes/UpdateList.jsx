@@ -21,7 +21,7 @@ function formatDescricao(descricao, auxData) {
   });
 }
 
-export default function UpdateList({ processoId, showDeleteButton = true }) {
+export default function UpdateList({ processoId, showDeleteButton = true, status }) {
   const { token, user } = useAuthContext();
   const queryClient = useQueryClient();
   const [updates, setUpdates] = useState([]);
@@ -32,8 +32,8 @@ export default function UpdateList({ processoId, showDeleteButton = true }) {
     async function fetchUpdates() {
       try {
         const url = processoId ? `?processo_id=${processoId}` : '';
-        const data = await atualizacaoProcessoService.listAtualizacoes(token, url);
-        setUpdates(data);
+  const data = await atualizacaoProcessoService.listAtualizacoes(token, url);
+  setUpdates(data);
       } catch {
         setUpdates([]);
       }
@@ -70,23 +70,8 @@ export default function UpdateList({ processoId, showDeleteButton = true }) {
         {updates.map(upd => (
           <li key={upd.id}>
             {upd.tipo && <b>[{upd.tipo}] </b>}
-            {(() => {
-              // Remove conteúdo desnecessário e garante que 'Por @nome_usuario' sempre tenha o nome do usuário, se disponível
-              let desc = (upd.descricao || '')
-                .replace(/^.*?\)\s*/, '')
-                .replace(/\{?Por:.*?\}?/gi, '')
-                .replace(/\{[^}]*\}/g, '')
-                .replace(/\[[^\]]*\]/g, '')
-                .replace(/\n+/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
-              // Se a descrição contém 'Por @ :', substituir por 'Por @nome_usuario :'
-              // Sempre garantir que "Por @" seja seguido do nome do usuário
-              if (/Por @\s*:?/i.test(desc) && upd.usuario && upd.usuario.nome) {
-                desc = desc.replace(/Por @\s*:?/gi, `Por @${upd.usuario.nome} :`);
-              }
-              return formatDescricao(desc, auxData);
-            })()}
+            {/* Exibe a descrição original, sem sobrescrever o autor */}
+            <span>{upd.descricao}</span>
             {upd.anexo && (
               <>
                 <br />
@@ -97,7 +82,7 @@ export default function UpdateList({ processoId, showDeleteButton = true }) {
             <small>
               Por <b>@{upd.usuario && upd.usuario.nome ? upd.usuario.nome : (upd.usuario_nome || 'Usuário')}</b> : em {new Date(upd.data_atualizacao).toLocaleString()}
             </small>
-            {userRole && ['professor', 'admin'].includes(userRole.toLowerCase()) && showDeleteButton && (
+            {userRole && ['professor', 'admin'].includes(userRole.toLowerCase()) && showDeleteButton && status !== 'Concluído' && (
               <button
                 style={{ marginLeft: 12, color: '#fff', background: '#d32f2f', border: 'none', borderRadius: 4, padding: '2px 10px', fontWeight: 500, cursor: 'pointer' }}
                 onClick={async () => {

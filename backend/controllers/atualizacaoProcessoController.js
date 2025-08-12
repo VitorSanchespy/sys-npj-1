@@ -179,7 +179,12 @@ exports.deletarAtualizacao = async (req, res) => {
       if (!atualizacao) {
         return res.status(404).json({ erro: 'Atualização não encontrada' });
       }
-      
+      // Bloquear exclusão se processo estiver concluído
+      const { processoModel: Processo } = require('../models/indexModel');
+      const processo = await Processo.findByPk(atualizacao.processo_id);
+      if (processo && processo.status === 'Concluído') {
+        return res.status(403).json({ erro: 'Processo concluído não pode ser alterado. Reabra para modificar.' });
+      }
       await atualizacao.destroy();
       res.json({ message: 'Atualização deletada com sucesso' });
       

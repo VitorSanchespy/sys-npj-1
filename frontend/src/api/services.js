@@ -201,7 +201,7 @@ export const processService = {
     return await apiRequest(`/api/processos/${processoId}/vincular-usuario`, {
       method: 'POST',
       token,
-      body: { usuario_id: usuarioId, role }
+      body: { usuario_id: usuarioId, role, processo_id: Number(processoId) }
     });
   },
 

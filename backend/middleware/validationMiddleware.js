@@ -128,7 +128,7 @@ const validate = (method) => {
       return [
         check('processo_id').isInt({ min: 1 }).withMessage('ID de processo inválido'),
         check('usuario_id').isInt({ min: 1 }).withMessage('ID de usuário inválido'),
-        check('role').isIn(['Aluno', 'Professor']).withMessage('Role inválida')
+        check('role').isString().trim().notEmpty().withMessage('Role inválida')
       ];
 
     default:

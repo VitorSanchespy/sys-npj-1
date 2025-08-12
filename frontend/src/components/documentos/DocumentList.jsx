@@ -6,7 +6,7 @@ import { getUserRole } from "../../hooks/useApi";
 import { requestCache } from "../../utils/requestCache";
 import DocumentUploadForm from "./DocumentUploadForm";
 
-export default function DocumentList({ processoId, showInactive = false }) {
+export default function DocumentList({ processoId, showInactive = false, status }) {
   const { token, user } = useAuthContext();
   const queryClient = useQueryClient();
   const [documentos, setDocumentos] = useState([]);
@@ -111,7 +111,7 @@ export default function DocumentList({ processoId, showInactive = false }) {
 
   return (
     <div>
-      {["admin", "professor", "aluno"].includes(userRole?.toLowerCase()) && (
+      {["admin", "professor", "aluno"].includes(userRole?.toLowerCase()) && status !== 'Concluído' && (
         <button 
           onClick={() => setShowUploadForm(v => !v)}
           style={{
