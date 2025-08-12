@@ -1,3 +1,24 @@
+// Atualizar senha do usuário
+exports.atualizarSenha = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { senha } = req.body;
+    if (!senha || senha.length < 6) {
+      return res.status(400).json({ erro: 'Senha deve ter pelo menos 6 caracteres' });
+    }
+    const bcrypt = require('bcrypt');
+    const { usuarioModel: Usuario } = require('../models/indexModel');
+    const usuario = await Usuario.findByPk(id);
+    if (!usuario) {
+      return res.status(404).json({ erro: 'Usuário não encontrado' });
+    }
+    usuario.senha = await bcrypt.hash(senha, 10);
+    await usuario.save();
+    res.json({ success: true, message: 'Senha atualizada com sucesso' });
+  } catch (error) {
+    res.status(500).json({ erro: 'Erro ao atualizar senha' });
+  }
+};
 // Listar apenas alunos - endpoint: GET /api/usuarios/alunos
 exports.listarAlunos = async (req, res) => {
   try {

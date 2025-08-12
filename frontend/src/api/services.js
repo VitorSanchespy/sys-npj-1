@@ -122,6 +122,16 @@ export const userService = {
       token
     });
   },
+
+  // Atualizar senha do usuário
+  updatePassword: async (token, id, novaSenha) => {
+    // Ajuste o endpoint conforme sua API backend
+    return await apiRequest(`/api/usuarios/${id}/senha`, {
+      method: 'PUT',
+      token,
+      body: { senha: novaSenha }
+    });
+  },
 };
 
 // ===== PROCESS SERVICES (UPDATED) =====

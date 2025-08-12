@@ -20,6 +20,10 @@ router.get('/', roleMiddleware(['admin', 'professor']), usuarioController.listar
 router.post('/', roleMiddleware(['admin', 'professor']), validate('registrarUsuario'), handleValidation, preveniDuplicacaoUsuario, usuarioController.criarUsuario);
 router.get('/alunos', usuarioController.listarAlunos);
 router.get('/para-vinculacao', usuarioController.buscarUsuariosParaVinculacao);
+
+// Atualizar senha do usuário
+router.put('/:id/senha', usuarioController.atualizarSenha);
+
 router.get('/:id', validate('getUsuario'), handleValidation, usuarioController.obterUsuario);
 router.put('/:id', roleMiddleware(['admin', 'professor']), validate('updateUsuario'), handleValidation, preveniDuplicacaoUsuario, usuarioController.atualizarUsuario);
 router.put('/:id/reativar', roleMiddleware(['admin', 'professor']), validate('getUsuario'), handleValidation, usuarioController.reativarUsuario);
