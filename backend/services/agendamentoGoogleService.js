@@ -36,7 +36,7 @@ class AgendamentoGoogleService {
    */
   async listarAgendamentos(usuario, filtros = {}) {
     try {
-      console.log(`📋 Listando agendamentos para usuário: ${usuario.nome} (ID: ${usuario.id})`);
+  // Removido console.log
       
       const calendar = await this.configurarClienteUsuario(usuario);
 
@@ -45,7 +45,7 @@ class AgendamentoGoogleService {
       const timeMin = filtros.dataInicio || new Date(agora.getTime() - (30 * 24 * 60 * 60 * 1000)).toISOString();
       const timeMax = filtros.dataFim || new Date(agora.getTime() + (90 * 24 * 60 * 60 * 1000)).toISOString();
 
-      console.log(`📅 Buscando eventos entre ${timeMin} e ${timeMax}`);
+  // Removido console.log
 
       // Buscar eventos no Google Calendar
       const response = await calendar.events.list({
@@ -59,16 +59,16 @@ class AgendamentoGoogleService {
       });
 
       const eventos = response.data.items || [];
-      console.log(`📋 ${eventos.length} eventos encontrados no Google Calendar`);
+  // Removido console.log
       
       // Transformar todos os eventos (não filtrar por sistema)
       const agendamentos = eventos.map(evento => this.transformarEventoParaAgendamento(evento, usuario));
 
-      console.log(`✅ ${agendamentos.length} agendamentos processados para usuário ${usuario.nome}`);
+  // Removido console.log
       return agendamentos;
 
     } catch (error) {
-      console.error('❌ Erro ao listar agendamentos:', error);
+  // Removido console.error
       throw new Error(`Erro ao buscar agendamentos: ${error.message}`);
     }
   }
@@ -78,8 +78,7 @@ class AgendamentoGoogleService {
    */
   async criarAgendamento(usuario, dadosAgendamento) {
     try {
-      console.log('📅 Criando agendamento no Google Calendar para:', usuario.nome);
-      console.log('📝 Dados:', dadosAgendamento);
+  // Removido console.log
 
       // Sempre usar Google Calendar real
       const calendar = await this.configurarClienteUsuario(usuario);
@@ -134,13 +133,13 @@ class AgendamentoGoogleService {
         }
       };
 
-      console.log('📡 Enviando evento para Google Calendar...');
+  // Removido console.log
       const response = await calendar.events.insert({
         calendarId: 'primary',
         resource: evento
       });
 
-      console.log('✅ Evento criado no Google Calendar:', response.data.id);
+  // Removido console.log
 
       const agendamentoCriado = this.transformarEventoParaAgendamento(response.data, usuario);
 
@@ -150,7 +149,7 @@ class AgendamentoGoogleService {
       return agendamentoCriado;
 
     } catch (error) {
-      console.error('❌ Erro ao criar agendamento:', error);
+  // Removido console.error
       throw new Error(`Erro ao criar agendamento: ${error.message}`);
     }
   }  /**
@@ -170,19 +169,44 @@ class AgendamentoGoogleService {
         throw new Error('Agendamento não encontrado');
       }
 
+      // Verificar se é um evento do tipo workingLocation (não editável)
+      if (eventoAtual.data.eventType === 'workingLocation') {
+        throw new Error('Eventos de localização de trabalho não podem ser editados através do sistema');
+      }
+
       // Verificar se o usuário é o criador
       const criadoPor = eventoAtual.data.extendedProperties?.private?.criadoPor;
       if (criadoPor && criadoPor !== usuario.id.toString()) {
         throw new Error('Você não tem permissão para editar este agendamento');
       }
 
-      // Montar dados atualizados
+      // Montar dados atualizados (criar novo objeto limpo para evitar conflitos)
       const eventoAtualizado = {
-        ...eventoAtual.data,
         summary: dadosAtualizacao.titulo || eventoAtual.data.summary,
-        description: dadosAtualizacao.descricao ? this.montarDescricaoEvento(dadosAtualizacao, usuario) : eventoAtual.data.description,
-        location: dadosAtualizacao.local !== undefined ? dadosAtualizacao.local : eventoAtual.data.location
+        description: dadosAtualizacao.descricao ? this.montarDescricaoEvento(dadosAtualizacao, usuario) : (eventoAtual.data.description || ''),
+        location: dadosAtualizacao.local !== undefined ? dadosAtualizacao.local : (eventoAtual.data.location || ''),
+        start: {
+          timeZone: 'America/Sao_Paulo'
+        },
+        end: {
+          timeZone: 'America/Sao_Paulo'
+        }
       };
+
+      // Atualizar datas se fornecidas
+      if (dadosAtualizacao.dataEvento) {
+        const dataInicio = new Date(dadosAtualizacao.dataEvento);
+        const dataFim = dadosAtualizacao.dataFim ? 
+          new Date(dadosAtualizacao.dataFim) : 
+          new Date(dataInicio.getTime() + (60 * 60 * 1000));
+
+        eventoAtualizado.start.dateTime = dataInicio.toISOString();
+        eventoAtualizado.end.dateTime = dataFim.toISOString();
+      } else {
+        // Manter datas originais se não estiver atualizando
+        eventoAtualizado.start = eventoAtual.data.start;
+        eventoAtualizado.end = eventoAtual.data.end;
+      }
 
       // Atualizar convidados se fornecidos
       if (dadosAtualizacao.convidados !== undefined) {
@@ -199,11 +223,19 @@ class AgendamentoGoogleService {
             .filter(email => email && email !== usuario.email)
             .map(email => ({ email, responseStatus: 'needsAction' })))
         ];
+      } else {
+        // Manter participantes originais se não estiver atualizando
+        eventoAtualizado.attendees = eventoAtual.data.attendees;
       }
 
-      if (dadosAtualizacao.dataEvento) {
-        eventoAtualizado.start.dateTime = new Date(dadosAtualizacao.dataEvento).toISOString();
-        eventoAtualizado.end.dateTime = new Date(new Date(dadosAtualizacao.dataEvento).getTime() + (60 * 60 * 1000)).toISOString();
+      // Preservar propriedades importantes do evento original
+      if (eventoAtual.data.extendedProperties) {
+        eventoAtualizado.extendedProperties = eventoAtual.data.extendedProperties;
+      }
+
+      // Preservar reminders
+      if (eventoAtual.data.reminders) {
+        eventoAtualizado.reminders = eventoAtual.data.reminders;
       }
 
       // Atualizar evento
@@ -219,7 +251,7 @@ class AgendamentoGoogleService {
       return this.transformarEventoParaAgendamento(response.data, usuario);
 
     } catch (error) {
-      console.error('❌ Erro ao atualizar agendamento:', error);
+  // Removido console.error
       throw new Error('Erro ao atualizar agendamento no Google Calendar');
     }
   }
@@ -251,11 +283,11 @@ class AgendamentoGoogleService {
       // Invalidar cache
       this.invalidarCacheUsuario(usuario.id);
 
-      console.log(`🗑️ Agendamento excluído para usuário ${usuario.nome}`);
+  // Removido console.log
       return { sucesso: true, mensagem: 'Agendamento excluído com sucesso' };
 
     } catch (error) {
-      console.error('❌ Erro ao excluir agendamento:', error);
+  // Removido console.error
       throw new Error('Erro ao excluir agendamento do Google Calendar');
     }
   }
@@ -275,7 +307,7 @@ class AgendamentoGoogleService {
       return this.transformarEventoParaAgendamento(response.data, usuario);
 
     } catch (error) {
-      console.error('❌ Erro ao buscar agendamento:', error);
+  // Removido console.error
       throw new Error('Agendamento não encontrado');
     }
   }
@@ -374,7 +406,7 @@ class AgendamentoGoogleService {
   invalidarCacheUsuario(usuarioId) {
     const keys = requestCache.keys().filter(key => key.includes(`agendamentos_${usuarioId}`));
     keys.forEach(key => requestCache.delete(key));
-    console.log(`🗑️ Cache invalidado para usuário ${usuarioId} (${keys.length} entradas)`);
+  // Removido console.log
   }
 
   /**
@@ -383,7 +415,7 @@ class AgendamentoGoogleService {
   invalidarTodoCache() {
     const keys = requestCache.keys().filter(key => key.includes('agendamentos_'));
     keys.forEach(key => requestCache.delete(key));
-    console.log(`🗑️ Todo cache de agendamentos invalidado (${keys.length} entradas)`);
+  // Removido console.log
   }
 
   /**
@@ -441,7 +473,7 @@ class AgendamentoGoogleService {
         porTipo
       };
     } catch (error) {
-      console.error('❌ Erro ao obter estatísticas:', error);
+  // Removido console.error
       return { total: 0, proximos7: 0, vencidos: 0, agendados: 0, hoje: 0, porTipo: {} };
     }
   }

@@ -389,6 +389,30 @@ exports.atualizarAgendamento = async (req, res) => {
       delete dadosAtualizacao.data_fim;
     }
 
+    // Validar dados de entrada
+    if (dadosAtualizacao.dataEvento) {
+      const dataEvento = new Date(dadosAtualizacao.dataEvento);
+      if (isNaN(dataEvento.getTime())) {
+        return res.status(400).json({
+          success: false,
+          error: 'Data do evento inválida'
+        });
+      }
+      // Garantir que a data esteja no formato correto
+      dadosAtualizacao.dataEvento = dataEvento.toISOString();
+    }
+
+    if (dadosAtualizacao.dataFim) {
+      const dataFim = new Date(dadosAtualizacao.dataFim);
+      if (isNaN(dataFim.getTime())) {
+        return res.status(400).json({
+          success: false,
+          error: 'Data de fim inválida'
+        });
+      }
+      dadosAtualizacao.dataFim = dataFim.toISOString();
+    }
+
     // Normalizar outros campos
     if (dadosAtualizacao.tipo_evento) {
       dadosAtualizacao.tipoEvento = dadosAtualizacao.tipo_evento;
@@ -401,10 +425,7 @@ exports.atualizarAgendamento = async (req, res) => {
     }
 
     // Atualizar no Google Calendar
-    console.log('📡 Atualizando no Google Calendar...');
     const agendamentoAtualizado = await agendamentoGoogleService.atualizarAgendamento(usuario, id, dadosAtualizacao);
-
-    console.log('✅ Agendamento atualizado com sucesso');
 
     res.json({
       success: true,
@@ -413,7 +434,6 @@ exports.atualizarAgendamento = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Erro ao atualizar agendamento:', error);
     
     if (error.message.includes('não encontrado')) {
       res.status(404).json({ 
@@ -424,6 +444,16 @@ exports.atualizarAgendamento = async (req, res) => {
       res.status(403).json({ 
         success: false,
         error: error.message 
+      });
+    } else if (error.message.includes('localização de trabalho')) {
+      res.status(400).json({ 
+        success: false,
+        error: 'Este tipo de evento não pode ser editado' 
+      });
+    } else if (error.message.includes('Invalid start time') || error.message.includes('Bad Request')) {
+      res.status(400).json({ 
+        success: false,
+        error: 'Dados de data/hora inválidos para o Google Calendar' 
       });
     } else {
       res.status(500).json({ 

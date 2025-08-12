@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNotificationContext } from '../../contexts/NotificationContext';
+import { useNotificacaoAutoRefresh } from '../../hooks/useAutoRefresh';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -14,6 +15,9 @@ const NotificationCenter = () => {
     loadNotifications,
     loadUnreadCount
   } = useNotificationContext();
+  
+  // Implementar auto-refresh para notificações
+  const { afterMarcarLida, afterMarcarTodasLidas, afterDeleteNotificacao, refreshNotificacoes } = useNotificacaoAutoRefresh(30000);
   
   const [filter, setFilter] = useState('todas'); // todas, nao_lidas, agendamentos, autenticacao, processos
   const [sortBy, setSortBy] = useState('data_criacao'); // data_criacao, tipo, lida
@@ -124,6 +128,7 @@ const NotificationCenter = () => {
             <button
               onClick={async () => {
                 await markAllAsRead();
+                afterMarcarTodasLidas(); // Trigger auto-refresh
                 // Forçar atualização visual
                 await loadNotifications();
                 await loadUnreadCount();
@@ -224,7 +229,10 @@ const NotificationCenter = () => {
               }`}
               onClick={() => {
                 const isRead = notification.lida === true || notification.status === 'lido' || notification.data_leitura;
-                if (!isRead) markAsRead(notification.id);
+                if (!isRead) {
+                  markAsRead(notification.id);
+                  afterMarcarLida(); // Trigger auto-refresh
+                }
               }}
             >
               <div className="flex items-start space-x-4">

@@ -1,7 +1,5 @@
-import React, { useState } from "react";
-import useApi, { downloadRelatorio } from '../../hooks/useApi.jsx';
-import Button from "@/components/common/Button";
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import useApi from '../../hooks/useApi.jsx';
 const { getUserRole } = useApi();
 
 // Helper function to safely render values that might be objects
@@ -65,7 +63,6 @@ function StatusBadge({ status }) {
       case "aguardando": return "#fd7e14";
       case "finalizado": return "#28a745";
       case "arquivado": return "#6c757d";
-      case "suspenso": return "#dc3545";
       default: return "#007bff";
     }
   };
@@ -76,7 +73,6 @@ function StatusBadge({ status }) {
       case "aguardando": return "Aguardando";
       case "finalizado": return "Finalizado";
       case "arquivado": return "Arquivado";
-      case "suspenso": return "Suspenso";
       default: return status || "Não Definido";
     }
   };
@@ -97,24 +93,24 @@ function StatusBadge({ status }) {
 }
 
 function Card({ title, children, color = "#007bff" }) {
+  const [hover, setHover] = React.useState(false);
   return (
-    <div style={{
-      backgroundColor: "white",
-      borderRadius: 12,
-      padding: 20,
-      marginBottom: 20,
-      boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
-      border: `3px solid ${color}20`,
-      transition: "transform 0.2s ease, box-shadow 0.2s ease",
-    }}
-    onMouseEnter={(e) => {
-      e.target.style.transform = "translateY(-2px)";
-      e.target.style.boxShadow = "0 4px 20px rgba(0,0,0,0.12)";
-    }}
-    onMouseLeave={(e) => {
-      e.target.style.transform = "translateY(0)";
-      e.target.style.boxShadow = "0 2px 10px rgba(0,0,0,0.08)";
-    }}>
+    <div
+      style={{
+        backgroundColor: "white",
+        borderRadius: 12,
+        padding: 20,
+        marginBottom: 20,
+        boxShadow: hover
+          ? "0 4px 20px rgba(0,0,0,0.12)"
+          : "0 2px 10px rgba(0,0,0,0.08)",
+        border: `3px solid ${color}20`,
+        transform: hover ? "translateY(-2px)" : "translateY(0)",
+        transition: "transform 0.2s ease, box-shadow 0.2s ease",
+      }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
       {title && (
         <h3 style={{
           color: color,
@@ -221,34 +217,23 @@ function PieChart({ data, title }) {
 // Dashboard específico para Alunos
 function AlunosDashboard({ dashboardData, user }) {
   const meusProcessos = dashboardData?.processos || [];
-  // Normalização dos status para refletir o banco
-  const normalizaStatus = (status) => {
-    if (!status) return '';
-    const s = status.toLowerCase();
-    if (s.includes('andamento')) return 'em_andamento';
-    if (s.includes('aguardando')) return 'aguardando';
-    if (s.includes('conclu')) return 'finalizado';
-    if (s.includes('finaliz')) return 'finalizado';
-    if (s.includes('arquiv')) return 'arquivado';
-    if (s.includes('suspen')) return 'suspenso';
-    return s;
-  };
-  const processosAtivos = meusProcessos.filter(p => normalizaStatus(p.status) !== 'arquivado').length;
-  const processosFinalizados = meusProcessos.filter(p => normalizaStatus(p.status) === 'finalizado').length;
+  const processosAtivos = meusProcessos.filter(p => p.status !== 'arquivado').length;
+  const processosFinalizados = meusProcessos.filter(p => p.status === 'finalizado').length;
+  
   // Dados para o gráfico de status
   const statusData = [
-    { label: "Em Andamento", value: meusProcessos.filter(p => normalizaStatus(p.status) === 'em_andamento').length },
-    { label: "Aguardando", value: meusProcessos.filter(p => normalizaStatus(p.status) === 'aguardando').length },
-    { label: "Finalizados", value: meusProcessos.filter(p => normalizaStatus(p.status) === 'finalizado').length },
-    { label: "Arquivados", value: meusProcessos.filter(p => normalizaStatus(p.status) === 'arquivado').length }
+    { label: "Em Andamento", value: meusProcessos.filter(p => p.status === 'em_andamento').length },
+    { label: "Aguardando", value: meusProcessos.filter(p => p.status === 'aguardando').length },
+    { label: "Finalizados", value: processosFinalizados },
+    { label: "Arquivados", value: meusProcessos.filter(p => p.status === 'arquivado').length }
   ];
 
-  const processosRecentes = meusProcessos.slice(0, 3);
+  const processosRecentes = meusProcessos.slice(0, 4);
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
       {/* Resumo dos Processos */}
-      <Card title="Meus Processos" color="#007bff">
+      <Card title="📋 Meus Processos" color="#007bff">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 15, marginBottom: 20 }}>
           <StatItem 
             label="Total" 
@@ -281,12 +266,12 @@ function AlunosDashboard({ dashboardData, user }) {
       </Card>
 
       {/* Gráfico de Status */}
-      <Card title="Status dos Processos" color="#17a2b8">
+      <Card title="📈 Status dos Processos" color="#17a2b8">
         <PieChart data={statusData} />
       </Card>
 
-      {/* Processos Recentes */}
-      <Card title="🕒 Últimos Processos" color="#ffc107">
+      {/* Processos Recentes - Limitados a 4 */}
+      <Card title="🕒 Processos Recentes (4 mais atualizados)" color="#ffc107">
         {processosRecentes.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {processosRecentes.map((processo, index) => (
@@ -310,6 +295,17 @@ function AlunosDashboard({ dashboardData, user }) {
                 </div>
               </div>
             ))}
+            {meusProcessos.length > 4 && (
+              <div style={{
+                textAlign: 'center',
+                padding: '8px',
+                color: '#666',
+                fontSize: '12px',
+                fontStyle: 'italic'
+              }}>
+                ... e mais {meusProcessos.length - 4} processos
+              </div>
+            )}
           </div>
         ) : (
           <div style={{ textAlign: "center", color: "#666", padding: 20 }}>
@@ -338,7 +334,7 @@ function ProfessoresDashboard({ dashboardData, user }) {
     { label: "Arquivados", value: processosSupervisionados.filter(p => p.status === 'arquivado').length }
   ];
 
-  const processosRecentes = processosSupervisionados.slice(0, 3);
+  const processosRecentes = processosSupervisionados.slice(0, 4);
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
@@ -376,12 +372,12 @@ function ProfessoresDashboard({ dashboardData, user }) {
       </Card>
 
       {/* Distribuição de Status */}
-      <Card title="Distribuição de Status" color="#6f42c1">
+      <Card title="📊 Distribuição de Status" color="#6f42c1">
         <PieChart data={statusData} />
       </Card>
 
-      {/* Processos Supervisionados Recentes */}
-      <Card title="🔍 Processos Supervisionados" color="#dc3545">
+      {/* Processos Supervisionados Recentes - Limitados a 4 */}
+      <Card title="🔍 Processos Supervisionados (4 mais atualizados)" color="#dc3545">
         {processosRecentes.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {processosRecentes.map((processo, index) => (
@@ -405,6 +401,17 @@ function ProfessoresDashboard({ dashboardData, user }) {
                 </div>
               </div>
             ))}
+            {processosSupervisionados.length > 4 && (
+              <div style={{
+                textAlign: 'center',
+                padding: '8px',
+                color: '#666',
+                fontSize: '12px',
+                fontStyle: 'italic'
+              }}>
+                ... e mais {processosSupervisionados.length - 4} processos
+              </div>
+            )}
           </div>
         ) : (
           <div style={{ textAlign: "center", color: "#666", padding: 20 }}>
@@ -421,34 +428,17 @@ function ProfessoresDashboard({ dashboardData, user }) {
 
 // Dashboard específico para Administradores
 function AdminsDashboard({ dashboardData }) {
-  const navigate = useNavigate();
-  const [isDownloading, setIsDownloading] = useState(false);
-  
   const totalProcessos = dashboardData?.totalProcessos || 0;
   const totalUsuarios = dashboardData?.totalUsuarios || 0;
   const processosAtivos = dashboardData?.processosAtivos || 0;
   const usuariosAtivos = dashboardData?.usuariosAtivos || 0;
-  
-  // Função para baixar relatório
-  const handleDownloadRelatorio = async () => {
-    setIsDownloading(true);
-    try {
-      await downloadRelatorio();
-    } catch (error) {
-      alert('Erro ao baixar relatório. Tente novamente.');
-    } finally {
-      setIsDownloading(false);
-    }
-  };
   
   // Dados para gráficos
   const statusData = [
     { label: "Em Andamento", value: dashboardData?.processosPorStatus?.em_andamento || 0 },
     { label: "Aguardando", value: dashboardData?.processosPorStatus?.aguardando || 0 },
     { label: "Finalizados", value: dashboardData?.processosPorStatus?.finalizado || 0 },
-    { label: "Arquivados", value: dashboardData?.processosPorStatus?.arquivado || 0 },
-    { label: "Suspensos", value: dashboardData?.processosPorStatus?.suspenso || 0 },
-    { label: "Outros", value: dashboardData?.processosPorStatus?.outros || 0 }
+    { label: "Arquivados", value: dashboardData?.processosPorStatus?.arquivado || 0 }
   ];
 
   const usuariosPorTipo = [
@@ -460,7 +450,7 @@ function AdminsDashboard({ dashboardData }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
       {/* Estatísticas Gerais do Sistema */}
-      <Card title="Visão Geral do Sistema" color="#6f42c1">
+      <Card title="🏛️ Visão Geral do Sistema" color="#6f42c1">
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 15, marginBottom: 20 }}>
           <StatItem 
             label="Total Processos" 
@@ -505,38 +495,54 @@ function AdminsDashboard({ dashboardData }) {
       </Card>
 
       {/* Distribuição de Status dos Processos */}
-      <Card title="Status dos Processos" color="#dc3545">
+      <Card title="📊 Status dos Processos" color="#dc3545">
         <PieChart data={statusData} />
       </Card>
 
       {/* Distribuição de Usuários */}
-      <Card title="Tipos de Usuários" color="#fd7e14">
+      <Card title="👥 Tipos de Usuários" color="#fd7e14">
         <PieChart data={usuariosPorTipo} />
       </Card>
 
       {/* Ações Administrativas */}
-      <Card title="Ações Administrativas" color="#20c997">
+      <Card title="⚙️ Ações Administrativas" color="#20c997">
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <Button 
-            variant="primary"
-            onClick={handleDownloadRelatorio}
-            disabled={isDownloading}
-          >
-            {isDownloading ? "Gerando..." : "Relatório Completo"}
-          </Button>
-          <Button 
-            variant="success"
-            onClick={() => navigate('/usuarios')}
-          >
-            Gerenciar Usuários
-          </Button>
-          <Button 
-            variant="secondary" 
-            style={{ backgroundColor: "#ffc107", color: "#212529" }}
-            onClick={() => navigate('/processos')}
-          >
-            Gerenciar Processos
-          </Button>
+          <button style={{
+            padding: 12,
+            backgroundColor: "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: 8,
+            cursor: "pointer",
+            fontSize: 14,
+            fontWeight: "bold"
+          }}>
+            📊 Relatório Completo
+          </button>
+          <button style={{
+            padding: 12,
+            backgroundColor: "#28a745",
+            color: "white",
+            border: "none",
+            borderRadius: 8,
+            cursor: "pointer",
+            fontSize: 14,
+            fontWeight: "bold"
+          }}>
+            👤 Gerenciar Usuários
+          </button>
+          <button style={{
+            padding: 12,
+            backgroundColor: "#ffc107",
+            color: "#212529",
+            border: "none",
+            borderRadius: 8,
+            cursor: "pointer",
+            fontSize: 14,
+            fontWeight: "bold"
+          }}>
+            📋 Gerenciar Processos
+          </button>
         </div>
       </Card>
     </div>
@@ -582,7 +588,7 @@ export default function DashboardSummary({ dashboardData, user }) {
       )}
       
       {!["Aluno", "Professor", "Admin"].includes(userRole) && (
-        <Card title="Acesso Restrito" color="#dc3545">
+        <Card title="⚠️ Acesso Restrito" color="#dc3545">
           <div style={{ textAlign: "center", color: "#666", padding: 20 }}>
             <p>Papel de usuário não reconhecido: {userRole}</p>
             <p style={{ fontSize: 12, marginTop: 8 }}>

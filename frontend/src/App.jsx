@@ -1,18 +1,36 @@
-import React from "react";
+import React from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { AuthProvider } from "./contexts/AuthContext";
-import { NotificationProvider } from "./contexts/NotificationContext";
-import { ToastProvider } from "./contexts/ToastContext";
-import AppRouter from "@/routes/AppRouter";
-import { queryClient } from "./hooks/useQueryClient";
-import NotificationToast from "./components/notifications/NotificationToast";
-import LoginDebugComponent from "./components/debug/LoginDebugComponent";
+import { queryClient } from './hooks/useQueryClient';
+import { ToastProvider } from './contexts/ToastContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import AppRouter from './routes/AppRouter';
+import NotificationToast from './components/notifications/NotificationToast';
+import AutoRefreshIndicator from './components/common/AutoRefreshIndicator';
+import { useAutoRefresh } from './hooks/useAutoRefresh';
+import LoginDebugComponent from './components/debug/LoginDebugComponent';
 
-// Debug tools apenas em desenvolvimento
-if (import.meta.env.DEV) {
-  import('./utils/apiTester.js');
-  import('./utils/frontendInitializer.js');
+// Componente interno para usar hooks
+function AppContent() {
+  const { manualRefresh, isActive } = useAutoRefresh(30000);
+  
+  return (
+    <>
+      <AppRouter />
+      <NotificationToast />
+      {/* Indicador de auto-refresh global */}
+      <AutoRefreshIndicator 
+        isActive={isActive}
+        interval={30000}
+        onForceRefresh={manualRefresh}
+      />
+      {/* DevTools apenas em desenvolvimento */}
+      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+      {/* Monitor de Performance */}
+      {/* <PerformanceMonitor /> */}
+    </>
+  );
 }
 
 function App() {
@@ -26,12 +44,7 @@ function App() {
       <ToastProvider>
         <AuthProvider>
           <NotificationProvider>
-            <AppRouter />
-            <NotificationToast />
-            {/* DevTools apenas em desenvolvimento */}
-            {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
-            {/* Monitor de Performance */}
-            {/* <PerformanceMonitor /> */}
+            <AppContent />
           </NotificationProvider>
         </AuthProvider>
       </ToastProvider>

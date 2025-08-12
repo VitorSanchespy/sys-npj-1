@@ -6,11 +6,13 @@ const jwt = require('jsonwebtoken');
 const roleMiddleware = (allowedRoles = []) => {
   return (req, res, next) => {
     try {
-      if (!req.usuario) {
+      // Verificar tanto req.user quanto req.usuario para compatibilidade
+      const user = req.user || req.usuario;
+      if (!user) {
         return res.status(401).json({ erro: 'Token de autenticação necessário' });
       }
       // Suporta role como string (nome) ou número (id)
-      let userRole = req.usuario.role;
+      let userRole = user.role;
       if (typeof userRole === 'object' && userRole.nome) userRole = userRole.nome;
       if (typeof userRole === 'number') userRole = userRole.toString();
       if (typeof userRole === 'string') userRole = userRole.trim();

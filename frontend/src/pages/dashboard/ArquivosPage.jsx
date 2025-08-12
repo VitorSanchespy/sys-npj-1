@@ -4,29 +4,47 @@ import { useAuthContext } from "../../contexts/AuthContext";
 import FileUploadForm from "../../components/arquivos/FileUploadForm";
 import { getFileUrl } from '../../utils/fileUrl';
 import Button from "@/components/common/Button";
+import { useArquivoAutoRefresh } from "../../hooks/useAutoRefresh";
 
 export default function ArquivosPage() {
   const { token, user } = useAuthContext();
   const [arquivos, setArquivos] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Implementar auto-refresh para arquivos
+  const { afterUploadArquivo, afterDeleteArquivo, refreshArquivos } = useArquivoAutoRefresh(30000);
+
+  const fetchArquivos = async () => {
+    setLoading(true);
+    try {
+      // Busca apenas arquivos do usuário logado
+      const data = await arquivoService.listArquivos(token);
+      // Se precisar filtrar por usuário:
+      const arquivosUsuario = user?.id ? data.filter(a => a.usuario_id === user.id) : data;
+      setArquivos(arquivosUsuario);
+    } catch {
+      setArquivos([]);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    async function fetchArquivos() {
-      setLoading(true);
-      try {
-        // Busca apenas arquivos do usuário logado
-        // O método correto para listar arquivos do usuário
-        const data = await arquivoService.listArquivos(token);
-        // Se precisar filtrar por usuário:
-        const arquivosUsuario = user?.id ? data.filter(a => a.usuario_id === user.id) : data;
-        setArquivos(arquivosUsuario);
-      } catch {
-        setArquivos([]);
-      }
-      setLoading(false);
+    if (user?.id) {
+      fetchArquivos();
     }
-    if (user?.id) fetchArquivos();
   }, [token, user]);
+
+  // Função para ser chamada após upload
+  const handleAfterUpload = () => {
+    afterUploadArquivo();
+    fetchArquivos(); // Refresh manual imediato
+  };
+
+  // Função para ser chamada após deletar
+  const handleAfterDelete = () => {
+    afterDeleteArquivo();
+    fetchArquivos(); // Refresh manual imediato
+  };
 
   return (
     <>
@@ -48,7 +66,7 @@ export default function ArquivosPage() {
         </p>
       </div>
       
-      <FileUploadForm onUpload={() => window.location.reload()} />
+      <FileUploadForm onUpload={handleAfterUpload} />
         {loading ? (
           <div>Carregando arquivos...</div>
         ) : arquivos.length === 0 ? (
@@ -91,6 +109,7 @@ export default function ArquivosPage() {
                             try {
                               await arquivoService.deleteArquivo(token, arquivo.id);
                               setArquivos(arquivos.filter(a => a.id !== arquivo.id));
+                              handleAfterDelete(); // Trigger auto-refresh
                             } catch (err) {
                               alert('Erro ao excluir arquivo: ' + (err.message || 'Erro desconhecido'));
                             }

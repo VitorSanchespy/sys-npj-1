@@ -11,6 +11,7 @@ router.use(verificarToken);
 router.get('/roles', tabelaController.listarRoles);
 router.get('/status', tabelaController.listarStatus);
 router.get('/tipos-acao', tabelaController.listarTiposAcao);
+router.get('/tipos-processo', tabelaController.listarTiposAcao); // Alias para tipos de processo
 router.get('/materia-assunto', tabelaController.listarMateriaAssunto);
 router.get('/materias-assuntos', tabelaController.listarMateriaAssunto); // Alias para compatibilidade
 router.post('/materia-assunto', tabelaController.criarMateriaAssunto);

@@ -184,86 +184,79 @@ export function useDashboardData() {
         throw new Error(`Token ou usuário não disponível`);
       }
 
-      // Para Admin, buscar estatísticas reais do backend
-      if (userRole === "Admin") {
-        const stats = await apiRequest('/api/dashboard/stats', { token });
-        // Estrutura compatível com DashboardSummary
-        return {
-          totalProcessos: stats.totalProcessos,
-          processosAtivos: stats.processosAtivos,
-          processosPorStatus: stats.processosPorStatus,
-          totalUsuarios: stats.totalUsuarios,
-          usuariosAtivos: stats.usuariosAtivos,
-          usuariosPorTipo: stats.usuariosPorTipo,
-          processos: [],
-          processosRecentes: [],
-          agendamentos: [],
-          usuarios: []
-        };
-      }
+  // Removido console.log
 
-      // Para outros perfis, manter lógica anterior
       try {
-        const requests = [
-          { key: 'processos', url: '/api/processos?recent=true&limit=4' },
-          { key: 'agendamentos', url: '/api/agendamentos' }
-        ];
-        if (userRole === "Professor") {
-          requests.push({ key: 'usuarios', url: '/api/usuarios' });
-        }
-        const results = await Promise.allSettled(
-          requests.map(({ key, url }) =>
-            requestCache.getOrFetch(
-              `${url}:${token}`,
-              () => apiRequest(url, { token })
-            ).catch(error => {
-              console.warn(`⚠️ Falha em ${url}:`, error.message);
-              return getDefaultValue(key);
-            })
-          )
-        );
-        const data = requests.reduce((acc, { key }, index) => {
-          const result = results[index];
-          acc[key] = result.status === 'fulfilled' ? result.value : getDefaultValue(key);
-          return acc;
-        }, {});
-        let processos = [];
-        if (data.processos) {
-          if (Array.isArray(data.processos)) {
-            processos = data.processos;
-          } else if (data.processos.processos && Array.isArray(data.processos.processos)) {
-            processos = data.processos.processos;
-          }
-        }
-        const dashboardData = {
-          processos: processos,
-          processosRecentes: processos.slice(0, 4),
-          agendamentos: Array.isArray(data.agendamentos) ? data.agendamentos : [],
-          usuarios: Array.isArray(data.usuarios) ? data.usuarios : []
+        // Buscar dados dinâmicos baseados no perfil do backend
+        const dashboardData = await apiRequest('/api/dashboard', { token });
+        
+  // Removido console.log
+
+        // Retornar dados na estrutura esperada pelo componente
+        return {
+          // Dados principais
+          processosTotal: dashboardData.processosTotal || 0,
+          processosAtivos: dashboardData.processosAtivos || 0,
+          processosPorStatus: dashboardData.processosPorStatus || {},
+          
+          // Dados de usuários (apenas para Admin/Professor)
+          totalUsuarios: dashboardData.totalUsuarios || 0,
+          usuariosAtivos: dashboardData.usuariosAtivos || 0,
+          usuariosPorTipo: dashboardData.usuariosPorTipo || {},
+          
+          // Dados de agendamentos
+          agendamentosTotal: dashboardData.agendamentosTotal || 0,
+          agendamentosPorTipo: dashboardData.agendamentosPorTipo || {},
+          agendamentosPorStatus: dashboardData.agendamentosPorStatus || {},
+          
+          // Metadados
+          userRole: dashboardData.userRole || userRole,
+          ultimaAtualizacao: dashboardData.ultimaAtualizacao,
+          estatisticas: dashboardData.estatisticas || {},
+          
+          // Arrays para compatibilidade (se existirem)
+          processos: dashboardData.processos || [],
+          agendamentos: dashboardData.agendamentos || [],
+          usuarios: dashboardData.usuarios || [],
+          
+          // Compatibilidade com estrutura anterior
+          processosRecentes: (dashboardData.processos || []).slice(0, 4),
+          statusCounts: dashboardData.processosPorStatus || {},
+          totalProcessos: dashboardData.processosTotal || 0
         };
-        const statusCounts = dashboardData.processos.reduce((acc, proc) => {
-          const status = proc.status || 'Indefinido';
-          acc[status] = (acc[status] || 0) + 1;
-          return acc;
-        }, {});
-        dashboardData.statusCounts = statusCounts;
-        dashboardData.totalProcessos = dashboardData.processos.length;
-        dashboardData.processosAtivos = dashboardData.processos.filter(p => p.status !== 'arquivado').length;
-        dashboardData.processosPorStatus = {
-          ativo: statusCounts.ativo || 0,
-          em_andamento: statusCounts.em_andamento || 0,
-          finalizado: statusCounts.finalizado || 0,
-          arquivado: statusCounts.arquivado || 0
-        };
-        return dashboardData;
+        
       } catch (error) {
-        console.error('Erro na busca do dashboard:', error);
-        throw error;
+        console.error(`❌ Erro ao buscar dados do dashboard:`, error);
+        
+        // Fallback: retornar dados vazios mas válidos
+        return {
+          processosTotal: 0,
+          processosAtivos: 0,
+          processosPorStatus: {},
+          totalUsuarios: 0,
+          usuariosAtivos: 0,
+          usuariosPorTipo: {},
+          agendamentosTotal: 0,
+          agendamentosPorTipo: {},
+          agendamentosPorStatus: {},
+          userRole: userRole,
+          ultimaAtualizacao: new Date().toISOString(),
+          estatisticas: {},
+          processos: [],
+          agendamentos: [],
+          usuarios: [],
+          processosRecentes: [],
+          statusCounts: {},
+          totalProcessos: 0,
+          erro: error.message
+        };
       }
     },
     enabled: !!(token && user),
     staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: true,
+    refetchInterval: 1000 * 60 * 2
   });
 }
 
