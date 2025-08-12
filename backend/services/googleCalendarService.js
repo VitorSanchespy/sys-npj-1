@@ -1,5 +1,6 @@
 const { google } = require('googleapis');
 const { OAuth2Client } = require('google-auth-library');
+const { toGoogleCalendarFormat } = require('../utils/timezone');
 
 class GoogleCalendarService {
   constructor() {
@@ -41,17 +42,16 @@ class GoogleCalendarService {
       this.oauth2Client.setCredentials(tokens);
       const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
 
+      // Usar formato específico para Google Calendar com timezone Brasil
+      const startFormat = toGoogleCalendarFormat(eventData.dataInicio);
+      const endFormat = toGoogleCalendarFormat(eventData.dataFim);
+
       const event = {
         summary: eventData.titulo,
         description: eventData.descricao,
-        start: {
-          dateTime: eventData.dataInicio,
-          timeZone: 'America/Sao_Paulo',
-        },
-        end: {
-          dateTime: eventData.dataFim,
-          timeZone: 'America/Sao_Paulo',
-        },
+        start: startFormat,
+        end: endFormat,
+        location: eventData.local || '',
         reminders: {
           useDefault: false,
           overrides: [
@@ -98,17 +98,16 @@ class GoogleCalendarService {
       this.oauth2Client.setCredentials(tokens);
       const calendar = google.calendar({ version: 'v3', auth: this.oauth2Client });
 
+      // Usar formato específico para Google Calendar com timezone Brasil
+      const startFormat = toGoogleCalendarFormat(eventData.dataInicio);
+      const endFormat = toGoogleCalendarFormat(eventData.dataFim);
+
       const event = {
         summary: eventData.titulo,
         description: eventData.descricao,
-        start: {
-          dateTime: eventData.dataInicio,
-          timeZone: 'America/Sao_Paulo',
-        },
-        end: {
-          dateTime: eventData.dataFim,
-          timeZone: 'America/Sao_Paulo',
-        },
+        start: startFormat,
+        end: endFormat,
+        location: eventData.local || '',
         reminders: {
           useDefault: false,
           overrides: [

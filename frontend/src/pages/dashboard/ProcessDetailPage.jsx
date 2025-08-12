@@ -229,7 +229,7 @@ export default function ProcessDetailPage() {
             Editar
           </Button>
         )}
-        {processo.status !== 'Concluído' && (
+        {processo.status !== 'Concluído' && getUserRole(user) !== "Aluno" && (
           <Button
             variant="blueWhite"
             onClick={handleConcluirProcesso}

@@ -51,8 +51,6 @@ const validate = (method) => {
       
     case 'updateSenha':
       return [
-        check('id').isInt({ min: 1 }).withMessage('ID de usuário inválido')
-          .toInt(),
         check('senha').isLength({ min: 6 }).withMessage('Senha deve ter pelo menos 6 caracteres')
       ];
 

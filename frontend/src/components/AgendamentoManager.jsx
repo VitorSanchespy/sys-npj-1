@@ -12,6 +12,11 @@ import {
   useInvalidateCache,
   useConnectionStatus
 } from '../hooks/agendamentoHooks';
+import { 
+  formatToBrasilia, 
+  toDateTimeLocalBrasilia, 
+  toBrasiliaISO 
+} from '../utils/timezone';
 
 const AgendamentoManager = ({ processoId = null }) => {
   const { user, token } = useAuthContext();
@@ -145,15 +150,9 @@ const AgendamentoManager = ({ processoId = null }) => {
     return labels[status] || status;
   };
 
-  // Corrigir formatDateTime para somar 3 horas ao UTC e exibir corretamente em horário de Brasília (UTC-3)
+  // Função para exibir datas em horário de Brasília - CORRIGIDA
   const formatDateTime = (dateTime) => {
-    if (!dateTime) return '';
-    // Garante que a string seja tratada como UTC
-    const date = new Date(dateTime);
-    // Soma 3 horas para UTC-3 (Brasília)
-    const brasiliaDate = new Date(date.getTime() + 3 * 60 * 60 * 1000);
-    const pad = (n) => n.toString().padStart(2, '0');
-    return `${pad(brasiliaDate.getDate())}/${pad(brasiliaDate.getMonth() + 1)}/${brasiliaDate.getFullYear()} ${pad(brasiliaDate.getHours())}:${pad(brasiliaDate.getMinutes())}`;
+    return formatToBrasilia(dateTime);
   };
 
   // Calcular estatísticas em tempo real baseadas nos agendamentos carregados
@@ -229,40 +228,32 @@ const AgendamentoManager = ({ processoId = null }) => {
   };
 
   const handleEdit = (agendamento) => {
-    // Converter data para formato datetime-local para edição
+    // Converter data UTC para formato datetime-local em horário de Brasília
     let dataInicioFormatada = '';
     let dataFimFormatada = '';
 
     try {
       const dataInicio = agendamento.data_inicio || agendamento.dataEvento || agendamento.data_evento;
       if (dataInicio) {
-        const data = new Date(dataInicio);
-        if (!isNaN(data.getTime())) {
-          dataInicioFormatada = data.toISOString().slice(0, 16);
-        }
+        dataInicioFormatada = toDateTimeLocalBrasilia(dataInicio);
       }
     } catch (error) {
       console.warn('Erro ao formatar data de início:', error);
-      dataInicioFormatada = new Date().toISOString().slice(0, 16);
+      dataInicioFormatada = '';
     }
 
     try {
       const dataFim = agendamento.data_fim || agendamento.dataFim;
       if (dataFim) {
-        const data = new Date(dataFim);
-        if (!isNaN(data.getTime())) {
-          dataFimFormatada = data.toISOString().slice(0, 16);
-        }
+        dataFimFormatada = toDateTimeLocalBrasilia(dataFim);
       }
     } catch (error) {
       console.warn('Erro ao formatar data de fim:', error);
       if (dataInicioFormatada) {
-        try {
-          const inicioDate = new Date(dataInicioFormatada);
-          dataFimFormatada = new Date(inicioDate.getTime() + 60*60*1000).toISOString().slice(0, 16);
-        } catch {
-          dataFimFormatada = '';
-        }
+        // Adiciona 1 hora à data de início se não houver data fim
+        const inicioDate = new Date(dataInicioFormatada);
+        inicioDate.setHours(inicioDate.getHours() + 1);
+        dataFimFormatada = toDateTimeLocalBrasilia(inicioDate);
       }
     }
     
@@ -323,58 +314,18 @@ const AgendamentoManager = ({ processoId = null }) => {
     try {
       setError(null);
 
-      // Função para converter string datetime-local (Brasília) para UTC ISO string
-      function brasiliaToUTCISOString(dtStr) {
-        if (!dtStr) return undefined;
-        // dtStr: 'YYYY-MM-DDTHH:mm' (assumido em Brasília)
-        const [datePart, timePart] = dtStr.split('T');
-        if (!datePart || !timePart) return undefined;
-        const [year, month, day] = datePart.split('-').map(Number);
-        const [hour, minute] = timePart.split(':').map(Number);
-        // Cria Date como se fosse no horário de Brasília (UTC-3)
-        const date = new Date(Date.UTC(year, month - 1, day, hour + 3, minute));
-        // Subtrai 3 horas para converter para UTC
-        date.setUTCHours(date.getUTCHours() - 3);
-        return date.toISOString();
-      }
-
       const dadosEnvio = {
         titulo: formData.titulo,
         descricao: formData.descricao || '',
-        data_inicio: formData.data_inicio ? brasiliaToUTCISOString(formData.data_inicio) : new Date().toISOString(),
-        data_fim: formData.data_fim ? brasiliaToUTCISOString(formData.data_fim) : (() => {
-          // Se não houver data_fim, adiciona 1h à data_inicio
-          if (formData.data_inicio) {
-            const [datePart, timePart] = formData.data_inicio.split('T');
-            if (datePart && timePart) {
-              const [year, month, day] = datePart.split('-').map(Number);
-              const [hour, minute] = timePart.split(':').map(Number);
-              let endHour = hour + 1;
-              let endDay = day;
-              let endMonth = month;
-              let endYear = year;
-              if (endHour >= 24) {
-                endHour = endHour - 24;
-                endDay++;
-                // Ajuste simples para mês/ano (não cobre todos os casos de mês)
-                if (endDay > 28) {
-                  const tempDate = new Date(year, month - 1, endDay);
-                  if (tempDate.getMonth() !== month - 1) {
-                    endDay = 1;
-                    endMonth++;
-                    if (endMonth > 12) {
-                      endMonth = 1;
-                      endYear++;
-                    }
-                  }
-                }
-              }
-              const endStr = `${endYear.toString().padStart(4, '0')}-${endMonth.toString().padStart(2, '0')}-${endDay.toString().padStart(2, '0')}T${endHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-              return brasiliaToUTCISOString(endStr);
-            }
-          }
-          return new Date().toISOString();
-        })(),
+        data_inicio: toBrasiliaISO(formData.data_inicio),
+        data_fim: formData.data_fim ? 
+          toBrasiliaISO(formData.data_fim) : 
+          (() => {
+            // Se não houver data_fim, adiciona 1h à data_inicio
+            const inicioDate = new Date(formData.data_inicio + ':00'); // Garantir segundos
+            inicioDate.setHours(inicioDate.getHours() + 1);
+            return toBrasiliaISO(inicioDate.toISOString().slice(0, 16));
+          })(),
         local: formData.local || '',
         convidados: formData.convidados ?
           formData.convidados.split(',')

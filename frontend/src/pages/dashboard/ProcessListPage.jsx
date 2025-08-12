@@ -160,20 +160,22 @@ export default function ProcessListPage() {
           >
             Ver Detalhes
           </Button>
-          {row.status === 'Concluído' ? (
-            <Button
-              variant="success"
-              onClick={() => handleReabrirProcesso(row.id)}
-            >
-              Reabrir
-            </Button>
-          ) : (
-            <Button
-              variant="blueWhite"
-              onClick={() => handleConcluirProcesso(row.id)}
-            >
-              Concluir
-            </Button>
+          {getUserRole(user) !== "Aluno" && (
+            row.status === 'Concluído' ? (
+              <Button
+                variant="success"
+                onClick={() => handleReabrirProcesso(row.id)}
+              >
+                Reabrir
+              </Button>
+            ) : (
+              <Button
+                variant="blueWhite"
+                onClick={() => handleConcluirProcesso(row.id)}
+              >
+                Concluir
+              </Button>
+            )
           )}
         </div>
       )

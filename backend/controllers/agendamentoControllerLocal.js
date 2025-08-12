@@ -1,7 +1,15 @@
 /**
  * CONTROLLER SIMPLIFICADO DE AGENDAMENTOS - PARA TESTES
  * Permite criação de agendamentos sem Google Calendar
+ * CORRIGIDO: Timezone fixo em América/São_Paulo
  */
+
+const { 
+  toBrasiliaISO,
+  toBrasiliaDate, 
+  formatToBrasilia,
+  nowBrasiliaISO
+} = require('../utils/timezone');
 
 // Simulação de banco de dados em memória para testes
 let agendamentosMemoria = [];
@@ -53,12 +61,12 @@ exports.criarAgendamento = async (req, res) => {
       titulo,
       descricao: descricao || '',
       local: local || '',
-      data_inicio,
-      data_fim: data_fim || data_inicio,
+      data_inicio: toBrasiliaISO(data_inicio), // Mantém fuso Brasil
+      data_fim: toBrasiliaISO(data_fim || data_inicio), // Mantém fuso Brasil
       tipo: tipo || 'outro',
       usuario_id: req.user.id,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      created_at: nowBrasiliaISO(),
+      updated_at: nowBrasiliaISO()
     };
 
     agendamentosMemoria.push(novoAgendamento);
@@ -101,8 +109,16 @@ exports.atualizarAgendamento = async (req, res) => {
       ...req.body,
       id: agendamentoAtual.id, // Manter ID
       usuario_id: agendamentoAtual.usuario_id, // Manter usuário
-      updated_at: new Date().toISOString()
+      updated_at: nowBrasiliaISO()
     };
+
+    // Converter datas se foram enviadas
+    if (req.body.data_inicio) {
+      dadosAtualizados.data_inicio = toBrasiliaISO(req.body.data_inicio);
+    }
+    if (req.body.data_fim) {
+      dadosAtualizados.data_fim = toBrasiliaISO(req.body.data_fim);
+    }
 
     agendamentosMemoria[agendamentoIndex] = dadosAtualizados;
 
@@ -158,21 +174,21 @@ exports.deletarAgendamento = async (req, res) => {
 exports.estatisticasAgendamentos = async (req, res) => {
   try {
     const agendamentosUsuario = agendamentosMemoria.filter(a => a.usuario_id === req.user.id);
-    const agora = new Date();
+    const agora = toBrasiliaDate(nowBrasiliaISO()); // Usar horário de Brasília para comparações
     
     const stats = {
       total: agendamentosUsuario.length,
       hoje: agendamentosUsuario.filter(a => {
-        const dataAgendamento = new Date(a.data_inicio);
+        const dataAgendamento = toBrasiliaDate(a.data_inicio);
         return dataAgendamento.toDateString() === agora.toDateString();
       }).length,
       proximos7Dias: agendamentosUsuario.filter(a => {
-        const dataAgendamento = new Date(a.data_inicio);
+        const dataAgendamento = toBrasiliaDate(a.data_inicio);
         const seteDiasDepois = new Date(agora.getTime() + 7 * 24 * 60 * 60 * 1000);
         return dataAgendamento >= agora && dataAgendamento <= seteDiasDepois;
       }).length,
       passados: agendamentosUsuario.filter(a => {
-        const dataAgendamento = new Date(a.data_inicio);
+        const dataAgendamento = toBrasiliaDate(a.data_inicio);
         return dataAgendamento < agora;
       }).length
     };
