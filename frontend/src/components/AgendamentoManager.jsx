@@ -145,14 +145,15 @@ const AgendamentoManager = ({ processoId = null }) => {
     return labels[status] || status;
   };
 
+  // Corrigir formatDateTime para somar 3 horas ao UTC e exibir corretamente em horário de Brasília (UTC-3)
   const formatDateTime = (dateTime) => {
-    return new Date(dateTime).toLocaleString('pt-BR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    if (!dateTime) return '';
+    // Garante que a string seja tratada como UTC
+    const date = new Date(dateTime);
+    // Soma 3 horas para UTC-3 (Brasília)
+    const brasiliaDate = new Date(date.getTime() + 3 * 60 * 60 * 1000);
+    const pad = (n) => n.toString().padStart(2, '0');
+    return `${pad(brasiliaDate.getDate())}/${pad(brasiliaDate.getMonth() + 1)}/${brasiliaDate.getFullYear()} ${pad(brasiliaDate.getHours())}:${pad(brasiliaDate.getMinutes())}`;
   };
 
   // Calcular estatísticas em tempo real baseadas nos agendamentos carregados
@@ -313,25 +314,69 @@ const AgendamentoManager = ({ processoId = null }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user || !token) return;
-    
+
     if (!formData.titulo || !formData.data_inicio) {
       setError('Título e data de início são obrigatórios');
       return;
     }
-    
+
     try {
       setError(null);
-      
+
+      // Função para converter string datetime-local (Brasília) para UTC ISO string
+      function brasiliaToUTCISOString(dtStr) {
+        if (!dtStr) return undefined;
+        // dtStr: 'YYYY-MM-DDTHH:mm' (assumido em Brasília)
+        const [datePart, timePart] = dtStr.split('T');
+        if (!datePart || !timePart) return undefined;
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hour, minute] = timePart.split(':').map(Number);
+        // Cria Date como se fosse no horário de Brasília (UTC-3)
+        const date = new Date(Date.UTC(year, month - 1, day, hour + 3, minute));
+        // Subtrai 3 horas para converter para UTC
+        date.setUTCHours(date.getUTCHours() - 3);
+        return date.toISOString();
+      }
+
       const dadosEnvio = {
         titulo: formData.titulo,
         descricao: formData.descricao || '',
-        data_inicio: formData.data_inicio ? new Date(formData.data_inicio).toISOString() : new Date().toISOString(),
-        data_fim: formData.data_fim ? new Date(formData.data_fim).toISOString() : (() => {
-          const inicio = formData.data_inicio ? new Date(formData.data_inicio) : new Date();
-          return new Date(inicio.getTime() + 60*60*1000).toISOString();
+        data_inicio: formData.data_inicio ? brasiliaToUTCISOString(formData.data_inicio) : new Date().toISOString(),
+        data_fim: formData.data_fim ? brasiliaToUTCISOString(formData.data_fim) : (() => {
+          // Se não houver data_fim, adiciona 1h à data_inicio
+          if (formData.data_inicio) {
+            const [datePart, timePart] = formData.data_inicio.split('T');
+            if (datePart && timePart) {
+              const [year, month, day] = datePart.split('-').map(Number);
+              const [hour, minute] = timePart.split(':').map(Number);
+              let endHour = hour + 1;
+              let endDay = day;
+              let endMonth = month;
+              let endYear = year;
+              if (endHour >= 24) {
+                endHour = endHour - 24;
+                endDay++;
+                // Ajuste simples para mês/ano (não cobre todos os casos de mês)
+                if (endDay > 28) {
+                  const tempDate = new Date(year, month - 1, endDay);
+                  if (tempDate.getMonth() !== month - 1) {
+                    endDay = 1;
+                    endMonth++;
+                    if (endMonth > 12) {
+                      endMonth = 1;
+                      endYear++;
+                    }
+                  }
+                }
+              }
+              const endStr = `${endYear.toString().padStart(4, '0')}-${endMonth.toString().padStart(2, '0')}-${endDay.toString().padStart(2, '0')}T${endHour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+              return brasiliaToUTCISOString(endStr);
+            }
+          }
+          return new Date().toISOString();
         })(),
         local: formData.local || '',
-        convidados: formData.convidados ? 
+        convidados: formData.convidados ?
           formData.convidados.split(',')
             .map(email => email.trim())
             .filter(email => email && email.includes('@'))
@@ -340,20 +385,20 @@ const AgendamentoManager = ({ processoId = null }) => {
         status: formData.status || 'agendado',
         processo_id: formData.processoId || processoId || null
       };
-      
+
       if (editando) {
         await updateAgendamento.mutateAsync({ id: editando, agendamentoData: dadosEnvio });
-        afterUpdateAgendamento(); // Auto-refresh após atualização
+        afterUpdateAgendamento();
         console.log('📅 Agendamento atualizado - dados atualizados automaticamente');
       } else {
         await createAgendamento.mutateAsync(dadosEnvio);
-        afterCreateAgendamento(); // Auto-refresh após criação
+        afterCreateAgendamento();
         console.log('📅 Agendamento criado - dados atualizados automaticamente');
       }
-      
+
       setShowForm(false);
       resetForm();
-      
+
       alert(editando ? 'Agendamento atualizado com sucesso!' : 'Agendamento criado com sucesso!');
     } catch (error) {
       console.error('Erro ao salvar agendamento:', error);
