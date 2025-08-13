@@ -12,6 +12,7 @@ const arquivoModel = require('./arquivoModel');
 const atualizacaoProcessoModel = require('./atualizacaoProcessoModel');
 const usuarioProcessoModel = require('./usuarioProcessoModel');
 const agendamentoModel = require('./agendamentoModelTemporario'); // TEMPORÁRIO - Google Calendar
+const agendamentoProcessoModel = require('./agendamentoProcessoModel'); // Agendamentos vinculados a processos
 const notificacaoModel = require('./notificacaoModel');
 const configuracaoNotificacaoModel = require('./configuracaoNotificacaoModel');
 
@@ -27,6 +28,7 @@ const models = {
   atualizacaoProcessoModel,
   usuarioProcessoModel,
   agendamentoModel, // TEMPORÁRIO - Google Calendar
+  agendamentoProcessoModel, // Agendamentos vinculados a processos
   notificacaoModel,
   configuracaoNotificacaoModel,
   sequelize,

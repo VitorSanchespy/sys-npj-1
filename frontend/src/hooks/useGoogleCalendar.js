@@ -43,18 +43,30 @@ export const useGoogleCalendar = () => {
     setError(null);
     
     try {
+      const token = localStorage.getItem('token');
+      console.log('🔍 Token encontrado:', token ? 'SIM' : 'NÃO');
+      console.log('🔍 Headers enviados:', getAuthHeaders());
+      
       // Obter URL de autorização
+      console.log('🚀 Fazendo request para:', `${API_BASE}/google-calendar/auth-url`);
       const response = await axios.get(
         `${API_BASE}/google-calendar/auth-url`,
         getAuthHeaders()
       );
+      
+      console.log('✅ Resposta recebida:', response.data);
 
       const authUrl = response.data.authUrl;
+      
+      console.log('🔗 URL de autorização recebida:', authUrl);
       
       // Usar redirect em vez de popup para evitar problemas de CORS
       window.location.href = authUrl;
 
     } catch (error) {
+      console.error('❌ Erro detalhado:', error);
+      console.error('❌ Response data:', error.response?.data);
+      console.error('❌ Status:', error.response?.status);
       setError(error.response?.data?.erro || 'Erro ao conectar');
       setLoading(false);
       throw error;

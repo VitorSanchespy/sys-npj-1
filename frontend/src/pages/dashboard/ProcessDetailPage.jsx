@@ -8,6 +8,8 @@ import StatusBadge from "@/components/common/StatusBadge";
 import Loader from "@/components/common/Loader";
 import UpdateList from "@/components/atualizacoes/UpdateList";
 import DocumentList from "@/components/documentos/DocumentList";
+import AgendamentosProcesso from "@/components/agendamentos/AgendamentosProcesso";
+import ProcessoAgendamentosSlim from "@/components/agendamentos/ProcessoAgendamentosSlim";
 import ProcessAssignUserModal from "@/components/processos/ProcessAssignUserModal";
 import ProcessUnassignUserModal from "@/components/processos/ProcessUnassignUserModal";
 import { getUserRole, hasRole, formatDate, renderValue } from "@/utils/commonUtils";
@@ -551,6 +553,17 @@ export default function ProcessDetailPage() {
             Anexe documentos relacionados ao processo como despachos, atas, petições, etc.
           </p>
           <DocumentList processoId={id} showInactive={true} status={processo.status} />
+        </div>
+
+        {/* Seção de Agendamentos */}
+        <div style={{
+          backgroundColor: '#f8f9fa',
+          padding: '20px',
+          borderRadius: '8px',
+          border: '1px solid #e9ecef',
+          marginBottom: '20px'
+        }}>
+          <ProcessoAgendamentosSlim processoId={id} />
         </div>
 
         {/* Histórico de Atualizações do Processo */}

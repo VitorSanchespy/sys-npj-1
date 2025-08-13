@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { google } = require('googleapis');
 const { OAuth2Client } = require('google-auth-library');
 const { toGoogleCalendarFormat } = require('../utils/timezone');
@@ -13,17 +14,31 @@ class GoogleCalendarService {
 
   // Gerar URL de autorização
   getAuthUrl() {
-    const scopes = ['https://www.googleapis.com/auth/calendar'];
-    const authUrl = this.oauth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: scopes,
-      prompt: 'consent'
-    });
-    
-    console.log('🔗 URL de autorização gerada:', authUrl);
-    console.log('🔗 Redirect URI configurado:', process.env.GOOGLE_REDIRECT_URI);
-    
-    return authUrl;
+    try {
+      console.log('🔧 Verificando credenciais OAuth2:');
+      console.log('  Client ID:', this.oauth2Client._clientId ? 'DEFINIDO' : 'INDEFINIDO');
+      console.log('  Client Secret:', this.oauth2Client._clientSecret ? 'DEFINIDO' : 'INDEFINIDO');
+      console.log('  Redirect URI:', this.oauth2Client._redirectUri);
+      
+      if (!this.oauth2Client._clientId || !this.oauth2Client._clientSecret) {
+        throw new Error('Credenciais do Google OAuth2 não estão configuradas corretamente');
+      }
+      
+      const scopes = ['https://www.googleapis.com/auth/calendar'];
+      const authUrl = this.oauth2Client.generateAuthUrl({
+        access_type: 'offline',
+        scope: scopes,
+        prompt: 'consent'
+      });
+      
+      console.log('🔗 URL de autorização gerada:', authUrl);
+      console.log('🔗 Redirect URI configurado:', process.env.GOOGLE_REDIRECT_URI);
+      
+      return authUrl;
+    } catch (error) {
+      console.error('❌ Erro ao gerar URL de autorização:', error);
+      throw error;
+    }
   }
 
   // Trocar código por tokens

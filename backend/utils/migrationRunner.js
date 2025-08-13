@@ -61,7 +61,12 @@ class MigrationRunner {
     console.log(`🚀 Executando migration: ${migrationFile}`);
     
     try {
-      await migration.up(this.connection);
+      // Importar Sequelize para passar para a migration
+      const { Sequelize } = require('sequelize');
+      const sequelize = require('./sequelize');
+      
+      // Executar migration com QueryInterface e Sequelize
+      await migration.up(sequelize.getQueryInterface(), Sequelize);
       
       // Registrar migration como executada
       await this.connection.execute(

@@ -8,9 +8,9 @@
     "dialect": "mysql"
   },
   "test": {
-    "username": "root",
-    "password": "1234",
-    "database": "npjdatabase_test",
+    "username": "test_user",
+    "password": "test_password",
+    "database": "npj_test",
     "host": "localhost",
     "port": 3306,
     "dialect": "mysql"

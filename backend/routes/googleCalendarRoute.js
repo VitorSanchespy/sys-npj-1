@@ -7,9 +7,19 @@ const authMiddleware = require('../middleware/authMiddleware');
 // Obter URL de autorização do Google
 router.get('/auth-url', authMiddleware, async (req, res) => {
   try {
+    console.log('📋 Verificando variáveis de ambiente:');
+    console.log('  GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? 'DEFINIDO' : 'INDEFINIDO');
+    console.log('  GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? 'DEFINIDO' : 'INDEFINIDO');
+    console.log('  GOOGLE_REDIRECT_URI:', process.env.GOOGLE_REDIRECT_URI);
+    
+    console.log('👤 Usuário autenticado:', req.user?.id);
+    
     const authUrl = googleCalendarService.getAuthUrl();
+    console.log('✅ URL gerada com sucesso');
     res.json({ authUrl });
   } catch (error) {
+    console.error('❌ Erro ao gerar URL de autorização:', error);
+    console.error('❌ Stack trace:', error.stack);
     res.status(500).json({ erro: error.message });
   }
 });

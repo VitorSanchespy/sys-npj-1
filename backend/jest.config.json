@@ -1,0 +1,17 @@
+{
+  "testEnvironment": "node",
+  "collectCoverageFrom": [
+    "controllers/**/*.js",
+    "models/**/*.js",
+    "services/**/*.js",
+    "!**/node_modules/**"
+  ],
+  "coverageDirectory": "coverage",
+  "coverageReporters": ["text", "lcov", "html"],
+  "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+  "testMatch": [
+    "**/tests/**/*.spec.js",
+    "**/tests/**/*.test.js"
+  ],
+  "testTimeout": 30000
+}

@@ -46,6 +46,11 @@ app.use('/api/usuarios', require('./routes/usuarioRoute'));
 app.use('/api/processos', require('./routes/processoRoute'));
 app.use('/api/agendamentos', require('./routes/agendamentoRoute'));
 app.use('/api/agendamentos-local', require('./routes/agendamentoLocalRoute')); // TEMPORÁRIO PARA TESTES
+// Rotas de agendamentos vinculados a processos
+app.use('/api/processos/:processoId/agendamentos-processo', require('./routes/agendamentosProcesso'));
+app.use('/api/agendamentos-processo', require('./routes/agendamentosProcesso'));
+// Rotas globais de agendamentos
+app.use('/api/agendamentos-global', require('./routes/agendamentos'));
 app.use('/api/notificacoes', require('./routes/notificacaoRoute'));
 app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoute'));
 app.use('/api/tabelas', require('./routes/tabelaAuxiliarRoute'));
@@ -77,6 +82,7 @@ app.use((err, req, res, next) => {
   console.error('Erro:', err.message);
   res.status(500).json({ erro: 'Erro interno do servidor' });
 });
+
   const PORT = parseInt(process.env.PORT);
   const sequelize = require('./utils/sequelize');
   sequelize.authenticate().then(() => {
@@ -85,7 +91,6 @@ app.use((err, req, res, next) => {
     app.listen(PORT, () => {
       console.log(` Servidor rodando na porta ${PORT}`);
       console.log(` Acesse: http://localhost:${PORT}`);
-      console.log('✅ Sistema com banco de dados');
     });
   }).catch((err) => {
     global.dbAvailable = false;
