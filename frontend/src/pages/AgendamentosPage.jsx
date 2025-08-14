@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, Search, Filter, Edit, Trash2, ExternalLink } from 'lucide-react';
 import { apiRequest } from '@/api/apiRequest';
 import { useAuthContext } from '@/contexts/AuthContext';
-import { useGoogleCalendar } from '@/contexts/GoogleCalendarContext';
+import { useGoogleCalendar } from '@/hooks/useGoogleCalendar';
 import Button from '@/components/common/Button';
 import AgendamentoForm from '../components/agendamentos/AgendamentoForm';
 
@@ -12,6 +12,7 @@ const AgendamentosPage = () => {
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingAgendamento, setEditingAgendamento] = useState(null);
+  const [searchTimeout, setSearchTimeout] = useState(null);
   const [filters, setFilters] = useState({
     status: '',
     tipo_evento: '',
@@ -25,7 +26,7 @@ const AgendamentosPage = () => {
   });
 
   const { token } = useAuthContext();
-  const { isConnected, connectCalendar, loading: calendarLoading } = useGoogleCalendar();
+  const { isConnected, connected, connectCalendar, disconnectCalendar, loading: calendarLoading } = useGoogleCalendar();
 
   // Carregar agendamentos
   const loadAgendamentos = async (page = 1) => {
@@ -37,7 +38,8 @@ const AgendamentosPage = () => {
         page: page.toString(),
         limit: pagination.limit.toString(),
         ...(filters.status && { status: filters.status }),
-        ...(filters.tipo_evento && { tipo_evento: filters.tipo_evento })
+        ...(filters.tipo_evento && { tipo_evento: filters.tipo_evento }),
+        ...(filters.search && { search: filters.search })
       });
 
       const response = await apiRequest(`/api/agendamentos-global?${queryParams}`, {
@@ -81,7 +83,27 @@ const AgendamentosPage = () => {
       loadAgendamentos();
       loadProcessos();
     }
-  }, [isConnected, filters.status, filters.tipo_evento]);
+  }, [isConnected, filters.status, filters.tipo_evento, filters.search]);
+
+  // Cleanup do timeout quando o componente é desmontado
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [searchTimeout]);
+
+  // Função para gerenciar busca com debounce
+  const handleSearchChange = (value) => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    setSearchTimeout(setTimeout(() => {
+      setFilters({ ...filters, search: value });
+    }, 500));
+  };
 
   // Abrir formulário
   const openForm = (agendamento = null) => {
@@ -123,40 +145,8 @@ const AgendamentosPage = () => {
   const formatDateTime = (dateString) => {
     if (!dateString) return '';
     
-    console.log('🗂️ LISTA - formatDateTime recebeu:', dateString, 'tipo:', typeof dateString);
-    
-    // Para objetos Date vindos do banco (UTC)
-    if (dateString instanceof Date || (typeof dateString === 'string' && dateString.endsWith('Z'))) {
-      const utcDate = new Date(dateString);
-      // Converte UTC para horário de Brasília (UTC - 3 horas)
-      const brasiliaDate = new Date(utcDate.getTime() - 3 * 60 * 60 * 1000);
-      
-      console.log('🗂️ LISTA - UTC original:', utcDate);
-      console.log('🗂️ LISTA - Brasília convertida:', brasiliaDate);
-      
-      const result = brasiliaDate.toLocaleString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-      
-      console.log('🗂️ LISTA - Resultado final:', result);
-      return result;
-    }
-    
-    // Para strings com offset já definido
-    let processedDate = dateString;
-    if (typeof dateString === 'string' && dateString.includes('-03:00')) {
-      processedDate = dateString.replace('-03:00', '');
-      console.log('🗂️ LISTA - Removeu offset, agora:', processedDate);
-    }
-    
-    const date = new Date(processedDate);
-    console.log('🗂️ LISTA - Date object:', date);
-    
-    const result = date.toLocaleString('pt-BR', {
+    // Para objetos Date vindos do banco (UTC), usar timezone diretamente
+    const result = new Date(dateString).toLocaleString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -165,7 +155,6 @@ const AgendamentosPage = () => {
       timeZone: 'America/Sao_Paulo'
     });
     
-    console.log('🗂️ LISTA - Resultado final:', result);
     return result;
   };
 
@@ -220,14 +209,24 @@ const AgendamentosPage = () => {
           <h1 className="text-3xl font-bold text-gray-900">Agendamentos</h1>
           <p className="text-gray-600 mt-2">Gerencie todos os agendamentos dos processos</p>
         </div>
-        <Button
-          onClick={() => openForm()}
-          variant="primary"
-          disabled={loading}
-        >
-          <Plus size={20} className="mr-2" />
-          Novo Agendamento
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            onClick={disconnectCalendar}
+            variant="outline"
+            disabled={calendarLoading}
+            className="text-red-600 border-red-600 hover:bg-red-50"
+          >
+            {calendarLoading ? 'Desconectando...' : 'Desconectar Google Calendar'}
+          </Button>
+          <Button
+            onClick={() => openForm()}
+            variant="primary"
+            disabled={loading}
+          >
+            <Plus size={20} className="mr-2" />
+            Novo Agendamento
+          </Button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -275,8 +274,7 @@ const AgendamentosPage = () => {
               <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                value={filters.search}
-                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Buscar por título ou processo..."
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -362,17 +360,6 @@ const AgendamentosPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
-                        {agendamento.google_event_id && (
-                          <a
-                            href={`https://calendar.google.com/calendar/event?eid=${agendamento.google_event_id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-green-600 hover:text-green-700"
-                            title="Ver no Google Calendar"
-                          >
-                            <ExternalLink size={16} />
-                          </a>
-                        )}
                         <button
                           onClick={() => openForm(agendamento)}
                           className="p-2 rounded bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"

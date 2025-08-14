@@ -4,7 +4,13 @@
     "controllers/**/*.js",
     "models/**/*.js",
     "services/**/*.js",
-    "!**/node_modules/**"
+    "middleware/**/*.js",
+    "utils/**/*.js",
+    "!**/node_modules/**",
+    "!coverage/**",
+    "!migrations/**",
+    "!tests/**",
+    "!**/*.backup.js"
   ],
   "coverageDirectory": "coverage",
   "coverageReporters": ["text", "lcov", "html"],
@@ -13,5 +19,15 @@
     "**/tests/**/*.spec.js",
     "**/tests/**/*.test.js"
   ],
-  "testTimeout": 30000
+  "testTimeout": 30000,
+  "verbose": true,
+  "collectCoverage": true,
+  "coverageThreshold": {
+    "global": {
+      "branches": 10,
+      "functions": 10,
+      "lines": 10,
+      "statements": 10
+    }
+  }
 }

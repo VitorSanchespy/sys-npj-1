@@ -28,8 +28,6 @@ router.get('/', async (req, res) => {
     const userId = req.user.id;
     const userRole = getUserRole(req.user);
     
-    console.log(`📊 Dashboard solicitado para usuário ${userId} com role ${userRole}`);
-
     // Verificar se os modelos estão disponíveis
     if (!Processo || !Usuario) {
       return res.status(500).json({ erro: 'Modelos não disponíveis' });
@@ -78,12 +76,12 @@ router.get('/', async (req, res) => {
         try {
           notificacoesDoAluno = await Notificacao.findAll({
             where: { usuario_id: userId },
-            attributes: ['id', 'titulo', 'lida', 'tipo', 'criado_em'],
+            attributes: ['id', 'titulo', 'status', 'tipo', 'criado_em'],
             order: [['criado_em', 'DESC']],
             limit: 10
           });
           notificacoesNaoLidas = await Notificacao.count({
-            where: { usuario_id: userId, lida: false }
+            where: { usuario_id: userId, status: { [Op.ne]: 'lido' } }
           });
         } catch (notifError) {
           console.warn('Erro ao buscar notificações do aluno:', notifError.message);
@@ -151,12 +149,12 @@ router.get('/', async (req, res) => {
           // Para Admin, pegar todas as notificações não lidas do sistema
           if (userRole === 'Admin') {
             notificacoesNaoLidas = await Notificacao.count({
-              where: { lida: false }
+              where: { status: { [Op.ne]: 'lido' } }
             });
           } else {
             // Para Professor, apenas suas notificações
             notificacoesNaoLidas = await Notificacao.count({
-              where: { usuario_id: userId, lida: false }
+              where: { usuario_id: userId, status: { [Op.ne]: 'lido' } }
             });
           }
         } catch (notifError) {
@@ -259,11 +257,6 @@ router.get('/', async (req, res) => {
 
     dashboardData.ultimaAtualizacao = new Date().toISOString();
     
-    console.log(`✅ Dashboard gerado para ${userRole}:`, {
-      processosTotal: dashboardData.processosTotal,
-      usuariosTotal: dashboardData.totalUsuarios
-    });
-
     res.json(dashboardData);
   } catch (error) {
     console.error('❌ Erro no dashboard principal:', error);
@@ -462,8 +455,6 @@ router.get('/exportar', async (req, res) => {
     const userRole = getUserRole(req.user);
     const userName = req.user.nome || 'Usuário';
     
-    console.log(`📄 Exportação de relatório solicitada por ${userName} (${userRole})`);
-
     // Verificar se PDFKit está disponível
     let PDFDocument;
     try {
@@ -609,8 +600,6 @@ router.get('/exportar', async (req, res) => {
     
     // Finalizar o documento
     doc.end();
-    
-    console.log(`✅ Relatório PDF gerado para ${userName} (${userRole})`);
     
   } catch (error) {
     console.error('❌ Erro ao gerar PDF:', error);

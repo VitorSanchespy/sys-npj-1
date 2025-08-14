@@ -103,7 +103,7 @@ exports.login = async (req, res) => {
           expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 dias
         });
       } catch (error) {
-        console.error('⚠️ Erro ao salvar refresh token:', error.message);
+        // Error saving refresh token - non-critical
       }
     }
 

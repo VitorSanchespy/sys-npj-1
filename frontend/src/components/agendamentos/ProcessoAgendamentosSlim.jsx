@@ -134,18 +134,6 @@ const ProcessoAgendamentosSlim = ({ processoId }) => {
                 <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
                   {agendamento.tipo_evento || 'Reunião'}
                 </span>
-                {/* Link para Google Calendar se disponível */}
-                {agendamento.google_event_id && (
-                  <a
-                    href={`https://calendar.google.com/calendar/event?eid=${agendamento.google_event_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-green-600 hover:text-green-700"
-                    title="Ver no Google Calendar"
-                  >
-                    <ExternalLink size={16} />
-                  </a>
-                )}
               </div>
             </div>
 

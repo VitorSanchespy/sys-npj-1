@@ -99,8 +99,6 @@ class AgendamentoGoogleService {
       const timeMin = filtros.dataInicio || new Date(agora.getTime() - (30 * 24 * 60 * 60 * 1000)).toISOString();
       const timeMax = filtros.dataFim || new Date(agora.getTime() + (90 * 24 * 60 * 60 * 1000)).toISOString();
 
-  // Removido console.log
-
       // Buscar eventos no Google Calendar
       const response = await calendar.events.list({
         calendarId: 'primary',
@@ -132,8 +130,6 @@ class AgendamentoGoogleService {
    */
   async criarAgendamento(usuario, dadosAgendamento) {
     try {
-  // Removido console.log
-
       // Sempre usar Google Calendar real
       const calendar = await this.configurarClienteUsuario(usuario);
 
@@ -149,8 +145,6 @@ class AgendamentoGoogleService {
         dataFimISO = new Date(dataInicio.getTime() + (60 * 60 * 1000)).toISOString();
       }
       const dataFim = new Date(dataFimISO);
-
-      console.log(`📅 Criando agendamento - Início: ${this.formatarDataBrasilia(dataInicioISO)} | Fim: ${this.formatarDataBrasilia(dataFimISO)}`);
 
       // Montar evento do Google Calendar com timezone explícito
       const evento = {
@@ -268,8 +262,6 @@ class AgendamentoGoogleService {
           // Se não foi fornecida data fim, calcular 1 hora após o início
           dataFimISO = new Date(dataInicio.getTime() + (60 * 60 * 1000)).toISOString();
         }
-
-        console.log(`📅 Atualizando agendamento - Início: ${this.formatarDataBrasilia(dataInicioISO)} | Fim: ${this.formatarDataBrasilia(dataFimISO)}`);
 
         eventoAtualizado.start.dateTime = dataInicioISO;
         eventoAtualizado.end.dateTime = dataFimISO;
@@ -404,7 +396,7 @@ class AgendamentoGoogleService {
       try {
         dataInicio = new Date(dataInicio).toISOString();
       } catch (error) {
-        console.error('❌ Erro ao processar data de início:', error.message);
+        // Erro ao processar data de início
       }
     }
     
@@ -412,7 +404,7 @@ class AgendamentoGoogleService {
       try {
         dataFim = new Date(dataFim).toISOString();
       } catch (error) {
-        console.error('❌ Erro ao processar data de fim:', error.message);
+        // Erro ao processar data de fim
       }
     }
     

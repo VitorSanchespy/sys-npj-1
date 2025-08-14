@@ -236,17 +236,6 @@ const AgendamentosProcesso = ({ processoId }) => {
                     <ExternalLink size={20} />
                   </button>
                 )}
-                {agendamento.google_event_id && (
-                  <a
-                    href={`https://calendar.google.com/calendar/event?eid=${agendamento.google_event_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-green-600 hover:text-green-800"
-                    title="Ver no Google Calendar"
-                  >
-                    <ExternalLink size={20} />
-                  </a>
-                )}
                 <button
                   onClick={() => openModal(agendamento)}
                   className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded transition-colors"

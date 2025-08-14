@@ -22,21 +22,12 @@ const AgendamentoForm = ({ agendamento, processos, onClose, onSave }) => {
   // Inicializar dados do formulário
   useEffect(() => {
     if (agendamento) {
-      console.log('📝 FORM - Dados recebidos para edição:');
-      console.log('📅 agendamento.start:', agendamento.start);
-      console.log('📅 agendamento.end:', agendamento.end);
-      console.log('📅 Tipo start:', typeof agendamento.start);
-      console.log('📅 Tipo end:', typeof agendamento.end);
-      
       const startFormatted = agendamento.start ? toDateTimeLocalBrasilia(agendamento.start) : 
                agendamento.dataEvento ? toDateTimeLocalBrasilia(agendamento.dataEvento) :
                agendamento.data_evento ? toDateTimeLocalBrasilia(agendamento.data_evento) : '';
       const endFormatted = agendamento.end ? toDateTimeLocalBrasilia(agendamento.end) : 
              agendamento.dataFim ? toDateTimeLocalBrasilia(agendamento.dataFim) :
              agendamento.data_fim ? toDateTimeLocalBrasilia(agendamento.data_fim) : '';
-             
-      console.log('📅 Start após toDateTimeLocalBrasilia:', startFormatted);
-      console.log('📅 End após toDateTimeLocalBrasilia:', endFormatted);
       
       setFormData({
         processo_id: agendamento.processo_id || '',
@@ -90,15 +81,8 @@ const AgendamentoForm = ({ agendamento, processos, onClose, onSave }) => {
       setLoading(true);
       
       // Converter datas para formato ISO padronizado do sistema (fuso Brasília)
-      console.log('🔍 DEBUG CONVERSÃO:');
-      console.log('📥 Form start input:', formData.start);
-      console.log('📥 Form end input:', formData.end);
-      
       const startISO = toBrasiliaISO(formData.start);
       const endISO = toBrasiliaISO(formData.end);
-      
-      console.log('📤 Start após toBrasiliaISO:', startISO);
-      console.log('📤 End após toBrasiliaISO:', endISO);
       
       // Verificar se as datas não estão no passado
       const startDate = new Date(startISO);
@@ -115,14 +99,6 @@ const AgendamentoForm = ({ agendamento, processos, onClose, onSave }) => {
         return;
       }
       
-      console.log('🕒 HORÁRIO PADRONIZADO BRASIL:');
-      console.log('📅 Início input:', formData.start);
-      console.log('📅 Início ISO Brasil:', startISO);
-      console.log('📅 Início formatado:', formatToBrasilia(startISO));
-      console.log('📅 Fim input:', formData.end);
-      console.log('📅 Fim ISO Brasil:', endISO);
-      console.log('📅 Fim formatado:', formatToBrasilia(endISO));
-      
       // Payload limpo sem redundâncias
       const dataToSend = {
         titulo: formData.summary,
@@ -134,8 +110,6 @@ const AgendamentoForm = ({ agendamento, processos, onClose, onSave }) => {
         processo_id: formData.processo_id,
         lembrete_1_dia: true
       };
-      
-      console.log('📤 Payload padronizado para backend:', dataToSend);
 
       let response;
       if (agendamento) {

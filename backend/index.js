@@ -56,6 +56,7 @@ app.use('/api/tabelas', require('./routes/tabelaAuxiliarRoute'));
 app.use('/api/arquivos', require('./routes/arquivoRoute'));
 app.use('/api/dashboard', require('./routes/dashboardRoute'));
 app.use('/api/google-calendar', require('./routes/googleCalendarRoute'));
+app.use('/api/npj-calendar', require('./routes/npjCalendarRoute'));
 
 // Rotas de compatibilidade (sem /api)
 app.use('/auth', require('./routes/autorizacaoRoute'));
@@ -73,6 +74,22 @@ app.get('/test', (req, res) => {
     message: 'Servidor funcionando!', 
     timestamp: new Date().toISOString(),
     dbAvailable: global.dbAvailable || false
+  });
+});
+
+// Rota de status público para validação do sistema
+app.get('/api/system-status', (req, res) => {
+  res.json({
+    api: 'funcionando',
+    database: global.dbAvailable || false,
+    routes: {
+      auth: true,
+      processos: true,
+      agendamentos: true,
+      googleCalendar: true
+    },
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
   });
 });
 

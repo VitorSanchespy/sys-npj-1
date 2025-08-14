@@ -39,16 +39,28 @@ export function toBrasiliaISO(dateInput) {
 export function toBrasiliaDate(dateInput) {
   if (!dateInput) return null;
   
-  // Se é string com offset -03:00, remove o offset e cria Date local
+  // Se é string com offset -03:00, JavaScript já converte automaticamente
   if (typeof dateInput === 'string' && dateInput.includes('-03:00')) {
-    const localString = dateInput.replace('-03:00', '');
-    return new Date(localString);
+    return new Date(dateInput);
   }
   
-  // Se é string com Z (UTC), converte para Brasil
+  // Se é string com Z (UTC), usar timezone para converter
   if (typeof dateInput === 'string' && dateInput.includes('Z')) {
     const utcDate = new Date(dateInput);
-    return new Date(utcDate.getTime() - 3 * 60 * 60 * 1000);
+    // Usar Intl para converter para timezone Brasil
+    const brasiliaTime = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).formatToParts(utcDate);
+    
+    const brasiliaString = `${brasiliaTime.find(p => p.type === 'year').value}-${brasiliaTime.find(p => p.type === 'month').value}-${brasiliaTime.find(p => p.type === 'day').value}T${brasiliaTime.find(p => p.type === 'hour').value}:${brasiliaTime.find(p => p.type === 'minute').value}:${brasiliaTime.find(p => p.type === 'second').value}`;
+    return new Date(brasiliaString);
   }
   
   // Para outros casos, assume que já é horário local

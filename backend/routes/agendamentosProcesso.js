@@ -47,13 +47,35 @@ const updateAgendamentoValidation = [
 
 /**
  * @route GET /processos/:processoId/agendamentos
- * @desc Listar todos os agendamentos de um processo
+ * @desc Listar todos os agendamentos de um processo (inclui eventos NPJ do Google Calendar)
  * @access Private
  * @query {number} page - Página (default: 1)
  * @query {number} limit - Itens por página (default: 10)
  * @query {string} status - Filtrar por status (pendente|sincronizado|cancelado)
+ * @query {string} includeGoogle - Incluir eventos NPJ do Google Calendar (default: true)
  */
-router.get('/', agendamentoController.listByProcesso);
+router.get('/', agendamentoController.listByProcess);
+
+/**
+ * @route GET /processos/:processoId/agendamentos/npj-events
+ * @desc Listar apenas eventos NPJ do Google Calendar para um processo
+ * @access Private
+ */
+router.get('/npj-events', agendamentoController.listNPJEvents);
+
+/**
+ * @route POST /processos/:processoId/agendamentos/sync-all
+ * @desc Sincronizar todos os agendamentos pendentes com Google Calendar
+ * @access Private
+ */
+router.post('/sync-all', agendamentoController.syncronizeAll);
+
+/**
+ * @route GET /processos/:processoId/agendamentos/calendar-status
+ * @desc Obter status de configuração do Google Calendar
+ * @access Private
+ */
+router.get('/calendar-status', agendamentoController.getCalendarStatus);
 
 /**
  * @route POST /processos/:processoId/agendamentos

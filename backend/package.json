@@ -9,11 +9,20 @@
     "migrate:check": "node migrate.js check",
     "migrate:rollback": "node migrate.js rollback",
     "setup": "node migrate.js up && node utils/createAdmin.js",
+    "setup-calendar": "node scripts/setup-npj-calendar-env.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:agendamentos": "jest tests/api/agendamentos.spec.js",
-    "test:verbose": "jest --verbose"
+    "test:unit": "jest tests/unit/",
+    "test:integration": "jest tests/integration/",
+    "test:e2e": "jest tests/e2e/",
+    "test:models": "jest tests/unit/models.test.js",
+    "test:services": "jest tests/unit/services.test.js",
+    "test:agendamentos": "jest tests/integration/agendamentos-google-calendar.test.js",
+    "test:agendamentos-e2e": "jest tests/e2e/agendamentos-complete-flow.test.js",
+    "test:all": "node test-runner.js",
+    "test:verbose": "jest --verbose",
+    "test:silent": "jest --silent"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",

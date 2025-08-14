@@ -63,6 +63,27 @@ const AgendamentoProcesso = sequelize.define('AgendamentoProcesso', {
     allowNull: false,
     defaultValue: 'pendente',
     comment: 'Status de sincronização com Google Calendar'
+  },
+  html_link: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Link do evento no Google Calendar'
+  },
+  attendees: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Participantes do evento (JSON)'
+  },
+  reminders_config: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Configuração de lembretes (JSON)'
+  },
+  email_sent: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    comment: 'Se o e-mail de lembrete foi enviado'
   }
 }, {
   tableName: 'AgendamentosProcesso',
@@ -86,12 +107,11 @@ const AgendamentoProcesso = sequelize.define('AgendamentoProcesso', {
 // Definir associações
 AgendamentoProcesso.associate = (models) => {
   // Um agendamento pertence a um processo
-  // Temporariamente desabilitado para testes
-  // AgendamentoProcesso.belongsTo(models.processoModel, {
-  //   foreignKey: 'processo_id',
-  //   as: 'processo',
-  //   onDelete: 'CASCADE'
-  // });
+  AgendamentoProcesso.belongsTo(models.processoModel, {
+    foreignKey: 'processo_id',
+    as: 'Processo',
+    onDelete: 'CASCADE'
+  });
 };
 
 module.exports = AgendamentoProcesso;

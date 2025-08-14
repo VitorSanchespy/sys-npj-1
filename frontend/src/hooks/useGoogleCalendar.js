@@ -141,9 +141,12 @@ export const useGoogleCalendar = () => {
 
   return {
     loading,
+    isConnected: connected,
     connected,
     error,
+    connectCalendar: connectGoogle,
     connectGoogle,
+    disconnectCalendar: disconnect,
     disconnect,
     getEvents,
     handleCallback,

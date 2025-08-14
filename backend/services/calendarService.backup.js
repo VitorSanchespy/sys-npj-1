@@ -192,6 +192,21 @@ class CalendarService {
       };
     }
   }
+        resource: updatedEvent,
+      });
+
+      return {
+        success: true,
+        event: response.data
+      };
+    } catch (error) {
+      console.error('Erro ao atualizar evento no Google Calendar:', error.message);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
 
   async deleteEvent(googleEventId) {
     try {
@@ -202,7 +217,6 @@ class CalendarService {
       await this.calendar.events.delete({
         calendarId: this.calendarId,
         eventId: googleEventId,
-        sendUpdates: 'all' // Notificar participantes sobre cancelamento
       });
 
       return {
@@ -238,43 +252,6 @@ class CalendarService {
       return {
         success: false,
         error: error.message
-      };
-    }
-  }
-
-  async listEvents(processoId = null, timeMin = null, timeMax = null) {
-    try {
-      if (!this.calendar) {
-        throw new Error('Google Calendar não está configurado');
-      }
-
-      const params = {
-        calendarId: this.calendarId,
-        maxResults: 100,
-        singleEvents: true,
-        orderBy: 'startTime',
-      };
-
-      if (timeMin) params.timeMin = timeMin;
-      if (timeMax) params.timeMax = timeMax;
-
-      // Se um processo específico for solicitado, filtrar por query
-      if (processoId) {
-        params.q = `Processo: ${processoId}`;
-      }
-
-      const response = await this.calendar.events.list(params);
-
-      return {
-        success: true,
-        events: response.data.items || []
-      };
-    } catch (error) {
-      console.error('Erro ao listar eventos do Google Calendar:', error.message);
-      return {
-        success: false,
-        error: error.message,
-        events: []
       };
     }
   }

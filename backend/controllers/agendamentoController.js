@@ -19,6 +19,7 @@ exports.verificarConexao = async (req, res) => {
   }
 };
 
+
 // Controller de Agendamentos - Google Calendar Integration
 const agendamentoGoogleService = require('../services/agendamentoGoogleService');
 const Usuario = require('../models/usuarioModel');
@@ -31,10 +32,6 @@ const UsuarioProcesso = require('../models/usuarioProcessoModel');
  */
 exports.listarAgendamentos = async (req, res) => {
   try {
-    console.log('\n📋 LISTANDO AGENDAMENTOS');
-    console.log('🔑 User ID:', req.user?.id);
-    console.log('📊 Query params:', req.query);
-
     const { offset = 0, limit = 50, busca, dataInicio, dataFim, tipoEvento } = req.query;
 
     // Buscar usuário
@@ -105,7 +102,6 @@ exports.listarAgendamentos = async (req, res) => {
       }
     };
 
-    console.log(`✅ ${agendamentosPaginados.length} de ${totalItens} agendamentos retornados`);
     res.json(resultado);
 
   } catch (error) {
@@ -126,9 +122,6 @@ exports.listarAgendamentos = async (req, res) => {
  */
 exports.criarAgendamento = async (req, res) => {
   try {
-    console.log('\n📅 CRIANDO AGENDAMENTO');
-    console.log('📝 Dados recebidos:', req.body);
-
     // Extrair e normalizar dados do request
     const {
       titulo, descricao, local, convidados,
@@ -250,7 +243,6 @@ exports.criarAgendamento = async (req, res) => {
     }
 
     // Criar agendamento no Google Calendar ou modo teste
-    console.log('📡 Criando agendamento...');
     let agendamentoCriado;
     
     if (isModoTeste) {
@@ -272,7 +264,6 @@ exports.criarAgendamento = async (req, res) => {
         fonte: 'teste',
         criado_em: new Date().toISOString()
       };
-      console.log('🧪 Agendamento de teste criado');
     } else {
       agendamentoCriado = await agendamentoGoogleService.criarAgendamento(usuario, dadosNormalizados);
     }
@@ -282,12 +273,8 @@ exports.criarAgendamento = async (req, res) => {
       const NotificacaoService = require('../services/notificacaoService');
       const notificacaoService = new NotificacaoService();
       await notificacaoService.notificarAgendamentoCriado(agendamentoCriado, usuario, usuario);
-      console.log('📧 Notificação enviada com sucesso');
     } catch (notifError) {
-      console.log('⚠️ Erro ao enviar notificação (não crítico):', notifError.message);
     }
-
-    console.log('✅ Agendamento criado com sucesso:', agendamentoCriado.id);
 
     res.status(201).json({
       success: true,
@@ -312,7 +299,6 @@ exports.criarAgendamento = async (req, res) => {
 exports.obterAgendamento = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('\n📋 BUSCANDO AGENDAMENTO:', id);
 
     // Buscar usuário
     const usuario = await Usuario.findByPk(req.user.id);
@@ -364,8 +350,6 @@ exports.obterAgendamento = async (req, res) => {
 exports.atualizarAgendamento = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('\n🔄 ATUALIZANDO AGENDAMENTO:', id);
-    console.log('📝 Dados recebidos:', req.body);
 
     // Buscar usuário
     const usuario = await Usuario.findByPk(req.user.id);
@@ -502,7 +486,6 @@ exports.atualizarAgendamento = async (req, res) => {
 exports.deletarAgendamento = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('\n🗑️ DELETANDO AGENDAMENTO:', id);
 
     // Buscar usuário
     const usuario = await Usuario.findByPk(req.user.id);
@@ -522,10 +505,7 @@ exports.deletarAgendamento = async (req, res) => {
     }
 
     // Deletar do Google Calendar
-    console.log('📡 Deletando do Google Calendar...');
     const resultado = await agendamentoGoogleService.excluirAgendamento(usuario, id);
-
-    console.log('✅ Agendamento deletado com sucesso');
 
     res.json({
       success: true,
@@ -565,7 +545,6 @@ exports.listarAgendamentosUsuario = exports.listarAgendamentos;
  */
 exports.obterEstatisticas = async (req, res) => {
   try {
-    console.log('\n📊 OBTENDO ESTATÍSTICAS DE AGENDAMENTOS');
 
     // Buscar usuário
     const usuario = await Usuario.findByPk(req.user.id);
@@ -621,8 +600,6 @@ exports.obterEstatisticas = async (req, res) => {
  */
 exports.invalidarCache = async (req, res) => {
   try {
-    console.log('\n🔄 INVALIDANDO CACHE DE AGENDAMENTOS');
-
     // Buscar usuário
     const usuario = await Usuario.findByPk(req.user.id);
     if (!usuario) {
@@ -786,8 +763,6 @@ exports.listarProcessosDisponiveis = async (req, res) => {
       ],
       order: [['id', 'DESC']] // Ordenar por ID descendente para mostrar mais recentes primeiro
     });
-
-    console.log(`📋 Processos disponíveis para agendamento (usuário ${req.user.id}): ${processos.length} encontrados`);
 
     res.json({
       success: true,
