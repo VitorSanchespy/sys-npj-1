@@ -18,6 +18,8 @@ router.post('/invalidar-cache', agendamentoController.invalidarCache);
 router.get('/verificar-conexao', agendamentoController.verificarConexao);
 // Compatibilidade: rota /conexao para frontend
 router.get('/conexao', agendamentoController.verificarConexao);
+// Novo endpoint: processos disponíveis para agendamento
+router.get('/processos-disponiveis', agendamentoController.listarProcessosDisponiveis);
 router.get('/:id', agendamentoController.obterAgendamento);
 router.put('/:id', preveniDuplicacaoAgendamento, agendamentoController.atualizarAgendamento);
 router.delete('/:id', agendamentoController.deletarAgendamento);

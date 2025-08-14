@@ -56,19 +56,23 @@ const AgendamentosPage = () => {
     }
   };
 
-  // Carregar processos para dropdown
+  // Carregar processos disponíveis para agendamento
   const loadProcessos = async () => {
     try {
-      const response = await apiRequest('/api/processos', {
+      const response = await apiRequest('/api/agendamentos/processos-disponiveis', {
         method: 'GET',
         token
       });
-      
-      if (response.success) {
-        setProcessos(response.data.processos || []);
+      if (response.processos) {
+        setProcessos(response.processos);
+      } else if (response.data && response.data.processos) {
+        setProcessos(response.data.processos);
+      } else {
+        setProcessos([]);
       }
     } catch (error) {
       console.error('Erro ao carregar processos:', error);
+      setProcessos([]);
     }
   };
 

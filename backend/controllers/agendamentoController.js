@@ -22,6 +22,8 @@ exports.verificarConexao = async (req, res) => {
 // Controller de Agendamentos - Google Calendar Integration
 const agendamentoGoogleService = require('../services/agendamentoGoogleService');
 const Usuario = require('../models/usuarioModel');
+const Processo = require('../models/processoModel');
+const UsuarioProcesso = require('../models/usuarioProcessoModel');
 
 /**
  * Listar agendamentos do usuário logado
@@ -188,6 +190,28 @@ exports.criarAgendamento = async (req, res) => {
         success: false,
         error: 'Não é possível criar agendamento no passado' 
       });
+    }
+
+    // Se foi especificado um processo, validar se ele não está concluído
+    if (dadosNormalizados.processoId) {
+      const processo = await Processo.findByPk(dadosNormalizados.processoId);
+      if (processo) {
+        const statusProcesso = processo.status ? processo.status.toLowerCase() : '';
+        const statusProibidos = ['concluído', 'finalizado', 'encerrado', 'arquivado'];
+        
+        if (statusProibidos.includes(statusProcesso)) {
+          return res.status(400).json({ 
+            success: false,
+            error: `Não é possível criar agendamento para processo com status "${processo.status}". O processo deve estar ativo para permitir agendamentos.`,
+            processoStatus: processo.status
+          });
+        }
+      } else {
+        return res.status(404).json({ 
+          success: false,
+          error: 'Processo não encontrado' 
+        });
+      }
     }
 
     // Buscar usuário
@@ -728,6 +752,49 @@ exports.sincronizarGoogleCalendar = async (req, res) => {
       success: false,
       error: 'Erro interno do servidor',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+/**
+ * Listar processos disponíveis para agendamento
+ * GET /api/agendamentos/processos-disponiveis
+ */
+exports.listarProcessosDisponiveis = async (req, res) => {
+  try {
+    const { Op } = require('sequelize');
+    
+    // Buscar processos disponíveis para o usuário logado, excluindo os concluídos
+    const processos = await Processo.findAll({
+      where: {
+        // Filtrar processos que não estão concluídos/finalizados
+        status: {
+          [Op.notIn]: ['Concluído', 'concluído', 'Finalizado', 'finalizado', 'Encerrado', 'encerrado', 'Arquivado', 'arquivado']
+        }
+      },
+      include: [
+        {
+          model: UsuarioProcesso,
+          as: 'usuariosProcesso',
+          where: { usuario_id: req.user.id },
+        },
+      ],
+      order: [['id', 'DESC']] // Ordenar por ID descendente para mostrar mais recentes primeiro
+    });
+
+    console.log(`📋 Processos disponíveis para agendamento (usuário ${req.user.id}): ${processos.length} encontrados`);
+
+    res.json({
+      success: true,
+      processos,
+      message: `${processos.length} processos ativos disponíveis para agendamento`
+    });
+  } catch (error) {
+    console.error('❌ Erro ao listar processos disponíveis:', error.message, error.stack);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor',
+      details: error.message,
     });
   }
 };

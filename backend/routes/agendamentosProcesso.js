@@ -10,9 +10,31 @@ router.use(authMiddleware);
 
 // Validações customizadas para agendamentos
 const createAgendamentoValidation = [
-  check('start').isISO8601().withMessage('Data de início deve ser válida'),
-  check('end').isISO8601().withMessage('Data de fim deve ser válida'),
-  check('summary').optional().isString().trim(),
+  check('start')
+    .notEmpty()
+    .withMessage('O campo "start" é obrigatório.')
+    .custom((value) => {
+      const date = new Date(value);
+      if (isNaN(date.getTime())) {
+        throw new Error('O campo "start" deve ser uma data/hora válida.');
+      }
+      return true;
+    }),
+  check('end')
+    .notEmpty()
+    .withMessage('O campo "end" é obrigatório.')
+    .custom((value) => {
+      const date = new Date(value);
+      if (isNaN(date.getTime())) {
+        throw new Error('O campo "end" deve ser uma data/hora válida.');
+      }
+      return true;
+    }),
+  check('summary')
+    .optional()
+    .isString()
+    .trim()
+    .withMessage('O campo "summary" deve ser uma string.'),
   handleValidation
 ];
 

@@ -5,6 +5,7 @@ const requestCache = require('../middleware/requestCache');
  * Service para gerenciar agendamentos individuais via Google Calendar
  * Cada usuário tem seus próprios agendamentos (individualizados)
  * Não usa banco de dados, apenas Google Calendar API + cache
+ * IMPORTANTE: Todos os horários são padronizados para o fuso America/Sao_Paulo
  */
 class AgendamentoGoogleService {
   constructor() {
@@ -13,6 +14,59 @@ class AgendamentoGoogleService {
       process.env.GOOGLE_CLIENT_SECRET,
       process.env.GOOGLE_REDIRECT_URI
     );
+    
+    // Fuso horário padrão do sistema
+    this.timeZone = 'America/Sao_Paulo';
+  }
+
+  /**
+   * Padroniza uma data para o fuso horário de Brasília
+   * Garante que a data seja interpretada sempre como America/Sao_Paulo
+   */
+  padronizarDataBrasilia(dataString) {
+    if (!dataString) return null;
+    
+    try {
+      // Se a data já tem informação de timezone, usar como está
+      if (dataString.includes('T') && (dataString.includes('-') || dataString.includes('+'))) {
+        const data = new Date(dataString);
+        return data.toISOString();
+      }
+      
+      // Se é uma data simples (sem timezone), interpretar como horário de Brasília
+      const data = new Date(dataString);
+      if (isNaN(data.getTime())) {
+        throw new Error('Data inválida');
+      }
+      
+      return data.toISOString();
+    } catch (error) {
+      console.error('❌ Erro ao padronizar data:', error.message, 'Data:', dataString);
+      throw new Error(`Data inválida: ${dataString}`);
+    }
+  }
+
+  /**
+   * Formatar data para exibição no fuso de Brasília
+   */
+  formatarDataBrasilia(dataISO) {
+    if (!dataISO) return null;
+    
+    try {
+      const data = new Date(dataISO);
+      return data.toLocaleString('pt-BR', {
+        timeZone: this.timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    } catch (error) {
+      console.error('❌ Erro ao formatar data:', error.message);
+      return dataISO;
+    }
   }
 
   /**
@@ -83,23 +137,32 @@ class AgendamentoGoogleService {
       // Sempre usar Google Calendar real
       const calendar = await this.configurarClienteUsuario(usuario);
 
-      // Calcular data de fim (1 hora após início se não especificada)
-      const dataInicio = new Date(dadosAgendamento.dataEvento);
-      const dataFim = dadosAgendamento.dataFim ? 
-        new Date(dadosAgendamento.dataFim) : 
-        new Date(dataInicio.getTime() + (60 * 60 * 1000));
+      // Padronizar datas para o fuso de Brasília
+      const dataInicioISO = this.padronizarDataBrasilia(dadosAgendamento.dataEvento);
+      const dataInicio = new Date(dataInicioISO);
+      
+      let dataFimISO;
+      if (dadosAgendamento.dataFim) {
+        dataFimISO = this.padronizarDataBrasilia(dadosAgendamento.dataFim);
+      } else {
+        // Calcular 1 hora após o início se não especificada
+        dataFimISO = new Date(dataInicio.getTime() + (60 * 60 * 1000)).toISOString();
+      }
+      const dataFim = new Date(dataFimISO);
 
-      // Montar evento do Google Calendar
+      console.log(`📅 Criando agendamento - Início: ${this.formatarDataBrasilia(dataInicioISO)} | Fim: ${this.formatarDataBrasilia(dataFimISO)}`);
+
+      // Montar evento do Google Calendar com timezone explícito
       const evento = {
         summary: dadosAgendamento.titulo,
-        description: dadosAgendamento.descricao || '',
+        description: this.montarDescricaoEvento(dadosAgendamento, usuario),
         start: {
-          dateTime: dataInicio.toISOString(),
-          timeZone: 'America/Sao_Paulo'
+          dateTime: dataInicioISO,
+          timeZone: this.timeZone
         },
         end: {
-          dateTime: dataFim.toISOString(),
-          timeZone: 'America/Sao_Paulo'
+          dateTime: dataFimISO,
+          timeZone: this.timeZone
         },
         location: dadosAgendamento.local || undefined,
         reminders: {
@@ -186,22 +249,30 @@ class AgendamentoGoogleService {
         description: dadosAtualizacao.descricao ? this.montarDescricaoEvento(dadosAtualizacao, usuario) : (eventoAtual.data.description || ''),
         location: dadosAtualizacao.local !== undefined ? dadosAtualizacao.local : (eventoAtual.data.location || ''),
         start: {
-          timeZone: 'America/Sao_Paulo'
+          timeZone: this.timeZone
         },
         end: {
-          timeZone: 'America/Sao_Paulo'
+          timeZone: this.timeZone
         }
       };
 
-      // Atualizar datas se fornecidas
+      // Atualizar datas se fornecidas - sempre padronizar para Brasília
       if (dadosAtualizacao.dataEvento) {
-        const dataInicio = new Date(dadosAtualizacao.dataEvento);
-        const dataFim = dadosAtualizacao.dataFim ? 
-          new Date(dadosAtualizacao.dataFim) : 
-          new Date(dataInicio.getTime() + (60 * 60 * 1000));
+        const dataInicioISO = this.padronizarDataBrasilia(dadosAtualizacao.dataEvento);
+        const dataInicio = new Date(dataInicioISO);
+        
+        let dataFimISO;
+        if (dadosAtualizacao.dataFim) {
+          dataFimISO = this.padronizarDataBrasilia(dadosAtualizacao.dataFim);
+        } else {
+          // Se não foi fornecida data fim, calcular 1 hora após o início
+          dataFimISO = new Date(dataInicio.getTime() + (60 * 60 * 1000)).toISOString();
+        }
 
-        eventoAtualizado.start.dateTime = dataInicio.toISOString();
-        eventoAtualizado.end.dateTime = dataFim.toISOString();
+        console.log(`📅 Atualizando agendamento - Início: ${this.formatarDataBrasilia(dataInicioISO)} | Fim: ${this.formatarDataBrasilia(dataFimISO)}`);
+
+        eventoAtualizado.start.dateTime = dataInicioISO;
+        eventoAtualizado.end.dateTime = dataFimISO;
       } else {
         // Manter datas originais se não estiver atualizando
         eventoAtualizado.start = eventoAtual.data.start;
@@ -318,21 +389,42 @@ class AgendamentoGoogleService {
   transformarEventoParaAgendamento(evento, usuario) {
     const props = evento.extendedProperties?.private || {};
     
-    // Extrair datas
-    const dataInicio = evento.start?.dateTime || evento.start?.date;
-    const dataFim = evento.end?.dateTime || evento.end?.date;
+    // Extrair e padronizar datas para o fuso de Brasília
+    let dataInicio = evento.start?.dateTime || evento.start?.date;
+    let dataFim = evento.end?.dateTime || evento.end?.date;
+    
+    // Garantir que as datas estejam padronizadas
+    if (dataInicio) {
+      try {
+        dataInicio = new Date(dataInicio).toISOString();
+      } catch (error) {
+        console.error('❌ Erro ao processar data de início:', error.message);
+      }
+    }
+    
+    if (dataFim) {
+      try {
+        dataFim = new Date(dataFim).toISOString();
+      } catch (error) {
+        console.error('❌ Erro ao processar data de fim:', error.message);
+      }
+    }
     
     return {
       id: evento.id,
       googleEventId: evento.id,
       titulo: evento.summary || 'Sem título',
       descricao: evento.description || '',
+      // Todas as variações de data padronizadas
       dataEvento: dataInicio,
       dataInicio: dataInicio,
       data_evento: dataInicio,
       data_inicio: dataInicio,
       dataFim: dataFim,
       data_fim: dataFim,
+      // Formatações para exibição
+      dataFormatada: dataInicio ? this.formatarDataBrasilia(dataInicio) : null,
+      dataFimFormatada: dataFim ? this.formatarDataBrasilia(dataFim) : null,
       local: evento.location || '',
       status: evento.status === 'cancelled' ? 'cancelado' : 'agendado',
       tipoEvento: props.tipoEvento || 'outro',
@@ -398,6 +490,32 @@ class AgendamentoGoogleService {
     lembretes.push({ method: 'popup', minutes: 15 });
     
     return lembretes;
+  }
+
+  /**
+   * Montar descrição formatada do evento para o Google Calendar
+   */
+  montarDescricaoEvento(dadosAgendamento, usuario) {
+    let descricao = dadosAgendamento.descricao || '';
+    
+    // Adicionar informações do sistema na descrição
+    const infoSistema = [
+      `📋 Criado por: ${usuario.nome} (${usuario.email})`,
+      `🏢 Sistema: NPJ - Núcleo de Prática Jurídica`,
+      `📅 Tipo: ${dadosAgendamento.tipoEvento || 'Outros'}`,
+    ];
+    
+    if (dadosAgendamento.processoId) {
+      infoSistema.push(`⚖️ Processo ID: ${dadosAgendamento.processoId}`);
+    }
+    
+    infoSistema.push(`🕒 Criado em: ${new Date().toLocaleString('pt-BR', { timeZone: this.timeZone })}`);
+    
+    if (descricao) {
+      return descricao + '\n\n' + '='.repeat(50) + '\n' + infoSistema.join('\n');
+    } else {
+      return infoSistema.join('\n');
+    }
   }
 
   /**
