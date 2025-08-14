@@ -322,8 +322,14 @@ class AgendamentoGoogleService {
       return this.transformarEventoParaAgendamento(response.data, usuario);
 
     } catch (error) {
-  // Removido console.error
-      throw new Error('Erro ao atualizar agendamento no Google Calendar');
+      console.error('❌ Erro detalhado ao atualizar agendamento no Google Calendar:', {
+        message: error.message,
+        status: error.code,
+        details: error.response?.data || error.errors || error
+      });
+      
+      // Relançar o erro original para manter detalhes
+      throw error;
     }
   }
 

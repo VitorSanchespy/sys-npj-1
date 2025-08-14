@@ -121,14 +121,52 @@ const AgendamentosPage = () => {
 
   // Formatação de data/hora
   const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('pt-BR', {
+    if (!dateString) return '';
+    
+    console.log('🗂️ LISTA - formatDateTime recebeu:', dateString, 'tipo:', typeof dateString);
+    
+    // Para objetos Date vindos do banco (UTC)
+    if (dateString instanceof Date || (typeof dateString === 'string' && dateString.endsWith('Z'))) {
+      const utcDate = new Date(dateString);
+      // Converte UTC para horário de Brasília (UTC - 3 horas)
+      const brasiliaDate = new Date(utcDate.getTime() - 3 * 60 * 60 * 1000);
+      
+      console.log('🗂️ LISTA - UTC original:', utcDate);
+      console.log('🗂️ LISTA - Brasília convertida:', brasiliaDate);
+      
+      const result = brasiliaDate.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      console.log('🗂️ LISTA - Resultado final:', result);
+      return result;
+    }
+    
+    // Para strings com offset já definido
+    let processedDate = dateString;
+    if (typeof dateString === 'string' && dateString.includes('-03:00')) {
+      processedDate = dateString.replace('-03:00', '');
+      console.log('🗂️ LISTA - Removeu offset, agora:', processedDate);
+    }
+    
+    const date = new Date(processedDate);
+    console.log('🗂️ LISTA - Date object:', date);
+    
+    const result = date.toLocaleString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: 'America/Sao_Paulo'
     });
+    
+    console.log('🗂️ LISTA - Resultado final:', result);
+    return result;
   };
 
   // Status badge
@@ -337,17 +375,27 @@ const AgendamentosPage = () => {
                         )}
                         <button
                           onClick={() => openForm(agendamento)}
-                          className="text-blue-600 hover:text-blue-700"
+                          className="p-2 rounded bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                           title="Editar"
                         >
-                          <Edit size={16} />
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-square-pen" aria-hidden="true">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                            <path d="M16.5 8.5l-9 9" />
+                            <path d="M18.5 6.5a2.121 2.121 0 0 1 3 3l-1.5 1.5-3-3 1.5-1.5z" />
+                          </svg>
                         </button>
                         <button
                           onClick={() => cancelAgendamento(agendamento.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className="p-2 rounded bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                           title="Cancelar"
                         >
-                          <Trash2 size={16} />
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trash-2" aria-hidden="true">
+                            <path d="M3 6h18" />
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                            <path d="M10 11v6" />
+                            <path d="M14 11v6" />
+                          </svg>
                         </button>
                       </div>
                     </td>

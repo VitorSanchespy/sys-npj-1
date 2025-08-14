@@ -44,8 +44,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', require('./routes/autorizacaoRoute'));
 app.use('/api/usuarios', require('./routes/usuarioRoute'));
 app.use('/api/processos', require('./routes/processoRoute'));
-app.use('/api/agendamentos', require('./routes/agendamentoRoute'));
-app.use('/api/agendamentos-local', require('./routes/agendamentoLocalRoute')); // TEMPORÁRIO PARA TESTES
+app.use('/api/agendamentos', require('./routes/agendamentos')); // Rota principal de agendamentos
 // Rotas de agendamentos vinculados a processos
 app.use('/api/processos/:processoId/agendamentos-processo', require('./routes/agendamentosProcesso'));
 app.use('/api/agendamentos-processo', require('./routes/agendamentosProcesso'));
@@ -62,7 +61,7 @@ app.use('/api/google-calendar', require('./routes/googleCalendarRoute'));
 app.use('/auth', require('./routes/autorizacaoRoute'));
 app.use('/usuarios', require('./routes/usuarioRoute'));
 app.use('/processos', require('./routes/processoRoute'));
-app.use('/agendamentos', require('./routes/agendamentoRoute'));
+app.use('/agendamentos', require('./routes/agendamentos')); // Usar rota unificada
 app.use('/notificacoes', require('./routes/notificacaoRoute'));
 app.use('/tabelas', require('./routes/tabelaAuxiliarRoute'));
 app.use('/arquivos', require('./routes/arquivoRoute'));

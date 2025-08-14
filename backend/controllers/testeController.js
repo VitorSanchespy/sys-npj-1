@@ -1,4 +1,4 @@
-const AgendamentoTeste = require('../models/agendamentoTeste');
+// const AgendamentoTeste = require('../models/agendamentoTeste'); // REMOVIDO - arquivo não existe mais
 
 async function testeController(req, res) {
   try {

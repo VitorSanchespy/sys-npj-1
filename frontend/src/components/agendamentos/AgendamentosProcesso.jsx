@@ -249,17 +249,17 @@ const AgendamentosProcesso = ({ processoId }) => {
                 )}
                 <button
                   onClick={() => openModal(agendamento)}
-                  className="text-gray-600 hover:text-gray-800"
+                  className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded transition-colors"
                   title="Editar"
                 >
-                  <Edit size={20} />
+                  <Edit size={20} className="text-white" />
                 </button>
                 <button
                   onClick={() => cancelAgendamento(agendamento.id)}
-                  className="text-red-600 hover:text-red-800"
+                  className="bg-red-600 hover:bg-red-700 text-white p-2 rounded transition-colors"
                   title="Cancelar"
                 >
-                  <Trash2 size={20} />
+                  <Trash2 size={20} className="text-white" />
                 </button>
               </div>
             </div>

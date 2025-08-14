@@ -458,6 +458,11 @@ exports.atualizarAgendamento = async (req, res) => {
     });
 
   } catch (error) {
+    console.error('❌ Erro detalhado no controller atualizarAgendamento:', {
+      message: error.message,
+      status: error.code,
+      stack: error.stack
+    });
     
     if (error.message.includes('não encontrado')) {
       res.status(404).json({ 

@@ -16,28 +16,19 @@
 export function toBrasiliaISO(dateInput) {
   if (!dateInput) return null;
   
-  let date;
   if (typeof dateInput === 'string') {
     // Se é string no formato datetime-local: "2025-08-13T10:00"
     if (dateInput.includes('T') && !dateInput.includes('Z') && !dateInput.includes('+') && !dateInput.includes('-', 10)) {
-      // Assume que é horário de Brasília, adiciona offset explícito
+      // Input datetime-local: apenas adiciona segundos e offset do Brasil
       return `${dateInput}:00-03:00`;
-    } else if (dateInput.includes('Z')) {
-      // Se é UTC, converte para Brasil
-      date = new Date(dateInput);
-      const brasiliaDate = new Date(date.getTime() - 3 * 60 * 60 * 1000);
-      return brasiliaDate.toISOString().replace('Z', '-03:00');
-    } else {
-      // Se já tem offset, mantém
-      return dateInput;
-    }
-  } else {
-    date = new Date(dateInput);
-    const brasiliaDate = new Date(date.getTime() - 3 * 60 * 60 * 1000);
-    return brasiliaDate.toISOString().replace('Z', '-03:00');
+    } 
+    // Se já tem offset ou timezone, mantém
+    return dateInput;
   }
   
-  return dateInput;
+  // Para Date objects, converte para string local e adiciona offset
+  const localString = dateInput.toISOString().slice(0, 19);
+  return `${localString}-03:00`;
 }
 
 /**
@@ -48,20 +39,20 @@ export function toBrasiliaISO(dateInput) {
 export function toBrasiliaDate(dateInput) {
   if (!dateInput) return null;
   
-  const date = new Date(dateInput);
-  
-  // Se a data foi interpretada como UTC, ajusta para Brasil
-  if (dateInput.includes && dateInput.includes('Z')) {
-    return new Date(date.getTime() - 3 * 60 * 60 * 1000);
+  // Se é string com offset -03:00, remove o offset e cria Date local
+  if (typeof dateInput === 'string' && dateInput.includes('-03:00')) {
+    const localString = dateInput.replace('-03:00', '');
+    return new Date(localString);
   }
   
-  // Se já tem offset Brasil, usa direto
-  if (dateInput.includes && dateInput.includes('-03:00')) {
-    return new Date(dateInput.replace('-03:00', ''));
+  // Se é string com Z (UTC), converte para Brasil
+  if (typeof dateInput === 'string' && dateInput.includes('Z')) {
+    const utcDate = new Date(dateInput);
+    return new Date(utcDate.getTime() - 3 * 60 * 60 * 1000);
   }
   
-  // Caso contrário, assume que já é Brasil
-  return date;
+  // Para outros casos, assume que já é horário local
+  return new Date(dateInput);
 }
 
 /**

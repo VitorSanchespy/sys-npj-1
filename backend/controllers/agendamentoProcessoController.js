@@ -1,7 +1,43 @@
 const AgendamentoProcesso = require('../models/agendamentoProcessoModel');
 const calendarService = require('../services/calendarService');
+const Processo = require('../models/processoModel');
+const { Op } = require('sequelize');
 
 class AgendamentoController {
+  // Listar processos disponíveis para agendamento (não concluídos)
+  async listarProcessosDisponiveis(req, res) {
+    try {
+      // Filtra processos ATIVOS (não concluídos e sem data de encerramento)
+      const processos = await Processo.findAll({
+        where: {
+          [Op.and]: [
+            { data_encerramento: null },
+            { 
+              [Op.or]: [
+                { status: null },
+                { status: { [Op.notIn]: ['concluido', 'encerrado', 'arquivado', 'finalizado'] } }
+              ]
+            }
+          ]
+        },
+        order: [['criado_em', 'DESC']]
+      });
+      
+      console.log(`📋 Processos disponíveis para agendamento: ${processos.length}`);
+      
+      return res.json({
+        success: true,
+        data: { processos }
+      });
+    } catch (error) {
+      console.error('Erro ao listar processos disponíveis:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor',
+        error: error.message
+      });
+    }
+  }
   // Listar todos os agendamentos (página global)
   async listAll(req, res) {
     try {
@@ -28,6 +64,15 @@ class AgendamentoController {
           // AgendamentoProcesso.belongsTo será habilitado quando necessário
         ]
       });
+
+      // Debug: log das datas vindas do banco
+      if (agendamentos.length > 0) {
+        console.log('🗄️ BACKEND - Datas do banco (primeiro agendamento):');
+        console.log('📅 Start do banco:', agendamentos[0].start);
+        console.log('📅 End do banco:', agendamentos[0].end);
+        console.log('📅 Start tipo:', typeof agendamentos[0].start);
+        console.log('📅 End tipo:', typeof agendamentos[0].end);
+      }
 
       return res.json({
         success: true,
@@ -93,6 +138,173 @@ class AgendamentoController {
       });
     } catch (error) {
       console.error('Erro ao listar agendamentos:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor',
+        error: error.message
+      });
+    }
+  }
+
+  // Criar novo agendamento (rota global - processo_id no body)
+  async createGlobal(req, res) {
+    try {
+      const { 
+        processo_id, processoId,
+        start, end, 
+        dataInicio, data_inicio, dataEvento, data_evento,
+        dataFim, data_fim,
+        summary, titulo, 
+        description, descricao, 
+        location, local, 
+        tipo_evento, tipoEvento,
+        lembrete_1_dia, lembrete1Dia
+      } = req.body;
+
+      // Padronizar campos (frontend pode enviar diferentes nomes)
+      const finalProcessoId = processo_id || processoId;
+      const finalStart = start || dataInicio || data_inicio || dataEvento || data_evento;
+      const finalEnd = end || dataFim || data_fim;
+      const finalTitulo = titulo || summary || 'Agendamento NPJ';
+      const finalDescricao = descricao || description || '';
+      const finalLocal = local || location || '';
+      const finalTipo = tipoEvento || tipo_evento || 'Reunião';
+      const finalLembrete = lembrete_1_dia || lembrete1Dia || false;
+
+      // Validações básicas
+      if (!finalProcessoId) {
+        return res.status(400).json({
+          success: false,
+          message: 'ID do processo é obrigatório'
+        });
+      }
+
+      if (!finalStart || !finalEnd) {
+        return res.status(400).json({
+          success: false,
+          message: 'Data de início e fim são obrigatórias'
+        });
+      }
+
+      // Função para converter corretamente data com offset Brasil para UTC
+      const parseCorrectUTC = (dateString) => {
+        if (typeof dateString === 'string' && dateString.includes('-03:00')) {
+          // Remove o offset e cria Date assumindo hora local
+          const localString = dateString.replace('-03:00', '');
+          const localDate = new Date(localString);
+          // Adiciona 3 horas para converter para UTC
+          return new Date(localDate.getTime() + 3 * 60 * 60 * 1000);
+        }
+        return new Date(dateString);
+      };
+
+      const startDate = parseCorrectUTC(finalStart);
+      const endDate = parseCorrectUTC(finalEnd);
+
+      console.log('🕐 BACKEND - Datas recebidas:');
+      console.log('📥 Start original:', finalStart);
+      console.log('📥 End original:', finalEnd);
+      console.log('📅 Start Date object:', startDate);
+      console.log('📅 End Date object:', endDate);
+      console.log('📅 Start ISO:', startDate.toISOString());
+      console.log('📅 End ISO:', endDate.toISOString());
+
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: 'Datas inválidas'
+        });
+      }
+
+      if (startDate >= endDate) {
+        return res.status(400).json({
+          success: false,
+          message: 'Data de início deve ser anterior à data de fim'
+        });
+      }
+
+      if (startDate < new Date()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Data de início não pode ser no passado'
+        });
+      }
+
+      // Verificar se o processo existe e não está concluído
+      const processo = await Processo.findByPk(finalProcessoId);
+      if (!processo) {
+        return res.status(404).json({
+          success: false,
+          message: 'Processo não encontrado'
+        });
+      }
+
+      if (processo.status === 'concluido' || processo.data_encerramento) {
+        return res.status(400).json({
+          success: false,
+          message: 'Não é possível agendar para processos concluídos'
+        });
+      }
+
+      // Criar registro pendente no banco
+      const agendamento = await AgendamentoProcesso.create({
+        processo_id: finalProcessoId,
+        start: startDate,
+        end: endDate,
+        summary: finalTitulo,
+        tipo_evento: finalTipo,
+        description: finalDescricao,
+        location: finalLocal,
+        status: 'pendente',
+        created_by: req.user?.id
+      });
+
+      // Tentar criar evento no Google Calendar
+      if (calendarService.isAvailable()) {
+        const calendarResult = await calendarService.createEvent({
+          start: startDate,
+          end: endDate,
+          summary: finalTitulo,
+          description: `${finalTipo} - Processo: ${finalProcessoId}\n\n${finalDescricao}`,
+          location: finalLocal
+        });
+
+        if (calendarResult.success) {
+          // Atualizar com ID do Google e status sincronizado
+          await agendamento.update({
+            google_event_id: calendarResult.eventId,
+            status: 'sincronizado'
+          });
+
+          return res.status(201).json({
+            success: true,
+            message: 'Agendamento criado e sincronizado com Google Calendar',
+            data: {
+              agendamento: {
+                ...agendamento.toJSON(),
+                google_event_id: calendarResult.eventId,
+                status: 'sincronizado'
+              },
+              googleEvent: {
+                id: calendarResult.eventId,
+                htmlLink: calendarResult.htmlLink
+              }
+            }
+          });
+        } else {
+          console.warn('Falha ao sincronizar com Google Calendar:', calendarResult.error);
+        }
+      }
+
+      // Retornar sucesso mesmo sem sincronização
+      return res.status(201).json({
+        success: true,
+        message: 'Agendamento criado (sem sincronização com Google Calendar)',
+        data: { agendamento }
+      });
+
+    } catch (error) {
+      console.error('Erro ao criar agendamento global:', error);
       return res.status(500).json({
         success: false,
         message: 'Erro interno do servidor',
