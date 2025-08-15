@@ -1,21 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Calendar, 
-  Clock, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  MapPin, 
-  Mail, 
-  User,
-  Filter,
-  Search,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Send,
-  Users
-} from 'lucide-react';
+import { Plus, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import AgendamentosLista from '../components/agendamentos/AgendamentosLista';
@@ -146,103 +130,37 @@ const AgendamentosPage = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-lg">Carregando agendamentos...</div>
+      <div className="flex justify-center items-center min-h-screen bg-gray-100">
+        <div className="text-lg text-blue-700 font-semibold animate-pulse">Carregando agendamentos...</div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-3xl font-bold text-gray-900">Agendamentos Individualizados</h1>
-          <button
-            onClick={criarNovoAgendamento}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Novo Agendamento
-          </button>
-        </div>
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-
-        {/* Filtros */}
-        <div className="bg-white p-4 rounded-lg shadow mb-6">
-          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-            <Filter className="w-5 h-5" />
-            Filtros
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <select
-              value={filtros.status}
-              onChange={(e) => setFiltros({...filtros, status: e.target.value})}
-              className="border border-gray-300 rounded-lg px-3 py-2"
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-3xl bg-white rounded-xl shadow-lg p-4 sm:p-6 transition-all duration-300">
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-blue-900">Meus Agendamentos</h1>
+            <button
+              onClick={criarNovoAgendamento}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 shadow font-semibold"
             >
-              <option value="">Todos os Status</option>
-              <option value="pendente">Pendente</option>
-              <option value="confirmado">Confirmado</option>
-              <option value="concluido">Concluído</option>
-              <option value="cancelado">Cancelado</option>
-            </select>
-
-            <select
-              value={filtros.tipo}
-              onChange={(e) => setFiltros({...filtros, tipo: e.target.value})}
-              className="border border-gray-300 rounded-lg px-3 py-2"
-            >
-              <option value="">Todos os Tipos</option>
-              <option value="reuniao">Reunião</option>
-              <option value="audiencia">Audiência</option>
-              <option value="prazo">Prazo</option>
-              <option value="outro">Outro</option>
-            </select>
-
-            <select
-              value={filtros.processo_id}
-              onChange={(e) => setFiltros({...filtros, processo_id: e.target.value})}
-              className="border border-gray-300 rounded-lg px-3 py-2"
-            >
-              <option value="">Todos os Processos</option>
-              {processos.map(processo => (
-                <option key={processo.id} value={processo.id}>
-                  {processo.numero} - {processo.titulo?.substring(0, 30)}...
-                </option>
-              ))}
-            </select>
-
-            <input
-              type="datetime-local"
-              value={filtros.data_inicio}
-              onChange={(e) => setFiltros({...filtros, data_inicio: e.target.value})}
-              className="border border-gray-300 rounded-lg px-3 py-2"
-              placeholder="Data início"
-            />
-
-            <input
-              type="datetime-local"
-              value={filtros.data_fim}
-              onChange={(e) => setFiltros({...filtros, data_fim: e.target.value})}
-              className="border border-gray-300 rounded-lg px-3 py-2"
-              placeholder="Data fim"
-            />
+              <Plus className="w-5 h-5" />
+              Novo
+            </button>
           </div>
         </div>
+        {/* Lista de Agendamentos usando componente */}
+        <AgendamentosLista 
+          agendamentos={agendamentos}
+          onEdit={abrirEdicao}
+          onDelete={handleDelete}
+          onStatusChange={handleStatusChange}
+          onEnviarLembrete={enviarLembrete}
+          compact={true}
+        />
       </div>
-
-      {/* Lista de Agendamentos usando componente */}
-      <AgendamentosLista 
-        agendamentos={agendamentos}
-        onEdit={abrirEdicao}
-        onDelete={handleDelete}
-        onStatusChange={handleStatusChange}
-        onEnviarLembrete={enviarLembrete}
-      />
     </div>
   );
 };

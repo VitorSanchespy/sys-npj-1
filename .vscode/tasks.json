@@ -11,6 +11,13 @@
 			"group": "test",
 			"isBackground": false,
 			"problemMatcher": []
+		},
+		{
+			"label": "Teste Sistema Agendamento",
+			"type": "shell",
+			"command": "node test-simple.js",
+			"isBackground": false,
+			"group": "test"
 		}
 	]
 }

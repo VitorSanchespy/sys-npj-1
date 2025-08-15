@@ -50,7 +50,7 @@ const AgendamentosLista = ({ processoId = null, showCreateButton = true, onEdit,
         throw new Error(response.message || 'Erro ao carregar agendamentos');
       }
     } catch (error) {
-      console.error('Erro ao carregar agendamentos:', error);
+  // console.error removido
       setError(error.message || 'Erro interno do servidor');
       setAgendamentos([]);
     } finally {
@@ -87,7 +87,7 @@ const AgendamentosLista = ({ processoId = null, showCreateButton = true, onEdit,
           throw new Error(response.message || 'Erro ao deletar agendamento');
         }
       } catch (error) {
-        console.error('Erro ao deletar agendamento:', error);
+  // console.error removido
         alert(error.message || 'Erro ao deletar agendamento');
       }
     }
@@ -174,351 +174,64 @@ const AgendamentosLista = ({ processoId = null, showCreateButton = true, onEdit,
   }
 
   return (
-    <div style={{
-      backgroundColor: 'white',
-      borderRadius: '8px',
-      padding: '24px',
-      border: '1px solid #e9ecef'
-    }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px'
-      }}>
-        <h2 style={{ margin: 0, color: '#212529' }}>
-          📅 {processoId ? 'Agendamentos do Processo' : 'Meus Agendamentos'}
-        </h2>
-        {showCreateButton && (
-          <Button
-            variant="primary"
-            onClick={() => setShowForm(true)}
-          >
-            Novo Agendamento
-          </Button>
-        )}
-      </div>
-
-      {/* Filtros */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '12px',
-        marginBottom: '20px',
-        padding: '16px',
-        backgroundColor: '#f8f9fa',
-        borderRadius: '6px',
-        border: '1px solid #e9ecef'
-      }}>
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', fontSize: '14px' }}>
-            Tipo
-          </label>
-          <select
-            name="tipo"
-            value={filters.tipo}
-            onChange={handleFilterChange}
-            style={{
-              width: '100%',
-              padding: '6px 10px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
-          >
-            <option value="">Todos os tipos</option>
-            <option value="reuniao">Reunião</option>
-            <option value="audiencia">Audiência</option>
-            <option value="prazo">Prazo</option>
-            <option value="outro">Outro</option>
-          </select>
-        </div>
-
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', fontSize: '14px' }}>
-            Status
-          </label>
-          <select
-            name="status"
-            value={filters.status}
-            onChange={handleFilterChange}
-            style={{
-              width: '100%',
-              padding: '6px 10px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
-          >
-            <option value="">Todos os status</option>
-            <option value="pendente">Pendente</option>
-            <option value="confirmado">Confirmado</option>
-            <option value="concluido">Concluído</option>
-            <option value="cancelado">Cancelado</option>
-          </select>
-        </div>
-
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', fontSize: '14px' }}>
-            Data Início
-          </label>
-          <input
-            type="date"
-            name="data_inicio"
-            value={filters.data_inicio}
-            onChange={handleFilterChange}
-            style={{
-              width: '100%',
-              padding: '6px 10px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
-          />
-        </div>
-
-        <div>
-          <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', fontSize: '14px' }}>
-            Data Fim
-          </label>
-          <input
-            type="date"
-            name="data_fim"
-            value={filters.data_fim}
-            onChange={handleFilterChange}
-            style={{
-              width: '100%',
-              padding: '6px 10px',
-              border: '1px solid #ced4da',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
-          />
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'end' }}>
-          <Button
-            variant="outline"
-            onClick={clearFilters}
-            style={{ fontSize: '14px', padding: '6px 12px' }}
-          >
-            Limpar Filtros
-          </Button>
-        </div>
-      </div>
-
+    <div className="flex flex-col gap-4">
       {error && (
-        <div style={{
-          backgroundColor: '#f8d7da',
-          color: '#721c24',
-          padding: '12px',
-          borderRadius: '4px',
-          marginBottom: '16px',
-          border: '1px solid #f5c6cb'
-        }}>
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-center">
           {error}
         </div>
       )}
-
       {agendamentos.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '40px 20px',
-          color: '#6c757d'
-        }}>
-          <p style={{ margin: 0, fontSize: '16px' }}>
-            {processoId 
-              ? 'Nenhum agendamento encontrado para este processo.'
-              : 'Você ainda não possui agendamentos.'
-            }
-          </p>
+        <div className="text-center py-12 text-gray-500">
+          <p className="text-lg">Você ainda não possui agendamentos.</p>
           {showCreateButton && (
-            <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
-              Clique em "Novo Agendamento" para criar seu primeiro agendamento.
-            </p>
+            <p className="mt-2 text-sm">Clique em <span className="font-semibold text-blue-600">Novo</span> para criar seu primeiro agendamento.</p>
           )}
         </div>
       ) : (
-        <div style={{
-          display: 'grid',
-          gap: '16px'
-        }}>
+        <div className="grid gap-4">
           {agendamentos.map(agendamento => (
             <div
               key={agendamento.id}
-              style={{
-                border: '1px solid #e9ecef',
-                borderRadius: '6px',
-                padding: '16px',
-                backgroundColor: '#fff'
-              }}
+              className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-all duration-200"
             >
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                marginBottom: '12px'
-              }}>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{
-                    margin: '0 0 8px 0',
-                    color: '#212529',
-                    fontSize: '18px',
-                    fontWeight: '600'
-                  }}>
-                    {getTipoIcon(agendamento.tipo)}{' '}
-                    <span 
-                      onClick={() => navigate(`/agendamentos/${agendamento.id}`)}
-                      style={{
-                        cursor: 'pointer',
-                        color: '#007bff',
-                        textDecoration: 'none'
-                      }}
-                      onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
-                      onMouseOut={(e) => e.target.style.textDecoration = 'none'}
-                    >
-                      {agendamento.titulo}
-                    </span>
-                  </h3>
-                  <div style={{
-                    display: 'flex',
-                    gap: '12px',
-                    flexWrap: 'wrap',
-                    marginBottom: '8px'
-                  }}>
-                    <span style={{
-                      display: 'inline-block',
-                      padding: '4px 8px',
-                      backgroundColor: '#e9ecef',
-                      borderRadius: '3px',
-                      fontSize: '12px',
-                      fontWeight: '500'
-                    }}>
-                      {getTipoText(agendamento.tipo)}
-                    </span>
-                    <StatusBadge status={getStatusText(agendamento.status)} />
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <Button
-                    variant="outline"
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{getTipoIcon(agendamento.tipo)}</span>
+                  <button
+                    type="button"
+                    className="text-blue-700 font-semibold hover:underline focus:outline-none"
                     onClick={() => navigate(`/agendamentos/${agendamento.id}`)}
-                    style={{ fontSize: '12px', padding: '4px 8px' }}
                   >
-                    Ver Detalhes
+                    {agendamento.titulo}
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium">{getTipoText(agendamento.tipo)}</span>
+                  <StatusBadge status={getStatusText(agendamento.status)} />
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-gray-500">
+                <span>Início: {formatDateTime(agendamento.data_inicio)}</span>
+                <span>Fim: {formatDateTime(agendamento.data_fim)}</span>
+              </div>
+              <div className="flex gap-2 mt-3">
+                <Button variant="outline" onClick={() => navigate(`/agendamentos/${agendamento.id}`)}>
+                  Ver Detalhes
+                </Button>
+                {canEdit(agendamento) && (
+                  <Button variant="outline" onClick={() => handleEdit(agendamento)}>
+                    Editar
                   </Button>
-                  {canEdit(agendamento) && (
-                    <Button
-                      variant="outline"
-                      onClick={() => handleEdit(agendamento)}
-                      style={{ fontSize: '12px', padding: '4px 8px' }}
-                    >
-                      Editar
-                    </Button>
-                  )}
-                  {canDelete(agendamento) && (
-                    <Button
-                      variant="danger"
-                      onClick={() => handleDelete(agendamento)}
-                      style={{ fontSize: '12px', padding: '4px 8px' }}
-                    >
-                      Deletar
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                gap: '12px',
-                marginBottom: '12px'
-              }}>
-                <div>
-                  <strong style={{ fontSize: '14px' }}>📅 Data/Hora:</strong>
-                  <p style={{ margin: '2px 0 0 0', fontSize: '14px', color: '#495057' }}>
-                    {formatDateTime(agendamento.data_inicio)} até {formatDateTime(agendamento.data_fim)}
-                  </p>
-                </div>
-
-                {agendamento.local && (
-                  <div>
-                    <strong style={{ fontSize: '14px' }}>📍 Local:</strong>
-                    <p style={{ margin: '2px 0 0 0', fontSize: '14px', color: '#495057' }}>
-                      {agendamento.local}
-                    </p>
-                  </div>
                 )}
-
-                {agendamento.processo && (
-                  <div>
-                    <strong style={{ fontSize: '14px' }}>📋 Processo:</strong>
-                    <p style={{ margin: '2px 0 0 0', fontSize: '14px', color: '#495057' }}>
-                      {agendamento.processo.numero_processo}
-                    </p>
-                  </div>
+                {canDelete(agendamento) && (
+                  <Button variant="danger" onClick={() => handleDelete(agendamento)}>
+                    Excluir
+                  </Button>
                 )}
-
-                <div>
-                  <strong style={{ fontSize: '14px' }}>👤 Criado por:</strong>
-                  <p style={{ margin: '2px 0 0 0', fontSize: '14px', color: '#495057' }}>
-                    {agendamento.usuario?.nome || 'Usuário não identificado'}
-                  </p>
-                </div>
+                <Button variant="outline" onClick={() => onEnviarLembrete?.(agendamento.id)}>
+                  Enviar Lembrete
+                </Button>
               </div>
-
-              {agendamento.descricao && (
-                <div style={{ marginBottom: '12px' }}>
-                  <strong style={{ fontSize: '14px' }}>📝 Descrição:</strong>
-                  <p style={{ margin: '2px 0 0 0', fontSize: '14px', color: '#495057' }}>
-                    {agendamento.descricao}
-                  </p>
-                </div>
-              )}
-
-              {agendamento.convidados && agendamento.convidados.length > 0 && (
-                <div style={{ marginBottom: '12px' }}>
-                  <strong style={{ fontSize: '14px' }}>👥 Convidados ({agendamento.convidados.length}):</strong>
-                  <div style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '8px',
-                    marginTop: '4px'
-                  }}>
-                    {agendamento.convidados.map((convidado, index) => (
-                      <span
-                        key={index}
-                        style={{
-                          display: 'inline-block',
-                          padding: '4px 8px',
-                          backgroundColor: convidado.status === 'aceito' ? '#d4edda' : 
-                                         convidado.status === 'recusado' ? '#f8d7da' : '#fff3cd',
-                          color: convidado.status === 'aceito' ? '#155724' : 
-                                 convidado.status === 'recusado' ? '#721c24' : '#856404',
-                          borderRadius: '3px',
-                          fontSize: '12px',
-                          border: '1px solid ' + (
-                            convidado.status === 'aceito' ? '#c3e6cb' : 
-                            convidado.status === 'recusado' ? '#f5c6cb' : '#ffeaa7'
-                          )
-                        }}
-                      >
-                        {convidado.nome || convidado.email} ({convidado.status})
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {agendamento.observacoes && (
-                <div>
-                  <strong style={{ fontSize: '14px' }}>💬 Observações:</strong>
-                  <p style={{ margin: '2px 0 0 0', fontSize: '14px', color: '#495057' }}>
-                    {agendamento.observacoes}
-                  </p>
-                </div>
-              )}
             </div>
           ))}
         </div>

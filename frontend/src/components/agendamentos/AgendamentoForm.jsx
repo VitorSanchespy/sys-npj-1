@@ -52,6 +52,17 @@ const AgendamentoForm = ({
     }
   };
 
+  // Calcular duração em horas
+  const getDuracaoHoras = () => {
+    if (!formData.data_inicio || !formData.data_fim) return null;
+    const inicio = new Date(formData.data_inicio);
+    const fim = new Date(formData.data_fim);
+    if (isNaN(inicio.getTime()) || isNaN(fim.getTime())) return null;
+    const diffMs = fim - inicio;
+    const diffHoras = diffMs / (1000 * 60 * 60);
+    return diffHoras > 0 ? diffHoras : 0;
+  };
+
   // Carregar dados do agendamento se estiver editando
   useEffect(() => {
     if (isEditing && agendamento) {
@@ -72,6 +83,30 @@ const AgendamentoForm = ({
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    // Se o campo alterado for data_inicio, configurar data_fim para +1 hora se estiver vazio ou igual ao antigo data_inicio
+    if (name === 'data_inicio') {
+      setFormData(prev => {
+        let novoFim = prev.data_fim;
+        const novoInicio = value;
+        // Só atualizar se data_fim estiver vazio ou igual ao antigo data_inicio
+        if (!prev.data_fim || prev.data_fim === prev.data_inicio) {
+          const inicioDate = new Date(novoInicio);
+          if (!isNaN(inicioDate.getTime())) {
+            const fimDate = new Date(inicioDate.getTime() + 60 * 60 * 1000);
+            // Formatar para datetime-local
+            novoFim = fimDate.toISOString().slice(0,16);
+          }
+        }
+        return {
+          ...prev,
+          [name]: value,
+          data_fim: novoFim
+        };
+      });
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -122,20 +157,8 @@ const AgendamentoForm = ({
     e.preventDefault();
     setLoading(true);
     setError('');
-
     try {
       console.log('📝 Dados do formulário antes da validação:', formData);
-
-      // Validações básicas
-      if (!formData.titulo.trim()) {
-        throw new Error('Título é obrigatório');
-      }
-      if (!formData.data_inicio) {
-        throw new Error('Data de início é obrigatória');
-      }
-      if (!formData.data_fim) {
-        throw new Error('Data de fim é obrigatória');
-      }
       
       // Validação mais precisa das datas
       const dataInicio = new Date(formData.data_inicio);
@@ -163,25 +186,28 @@ const AgendamentoForm = ({
       if (!dataToSend.email_lembrete) {
         delete dataToSend.email_lembrete;
       }
-
-      // Garantir que as datas estão no formato ISO correto
-      if (dataToSend.data_inicio) {
-        // Se a data já está no formato correto (datetime-local), converter para ISO
-        const dataInicioISO = new Date(dataToSend.data_inicio).toISOString();
-        dataToSend.data_inicio = dataInicioISO;
-        console.log('📅 Data início formatada:', dataInicioISO);
+      if (!dataToSend.observacoes) {
+        delete dataToSend.observacoes;
       }
-      if (dataToSend.data_fim) {
-        const dataFimISO = new Date(dataToSend.data_fim).toISOString();
-        dataToSend.data_fim = dataFimISO;
-        console.log('📅 Data fim formatada:', dataFimISO);
+      if (!dataToSend.descricao) {
+        delete dataToSend.descricao;
       }
-
+      
+      // Converter processo_id para número
+      dataToSend.processo_id = parseInt(dataToSend.processo_id);
+      
+      // Converter datas para formato ISO correto
+      dataToSend.data_inicio = dataInicio.toISOString();
+      dataToSend.data_fim = dataFim.toISOString();
+      
+      console.log('📅 Data início formatada:', dataToSend.data_inicio);
+      console.log('📅 Data fim formatada:', dataToSend.data_fim);
+      
       console.log('📦 Dados sendo enviados:', JSON.stringify(dataToSend, null, 2));
 
       const response = await apiRequest(endpoint, {
         method,
-        data: dataToSend,
+        body: dataToSend,
         token
       });
 

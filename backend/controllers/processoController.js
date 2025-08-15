@@ -497,13 +497,14 @@ exports.listarProcessosUsuario = async (req, res) => {
       const totalPages = Math.ceil(totalItems / limitNum);
       const hasMore = pageNum < totalPages;
 
-      res.json({
-        processos: processosRows,
-        totalItems,
-        currentPage: pageNum,
-        totalPages,
-        hasMore
-      });
+        res.json({
+          success: true,
+          data: processosRows,
+          totalItems,
+          currentPage: pageNum,
+          totalPages,
+          hasMore
+        });
     } else {
       res.status(503).json({ erro: 'Banco de dados não disponível' });
     }

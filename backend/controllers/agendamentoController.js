@@ -89,6 +89,12 @@ exports.criar = async function(req, res) {
 
 exports.listar = async function(req, res) {
     try {
+        console.log('🔍 Debug listar agendamentos:', {
+            usuario_logado: req.user.id,
+            email_usuario: req.user.email,
+            role_id: req.user.role_id
+        });
+        
         const { processo_id, data_inicio, data_fim, status, tipo, page = 1, limit = 20 } = req.query;
         const where = {};
         const offset = (page - 1) * limit;
@@ -110,6 +116,8 @@ exports.listar = async function(req, res) {
             };
         }
         
+        console.log('🔍 Where clause:', JSON.stringify(where, null, 2));
+        
         const { count, rows } = await Agendamento.findAndCountAll({
             where,
             include: [
@@ -121,6 +129,15 @@ exports.listar = async function(req, res) {
             offset: parseInt(offset)
         });
         
+        console.log('🔍 Agendamentos encontrados na consulta:', rows.length);
+        if (rows.length > 0) {
+            console.log('🔍 Primeiro agendamento:', {
+                id: rows[0].id,
+                titulo: rows[0].titulo,
+                criado_por: rows[0].criado_por
+            });
+        }
+        
         // Filtrar também por convidados no JSON
         const agendamentosFiltrados = rows.filter(agendamento => {
             if (agendamento.criado_por === req.user.id) return true;
@@ -128,6 +145,8 @@ exports.listar = async function(req, res) {
             const convidados = agendamento.convidados || [];
             return convidados.some(c => c.email === req.user.email && c.status === 'aceito');
         });
+        
+        console.log('🔍 Agendamentos após filtro:', agendamentosFiltrados.length);
         
         res.json({ 
             success: true, 
@@ -332,10 +351,20 @@ exports.enviarLembrete = async function(req, res) {
         }
 
         // Verificar se o usuário tem acesso ao agendamento
+        console.log('🔍 Verificando acesso:', {
+            agendamento_criado_por: agendamento.criado_por,
+            usuario_atual: req.user.id,
+            usuario_role: req.user.role_id,
+            usuario_email: req.user.email
+        });
+        
         const temAcesso = agendamento.criado_por === req.user.id || 
                          (agendamento.convidados && agendamento.convidados.some(c => 
                             c.email === req.user.email && c.status === 'aceito'
-                         ));
+                         )) ||
+                         req.user.role_id === 1; // Admin pode enviar lembrete
+                         
+        console.log('🔍 Tem acesso:', temAcesso);
 
         if (!temAcesso) {
             return res.status(403).json({ success: false, message: 'Sem permissão para enviar lembrete deste agendamento' });
