@@ -10,7 +10,7 @@ module.exports = app;
 
 // Configuração de CORS para permitir requisições do frontend
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+  origin: ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
 }));
@@ -44,19 +44,17 @@ app.get('/', (req, res) => {
 app.use('/api/auth', require('./routes/autorizacaoRoute'));
 app.use('/api/usuarios', require('./routes/usuarioRoute'));
 app.use('/api/processos', require('./routes/processoRoute'));
-app.use('/api/agendamentos', require('./routes/agendamentos')); // Rota principal de agendamentos
-// Rotas de agendamentos vinculados a processos
-app.use('/api/processos/:processoId/agendamentos-processo', require('./routes/agendamentosProcesso'));
-app.use('/api/agendamentos-processo', require('./routes/agendamentosProcesso'));
-// Rotas globais de agendamentos
-app.use('/api/agendamentos-global', require('./routes/agendamentos'));
+
+// Nova rota de agendamentos - sistema unificado
+app.use('/api/agendamentos', require('./routes/agendamentos'));
+
+//
 app.use('/api/notificacoes', require('./routes/notificacaoRoute'));
 app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoute'));
 app.use('/api/tabelas', require('./routes/tabelaAuxiliarRoute'));
 app.use('/api/arquivos', require('./routes/arquivoRoute'));
 app.use('/api/dashboard', require('./routes/dashboardRoute'));
-app.use('/api/google-calendar', require('./routes/googleCalendarRoute'));
-app.use('/api/npj-calendar', require('./routes/npjCalendarRoute'));
+
 
 // Rotas de compatibilidade (sem /api)
 app.use('/auth', require('./routes/autorizacaoRoute'));
@@ -68,15 +66,6 @@ app.use('/tabelas', require('./routes/tabelaAuxiliarRoute'));
 app.use('/arquivos', require('./routes/arquivoRoute'));
 app.use('/dashboard', require('./routes/dashboardRoute'));
 
-// Rota de teste
-app.get('/test', (req, res) => {
-  res.json({ 
-    message: 'Servidor funcionando!', 
-    timestamp: new Date().toISOString(),
-    dbAvailable: global.dbAvailable || false
-  });
-});
-
 // Rota de status público para validação do sistema
 app.get('/api/system-status', (req, res) => {
   res.json({
@@ -86,7 +75,7 @@ app.get('/api/system-status', (req, res) => {
       auth: true,
       processos: true,
       agendamentos: true,
-      googleCalendar: true
+      individualizados: true
     },
     timestamp: new Date().toISOString(),
     version: '1.0.0'
@@ -101,17 +90,31 @@ app.use((err, req, res, next) => {
 
   const PORT = parseInt(process.env.PORT);
   const sequelize = require('./utils/sequelize');
+  
+  // Importar e inicializar o job de lembretes
+  const lembreteJob = require('./jobs/lembreteJob');
+  
   sequelize.authenticate().then(() => {
     global.dbAvailable = true;
     console.log('✅ Banco de dados conectado');
+    
+    // Inicializar job de lembretes após conexão com o banco
+    try {
+      lembreteJob.iniciar();
+      console.log('📧 Job de lembretes de agendamentos iniciado');
+    } catch (error) {
+      console.error('❌ Erro ao inicializar job de lembretes:', error.message);
+    }
+    
     app.listen(PORT, () => {
-      console.log(` Servidor rodando na porta ${PORT}`);
-      console.log(` Acesse: http://localhost:${PORT}`);
+      console.log(`🚀 Servidor rodando na porta ${PORT}`);
+      console.log(`🌐 Acesse: http://localhost:${PORT}`);
+      console.log('📧 Sistema de agendamentos individualizado ativo');
     });
   }).catch((err) => {
     global.dbAvailable = false;
     console.error('❌ Erro ao conectar ao banco de dados:', err.message);
-    console.error(' O servidor não será iniciado sem banco de dados.');
+    console.error('🛑 O servidor não será iniciado sem banco de dados.');
     process.exit(1);
   });
 

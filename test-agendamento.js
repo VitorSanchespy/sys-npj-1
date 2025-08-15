@@ -23,9 +23,9 @@ async function testAgendamentoCreation() {
       titulo: 'Teste de Agendamento',
       descricao: 'Agendamento de teste para verificar tratamento de erro',
       local: 'Online',
-      dataInicio: '2025-08-20T14:00:00-03:00',
-      dataFim: '2025-08-20T15:00:00-03:00',
-      tipo_evento: 'Reunião'
+      data_inicio: '2025-08-20T14:00:00-03:00',
+      data_fim: '2025-08-20T15:00:00-03:00',
+      tipo: 'reuniao'
       // processo_id: 1 // Removido para testar agendamento geral
     };
     
@@ -53,6 +53,7 @@ async function testAgendamentoCreation() {
       console.log('📊 Resposta do servidor:', {
         status: error.response.status,
         message: error.response.data.message || error.response.data.erro,
+        details: JSON.stringify(error.response.data, null, 2),
         warning: error.response.data.warning || 'Nenhum aviso'
       });
     } else {

@@ -1,10 +1,8 @@
 import { NPJ_CONFIG, ERROR_CODES, ERROR_MESSAGES, getRouteConfig } from '../config/npjConfig';
-import { requestCache } from '../utils/requestCache';
 
-// Interceptador de requisições otimizado
+// Interceptador de requisições simplificado
 class RequestInterceptor {
   constructor() {
-    this.requestQueue = new Map();
     this.activeRequests = new Set();
     this.retryCount = new Map();
   }
@@ -12,21 +10,6 @@ class RequestInterceptor {
   // Interceptar requisição antes do envio
   async interceptRequest(url, options = {}) {
     const config = getRouteConfig(url);
-    const requestId = `${options.method || 'GET'}:${url}:${JSON.stringify(options.body || {})}`;
-
-    // Pular proteção para endpoints de cache e únicos
-    const skipDuplicateCheck = url.includes('/invalidar-cache') || 
-                               url.includes('/sincronizar') ||
-                               url.includes('/conexao') ||
-                               url.includes('/agendamentos') ||  // Adicionar agendamentos
-                               url.includes('/processos') ||    // Adicionar processos
-                               url.includes('/notificacoes') ||  // Adicionar notificações
-                               (options.method === 'DELETE');
-
-    // Evitar requisições duplicadas simultâneas (exceto para endpoints especiais)
-    if (!skipDuplicateCheck && this.activeRequests.has(requestId)) {
-      return await this.waitForActiveRequest(requestId);
-    }
 
     // Aplicar timeout se não especificado
     if (!options.timeout) {
@@ -49,41 +32,22 @@ class RequestInterceptor {
       };
     }
 
-    // Marcar como ativa apenas se não for skipDuplicateCheck
-    if (!skipDuplicateCheck) {
-      this.activeRequests.add(requestId);
-    }
-
     try {
       const response = await this.executeRequest(url, options, config);
       return response;
     } finally {
-      // Só remover se foi adicionado
-      if (!url.includes('/agendamentos') && !url.includes('/processos') && !url.includes('/notificacoes')) {
-        this.activeRequests.delete(requestId);
-      }
-      this.retryCount.delete(requestId);
+      this.retryCount.delete(`${options.method || 'GET'}:${url}`);
     }
   }
 
   // Executar requisição com retry
   async executeRequest(url, options, config, attempt = 1) {
-    const requestId = `${options.method || 'GET'}:${url}`;
     const maxAttempts = config.retry?.attempts || NPJ_CONFIG.API.RETRY_ATTEMPTS;
 
     try {
       const response = await this.makeRequest(url, options);
-      
-      if (NPJ_CONFIG.DEV.ENABLE_LOGS) {
-        // log removido
-      }
-      
       return response;
     } catch (error) {
-      if (NPJ_CONFIG.DEV.ENABLE_LOGS) {
-        // log removido
-      }
-
       // Determinar se deve fazer retry
       if (attempt < maxAttempts && this.shouldRetry(error)) {
         const delay = config.retry?.delay || NPJ_CONFIG.API.RETRY_DELAY;
@@ -159,63 +123,56 @@ class RequestInterceptor {
       return false;
     }
 
-    // Não retry para erros de validação
-    if (error.status === ERROR_CODES.VALIDATION_ERROR) {
-      return false;
-    }
-
-    // Retry para erros de servidor e rede
-    return error.status >= 500 || 
-           error.code === ERROR_CODES.NETWORK_ERROR ||
-           error.code === ERROR_CODES.TIMEOUT;
+    // Retry para erros de rede e timeout
+    return [
+      ERROR_CODES.NETWORK_ERROR,
+      ERROR_CODES.TIMEOUT,
+      ERROR_CODES.INTERNAL_SERVER_ERROR,
+      ERROR_CODES.BAD_GATEWAY,
+      ERROR_CODES.SERVICE_UNAVAILABLE,
+      ERROR_CODES.GATEWAY_TIMEOUT
+    ].includes(error.status);
   }
 
-  // Lidar com erro de autenticação
-  handleUnauthorized() {
-    // Limpar tokens expirados
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    
-    // Redirecionar para login se não estiver já na página de login
-    if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
-      window.location.href = '/login';
-    }
-  }
-
-  // Normalizar erros
+  // Normalizar erro
   normalizeError(error) {
-    let normalizedError = {
-      code: error.status || error.code || ERROR_CODES.SERVER_ERROR,
-      message: error.message || ERROR_MESSAGES[error.status || error.code] || 'Erro desconhecido',
+    if (error.code) return error;
+
+    // Mapear códigos de status HTTP para códigos de erro internos
+    const statusToCode = {
+      400: ERROR_CODES.BAD_REQUEST,
+      401: ERROR_CODES.UNAUTHORIZED,
+      403: ERROR_CODES.FORBIDDEN,
+      404: ERROR_CODES.NOT_FOUND,
+      422: ERROR_CODES.VALIDATION_ERROR,
+      500: ERROR_CODES.INTERNAL_SERVER_ERROR,
+      502: ERROR_CODES.BAD_GATEWAY,
+      503: ERROR_CODES.SERVICE_UNAVAILABLE,
+      504: ERROR_CODES.GATEWAY_TIMEOUT
+    };
+
+    const code = statusToCode[error.status] || ERROR_CODES.NETWORK_ERROR;
+    
+    return {
+      code,
+      message: error.message || ERROR_MESSAGES[code] || 'Erro desconhecido',
+      status: error.status,
+      data: error.data,
       url: error.url,
       originalError: error
     };
-
-    // Usar mensagem específica se disponível
-    if (error.data && (error.data.erro || error.data.message || error.data.detalhes)) {
-      normalizedError.message = error.data.erro || error.data.message || error.data.detalhes;
-    }
-
-    // Casos especiais
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      normalizedError.code = ERROR_CODES.NETWORK_ERROR;
-      normalizedError.message = ERROR_MESSAGES[ERROR_CODES.NETWORK_ERROR];
-    }
-
-    return normalizedError;
   }
 
-  // Aguardar requisição ativa
-  async waitForActiveRequest(requestId) {
-    return new Promise((resolve) => {
-      const checkInterval = setInterval(() => {
-        if (!this.activeRequests.has(requestId)) {
-          clearInterval(checkInterval);
-          resolve();
-        }
-      }, 100);
-    });
+  // Lidar com erro 401
+  handleUnauthorized() {
+    // Limpar tokens
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    
+    // Redirecionar para login se não estiver na página de login
+    if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/')) {
+      window.location.href = '/login';
+    }
   }
 
   // Sleep utility
@@ -225,7 +182,6 @@ class RequestInterceptor {
 
   // Limpar estado
   clear() {
-    this.requestQueue.clear();
     this.activeRequests.clear();
     this.retryCount.clear();
   }
@@ -236,19 +192,6 @@ export const requestInterceptor = new RequestInterceptor();
 
 // Função wrapper para usar com apiRequest
 export async function interceptedRequest(url, options = {}) {
-  const cacheKey = requestCache.generateKey(url, options);
-  
-  // Tentar cache primeiro para requisições GET (apenas para alguns endpoints)
-  if ((!options.method || options.method === 'GET') && !url.includes('/agendamentos') && !url.includes('/processos')) {
-    const cached = requestCache.get(cacheKey);
-    if (cached) {
-      if (NPJ_CONFIG.DEV.ENABLE_LOGS) {
-        // log removido
-      }
-      return cached;
-    }
-  }
-
   // Executar requisição com interceptação
   const response = await requestInterceptor.interceptRequest(url, options);
 
@@ -265,12 +208,6 @@ export async function interceptedRequest(url, options = {}) {
   // Se é uma response do fetch, fazer parse JSON
   if (typeof response.json === 'function') {
     const data = await response.json();
-    
-    // Cachear resposta para requisições GET bem-sucedidas (exceto endpoints sensíveis)
-    if ((!options.method || options.method === 'GET') && !url.includes('/agendamentos') && !url.includes('/processos')) {
-      requestCache.set(cacheKey, data);
-    }
-    
     return data;
   }
   

@@ -5,7 +5,6 @@ import { queryClient } from './hooks/useQueryClient';
 import { ToastProvider } from './contexts/ToastContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
-import { GoogleCalendarProvider } from './contexts/GoogleCalendarContext';
 import AppRouter from './routes/AppRouter';
 import NotificationToast from './components/notifications/NotificationToast';
 import AutoRefreshIndicator from './components/common/AutoRefreshIndicator';
@@ -44,11 +43,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <AuthProvider>
-          <GoogleCalendarProvider>
-            <NotificationProvider>
-              <AppContent />
-            </NotificationProvider>
-          </GoogleCalendarProvider>
+          <NotificationProvider>
+            <AppContent />
+          </NotificationProvider>
         </AuthProvider>
       </ToastProvider>
     </QueryClientProvider>

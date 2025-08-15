@@ -8,8 +8,7 @@ import StatusBadge from "@/components/common/StatusBadge";
 import Loader from "@/components/common/Loader";
 import UpdateList from "@/components/atualizacoes/UpdateList";
 import DocumentList from "@/components/documentos/DocumentList";
-import AgendamentosProcesso from "@/components/agendamentos/AgendamentosProcesso";
-import ProcessoAgendamentosSlim from "@/components/agendamentos/ProcessoAgendamentosSlim";
+import ProcessoAgendamentos from "@/components/agendamentos/ProcessoAgendamentos";
 import ProcessAssignUserModal from "@/components/processos/ProcessAssignUserModal";
 import ProcessUnassignUserModal from "@/components/processos/ProcessUnassignUserModal";
 import { getUserRole, hasRole, formatDate, renderValue } from "@/utils/commonUtils";
@@ -563,7 +562,7 @@ export default function ProcessDetailPage() {
           border: '1px solid #e9ecef',
           marginBottom: '20px'
         }}>
-          <ProcessoAgendamentosSlim processoId={id} />
+          <ProcessoAgendamentos processoId={id} status={processo.status} />
         </div>
 
         {/* Histórico de Atualizações do Processo */}

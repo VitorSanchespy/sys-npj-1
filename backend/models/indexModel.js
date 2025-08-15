@@ -11,8 +11,7 @@ const processoModel = require('./processoModel');
 const arquivoModel = require('./arquivoModel');
 const atualizacaoProcessoModel = require('./atualizacaoProcessoModel');
 const usuarioProcessoModel = require('./usuarioProcessoModel');
-// const agendamentoModel = require('./agendamentoModel'); // DESABILITADO - Google Calendar
-const agendamentoProcessoModel = require('./agendamentoProcessoModel'); // Agendamentos vinculados a processos
+const agendamentoModel = require('./agendamentoModel'); // Sistema unificado de agendamentos
 const notificacaoModel = require('./notificacaoModel');
 const configuracaoNotificacaoModel = require('./configuracaoNotificacaoModel');
 
@@ -27,8 +26,7 @@ const models = {
   arquivoModel,
   atualizacaoProcessoModel,
   usuarioProcessoModel,
-  // agendamentoModel, // DESABILITADO - Google Calendar
-  agendamentoProcessoModel, // Agendamentos vinculados a processos
+  agendamentoModel, // Sistema unificado de agendamentos
   notificacaoModel,
   configuracaoNotificacaoModel,
   sequelize,

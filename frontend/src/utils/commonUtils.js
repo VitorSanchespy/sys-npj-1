@@ -62,6 +62,20 @@ export const formatDateTime = (date) => {
   }
 };
 
+// Formatar data para input datetime-local
+export const formatDateTimeForInput = (date) => {
+  if (!date) return '';
+  try {
+    const d = new Date(date);
+    // Ajustar para o timezone local
+    const offset = d.getTimezoneOffset();
+    d.setMinutes(d.getMinutes() - offset);
+    return d.toISOString().slice(0, 16);
+  } catch (error) {
+    return '';
+  }
+};
+
 // Verificar se valor é objeto e renderizar adequadamente
 export const renderValue = (value) => {
   if (value === null || value === undefined) {

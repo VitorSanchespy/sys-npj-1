@@ -1,4 +1,3 @@
-// Roteador principal da aplicação - gerencia navegação e permissões
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -22,10 +21,12 @@ import UserDetailPage from "@/pages/dashboard/UserDetailPage";
 import UserEditPage from "@/pages/dashboard/UserEditPage";
 import ArquivosPage from "@/pages/dashboard/ArquivosPage";
 import AgendamentosPage from "@/pages/AgendamentosPage";
+import ConviteAgendamento from "@/components/agendamentos/ConviteAgendamento";
 import NotificationPage from "@/pages/dashboard/NotificationPage";
 import NotificationSettingsPage from "@/pages/dashboard/NotificationSettingsPage";
 import NotFoundPage from "@/pages/NotFoundPage";
-import GoogleCallbackPage from "../pages/GoogleCallbackPage";
+// import GoogleCallbackPage from "../pages/GoogleCallbackPage";
+// import TesteAPI from "@/components/TesteAPI";
 import { hasRole } from "@/utils/permissions";
 
 // Componente de rota privada - controla acesso baseado em autenticação e papéis
@@ -94,8 +95,11 @@ export default function AppRouter() {
           <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
           <Route path="/resetar-senha" element={<ResetPasswordPage />} />
           
-          {/* Google Calendar Callback */}
-          <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+          {/* Convite de agendamento - público */}
+          <Route path="/convite/:token" element={<ConviteAgendamento />} />
+          
+          {/* Teste temporário removido */}
+          {/* Google Calendar Callback removido */}
           
           {/* Protegido: Todos autenticados */}
           <Route

@@ -1,5 +1,5 @@
 // API Request Handler - Centraliza todas as requisições HTTP do sistema
-import { interceptedRequest } from '../utils/requestInterceptor';
+import { interceptedRequest } from '../utils/requestInterceptorSimple';
 import { NPJ_CONFIG } from '../config/npjConfig';
 
 const API_BASE_URL = NPJ_CONFIG.API.BASE_URL;

@@ -1,380 +1,529 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, MapPin, FileText, User } from 'lucide-react';
-import { apiRequest } from '@/api/apiRequest';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { apiRequest } from '@/api/apiRequest';
 import Button from '@/components/common/Button';
-import { toBrasiliaISO, toDateTimeLocalBrasilia, formatToBrasilia } from '@/utils/timezone';
+import { formatDateTimeForInput, formatDate } from '@/utils/commonUtils';
 
-const AgendamentoForm = ({ agendamento, processos, onClose, onSave }) => {
+const AgendamentoForm = ({ 
+  processoId, 
+  agendamento = null, 
+  onSuccess, 
+  onCancel,
+  isEditing = false 
+}) => {
+  const { token } = useAuthContext();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  
   const [formData, setFormData] = useState({
-    processo_id: '',
-    summary: '',
-    tipo_evento: 'Reunião',
-    start: '',
-    end: '',
-    location: '',
-    description: ''
+    processo_id: processoId || '',
+    titulo: '',
+    descricao: '',
+    data_inicio: '',
+    data_fim: '',
+    local: '',
+    tipo: 'reuniao',
+    email_lembrete: '',
+    observacoes: '',
+    convidados: []
   });
 
-  const { token } = useAuthContext();
+  const [newConvidado, setNewConvidado] = useState({
+    email: '',
+    nome: ''
+  });
 
-  // Inicializar dados do formulário
+  // Carregar dados do agendamento se estiver editando
   useEffect(() => {
-    if (agendamento) {
-      const startFormatted = agendamento.start ? toDateTimeLocalBrasilia(agendamento.start) : 
-               agendamento.dataEvento ? toDateTimeLocalBrasilia(agendamento.dataEvento) :
-               agendamento.data_evento ? toDateTimeLocalBrasilia(agendamento.data_evento) : '';
-      const endFormatted = agendamento.end ? toDateTimeLocalBrasilia(agendamento.end) : 
-             agendamento.dataFim ? toDateTimeLocalBrasilia(agendamento.dataFim) :
-             agendamento.data_fim ? toDateTimeLocalBrasilia(agendamento.data_fim) : '';
-      
+    if (isEditing && agendamento) {
       setFormData({
-        processo_id: agendamento.processo_id || '',
-        summary: agendamento.summary || agendamento.titulo || '',
-        tipo_evento: agendamento.tipo_evento || agendamento.tipoEvento || 'Reunião',
-        start: startFormatted,
-        end: endFormatted,
-        location: agendamento.location || agendamento.local || '',
-        description: agendamento.description || agendamento.descricao || ''
-      });
-    } else {
-      // Valores padrão para novo agendamento - sempre no futuro, em horário de Brasília
-      const now = new Date();
-      // Adicionar 1 hora para garantir que seja no futuro
-      const futureTime = new Date(now.getTime() + 60 * 60 * 1000);
-      const oneHourLater = new Date(futureTime.getTime() + 60 * 60 * 1000);
-      
-      setFormData({
-        processo_id: '',
-        summary: '',
-        tipo_evento: 'Reunião',
-        start: toDateTimeLocalBrasilia(futureTime),
-        end: toDateTimeLocalBrasilia(oneHourLater),
-        location: '',
-        description: ''
+        processo_id: agendamento.processo_id || processoId,
+        titulo: agendamento.titulo || '',
+        descricao: agendamento.descricao || '',
+        data_inicio: formatDateTimeForInput(agendamento.data_inicio) || '',
+        data_fim: formatDateTimeForInput(agendamento.data_fim) || '',
+        local: agendamento.local || '',
+        tipo: agendamento.tipo || 'reuniao',
+        email_lembrete: agendamento.email_lembrete || '',
+        observacoes: agendamento.observacoes || '',
+        convidados: agendamento.convidados || []
       });
     }
-  }, [agendamento]);
+  }, [agendamento, isEditing, processoId]);
 
-  // Salvar agendamento
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleConvidadoChange = (e) => {
+    const { name, value } = e.target;
+    setNewConvidado(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const adicionarConvidado = () => {
+    if (!newConvidado.email) {
+      setError('Email do convidado é obrigatório');
+      return;
+    }
+
+    // Verificar se email já existe
+    const emailExiste = formData.convidados.some(c => c.email === newConvidado.email);
+    if (emailExiste) {
+      setError('Este email já foi adicionado à lista de convidados');
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      convidados: [...prev.convidados, {
+        ...newConvidado,
+        status: 'pendente'
+      }]
+    }));
+
+    setNewConvidado({ email: '', nome: '' });
+    setError('');
+  };
+
+  const removerConvidado = (email) => {
+    setFormData(prev => ({
+      ...prev,
+      convidados: prev.convidados.filter(c => c.email !== email)
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validações básicas
-    if (!formData.summary.trim()) {
-      alert('Título é obrigatório');
-      return;
-    }
-    
-    if (!formData.start || !formData.end) {
-      alert('Datas de início e fim são obrigatórias');
-      return;
-    }
-    
-    if (!formData.processo_id && !agendamento) {
-      alert('Selecione um processo');
-      return;
-    }
+    setLoading(true);
+    setError('');
 
     try {
-      setLoading(true);
-      
-      // Converter datas para formato ISO padronizado do sistema (fuso Brasília)
-      const startISO = toBrasiliaISO(formData.start);
-      const endISO = toBrasiliaISO(formData.end);
-      
-      // Verificar se as datas não estão no passado
-      const startDate = new Date(startISO);
-      const endDate = new Date(endISO);
-      const now = new Date();
-      
-      if (startDate < now) {
-        alert('A data de início não pode ser no passado');
-        return;
+      // Validações básicas
+      if (!formData.titulo.trim()) {
+        throw new Error('Título é obrigatório');
+      }
+      if (!formData.data_inicio) {
+        throw new Error('Data de início é obrigatória');
+      }
+      if (!formData.data_fim) {
+        throw new Error('Data de fim é obrigatória');
       }
       
-      if (endDate <= startDate) {
-        alert('A data de fim deve ser posterior à data de início');
-        return;
+      // Validação mais precisa das datas
+      const dataInicio = new Date(formData.data_inicio);
+      const dataFim = new Date(formData.data_fim);
+      
+      if (isNaN(dataInicio.getTime()) || isNaN(dataFim.getTime())) {
+        throw new Error('Datas inválidas');
       }
       
-      // Payload limpo sem redundâncias
-      const dataToSend = {
-        titulo: formData.summary,
-        descricao: formData.description,
-        local: formData.location,
-        tipo_evento: formData.tipo_evento,
-        dataInicio: startISO,
-        dataFim: endISO,
-        processo_id: formData.processo_id,
-        lembrete_1_dia: true
-      };
+      // Validação corrigida: data de fim deve ser posterior (não igual) à data de início
+      if (dataFim < dataInicio) {
+        throw new Error('Data de fim deve ser posterior à data de início');
+      }
 
-      let response;
-      if (agendamento) {
-        // Atualizar agendamento existente
-        response = await apiRequest(`/api/agendamentos/${agendamento.id}`, {
-          method: 'PUT',
-          token,
-          body: dataToSend
-        });
-      } else {
-        // Criar novo agendamento
-        response = await apiRequest('/api/agendamentos', {
-          method: 'POST',
-          token,
-          body: dataToSend
-        });
-      }
+      const endpoint = isEditing 
+        ? `/api/agendamentos/${agendamento.id}`
+        : '/api/agendamentos';
+      
+      const method = isEditing ? 'PUT' : 'POST';
+
+      const response = await apiRequest(endpoint, {
+        method,
+        data: formData,
+        token
+      });
 
       if (response.success) {
-        alert(agendamento ? 'Agendamento atualizado com sucesso!' : 'Agendamento criado com sucesso!');
-        onSave();
+        onSuccess?.(response.data);
       } else {
-        const errorMsg = response.error || response.message || 'Erro desconhecido';
-        alert(`Erro: ${errorMsg}`);
+        throw new Error(response.message || 'Erro ao salvar agendamento');
       }
     } catch (error) {
       console.error('Erro ao salvar agendamento:', error);
-      const errorMsg = error.message || 'Erro desconhecido';
-      alert(`Erro ao salvar agendamento: ${errorMsg}`);
+      setError(error.message || 'Erro interno do servidor');
     } finally {
       setLoading(false);
     }
   };
 
-  // Atualizar campo do formulário
-  const updateField = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const getStatusBadgeColor = (status) => {
+    switch (status) {
+      case 'aceito': return '#28a745';
+      case 'recusado': return '#dc3545';
+      default: return '#ffc107';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'aceito': return 'Aceito';
+      case 'recusado': return 'Recusado';
+      default: return 'Pendente';
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {agendamento ? 'Editar Agendamento' : 'Novo Agendamento'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="bg-red-600 hover:bg-red-700 text-white p-2 rounded transition-colors"
-            title="Cancelar"
-          >
-            <X size={24} className="text-white" />
-          </button>
+    <div style={{
+      backgroundColor: 'white',
+      padding: '24px',
+      borderRadius: '8px',
+      border: '1px solid #e9ecef',
+      maxWidth: '800px',
+      margin: '0 auto'
+    }}>
+      <h2 style={{ marginBottom: '24px', color: '#212529' }}>
+        {isEditing ? 'Editar Agendamento' : 'Novo Agendamento'}
+      </h2>
+
+      {error && (
+        <div style={{
+          backgroundColor: '#f8d7da',
+          color: '#721c24',
+          padding: '12px',
+          borderRadius: '4px',
+          marginBottom: '16px',
+          border: '1px solid #f5c6cb'
+        }}>
+          {error}
         </div>
+      )}
 
-        {/* Formulário */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Seleção de Processo */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-              <User size={16} />
-              Processo *
-            </label>
-            {processos.length === 0 ? (
-              <div>
-                <div className="text-red-600 text-sm mb-2">
-                  Nenhum processo ativo disponível para agendamento.
-                </div>
-                <div className="text-gray-600 text-sm mb-2">
-                  💡 Processos concluídos, finalizados ou arquivados não podem receber novos agendamentos.
-                </div>
-                <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
-                  disabled
-                >
-                  <option value="">Nenhum processo ativo encontrado</option>
-                </select>
-              </div>
-            ) : (
-              <select
-                value={formData.processo_id}
-                onChange={(e) => updateField('processo_id', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-                disabled={!!agendamento}
-              >
-                <option value="">Selecione um processo ativo</option>
-                {processos.map((processo) => (
-                  <option key={processo.id} value={processo.id}>
-                    #{processo.id} - {processo.numero_processo || 'Sem número'}
-                    {processo.assistido && ` - ${processo.assistido}`}
-                    {processo.status && ` (${processo.status})`}
-                  </option>
-                ))}
-              </select>
-            )}
-            {processos.length > 0 && (
-              <div className="text-green-600 text-sm mt-1">
-                ✅ {processos.length} processo(s) ativo(s) disponível(is)
-              </div>
-            )}
-          </div>
-
+      <form onSubmit={handleSubmit}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '16px',
+          marginBottom: '20px'
+        }}>
           {/* Título */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-              <FileText size={16} />
-              Título do Agendamento *
+            <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>
+              Título *
             </label>
             <input
               type="text"
-              value={formData.summary}
-              onChange={(e) => updateField('summary', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Ex: Reunião inicial com cliente"
+              name="titulo"
+              value={formData.titulo}
+              onChange={handleInputChange}
               required
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ced4da',
+                borderRadius: '4px',
+                fontSize: '14px'
+              }}
+              placeholder="Ex: Reunião com cliente"
             />
           </div>
 
-          {/* Tipo de Evento */}
+          {/* Tipo */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-              <Calendar size={16} />
-              Tipo de Evento
+            <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>
+              Tipo
             </label>
             <select
-              value={formData.tipo_evento}
-              onChange={(e) => updateField('tipo_evento', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              name="tipo"
+              value={formData.tipo}
+              onChange={handleInputChange}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ced4da',
+                borderRadius: '4px',
+                fontSize: '14px'
+              }}
             >
               <option value="reuniao">Reunião</option>
               <option value="audiencia">Audiência</option>
-              <option value="entrevista">Entrevista</option>
-              <option value="acompanhamento">Acompanhamento</option>
-              <option value="mediacao">Mediação</option>
-              <option value="pericia">Perícia</option>
-              <option value="diligencia">Diligência</option>
-              <option value="outro">Outros</option>
+              <option value="prazo">Prazo</option>
+              <option value="outro">Outro</option>
             </select>
           </div>
 
-          {/* Data e Hora */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                <Clock size={16} />
-                Data/Hora de Início * 🇧🇷
-              </label>
-              <input
-                type="datetime-local"
-                value={formData.start}
-                onChange={(e) => updateField('start', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-                min={new Date().toISOString().slice(0, 16)}
-              />
-              <div className="text-xs text-gray-500 mt-1">
-                🕒 Horário de Brasília (GMT-3)
-              </div>
-            </div>
+          {/* Data e Hora de Início */}
+          <div>
+            <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>
+              Data e Hora de Início *
+            </label>
+            <input
+              type="datetime-local"
+              name="data_inicio"
+              value={formData.data_inicio}
+              onChange={handleInputChange}
+              required
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ced4da',
+                borderRadius: '4px',
+                fontSize: '14px'
+              }}
+            />
+          </div>
 
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                <Clock size={16} />
-                Data/Hora de Fim * 🇧🇷
-              </label>
-              <input
-                type="datetime-local"
-                value={formData.end}
-                onChange={(e) => updateField('end', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-                min={formData.start || new Date().toISOString().slice(0, 16)}
-              />
-              <div className="text-xs text-gray-500 mt-1">
-                🕒 Horário de Brasília (GMT-3)
-              </div>
-            </div>
+          {/* Data e Hora de Fim */}
+          <div>
+            <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>
+              Data e Hora de Fim *
+            </label>
+            <input
+              type="datetime-local"
+              name="data_fim"
+              value={formData.data_fim}
+              onChange={handleInputChange}
+              required
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ced4da',
+                borderRadius: '4px',
+                fontSize: '14px'
+              }}
+            />
           </div>
 
           {/* Local */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-              <MapPin size={16} />
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>
               Local
             </label>
             <input
               type="text"
-              value={formData.location}
-              onChange={(e) => updateField('location', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Ex: Sala 101, NPJ"
+              name="local"
+              value={formData.local}
+              onChange={handleInputChange}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ced4da',
+                borderRadius: '4px',
+                fontSize: '14px'
+              }}
+              placeholder="Ex: Sala 205, NPJ UFMT"
             />
           </div>
 
-          {/* Descrição */}
+          {/* Email para Lembrete */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-              <FileText size={16} />
-              Descrição
+            <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>
+              Email para Lembrete
             </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => updateField('description', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              rows={4}
-              placeholder="Informações adicionais sobre o agendamento..."
+            <input
+              type="email"
+              name="email_lembrete"
+              value={formData.email_lembrete}
+              onChange={handleInputChange}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #ced4da',
+                borderRadius: '4px',
+                fontSize: '14px'
+              }}
+              placeholder="seu@email.com"
             />
           </div>
+        </div>
 
-          {/* Aviso sobre horários */}
-          <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <Clock className="h-5 w-5 text-blue-400" />
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-800">
-                  Informações sobre Horários
-                </h3>
-                <div className="mt-2 text-sm text-blue-700">
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Todos os horários são em <strong>horário de Brasília (GMT-3)</strong></li>
-                    <li>O horário será <strong>sincronizado automaticamente</strong> com seu Google Calendar</li>
-                    <li>Você verá o <strong>mesmo horário</strong> tanto no sistema quanto no Google Calendar</li>
-                  </ul>
-                </div>
-              </div>
+        {/* Descrição */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>
+            Descrição
+          </label>
+          <textarea
+            name="descricao"
+            value={formData.descricao}
+            onChange={handleInputChange}
+            rows={3}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '14px',
+              resize: 'vertical'
+            }}
+            placeholder="Descreva o agendamento..."
+          />
+        </div>
+
+        {/* Observações */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>
+            Observações
+          </label>
+          <textarea
+            name="observacoes"
+            value={formData.observacoes}
+            onChange={handleInputChange}
+            rows={2}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '14px',
+              resize: 'vertical'
+            }}
+            placeholder="Observações adicionais..."
+          />
+        </div>
+
+        {/* Seção de Convidados */}
+        <div style={{ marginBottom: '20px' }}>
+          <h3 style={{ marginBottom: '16px', color: '#495057' }}>
+            Convidados
+          </h3>
+          
+          {/* Adicionar Convidado */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr auto',
+            gap: '8px',
+            marginBottom: '16px',
+            alignItems: 'end'
+          }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', fontSize: '14px' }}>
+                Email do Convidado
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={newConvidado.email}
+                onChange={handleConvidadoChange}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '14px'
+                }}
+                placeholder="convidado@email.com"
+              />
             </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', fontSize: '14px' }}>
+                Nome (opcional)
+              </label>
+              <input
+                type="text"
+                name="nome"
+                value={newConvidado.nome}
+                onChange={handleConvidadoChange}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '14px'
+                }}
+                placeholder="Nome do convidado"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={adicionarConvidado}
+              style={{ marginBottom: '0' }}
+            >
+              Adicionar
+            </Button>
           </div>
 
-          {/* Botões */}
-          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={loading}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded flex items-center gap-2"
-              title="Cancelar"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trash2 lucide-trash-2 text-white" aria-hidden="true"><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              <span>Cancelar</span>
-            </button>
-            <button
-              type="submit"
-              disabled={loading || (!formData.summary.trim()) || (!formData.start) || (!formData.end) || (!formData.processo_id && !agendamento)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2"
-              title={agendamento ? 'Editar' : 'Criar'}
-            >
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <svg className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" viewBox="0 0 24 24" />
-                  Salvando...
+          {/* Lista de Convidados */}
+          {formData.convidados.length > 0 && (
+            <div style={{
+              border: '1px solid #e9ecef',
+              borderRadius: '4px',
+              padding: '12px'
+            }}>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#495057' }}>
+                Convidados ({formData.convidados.length})
+              </h4>
+              {formData.convidados.map((convidado, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '8px 12px',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '4px',
+                    marginBottom: index < formData.convidados.length - 1 ? '8px' : '0'
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: '500', fontSize: '14px' }}>
+                      {convidado.nome || convidado.email}
+                    </div>
+                    {convidado.nome && (
+                      <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                        {convidado.email}
+                      </div>
+                    )}
+                    <div style={{
+                      display: 'inline-block',
+                      padding: '2px 6px',
+                      fontSize: '11px',
+                      fontWeight: '500',
+                      borderRadius: '3px',
+                      color: 'white',
+                      backgroundColor: getStatusBadgeColor(convidado.status),
+                      marginTop: '4px'
+                    }}>
+                      {getStatusText(convidado.status)}
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="danger"
+                    onClick={() => removerConvidado(convidado.email)}
+                    style={{ fontSize: '12px', padding: '4px 8px' }}
+                  >
+                    Remover
+                  </Button>
                 </div>
-              ) : (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-square-pen text-white" aria-hidden="true"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"></path></svg>
-                  <span>{agendamento ? 'Atualizar Agendamento' : 'Criar Agendamento'}</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Botões */}
+        <div style={{
+          display: 'flex',
+          gap: '12px',
+          justifyContent: 'flex-end',
+          borderTop: '1px solid #e9ecef',
+          paddingTop: '20px'
+        }}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={loading}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={loading}
+          >
+            {loading ? 'Salvando...' : (isEditing ? 'Atualizar' : 'Criar')} Agendamento
+          </Button>
+        </div>
+      </form>
     </div>
   );
 };
