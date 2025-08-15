@@ -89,35 +89,22 @@ exports.criar = async function(req, res) {
 
 exports.listar = async function(req, res) {
     try {
-        console.log('🔍 Debug listar agendamentos:', {
-            usuario_logado: req.user.id,
-            email_usuario: req.user.email,
-            role_id: req.user.role_id
-        });
-        
         const { processo_id, data_inicio, data_fim, status, tipo, page = 1, limit = 20 } = req.query;
         const where = {};
         const offset = (page - 1) * limit;
-        
-        // Filtrar apenas agendamentos do usuário logado (criados por ele ou onde foi convidado)
         const { Op } = require('sequelize');
         where[Op.or] = [
             { criado_por: req.user.id },
             { '$usuario.email$': req.user.email }
         ];
-
         if (processo_id) where.processo_id = processo_id;
         if (status) where.status = status;
         if (tipo) where.tipo = tipo;
-        
         if (data_inicio && data_fim) {
             where.data_inicio = {
                 [Op.between]: [data_inicio, data_fim]
             };
         }
-        
-        console.log('🔍 Where clause:', JSON.stringify(where, null, 2));
-        
         const { count, rows } = await Agendamento.findAndCountAll({
             where,
             include: [
@@ -128,26 +115,11 @@ exports.listar = async function(req, res) {
             limit: parseInt(limit),
             offset: parseInt(offset)
         });
-        
-        console.log('🔍 Agendamentos encontrados na consulta:', rows.length);
-        if (rows.length > 0) {
-            console.log('🔍 Primeiro agendamento:', {
-                id: rows[0].id,
-                titulo: rows[0].titulo,
-                criado_por: rows[0].criado_por
-            });
-        }
-        
-        // Filtrar também por convidados no JSON
         const agendamentosFiltrados = rows.filter(agendamento => {
             if (agendamento.criado_por === req.user.id) return true;
-            
             const convidados = agendamento.convidados || [];
             return convidados.some(c => c.email === req.user.email && c.status === 'aceito');
         });
-        
-        console.log('🔍 Agendamentos após filtro:', agendamentosFiltrados.length);
-        
         res.json({ 
             success: true, 
             data: agendamentosFiltrados, 
@@ -159,7 +131,6 @@ exports.listar = async function(req, res) {
             } 
         });
     } catch (error) {
-        console.error('Erro ao listar agendamentos:', error);
         res.status(500).json({ success: false, message: 'Erro interno do servidor', error: error.message });
     }
 };
@@ -351,21 +322,10 @@ exports.enviarLembrete = async function(req, res) {
         }
 
         // Verificar se o usuário tem acesso ao agendamento
-        console.log('🔍 Verificando acesso:', {
-            agendamento_criado_por: agendamento.criado_por,
-            usuario_atual: req.user.id,
-            usuario_role: req.user.role_id,
-            usuario_email: req.user.email
-        });
-        
         const temAcesso = agendamento.criado_por === req.user.id || 
                          (agendamento.convidados && agendamento.convidados.some(c => 
                             c.email === req.user.email && c.status === 'aceito'
-                         )) ||
-                         req.user.role_id === 1; // Admin pode enviar lembrete
-                         
-        console.log('🔍 Tem acesso:', temAcesso);
-
+                         ));
         if (!temAcesso) {
             return res.status(403).json({ success: false, message: 'Sem permissão para enviar lembrete deste agendamento' });
         }
@@ -384,37 +344,17 @@ exports.aceitarConvite = async function(req, res) {
         const { id } = req.params;
         const { email } = req.body;
         
-        // Se não foi passado email, usar o email do usuário logado
-        const emailConvidado = email || req.user.email;
-        
-        const agendamento = await Agendamento.findByPk(id, {
-            include: [
-                { model: Processo, as: 'processo', attributes: ['id', 'numero_processo', 'titulo'] },
-                { model: Usuario, as: 'usuario', attributes: ['id', 'nome', 'email'] }
-            ]
-        });
-        
+        const agendamento = await Agendamento.findByPk(id);
         if (!agendamento) {
             return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
         }
 
-        // Verificar se o email está na lista de convidados
-        const convidados = agendamento.convidados || [];
-        const convidado = convidados.find(c => c.email === emailConvidado);
-        
-        if (!convidado) {
-            return res.status(404).json({ success: false, message: 'Convite não encontrado para este email' });
-        }
-
-        if (convidado.status === 'aceito') {
-            return res.status(400).json({ success: false, message: 'Convite já foi aceito anteriormente' });
-        }
-        
+        const emailConvidado = email || req.user.email;
         await agendamento.aceitarConvite(emailConvidado);
         
         res.json({ 
             success: true, 
-            message: 'Convite aceito com sucesso! Agendamento adicionado à sua agenda.',
+            message: 'Convite aceito com sucesso.',
             data: agendamento 
         });
     } catch (error) {
@@ -428,32 +368,12 @@ exports.recusarConvite = async function(req, res) {
         const { id } = req.params;
         const { email } = req.body;
         
-        // Se não foi passado email, usar o email do usuário logado
-        const emailConvidado = email || req.user.email;
-        
-        const agendamento = await Agendamento.findByPk(id, {
-            include: [
-                { model: Processo, as: 'processo', attributes: ['id', 'numero_processo', 'titulo'] },
-                { model: Usuario, as: 'usuario', attributes: ['id', 'nome', 'email'] }
-            ]
-        });
-        
+        const agendamento = await Agendamento.findByPk(id);
         if (!agendamento) {
             return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
         }
 
-        // Verificar se o email está na lista de convidados
-        const convidados = agendamento.convidados || [];
-        const convidado = convidados.find(c => c.email === emailConvidado);
-        
-        if (!convidado) {
-            return res.status(404).json({ success: false, message: 'Convite não encontrado para este email' });
-        }
-
-        if (convidado.status === 'recusado') {
-            return res.status(400).json({ success: false, message: 'Convite já foi recusado anteriormente' });
-        }
-        
+        const emailConvidado = email || req.user.email;
         await agendamento.recusarConvite(emailConvidado);
         
         res.json({ 

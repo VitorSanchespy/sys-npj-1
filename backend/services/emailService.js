@@ -1,16 +1,15 @@
 const nodemailer = require('nodemailer');
 
-// Configuração do transporter (mock - pode ser configurado com serviço real)
-const transporter = {
-  sendMail: async (mailOptions) => {
-    console.log('📧 [MOCK] Email enviado:', {
-      to: mailOptions.to,
-      subject: mailOptions.subject,
-      html: mailOptions.html ? '[HTML Content]' : '[No HTML]'
-    });
-    return { messageId: 'mock-' + Date.now() };
+// Configuração do transporter real (SMTP)
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587,
+  secure: false, // true para 465, false para outras portas
+  auth: {
+    user: process.env.SMTP_USER || 'seuemail@gmail.com',
+    pass: process.env.SMTP_PASS || 'suasenha'
   }
-};
+});
 
 // Função para enviar convite de agendamento
 async function enviarConviteAgendamento(agendamento, emailConvidado, nomeConvidado) {
@@ -41,9 +40,9 @@ async function enviarConviteAgendamento(agendamento, emailConvidado, nomeConvida
       `,
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log(`✅ Convite enviado para ${emailConvidado}`);
-    return { success: true };
+  const info = await transporter.sendMail(mailOptions);
+  console.log(`✅ Convite enviado para ${emailConvidado} (ID: ${info.messageId})`);
+  return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('❌ Erro ao enviar convite:', error);
     throw error;
@@ -80,7 +79,8 @@ async function enviarLembreteAgendamento(agendamento) {
         `,
       };
 
-      await transporter.sendMail(mailOptions);
+  const info = await transporter.sendMail(mailOptions);
+  console.log(`✅ Lembrete enviado para ${agendamento.email_lembrete} (ID: ${info.messageId})`);
     }
 
     // Enviar para convidados aceitos
@@ -105,7 +105,8 @@ async function enviarLembreteAgendamento(agendamento) {
             `,
           };
 
-          await transporter.sendMail(mailOptions);
+          const info = await transporter.sendMail(mailOptions);
+          console.log(`✅ Lembrete enviado para ${convidado.email} (ID: ${info.messageId})`);
         }
       }
     }

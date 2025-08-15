@@ -112,6 +112,8 @@ class Agendamento extends Model {
     const em24h = new Date();
     em24h.setHours(em24h.getHours() + 24);
     
+    const Processo = require('./processoModel');
+    const Usuario = require('./usuarioModel');
     return Agendamento.findAll({
       where: {
         data_inicio: {
@@ -129,13 +131,13 @@ class Agendamento extends Model {
       },
       include: [
         { 
-          model: sequelize.models.processoModel, 
+          model: Processo, 
           as: 'processo', 
           attributes: ['id', 'numero_processo', 'titulo'],
           required: false
         },
         { 
-          model: sequelize.models.usuarioModel, 
+          model: Usuario, 
           as: 'usuario', 
           attributes: ['id', 'nome', 'email'],
           required: false
