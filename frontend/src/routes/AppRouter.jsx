@@ -1,5 +1,8 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import AgendamentoCreatePage from "@/pages/AgendamentoCreatePage";
+import AgendamentoEditPage from "@/pages/AgendamentoEditPage";
+import AgendamentoDetailPage from "@/pages/AgendamentoDetailPage";
 import { useAuthContext } from "@/contexts/AuthContext";
 import MainLayout from "@/components/layout/MainLayout";
 import LoginPage from "@/pages/auth/LoginPage";
@@ -120,7 +123,10 @@ export default function AppRouter() {
           />
           <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} /> 
           <Route path="/arquivos" element={<PrivateRoute><ArquivosPage /></PrivateRoute>} /> 
-          <Route path="/agendamentos" element={<PrivateRoute><AgendamentosPage /></PrivateRoute>} /> 
+            <Route path="/agendamentos" element={<PrivateRoute><AgendamentosPage /></PrivateRoute>} />
+            <Route path="/agendamentos/novo" element={<PrivateRoute><AgendamentoCreatePage /></PrivateRoute>} />
+            <Route path="/agendamentos/:id" element={<PrivateRoute><AgendamentoDetailPage /></PrivateRoute>} />
+            <Route path="/agendamentos/:id/editar" element={<PrivateRoute><AgendamentoEditPage /></PrivateRoute>} />
           
           {/* Notificações */}
           <Route path="/notificacoes" element={<PrivateRoute><NotificationPage /></PrivateRoute>} />

@@ -9,7 +9,8 @@ const AgendamentoForm = ({
   agendamento = null, 
   onSuccess, 
   onCancel,
-  isEditing = false 
+  isEditing = false,
+  processos = [] // Recebendo a lista de processos como prop
 }) => {
   const { token } = useAuthContext();
   const [loading, setLoading] = useState(false);
@@ -32,6 +33,24 @@ const AgendamentoForm = ({
     email: '',
     nome: ''
   });
+
+  // Função para formatar data para input datetime-local
+  const formatDateTimeForInput = (dateString) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '';
+      
+      // Ajustar para o timezone local
+      const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      
+      // Formato YYYY-MM-DDTHH:mm para input datetime-local
+      return localDate.toISOString().slice(0, 16);
+    } catch (error) {
+      console.error('Erro ao formatar data:', error);
+      return '';
+    }
+  };
 
   // Carregar dados do agendamento se estiver editando
   useEffect(() => {
@@ -105,6 +124,8 @@ const AgendamentoForm = ({
     setError('');
 
     try {
+      console.log('📝 Dados do formulário antes da validação:', formData);
+
       // Validações básicas
       if (!formData.titulo.trim()) {
         throw new Error('Título é obrigatório');
@@ -119,6 +140,8 @@ const AgendamentoForm = ({
       // Validação mais precisa das datas
       const dataInicio = new Date(formData.data_inicio);
       const dataFim = new Date(formData.data_fim);
+      
+      console.log('📅 Datas parseadas:', { dataInicio, dataFim });
       
       if (isNaN(dataInicio.getTime()) || isNaN(dataFim.getTime())) {
         throw new Error('Datas inválidas');
@@ -135,15 +158,41 @@ const AgendamentoForm = ({
       
       const method = isEditing ? 'PUT' : 'POST';
 
+      // Não enviar email_lembrete se estiver vazio
+      const dataToSend = { ...formData };
+      if (!dataToSend.email_lembrete) {
+        delete dataToSend.email_lembrete;
+      }
+
+      // Garantir que as datas estão no formato ISO correto
+      if (dataToSend.data_inicio) {
+        // Se a data já está no formato correto (datetime-local), converter para ISO
+        const dataInicioISO = new Date(dataToSend.data_inicio).toISOString();
+        dataToSend.data_inicio = dataInicioISO;
+        console.log('📅 Data início formatada:', dataInicioISO);
+      }
+      if (dataToSend.data_fim) {
+        const dataFimISO = new Date(dataToSend.data_fim).toISOString();
+        dataToSend.data_fim = dataFimISO;
+        console.log('📅 Data fim formatada:', dataFimISO);
+      }
+
+      console.log('📦 Dados sendo enviados:', JSON.stringify(dataToSend, null, 2));
+
       const response = await apiRequest(endpoint, {
         method,
-        data: formData,
+        data: dataToSend,
         token
       });
 
       if (response.success) {
         onSuccess?.(response.data);
       } else {
+        // Se há erros de validação, mostrar detalhes
+        if (response.errors && Array.isArray(response.errors)) {
+          const errorMessages = response.errors.map(err => err.msg).join(', ');
+          throw new Error(errorMessages);
+        }
         throw new Error(response.message || 'Erro ao salvar agendamento');
       }
     } catch (error) {
@@ -193,6 +242,33 @@ const AgendamentoForm = ({
           border: '1px solid #f5c6cb'
         }}>
           {error}
+        </div>
+      )}
+      {/* Validação visual para datas */}
+      {formData.data_inicio && formData.data_fim && (new Date(formData.data_fim) < new Date(formData.data_inicio)) && (
+        <div style={{
+          backgroundColor: '#fff3cd',
+          color: '#856404',
+          padding: '12px',
+          borderRadius: '4px',
+          marginBottom: '16px',
+          border: '1px solid #ffeeba'
+        }}>
+          A <b>data de fim</b> deve ser posterior à <b>data de início</b>.
+        </div>
+      )}
+
+      {/* Validação visual para processo_id */}
+      {formData.processo_id === '' && (
+        <div style={{
+          backgroundColor: '#fff3cd',
+          color: '#856404',
+          padding: '12px',
+          borderRadius: '4px',
+          marginBottom: '16px',
+          border: '1px solid #ffeeba'
+        }}>
+          Selecione um <b>processo</b> antes de salvar o agendamento.
         </div>
       )}
 
@@ -499,6 +575,33 @@ const AgendamentoForm = ({
           )}
         </div>
 
+        {/* Processo */}
+        <div>
+          <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>
+            Processo vinculado *
+          </label>
+          <select
+            name="processo_id"
+            value={formData.processo_id}
+            onChange={handleInputChange}
+            required
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '14px'
+            }}
+          >
+            <option value="">Selecione um processo</option>
+            {Array.isArray(processos) && processos.filter(p => p.status !== 'concluido').map(processo => (
+              <option key={processo.id} value={processo.id}>
+                {processo.numero} - {processo.titulo}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* Botões */}
         <div style={{
           display: 'flex',
@@ -508,17 +611,34 @@ const AgendamentoForm = ({
           paddingTop: '20px'
         }}>
           <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={loading}
-          >
-            Cancelar
-          </Button>
+              type="button"
+              variant="outline"
+              onClick={() => {
+                // Limpa o formulário ao cancelar
+                setFormData({
+                  processo_id: processoId || '',
+                  titulo: '',
+                  descricao: '',
+                  data_inicio: '',
+                  data_fim: '',
+                  local: '',
+                  tipo: 'reuniao',
+                  email_lembrete: '',
+                  observacoes: '',
+                  convidados: []
+                });
+                setError('');
+                setNewConvidado({ email: '', nome: '' });
+                if (onCancel) onCancel();
+              }}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
           <Button
             type="submit"
             variant="primary"
-            disabled={loading}
+            disabled={loading || (formData.data_inicio && formData.data_fim && (new Date(formData.data_fim) < new Date(formData.data_inicio)) || formData.processo_id === '')}
           >
             {loading ? 'Salvando...' : (isEditing ? 'Atualizar' : 'Criar')} Agendamento
           </Button>

@@ -1,65 +1,42 @@
 const axios = require('axios');
 
-async function testAgendamentoCreation() {
+async function testAgendamentoDebug() {
   try {
-    console.log('📅 Testando criação de agendamento...');
-    
     // Login
     const loginResponse = await axios.post('http://localhost:3001/auth/login', {
       email: 'admin@teste.com',
       senha: 'admin123'
     });
-    
-    if (!loginResponse.data.token) {
-      console.log('❌ Falha no login');
-      return;
-    }
-    
+
     const token = loginResponse.data.token;
     console.log('✅ Login realizado com sucesso');
-    
-    // Testar criação de agendamento sem processo específico
+
+    // Dados do agendamento
     const agendamentoData = {
-      titulo: 'Teste de Agendamento',
-      descricao: 'Agendamento de teste para verificar tratamento de erro',
-      local: 'Online',
-      data_inicio: '2025-08-20T14:00:00-03:00',
-      data_fim: '2025-08-20T15:00:00-03:00',
-      tipo: 'reuniao'
-      // processo_id: 1 // Removido para testar agendamento geral
+      titulo: 'Teste Debug',
+      descricao: 'Teste de debug do erro 400',
+      data_inicio: '2025-08-15T14:00',
+      data_fim: '2025-08-15T15:00',
+      tipo: 'reuniao',
+      local: 'Sala 101',
+      observacoes: '',
+      convidados: []
+      // Não inclua email_lembrete se não houver valor!
     };
-    
+
+    // Requisição de criação
     const response = await axios.post('http://localhost:3001/api/agendamentos', agendamentoData, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+      headers: { 'Authorization': `Bearer ${token}` }
     });
-    
-    console.log('📊 Resultado da criação:', {
-      success: response.data.success,
-      message: response.data.message,
-      warning: response.data.warning || 'Nenhum aviso'
-    });
-    
-    if (response.data.success) {
-      console.log('✅ Agendamento criado com sucesso!');
-      if (response.data.warning) {
-        console.log(`⚠️ Aviso: ${response.data.warning}`);
-      }
-    }
-    
+
+    console.log('📥 Resposta:', JSON.stringify(response.data, null, 2));
   } catch (error) {
     if (error.response) {
-      console.log('📊 Resposta do servidor:', {
-        status: error.response.status,
-        message: error.response.data.message || error.response.data.erro,
-        details: JSON.stringify(error.response.data, null, 2),
-        warning: error.response.data.warning || 'Nenhum aviso'
-      });
+      console.log('❌ Erro:', JSON.stringify(error.response.data, null, 2));
     } else {
       console.error('❌ Erro na requisição:', error.message);
     }
   }
 }
 
-testAgendamentoCreation();
+testAgendamentoDebug();

@@ -16,17 +16,16 @@ import {
   Send,
   Users
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import AgendamentoForm from '../components/agendamentos/AgendamentoForm';
 import AgendamentosLista from '../components/agendamentos/AgendamentosLista';
 
 const AgendamentosPage = () => {
+  const navigate = useNavigate();
   const [agendamentos, setAgendamentos] = useState([]);
   const [processos, setProcessos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [editando, setEditando] = useState(null);
   const [filtros, setFiltros] = useState({
     status: '',
     tipo: '',
@@ -137,19 +136,12 @@ const AgendamentosPage = () => {
     }
   };
 
-  const abrirModal = (agendamento = null) => {
-    setEditando(agendamento);
-    setShowModal(true);
+  const abrirEdicao = (agendamento) => {
+    navigate(`/agendamentos/${agendamento.id}/editar`);
   };
 
-  const fecharModal = () => {
-    setShowModal(false);
-    setEditando(null);
-  };
-
-  const onSalvarAgendamento = async () => {
-    await carregarAgendamentos();
-    fecharModal();
+  const criarNovoAgendamento = () => {
+    navigate('/agendamentos/novo');
   };
 
   if (loading) {
@@ -166,7 +158,7 @@ const AgendamentosPage = () => {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-3xl font-bold text-gray-900">Agendamentos Individualizados</h1>
           <button
-            onClick={() => abrirModal()}
+            onClick={criarNovoAgendamento}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -246,29 +238,11 @@ const AgendamentosPage = () => {
       {/* Lista de Agendamentos usando componente */}
       <AgendamentosLista 
         agendamentos={agendamentos}
-        onEdit={abrirModal}
+        onEdit={abrirEdicao}
         onDelete={handleDelete}
         onStatusChange={handleStatusChange}
         onEnviarLembrete={enviarLembrete}
       />
-
-      {/* Modal do Formulário */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4">
-              {editando ? 'Editar Agendamento' : 'Novo Agendamento'}
-            </h2>
-
-            <AgendamentoForm 
-              agendamento={editando}
-              processos={processos}
-              onSalvar={onSalvarAgendamento}
-              onCancelar={fecharModal}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

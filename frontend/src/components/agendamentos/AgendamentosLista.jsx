@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { apiRequest } from '@/api/apiRequest';
 import Button from '@/components/common/Button';
@@ -7,8 +8,9 @@ import Loader from '@/components/common/Loader';
 import AgendamentoForm from './AgendamentoForm';
 import { formatDate, formatDateTime } from '@/utils/commonUtils';
 
-const AgendamentosLista = ({ processoId = null, showCreateButton = true }) => {
+const AgendamentosLista = ({ processoId = null, showCreateButton = true, onEdit, onDelete, onStatusChange, onEnviarLembrete }) => {
   const { token, user } = useAuthContext();
+  const navigate = useNavigate();
   const [agendamentos, setAgendamentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -57,29 +59,37 @@ const AgendamentosLista = ({ processoId = null, showCreateButton = true }) => {
   };
 
   const handleEdit = (agendamento) => {
-    setEditingAgendamento(agendamento);
-    setShowForm(true);
+    if (onEdit) {
+      onEdit(agendamento);
+    } else {
+      setEditingAgendamento(agendamento);
+      setShowForm(true);
+    }
   };
 
   const handleDelete = async (agendamento) => {
-    if (!window.confirm(`Tem certeza que deseja deletar o agendamento "${agendamento.titulo}"?`)) {
-      return;
-    }
-
-    try {
-      const response = await apiRequest(`/api/agendamentos/${agendamento.id}`, {
-        method: 'DELETE',
-        token
-      });
-
-      if (response.success) {
-        await carregarAgendamentos();
-      } else {
-        throw new Error(response.message || 'Erro ao deletar agendamento');
+    if (onDelete) {
+      onDelete(agendamento.id);
+    } else {
+      if (!window.confirm(`Tem certeza que deseja deletar o agendamento "${agendamento.titulo}"?`)) {
+        return;
       }
-    } catch (error) {
-      console.error('Erro ao deletar agendamento:', error);
-      alert(error.message || 'Erro ao deletar agendamento');
+
+      try {
+        const response = await apiRequest(`/api/agendamentos/${agendamento.id}`, {
+          method: 'DELETE',
+          token
+        });
+
+        if (response.success) {
+          await carregarAgendamentos();
+        } else {
+          throw new Error(response.message || 'Erro ao deletar agendamento');
+        }
+      } catch (error) {
+        console.error('Erro ao deletar agendamento:', error);
+        alert(error.message || 'Erro ao deletar agendamento');
+      }
     }
   };
 
@@ -356,7 +366,19 @@ const AgendamentosLista = ({ processoId = null, showCreateButton = true }) => {
                     fontSize: '18px',
                     fontWeight: '600'
                   }}>
-                    {getTipoIcon(agendamento.tipo)} {agendamento.titulo}
+                    {getTipoIcon(agendamento.tipo)}{' '}
+                    <span 
+                      onClick={() => navigate(`/agendamentos/${agendamento.id}`)}
+                      style={{
+                        cursor: 'pointer',
+                        color: '#007bff',
+                        textDecoration: 'none'
+                      }}
+                      onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+                      onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+                    >
+                      {agendamento.titulo}
+                    </span>
                   </h3>
                   <div style={{
                     display: 'flex',
@@ -379,6 +401,13 @@ const AgendamentosLista = ({ processoId = null, showCreateButton = true }) => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate(`/agendamentos/${agendamento.id}`)}
+                    style={{ fontSize: '12px', padding: '4px 8px' }}
+                  >
+                    Ver Detalhes
+                  </Button>
                   {canEdit(agendamento) && (
                     <Button
                       variant="outline"
