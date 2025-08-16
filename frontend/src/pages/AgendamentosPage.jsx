@@ -30,31 +30,33 @@ const AgendamentosPage = () => {
   const carregarDados = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🔄 Carregando dados iniciais...');
+      setError('');
       
       const [agendamentosRes, processosRes] = await Promise.all([
         api.get('/api/agendamentos'),
         api.get('/api/processos')
       ]);
 
-      console.log('📅 Resposta agendamentos:', agendamentosRes);
-      console.log('📋 Resposta processos:', processosRes);
-
-      if (agendamentosRes.data?.success) {
-        const agendamentosData = agendamentosRes.data.data || [];
-        console.log('✅ Agendamentos carregados:', agendamentosData.length, agendamentosData);
+      // Backend retorna diretamente: { success: true, data: [...] }
+      if (agendamentosRes && agendamentosRes.success) {
+        const agendamentosData = agendamentosRes.data || [];
         setAgendamentos(agendamentosData);
       } else {
-        console.warn('⚠️ Resposta de agendamentos sem success:', agendamentosRes);
         setAgendamentos([]);
       }
 
-      if (processosRes.data?.success) {
-        setProcessos(processosRes.data.data || []);
+      if (processosRes && processosRes.success) {
+        setProcessos(processosRes.data || []);
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar dados:', error);
-      setError('Erro ao carregar dados: ' + (error.message || error));
+      console.error('Erro ao carregar dados:', error);
+      if (error.message && error.message.includes('Token')) {
+        setError('Sessão expirada. Redirecionando para login...');
+      } else {
+        setError('Erro ao carregar dados. Tente novamente.');
+      }
+      setAgendamentos([]);
+      setProcessos([]);
     } finally {
       setLoading(false);
     }
@@ -64,7 +66,7 @@ const AgendamentosPage = () => {
   const carregarAgendamentos = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🔍 Aplicando filtros:', filtros);
+      setError('');
       
       const params = new URLSearchParams();
       
@@ -73,22 +75,24 @@ const AgendamentosPage = () => {
       });
 
       const url = `/api/agendamentos?${params}`;
-      console.log('🌐 URL da requisição:', url);
       
       const response = await api.get(url);
-      console.log('📊 Resposta filtrada:', response);
       
-      if (response.data?.success) {
-        const agendamentosData = response.data.data || [];
-        console.log('✅ Agendamentos filtrados:', agendamentosData.length, agendamentosData);
+      // Backend retorna diretamente: { success: true, data: [...] }
+      if (response && response.success) {
+        const agendamentosData = response.data || [];
         setAgendamentos(agendamentosData);
       } else {
-        console.warn('⚠️ Resposta sem success:', response);
         setAgendamentos([]);
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar agendamentos:', error);
-      setError('Erro ao carregar agendamentos: ' + (error.message || error));
+      console.error('Erro ao carregar agendamentos:', error);
+      if (error.message && error.message.includes('Token')) {
+        setError('Sessão expirada. Redirecionando para login...');
+      } else {
+        setError('Erro ao carregar agendamentos. Tente novamente.');
+      }
+      setAgendamentos([]);
     } finally {
       setLoading(false);
     }

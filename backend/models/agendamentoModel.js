@@ -161,26 +161,42 @@ class Agendamento extends Model {
     return this;
   }
 
-  aceitarConvite(email) {
-    const convidados = this.convidados || [];
+  async aceitarConvite(email) {
+    let convidados = this.convidados;
+    if (!Array.isArray(convidados)) {
+      try {
+        convidados = JSON.parse(convidados);
+      } catch {
+        convidados = [];
+      }
+    }
     const convidado = convidados.find(c => c.email === email);
     if (convidado) {
       convidado.status = 'aceito';
       convidado.respondido_em = new Date();
       this.convidados = convidados;
+      await this.save();
     }
-    return this.save();
+    return this;
   }
 
-  recusarConvite(email) {
-    const convidados = this.convidados || [];
+  async recusarConvite(email) {
+    let convidados = this.convidados;
+    if (!Array.isArray(convidados)) {
+      try {
+        convidados = JSON.parse(convidados);
+      } catch {
+        convidados = [];
+      }
+    }
     const convidado = convidados.find(c => c.email === email);
     if (convidado) {
       convidado.status = 'recusado';
       convidado.respondido_em = new Date();
       this.convidados = convidados;
+      await this.save();
     }
-    return this.save();
+    return this;
   }
 }
 

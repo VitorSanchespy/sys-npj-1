@@ -6,14 +6,21 @@ const apiService = {
   get: async (url) => {
     try {
       const token = localStorage.getItem('token');
-  // ...existing code...
+      
+      if (!token) {
+        throw new Error('Token de autenticação não encontrado. Faça login novamente.');
+      }
       
       const response = await api.get(url, token);
-  // ...existing code...
       
       return response;
     } catch (error) {
-  // ...existing code...
+      if (error.status === 401) {
+        // Token inválido ou expirado
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
+      }
       throw error;
     }
   },
@@ -22,14 +29,11 @@ const apiService = {
   post: async (url, data) => {
     try {
       const token = localStorage.getItem('token');
-  // ...existing code...
       
       const response = await api.post(url, data, token);
-  // ...existing code...
       
       return response;
     } catch (error) {
-  // ...existing code...
       throw error;
     }
   },
@@ -38,14 +42,24 @@ const apiService = {
   put: async (url, data) => {
     try {
       const token = localStorage.getItem('token');
-  // ...existing code...
       
       const response = await api.put(url, data, token);
-  // ...existing code...
       
       return response;
     } catch (error) {
-  // ...existing code...
+      throw error;
+    }
+  },
+
+  // PATCH request
+  patch: async (url, data) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await api.patch(url, data, token);
+      
+      return response;
+    } catch (error) {
       throw error;
     }
   },
@@ -54,14 +68,11 @@ const apiService = {
   delete: async (url) => {
     try {
       const token = localStorage.getItem('token');
-  // ...existing code...
       
       const response = await api.delete(url, token);
-  // ...existing code...
       
       return response;
     } catch (error) {
-  // ...existing code...
       throw error;
     }
   }

@@ -571,9 +571,24 @@ const AgendamentoForm = ({
               onChange={handleInputChange}
               required
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+              disabled={isEditing}
             >
-              <option value="">Selecione um processo</option>
-              {Array.isArray(processos) && processos.filter(p => p.status !== 'concluido').map(processo => (
+              {isEditing
+                ? (() => {
+                    const processoAtual = Array.isArray(processos)
+                      ? processos.find(p => p.id === formData.processo_id)
+                      : null;
+                    return processoAtual ? (
+                      <option value={processoAtual.id}>
+                        {processoAtual.numero} - {processoAtual.titulo}
+                      </option>
+                    ) : (
+                      <option value={formData.processo_id}>Processo vinculado</option>
+                    );
+                  })()
+                : <option value="">Selecione um processo</option>
+              }
+              {!isEditing && Array.isArray(processos) && processos.filter(p => p.status !== 'concluido').map(processo => (
                 <option key={processo.id} value={processo.id}>
                   {processo.numero} - {processo.titulo}
                 </option>
