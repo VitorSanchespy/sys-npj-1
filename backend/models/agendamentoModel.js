@@ -122,7 +122,6 @@ class Agendamento extends Model {
         lembrete_enviado: false,
         [Sequelize.Op.or]: [
           { email_lembrete: { [Sequelize.Op.not]: null } },
-          { email_cliente: { [Sequelize.Op.not]: null } },
           Sequelize.literal('JSON_LENGTH(convidados) > 0')
         ],
         status: {

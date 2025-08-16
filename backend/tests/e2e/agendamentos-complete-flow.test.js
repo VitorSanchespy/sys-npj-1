@@ -21,7 +21,7 @@ describe('Agendamentos E2E - Fluxo Completo', () => {
         start: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         end: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(),
         summary: 'E2E Test - Reunião Completa',
-        tipo_evento: 'Reunião',
+  tipo: 'Reunião',
         description: 'Teste end-to-end do sistema',
         location: 'Escritório NPJ - Sala 1',
         attendees: ['participante1@test.com', 'participante2@test.com'],

@@ -48,6 +48,20 @@ app.use('/api/processos', require('./routes/processoRoute'));
 // Nova rota de agendamentos - sistema unificado
 app.use('/api/agendamentos', require('./routes/agendamentos'));
 
+// Rotas públicas para convites (sem autenticação)
+const agendamentoController = require('./controllers/agendamentoController');
+const { param, body } = require('express-validator');
+
+app.post('/api/convite/:id/aceitar', [
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
+  body('email').isEmail().withMessage('Email deve ter formato válido')
+], agendamentoController.aceitarConvitePublico);
+
+app.post('/api/convite/:id/recusar', [
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
+  body('email').isEmail().withMessage('Email deve ter formato válido')
+], agendamentoController.recusarConvitePublico);
+
 //
 app.use('/api/notificacoes', require('./routes/notificacaoRoute'));
 app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoute'));

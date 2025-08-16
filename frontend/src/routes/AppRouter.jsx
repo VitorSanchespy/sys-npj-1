@@ -25,6 +25,8 @@ import UserEditPage from "@/pages/dashboard/UserEditPage";
 import ArquivosPage from "@/pages/dashboard/ArquivosPage";
 import AgendamentosPage from "@/pages/AgendamentosPage";
 import ConviteAgendamento from "@/components/agendamentos/ConviteAgendamento";
+import AceitarConvitePage from "@/pages/convite/AceitarConvitePage";
+import RecusarConvitePage from "@/pages/convite/RecusarConvitePage";
 import NotificationPage from "@/pages/dashboard/NotificationPage";
 import NotificationSettingsPage from "@/pages/dashboard/NotificationSettingsPage";
 import NotFoundPage from "@/pages/NotFoundPage";
@@ -101,8 +103,10 @@ export default function AppRouter() {
           {/* Convite de agendamento - público */}
           <Route path="/convite/:token" element={<ConviteAgendamento />} />
           
-          {/* Teste temporário removido */}
-          {/* Google Calendar Callback removido */}
+          {/* Resposta a convites - rotas públicas */}
+          <Route path="/convite/:id/aceitar" element={<AceitarConvitePage />} />
+          <Route path="/convite/:id/recusar" element={<RecusarConvitePage />} />
+          
           
           {/* Protegido: Todos autenticados */}
           <Route

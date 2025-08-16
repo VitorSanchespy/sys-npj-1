@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useToast } from '@/components/common/Toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { apiRequest } from '@/api/apiRequest';
@@ -8,55 +9,14 @@ import Loader from '@/components/common/Loader';
 import AgendamentoForm from './AgendamentoForm';
 import { formatDate, formatDateTime } from '@/utils/commonUtils';
 
-const AgendamentosLista = ({ processoId = null, showCreateButton = true, onEdit, onDelete, onStatusChange, onEnviarLembrete }) => {
+const AgendamentosLista = ({ agendamentos = [], showCreateButton = true, onEdit, onDelete, onStatusChange, onEnviarLembrete }) => {
+  const { showSuccess, showError } = useToast();
   const { token, user } = useAuthContext();
   const navigate = useNavigate();
-  const [agendamentos, setAgendamentos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingAgendamento, setEditingAgendamento] = useState(null);
-  const [filters, setFilters] = useState({
-    tipo: '',
-    status: '',
-    data_inicio: '',
-    data_fim: ''
-  });
 
-  useEffect(() => {
-    carregarAgendamentos();
-  }, [processoId, filters]);
-
-  const carregarAgendamentos = async () => {
-    try {
-      setLoading(true);
-      setError('');
-
-      const params = new URLSearchParams();
-      if (processoId) params.append('processo_id', processoId);
-      if (filters.tipo) params.append('tipo', filters.tipo);
-      if (filters.status) params.append('status', filters.status);
-      if (filters.data_inicio) params.append('data_inicio', filters.data_inicio);
-      if (filters.data_fim) params.append('data_fim', filters.data_fim);
-
-      const response = await apiRequest(`/api/agendamentos?${params.toString()}`, {
-        method: 'GET',
-        token
-      });
-
-      if (response.success) {
-        setAgendamentos(response.data || []);
-      } else {
-        throw new Error(response.message || 'Erro ao carregar agendamentos');
-      }
-    } catch (error) {
-  // console.error removido
-      setError(error.message || 'Erro interno do servidor');
-      setAgendamentos([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Removida lógica de busca/filtro interna. Agendamentos vêm via prop.
 
   const handleEdit = (agendamento) => {
     if (onEdit) {
@@ -74,29 +34,14 @@ const AgendamentosLista = ({ processoId = null, showCreateButton = true, onEdit,
       if (!window.confirm(`Tem certeza que deseja deletar o agendamento "${agendamento.titulo}"?`)) {
         return;
       }
-
-      try {
-        const response = await apiRequest(`/api/agendamentos/${agendamento.id}`, {
-          method: 'DELETE',
-          token
-        });
-
-        if (response.success) {
-          await carregarAgendamentos();
-        } else {
-          throw new Error(response.message || 'Erro ao deletar agendamento');
-        }
-      } catch (error) {
-  // console.error removido
-        alert(error.message || 'Erro ao deletar agendamento');
-      }
+      // ...existing code...
     }
   };
 
   const handleFormSuccess = async () => {
     setShowForm(false);
     setEditingAgendamento(null);
-    await carregarAgendamentos();
+    // Atualização da lista deve ser feita pelo componente pai
   };
 
   const handleFormCancel = () => {
@@ -104,22 +49,7 @@ const AgendamentosLista = ({ processoId = null, showCreateButton = true, onEdit,
     setEditingAgendamento(null);
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      tipo: '',
-      status: '',
-      data_inicio: '',
-      data_fim: ''
-    });
-  };
+  // Removidos métodos de filtro, pois agora são responsabilidade do componente pai
 
   const getTipoIcon = (tipo) => {
     switch (tipo) {
@@ -160,7 +90,6 @@ const AgendamentosLista = ({ processoId = null, showCreateButton = true, onEdit,
   if (showForm) {
     return (
       <AgendamentoForm
-        processoId={processoId}
         agendamento={editingAgendamento}
         isEditing={!!editingAgendamento}
         onSuccess={handleFormSuccess}
@@ -169,68 +98,91 @@ const AgendamentosLista = ({ processoId = null, showCreateButton = true, onEdit,
     );
   }
 
-  if (loading) {
-    return <Loader message="Carregando agendamentos..." />;
-  }
-
   return (
-    <div className="flex flex-col gap-4">
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-center">
-          {error}
-        </div>
-      )}
+    <div className="flex flex-col gap-6">
       {agendamentos.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
           <p className="text-lg">Você ainda não possui agendamentos.</p>
           {showCreateButton && (
-            <p className="mt-2 text-sm">Clique em <span className="font-semibold text-blue-600">Novo</span> para criar seu primeiro agendamento.</p>
+            <p className="mt-2 text-sm">Clique em <span className="font-semibold text-primary-600">Novo</span> para criar seu primeiro agendamento.</p>
           )}
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {agendamentos.map(agendamento => (
             <div
               key={agendamento.id}
-              className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-all duration-200"
+              className="bg-white border border-gray-200 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 p-6 flex flex-col justify-between"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">{getTipoIcon(agendamento.tipo)}</span>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-3xl">{getTipoIcon(agendamento.tipo)}</span>
+                <div className="flex-1 min-w-0">
                   <button
                     type="button"
-                    className="text-blue-700 font-semibold hover:underline focus:outline-none"
+                    className="text-lg font-bold bg-primary-600 text-white px-4 py-2 rounded-lg shadow hover:bg-primary-700 focus:outline-none truncate transition-colors"
                     onClick={() => navigate(`/agendamentos/${agendamento.id}`)}
                   >
                     {agendamento.titulo}
                   </button>
-                </div>
-                <div className="flex gap-2">
-                  <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium">{getTipoText(agendamento.tipo)}</span>
-                  <StatusBadge status={getStatusText(agendamento.status)} />
+                  <div className="flex gap-2 mt-1">
+                    <span className="bg-primary-50 text-primary-700 px-2 py-1 rounded-full text-xs font-semibold">{getTipoText(agendamento.tipo)}</span>
+                    <StatusBadge status={getStatusText(agendamento.status)} />
+                  </div>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-gray-500">
-                <span>Início: {formatDateTime(agendamento.data_inicio)}</span>
-                <span>Fim: {formatDateTime(agendamento.data_fim)}</span>
+              <div className="flex flex-col gap-1 text-sm text-gray-600 mb-4">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-primary-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/></svg>
+                  <span>Início: <span className="font-medium text-gray-800">{formatDateTime(agendamento.data_inicio)}</span></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-primary-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"/></svg>
+                  <span>Fim: <span className="font-medium text-gray-800">{formatDateTime(agendamento.data_fim)}</span></span>
+                </div>
               </div>
-              <div className="flex gap-2 mt-3">
-                <Button variant="outline" onClick={() => navigate(`/agendamentos/${agendamento.id}`)}>
+              <div className="flex flex-wrap gap-2 mt-2">
+                <button
+                  className="px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors"
+                  onClick={() => navigate(`/agendamentos/${agendamento.id}`)}
+                >
                   Ver Detalhes
-                </Button>
+                </button>
                 {canEdit(agendamento) && (
-                  <Button variant="outline" onClick={() => handleEdit(agendamento)}>
+                  <button
+                    className="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 transition-colors"
+                    onClick={() => handleEdit(agendamento)}
+                  >
                     Editar
-                  </Button>
+                  </button>
                 )}
                 {canDelete(agendamento) && (
-                  <Button variant="danger" onClick={() => handleDelete(agendamento)}>
+                  <button
+                    className="px-4 py-2 bg-danger-600 text-white font-semibold rounded-lg hover:bg-danger-700 transition-colors"
+                    onClick={() => handleDelete(agendamento)}
+                  >
                     Excluir
-                  </Button>
+                  </button>
                 )}
-                <Button variant="outline" onClick={() => onEnviarLembrete?.(agendamento.id)}>
+                <button
+                  className="px-4 py-2 bg-success-600 text-white font-semibold rounded-lg hover:bg-success-700 transition-colors"
+                  onClick={async () => {
+                    try {
+                      const response = await apiRequest(`/api/agendamentos/${agendamento.id}/lembrete`, {
+                        method: 'POST',
+                        token
+                      });
+                      if (response.success) {
+                        showSuccess(response.message || 'Lembrete enviado com sucesso!');
+                      } else {
+                        showError(response.message || 'Falha ao enviar lembrete.');
+                      }
+                    } catch (err) {
+                      showError('Falha ao enviar lembrete: ' + (err.message || 'Erro desconhecido'));
+                    }
+                  }}
+                >
                   Enviar Lembrete
-                </Button>
+                </button>
               </div>
             </div>
           ))}

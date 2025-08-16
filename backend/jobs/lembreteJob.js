@@ -29,6 +29,12 @@ class LembreteJob {
     console.log('✅ Job de lembretes iniciado com sucesso');
   }
 
+  // Método para teste manual
+  async testarManual() {
+    console.log('🧪 Executando teste manual do job de lembretes...');
+    await this.executarLembretes();
+  }
+
   // Parar o job
   parar() {
     if (this.job) {
@@ -43,8 +49,39 @@ class LembreteJob {
     console.log('📧 Iniciando execução de lembretes de agendamentos...');
 
     try {
-      // Buscar agendamentos pendentes de lembrete
-      const agendamentos = await Agendamento.findPendentesLembrete();
+      // Buscar agendamentos que precisam de lembrete nas próximas 24 horas
+      const agora = new Date();
+      const em24h = new Date(agora.getTime() + 24 * 60 * 60 * 1000);
+      
+      const { Op } = require('sequelize');
+      const Usuario = require('../models/usuarioModel');
+      const Processo = require('../models/processoModel');
+      
+      const agendamentos = await Agendamento.findAll({
+        where: {
+          data_inicio: {
+            [Op.between]: [agora, em24h]
+          },
+          lembrete_enviado: false,
+          status: {
+            [Op.in]: ['pendente', 'confirmado']
+          }
+        },
+        include: [
+          { 
+            model: Processo, 
+            as: 'processo', 
+            attributes: ['id', 'numero_processo', 'titulo'],
+            required: false
+          },
+          { 
+            model: Usuario, 
+            as: 'usuario', 
+            attributes: ['id', 'nome', 'email'],
+            required: false
+          }
+        ]
+      });
       
       if (agendamentos.length === 0) {
         console.log('📭 Nenhum agendamento pendente de lembrete encontrado');
@@ -61,14 +98,51 @@ class LembreteJob {
         try {
           console.log(`📤 Enviando lembrete para agendamento: ${agendamento.titulo} (ID: ${agendamento.id})`);
           
-          // Enviar lembrete
-          await emailService.enviarLembreteAgendamento(agendamento);
+          let lembreteEnviado = false;
           
-          // Marcar como enviado
-          await agendamento.marcarLembreteEnviado();
+          // Enviar para o criador do agendamento
+          if (agendamento.usuario && agendamento.usuario.email) {
+            await emailService.enviarLembreteAgendamento(
+              agendamento, 
+              agendamento.usuario.email, 
+              agendamento.usuario.nome
+            );
+            lembreteEnviado = true;
+          }
           
-          sucessos++;
-          console.log(`✅ Lembrete enviado com sucesso para agendamento ID: ${agendamento.id}`);
+          // Enviar para email específico se informado
+          if (agendamento.email_lembrete) {
+            await emailService.enviarLembreteAgendamento(
+              agendamento, 
+              agendamento.email_lembrete, 
+              'Participante'
+            );
+            lembreteEnviado = true;
+          }
+          
+          // Enviar para convidados aceitos
+          if (agendamento.convidados && Array.isArray(agendamento.convidados)) {
+            for (const convidado of agendamento.convidados) {
+              if (convidado.status === 'aceito' && convidado.email) {
+                await emailService.enviarLembreteAgendamento(
+                  agendamento, 
+                  convidado.email, 
+                  convidado.nome || 'Convidado'
+                );
+                lembreteEnviado = true;
+              }
+            }
+          }
+          
+          // Marcar como enviado se pelo menos um lembrete foi enviado
+          if (lembreteEnviado) {
+            agendamento.lembrete_enviado = true;
+            await agendamento.save();
+            sucessos++;
+            console.log(`✅ Lembrete enviado com sucesso para agendamento ID: ${agendamento.id}`);
+          } else {
+            console.log(`⚠️ Nenhum destinatário válido para agendamento ID: ${agendamento.id}`);
+          }
           
         } catch (error) {
           erros++;
@@ -76,16 +150,16 @@ class LembreteJob {
         }
       }
 
-      console.log(`📊 Resumo do job de lembretes:`);
-      console.log(`   ✅ Sucessos: ${sucessos}`);
-      console.log(`   ❌ Erros: ${erros}`);
-      console.log(`   📧 Total processados: ${agendamentos.length}`);
+      console.log(`Resumo do job de lembretes:`);
+      console.log(`Sucessos: ${sucessos}`);
+      console.log(`Erros: ${erros}`);
+      console.log(`Total processados: ${agendamentos.length}`);
 
     } catch (error) {
-      console.error('💥 Erro geral no job de lembretes:', error);
+      console.error('Erro geral no job de lembretes:', error);
     } finally {
       this.isRunning = false;
-      console.log('🏁 Execução de lembretes finalizada');
+      console.log('Execução de lembretes finalizada');
     }
   }
 

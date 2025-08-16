@@ -113,7 +113,7 @@ describe('Agendamentos API Tests', () => {
     it('deve criar um novo agendamento', async () => {
       const agendamentoData = {
         summary: 'Reunião de Teste',
-        tipo_evento: 'Reunião',
+  tipo: 'Reunião',
         start: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Amanhã
         end: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(), // Amanhã + 1h
         location: 'Sala de Teste',
@@ -144,7 +144,7 @@ describe('Agendamentos API Tests', () => {
       const agendamento = await AgendamentoProcesso.create({
         processo_id: testProcesso.id,
         summary: 'Agendamento Original',
-        tipo_evento: 'Reunião',
+  tipo: 'Reunião',
         start: new Date(Date.now() + 24 * 60 * 60 * 1000),
         end: new Date(Date.now() + 25 * 60 * 60 * 1000),
         status: 'sincronizado',
@@ -176,7 +176,7 @@ describe('Agendamentos API Tests', () => {
       const agendamento = await AgendamentoProcesso.create({
         processo_id: testProcesso.id,
         summary: 'Agendamento para Deletar',
-        tipo_evento: 'Reunião',
+  tipo: 'Reunião',
         start: new Date(Date.now() + 24 * 60 * 60 * 1000),
         end: new Date(Date.now() + 25 * 60 * 60 * 1000),
         status: 'sincronizado',
@@ -203,7 +203,7 @@ describe('Agendamentos API Tests', () => {
         {
           processo_id: testProcesso.id,
           summary: 'Agendamento 1',
-          tipo_evento: 'Reunião',
+          tipo: 'Reunião',
           start: new Date(Date.now() + 24 * 60 * 60 * 1000),
           end: new Date(Date.now() + 25 * 60 * 60 * 1000),
           status: 'sincronizado'
@@ -211,7 +211,7 @@ describe('Agendamentos API Tests', () => {
         {
           processo_id: testProcesso.id,
           summary: 'Agendamento 2',
-          tipo_evento: 'Audiência',
+          tipo: 'Audiência',
           start: new Date(Date.now() + 48 * 60 * 60 * 1000),
           end: new Date(Date.now() + 49 * 60 * 60 * 1000),
           status: 'pendente'
@@ -252,7 +252,7 @@ describe('Agendamentos API Tests', () => {
 
     it('deve filtrar agendamentos por tipo de evento', async () => {
       const response = await request(app)
-        .get('/api/agendamentos-global?tipo_evento=Audiência')
+  .get('/api/agendamentos-global?tipo=Audiência')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
@@ -261,7 +261,7 @@ describe('Agendamentos API Tests', () => {
       
       // Todos os agendamentos retornados devem ter tipo 'Audiência'
       agendamentos.forEach(agendamento => {
-        expect(agendamento.tipo_evento).toBe('Audiência');
+  expect(agendamento.tipo).toBe('Audiência');
       });
     });
   });
@@ -272,7 +272,7 @@ describe('Agendamentos API Tests', () => {
       await AgendamentoProcesso.create({
         processo_id: testProcesso.id,
         summary: 'Agendamento do Processo',
-        tipo_evento: 'Reunião',
+  tipo: 'Reunião',
         start: new Date(Date.now() + 24 * 60 * 60 * 1000),
         end: new Date(Date.now() + 25 * 60 * 60 * 1000),
         status: 'sincronizado'

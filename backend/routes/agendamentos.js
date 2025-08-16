@@ -154,6 +154,17 @@ router.patch('/:id/status', [
 // POST /api/agendamentos/:id/lembrete - Enviar lembrete manual
 router.post('/:id/lembrete', validacaoId, agendamentoController.enviarLembrete);
 
+// Rotas públicas para convites (sem autenticação)
+router.post('/:id/aceitar-publico', [
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
+  body('email').isEmail().withMessage('Email deve ter formato válido')
+], agendamentoController.aceitarConvitePublico);
+
+router.post('/:id/recusar-publico', [
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
+  body('email').isEmail().withMessage('Email deve ter formato válido')
+], agendamentoController.recusarConvitePublico);
+
 // POST /api/agendamentos/:id/aceitar - Aceitar convite para agendamento
 router.post('/:id/aceitar', [
   ...validacaoId,

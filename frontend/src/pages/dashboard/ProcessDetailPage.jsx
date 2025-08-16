@@ -9,6 +9,7 @@ import Loader from "@/components/common/Loader";
 import UpdateList from "@/components/atualizacoes/UpdateList";
 import DocumentList from "@/components/documentos/DocumentList";
 import ProcessoAgendamentos from "@/components/agendamentos/ProcessoAgendamentos";
+import AgendamentosCard from "@/components/agendamentos/AgendamentosCard";
 import ProcessAssignUserModal from "@/components/processos/ProcessAssignUserModal";
 import ProcessUnassignUserModal from "@/components/processos/ProcessUnassignUserModal";
 import { getUserRole, hasRole, formatDate, renderValue } from "@/utils/commonUtils";
@@ -562,7 +563,7 @@ export default function ProcessDetailPage() {
           border: '1px solid #e9ecef',
           marginBottom: '20px'
         }}>
-          <ProcessoAgendamentos processoId={id} status={processo.status} />
+          <AgendamentosCard processoId={id} />
         </div>
 
         {/* Histórico de Atualizações do Processo */}

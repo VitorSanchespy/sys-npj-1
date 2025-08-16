@@ -330,8 +330,28 @@ exports.enviarLembrete = async function(req, res) {
             return res.status(403).json({ success: false, message: 'Sem permissão para enviar lembrete deste agendamento' });
         }
         
-        await emailService.enviarLembreteAgendamento(agendamento);
-        await agendamento.marcarLembreteEnviado();
+        // Enviar lembrete para o criador se tiver email
+        const usuario = await require('../models/usuarioModel').findByPk(agendamento.criado_por);
+        if (usuario && usuario.email) {
+            await emailService.enviarLembreteAgendamento(agendamento, usuario.email, usuario.nome);
+        }
+        
+        // Enviar para convidados aceitos
+        if (agendamento.convidados && Array.isArray(agendamento.convidados)) {
+            for (const convidado of agendamento.convidados) {
+                if (convidado.status === 'aceito' && convidado.email) {
+                    await emailService.enviarLembreteAgendamento(agendamento, convidado.email, convidado.nome);
+                }
+            }
+        }
+        
+        // Marcar lembrete como enviado se o campo existir
+        if (typeof agendamento.marcarLembreteEnviado === 'function') {
+            await agendamento.marcarLembreteEnviado();
+        } else {
+            agendamento.lembrete_enviado = true;
+            await agendamento.save();
+        }
         res.json({ success: true, message: 'Lembrete enviado com sucesso' });
     } catch (error) {
         console.error('Erro ao enviar lembrete:', error);
@@ -363,6 +383,56 @@ exports.aceitarConvite = async function(req, res) {
     }
 };
 
+exports.aceitarConvitePublico = async function(req, res) {
+    try {
+        const { id } = req.params;
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Email é obrigatório' });
+        }
+        
+        const agendamento = await Agendamento.findByPk(id, {
+            include: [
+                { model: Processo, as: 'processo', attributes: ['id', 'numero_processo', 'titulo'] },
+                { model: Usuario, as: 'usuario', attributes: ['id', 'nome', 'email'] }
+            ]
+        });
+        
+        if (!agendamento) {
+            return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
+        }
+
+        // Verificar se o email está na lista de convidados
+        const convidados = agendamento.convidados || [];
+        const convidado = convidados.find(c => c.email === email);
+        
+        if (!convidado) {
+            return res.status(403).json({ success: false, message: 'Email não encontrado na lista de convidados' });
+        }
+
+        await agendamento.aceitarConvite(email);
+        
+        res.json({ 
+            success: true, 
+            message: 'Convite aceito com sucesso! Obrigado por confirmar sua participação.',
+            data: {
+                agendamento: {
+                    id: agendamento.id,
+                    titulo: agendamento.titulo,
+                    data_inicio: agendamento.data_inicio,
+                    local: agendamento.local,
+                    descricao: agendamento.descricao
+                },
+                status: 'aceito'
+            }
+        });
+    } catch (error) {
+        console.error('Erro ao aceitar convite público:', error);
+        res.status(500).json({ success: false, message: 'Erro ao aceitar convite', error: error.message });
+    }
+};
+
 exports.recusarConvite = async function(req, res) {
     try {
         const { id } = req.params;
@@ -383,6 +453,56 @@ exports.recusarConvite = async function(req, res) {
         });
     } catch (error) {
         console.error('Erro ao recusar convite:', error);
+        res.status(500).json({ success: false, message: 'Erro ao recusar convite', error: error.message });
+    }
+};
+
+exports.recusarConvitePublico = async function(req, res) {
+    try {
+        const { id } = req.params;
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Email é obrigatório' });
+        }
+        
+        const agendamento = await Agendamento.findByPk(id, {
+            include: [
+                { model: Processo, as: 'processo', attributes: ['id', 'numero_processo', 'titulo'] },
+                { model: Usuario, as: 'usuario', attributes: ['id', 'nome', 'email'] }
+            ]
+        });
+        
+        if (!agendamento) {
+            return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
+        }
+
+        // Verificar se o email está na lista de convidados
+        const convidados = agendamento.convidados || [];
+        const convidado = convidados.find(c => c.email === email);
+        
+        if (!convidado) {
+            return res.status(403).json({ success: false, message: 'Email não encontrado na lista de convidados' });
+        }
+
+        await agendamento.recusarConvite(email);
+        
+        res.json({ 
+            success: true, 
+            message: 'Convite recusado. Obrigado por nos informar.',
+            data: {
+                agendamento: {
+                    id: agendamento.id,
+                    titulo: agendamento.titulo,
+                    data_inicio: agendamento.data_inicio,
+                    local: agendamento.local,
+                    descricao: agendamento.descricao
+                },
+                status: 'recusado'
+            }
+        });
+    } catch (error) {
+        console.error('Erro ao recusar convite público:', error);
         res.status(500).json({ success: false, message: 'Erro ao recusar convite', error: error.message });
     }
 };

@@ -6,14 +6,14 @@ const apiService = {
   get: async (url) => {
     try {
       const token = localStorage.getItem('token');
-  console.log('🔍 GET Request:', JSON.stringify({ url, hasToken: !!token }, null, 2));
+  // ...existing code...
       
       const response = await api.get(url, token);
-  console.log('📥 GET Response:', JSON.stringify({ url, response }, null, 2));
+  // ...existing code...
       
       return response;
     } catch (error) {
-      console.error('❌ GET Error:', { url, error });
+  // ...existing code...
       throw error;
     }
   },
@@ -22,14 +22,14 @@ const apiService = {
   post: async (url, data) => {
     try {
       const token = localStorage.getItem('token');
-  console.log('🔍 POST Request:', JSON.stringify({ url, hasToken: !!token, data }, null, 2));
+  // ...existing code...
       
       const response = await api.post(url, data, token);
-  console.log('📥 POST Response:', JSON.stringify({ url, response }, null, 2));
+  // ...existing code...
       
       return response;
     } catch (error) {
-      console.error('❌ POST Error:', { url, error });
+  // ...existing code...
       throw error;
     }
   },
@@ -38,14 +38,14 @@ const apiService = {
   put: async (url, data) => {
     try {
       const token = localStorage.getItem('token');
-  console.log('🔍 PUT Request:', JSON.stringify({ url, hasToken: !!token, data }, null, 2));
+  // ...existing code...
       
       const response = await api.put(url, data, token);
-  console.log('📥 PUT Response:', JSON.stringify({ url, response }, null, 2));
+  // ...existing code...
       
       return response;
     } catch (error) {
-      console.error('❌ PUT Error:', { url, error });
+  // ...existing code...
       throw error;
     }
   },
@@ -54,14 +54,14 @@ const apiService = {
   delete: async (url) => {
     try {
       const token = localStorage.getItem('token');
-  console.log('🔍 DELETE Request:', JSON.stringify({ url, hasToken: !!token }, null, 2));
+  // ...existing code...
       
       const response = await api.delete(url, token);
-  console.log('📥 DELETE Response:', JSON.stringify({ url, response }, null, 2));
+  // ...existing code...
       
       return response;
     } catch (error) {
-      console.error('❌ DELETE Error:', { url, error });
+  // ...existing code...
       throw error;
     }
   }

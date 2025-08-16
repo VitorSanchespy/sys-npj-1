@@ -94,7 +94,7 @@ router.get('/', async (req, res) => {
         try {
           agendamentosDoAluno = await Agendamento.findAll({
             where: { usuario_id: userId },
-            attributes: ['id', 'tipo_evento', 'status', 'data_evento', 'titulo']
+            attributes: ['id', 'tipo', 'status', 'data_evento', 'titulo']
           });
         } catch (agendError) {
           console.warn('Erro ao buscar agendamentos do aluno:', agendError.message);
@@ -202,10 +202,10 @@ router.get('/', async (req, res) => {
           
           const agendamentosPorTipo = await Agendamento.findAll({
             attributes: [
-              'tipo_evento', 
-              [require('sequelize').fn('COUNT', require('sequelize').col('tipo_evento')), 'count']
+              'tipo', 
+              [require('sequelize').fn('COUNT', require('sequelize').col('tipo')), 'count']
             ],
-            group: ['tipo_evento'],
+            group: ['tipo'],
             raw: true
           });
 
@@ -221,7 +221,7 @@ router.get('/', async (req, res) => {
           agendamentosData.total = totalAgendamentos;
           
           agendamentosPorTipo.forEach(row => {
-            agendamentosData.porTipo[row.tipo_evento || 'outro'] = parseInt(row.count) || 0;
+            agendamentosData.porTipo[row.tipo || 'outro'] = parseInt(row.count) || 0;
           });
 
           agendamentosPorStatus.forEach(row => {

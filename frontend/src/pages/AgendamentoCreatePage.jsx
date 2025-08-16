@@ -67,7 +67,7 @@ const AgendamentoCreatePage = () => {
       )}
       <AgendamentoForm
         processos={processos}
-        onSuccess={() => navigate('/agendamentos')}
+        onSuccess={() => navigate('/agendamentos', { state: { reload: true } })}
         onCancel={() => navigate('/agendamentos')}
       />
     </div>
