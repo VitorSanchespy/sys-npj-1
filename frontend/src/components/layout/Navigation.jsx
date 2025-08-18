@@ -18,6 +18,7 @@ const Navigation = () => {
     { path: '/dashboard', label: 'Dashboard', icon: '🏠', roles: ['Admin', 'Professor', 'Aluno'] },
     { path: '/processos', label: 'Processos', icon: '📋', roles: ['Admin', 'Professor', 'Aluno'] },
     { path: '/agendamentos', label: 'Agendamentos', icon: '📅', roles: ['Admin', 'Professor', 'Aluno'] },
+    { path: '/eventos', label: 'Eventos', icon: '🎭', roles: ['Admin', 'Professor', 'Aluno'] },
     { path: '/arquivos', label: 'Arquivos', icon: '📁', roles: ['Admin', 'Professor', 'Aluno'] },
     { path: '/notificacoes', label: 'Notificações', icon: '🔔', roles: ['Admin', 'Professor', 'Aluno'] },
     { path: '/usuarios', label: 'Usuários', icon: '👥', roles: ['Admin', 'Professor'] },

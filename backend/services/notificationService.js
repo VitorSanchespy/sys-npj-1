@@ -1,5 +1,8 @@
 const nodemailer = require('nodemailer');
 
+// Carregar variáveis de ambiente do arquivo centralizado
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../env/main.env') });
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {

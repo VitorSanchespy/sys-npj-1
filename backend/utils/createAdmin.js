@@ -5,6 +5,7 @@
 require('dotenv').config();
 const bcrypt = require('bcrypt');
 const sequelize = require('./sequelize');
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../env/main.env') });
 const Usuario = require('../models/usuarioModel');
 const Role = require('../models/roleModel');
 

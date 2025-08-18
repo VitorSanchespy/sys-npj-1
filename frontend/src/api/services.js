@@ -2,6 +2,75 @@
 import { apiRequest, uploadFile } from './apiRequest.js';
 import { API_BASE_URL } from '../utils/constants.js';
 
+// ===== EVENT SERVICES =====
+export const eventService = {
+  // POST /api/events - Criar nova solicitação de evento
+  createEvent: async (eventData, token) => {
+    return await apiRequest('/api/events', {
+      method: 'POST',
+      body: eventData,
+      token
+    });
+  },
+
+  // GET /api/events - Listar eventos do usuário
+  getEvents: async (filters = {}, token) => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, value);
+      }
+    });
+    
+    const url = `/api/events${params.toString() ? '?' + params.toString() : ''}`;
+    return await apiRequest(url, {
+      method: 'GET',
+      token
+    });
+  },
+
+  // GET /api/events/:id - Buscar evento específico
+  getEventById: async (eventId, token) => {
+    return await apiRequest(`/api/events/${eventId}`, {
+      method: 'GET',
+      token
+    });
+  },
+
+  // POST /api/events/:id/approve - Aprovar evento
+  approveEvent: async (eventId, token) => {
+    return await apiRequest(`/api/events/${eventId}/approve`, {
+      method: 'POST',
+      token
+    });
+  },
+
+  // POST /api/events/:id/reject - Rejeitar evento
+  rejectEvent: async (eventId, rejectionReason, token) => {
+    return await apiRequest(`/api/events/${eventId}/reject`, {
+      method: 'POST',
+      body: { rejection_reason: rejectionReason },
+      token
+    });
+  },
+
+  // POST /api/events/:id/cancel - Cancelar evento
+  cancelEvent: async (eventId, token) => {
+    return await apiRequest(`/api/events/${eventId}/cancel`, {
+      method: 'POST',
+      token
+    });
+  },
+
+  // GET /api/events/stats - Obter estatísticas
+  getEventStats: async (token) => {
+    return await apiRequest('/api/events/stats', {
+      method: 'GET',
+      token
+    });
+  }
+};
+
 // ===== AUTH SERVICES =====
 export const authService = {
   // POST /auth/login

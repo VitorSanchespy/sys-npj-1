@@ -1,5 +1,9 @@
 const nodemailer = require('nodemailer');
 const cron = require('node-cron');
+
+// Carregar variáveis de ambiente do arquivo centralizado
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../env/main.env') });
+
 const { 
   notificacaoModel: Notificacao, 
   usuarioModel: Usuario, 
@@ -153,7 +157,7 @@ const verificarProcessosSemAtualizacao = async () => {
         },
         include: [
           {
-            model: require('../models/atualizacaoprocessoModel'),
+            model: require('../models/atualizacaoProcessoModel'),
             as: 'atualizacoes',
             required: false,
             where: {

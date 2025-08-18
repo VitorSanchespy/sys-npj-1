@@ -8,6 +8,11 @@ class Usuario extends Model {
     Usuario.hasMany(models.arquivoModel, { foreignKey: 'usuario_id', as: 'arquivos' });
     Usuario.hasMany(models.usuarioProcessoModel, { foreignKey: 'usuario_id', as: 'usuariosProcesso' });
     Usuario.hasMany(models.processoModel, { foreignKey: 'idusuario_responsavel', as: 'processosResponsavel' });
+    
+    // Associações do sistema de eventos
+    Usuario.hasMany(models.eventModel, { foreignKey: 'requester_id', as: 'requestedEvents' });
+    Usuario.hasMany(models.eventModel, { foreignKey: 'approver_id', as: 'approvedEvents' });
+    Usuario.hasMany(models.eventParticipantModel, { foreignKey: 'user_id', as: 'eventParticipations' });
   }
 
   static async usuarioCompleto(id) {

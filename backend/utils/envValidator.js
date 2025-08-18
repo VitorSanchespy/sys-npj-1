@@ -2,8 +2,7 @@
  * Validador de Variáveis de Ambiente
  * Centraliza a validação e configuração de todas as variáveis de ambiente
  */
-
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../env/main.env') });
 
 // Variáveis obrigatórias para o funcionamento básico
 const REQUIRED_ENV_VARS = [

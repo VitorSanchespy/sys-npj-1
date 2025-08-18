@@ -1,5 +1,5 @@
 // Servidor principal do sistema NPJ - configurações e inicialização
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../env/main.env') });
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -47,6 +47,9 @@ app.use('/api/processos', require('./routes/processoRoute'));
 
 // Nova rota de agendamentos - sistema unificado
 app.use('/api/agendamentos', require('./routes/agendamentos'));
+
+// Sistema de eventos
+app.use('/api/events', require('./routes/events'));
 
 // Rotas públicas para convites (sem autenticação)
 const agendamentoController = require('./controllers/agendamentoController');
@@ -108,6 +111,9 @@ app.use((err, req, res, next) => {
   // Importar e inicializar o job de lembretes
   const lembreteJob = require('./jobs/lembreteJob');
   
+  // Importar e inicializar os cron jobs de eventos
+  const eventCronJobs = require('./jobs/eventCronJobs');
+  
   sequelize.authenticate().then(() => {
     global.dbAvailable = true;
     console.log('✅ Banco de dados conectado');
@@ -118,6 +124,14 @@ app.use((err, req, res, next) => {
       console.log('📧 Job de lembretes de agendamentos iniciado');
     } catch (error) {
       console.error('❌ Erro ao inicializar job de lembretes:', error.message);
+    }
+    
+    // Inicializar cron jobs de eventos
+    try {
+      eventCronJobs.start();
+      console.log('⚡ Cron jobs de eventos iniciados');
+    } catch (error) {
+      console.error('❌ Erro ao inicializar cron jobs de eventos:', error.message);
     }
     
     app.listen(PORT, () => {

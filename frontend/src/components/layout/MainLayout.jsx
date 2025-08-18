@@ -1,6 +1,7 @@
 import React from "react";
 import Header from "./Header";
 import Navigation from "./Navigation";
+import EventNotifications from "../events/EventNotifications";
 import { useAuthContext } from "../../contexts/AuthContext";
 
 const MainLayout = ({ children, showNavigation = true }) => {
@@ -91,6 +92,9 @@ const MainLayout = ({ children, showNavigation = true }) => {
           {children}
         </div>
       </main>
+      
+      {/* Event Notifications */}
+      <EventNotifications />
     </div>
   );
 };

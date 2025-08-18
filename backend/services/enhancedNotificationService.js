@@ -1,5 +1,9 @@
 const nodemailer = require('nodemailer');
 const cron = require('node-cron');
+
+// Carregar variáveis de ambiente do arquivo centralizado
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../env/main.env') });
+
 const AgendamentoProcesso = require('../models/agendamentoProcessoModel');
 const { usuarioModel: Usuario } = require('../models/indexModel');
 const { Op } = require('sequelize');

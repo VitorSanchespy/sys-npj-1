@@ -34,6 +34,10 @@ import NotFoundPage from "@/pages/NotFoundPage";
 // import TesteAPI from "@/components/TesteAPI";
 import { hasRole } from "@/utils/permissions";
 
+// Eventos - importações
+import EventsPage from "@/pages/events/EventsPage";
+import EventsDashboard from "@/components/events/EventsDashboard";
+
 // Componente de rota privada - controla acesso baseado em autenticação e papéis
 function PrivateRoute({ children, roles }) {
   const { isAuthenticated, user, loading } = useAuthContext();
@@ -135,6 +139,10 @@ export default function AppRouter() {
           {/* Notificações */}
           <Route path="/notificacoes" element={<PrivateRoute><NotificationPage /></PrivateRoute>} />
           <Route path="/notificacoes/configuracoes" element={<PrivateRoute><NotificationSettingsPage /></PrivateRoute>} />
+          
+          {/* Eventos */}
+          <Route path="/eventos" element={<PrivateRoute><EventsPage /></PrivateRoute>} />
+          <Route path="/eventos/dashboard" element={<PrivateRoute><EventsDashboard /></PrivateRoute>} />
           
           {/* Protegido: Admin */}
           {/* Usuários (admin/professor) */}

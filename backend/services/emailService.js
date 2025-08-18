@@ -1,6 +1,9 @@
 const nodemailer = require('nodemailer');
 const axios = require('axios');
 
+// Carregar variáveis de ambiente do arquivo centralizado
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../env/main.env') });
+
 // Configuração do transporter SMTP (fallback)
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
@@ -24,7 +27,7 @@ const brevoConfig = {
 async function enviarViaBrevoAPI(emailData) {
   try {
     const response = await axios.post(`${brevoConfig.apiUrl}/smtp/email`, {
-      sender: {
+                sender: {
         name: brevoConfig.fromName,
         email: brevoConfig.fromEmail
       },
@@ -65,15 +68,43 @@ async function enviarViaSMTP(emailData) {
 
 // Função principal para enviar email (tenta API primeiro, fallback para SMTP)
 async function enviarEmail(emailData) {
+  // Modo desenvolvimento: simular envio
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`📧 [MODO DEV] Simulando envio de email:`);
+    console.log(`   Para: ${emailData.to.map(r => r.email).join(', ')}`);
+    console.log(`   Assunto: ${emailData.subject}`);
+    console.log(`   ✅ Email "enviado" (simulado)`);
+    return { success: true, messageId: 'dev-' + Date.now(), provider: 'simulated' };
+  }
+
   if (brevoConfig.apiKey) {
     try {
       return await enviarViaBrevoAPI(emailData);
     } catch (error) {
       console.log('⚠️ Falha na API, tentando SMTP...');
-      return await enviarViaSMTP(emailData);
+      try {
+        return await enviarViaSMTP(emailData);
+      } catch (smtpError) {
+        console.error('❌ Falha no SMTP também:', smtpError.message);
+        // Em desenvolvimento, simular sucesso para não quebrar o fluxo
+        if (process.env.NODE_ENV === 'development') {
+          console.log('📧 [MODO DEV] Simulando sucesso devido aos erros SMTP');
+          return { success: true, messageId: 'dev-fallback-' + Date.now(), provider: 'simulated' };
+        }
+        throw smtpError;
+      }
     }
   } else {
-    return await enviarViaSMTP(emailData);
+    try {
+      return await enviarViaSMTP(emailData);
+    } catch (error) {
+      // Em desenvolvimento, simular sucesso para não quebrar o fluxo
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📧 [MODO DEV] Simulando sucesso devido ao erro SMTP');
+        return { success: true, messageId: 'dev-fallback-' + Date.now(), provider: 'simulated' };
+      }
+      throw error;
+    }
   }
 }
 
