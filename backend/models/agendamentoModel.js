@@ -14,12 +14,16 @@ class Agendamento extends Model {
     });
   }
 
-  marcarComoConfirmado() {
-    this.status = 'confirmado';
+  marcarComoEnviandoConvites() {
+    this.status = 'enviando_convites';
     return this.save();
   }
-  marcarComoConcluido() {
-    this.status = 'concluido';
+  marcarComoMarcado() {
+    this.status = 'marcado';
+    return this.save();
+  }
+  marcarComoFinalizado() {
+    this.status = 'finalizado';
     return this.save();
   }
   cancelar() {
@@ -125,7 +129,7 @@ class Agendamento extends Model {
           Sequelize.literal('JSON_LENGTH(convidados) > 0')
         ],
         status: {
-          [Sequelize.Op.in]: ['pendente', 'confirmado']
+          [Sequelize.Op.in]: ['enviando_convites', 'marcado']
         }
       },
       include: [
@@ -272,13 +276,13 @@ Agendamento.init({
     }
   },
   status: {
-    type: DataTypes.ENUM('pendente', 'confirmado', 'concluido', 'cancelado'),
+    type: DataTypes.ENUM('em_analise', 'enviando_convites', 'marcado', 'cancelado', 'finalizado'),
     allowNull: false,
-    defaultValue: 'pendente',
+    defaultValue: 'em_analise',
     validate: {
       isIn: {
-        args: [['pendente', 'confirmado', 'concluido', 'cancelado']],
-        msg: 'Status deve ser: pendente, confirmado, concluido ou cancelado'
+        args: [['em_analise', 'enviando_convites', 'marcado', 'cancelado', 'finalizado']],
+        msg: 'Status deve ser: em_analise, enviando_convites, marcado, cancelado ou finalizado'
       }
     }
   },
@@ -314,6 +318,25 @@ Agendamento.init({
   observacoes: {
     type: DataTypes.TEXT,
     allowNull: true
+  },
+  motivo_recusa: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Motivo da recusa quando o responsável rejeita o agendamento'
+  },
+  aprovado_por: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'usuarios',
+      key: 'id'
+    },
+    comment: 'Usuário que aprovou o agendamento'
+  },
+  data_aprovacao: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: 'Data em que o agendamento foi aprovado'
   }
 }, {
   sequelize,

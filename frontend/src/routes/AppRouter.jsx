@@ -27,16 +27,13 @@ import AgendamentosPage from "@/pages/AgendamentosPage";
 import ConviteAgendamento from "@/components/agendamentos/ConviteAgendamento";
 import AceitarConvitePage from "@/pages/convite/AceitarConvitePage";
 import RecusarConvitePage from "@/pages/convite/RecusarConvitePage";
+import ConviteVisualizacao from "@/pages/convite/ConviteVisualizacao";
 import NotificationPage from "@/pages/dashboard/NotificationPage";
 import NotificationSettingsPage from "@/pages/dashboard/NotificationSettingsPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 // import GoogleCallbackPage from "../pages/GoogleCallbackPage";
 // import TesteAPI from "@/components/TesteAPI";
 import { hasRole } from "@/utils/permissions";
-
-// Eventos - importações
-import EventsPage from "@/pages/events/EventsPage";
-import EventsDashboard from "@/components/events/EventsDashboard";
 
 // Componente de rota privada - controla acesso baseado em autenticação e papéis
 function PrivateRoute({ children, roles }) {
@@ -110,6 +107,7 @@ export default function AppRouter() {
           {/* Resposta a convites - rotas públicas */}
           <Route path="/convite/:id/aceitar" element={<AceitarConvitePage />} />
           <Route path="/convite/:id/recusar" element={<RecusarConvitePage />} />
+          <Route path="/convite/:id" element={<ConviteVisualizacao />} />
           
           
           {/* Protegido: Todos autenticados */}
@@ -139,10 +137,6 @@ export default function AppRouter() {
           {/* Notificações */}
           <Route path="/notificacoes" element={<PrivateRoute><NotificationPage /></PrivateRoute>} />
           <Route path="/notificacoes/configuracoes" element={<PrivateRoute><NotificationSettingsPage /></PrivateRoute>} />
-          
-          {/* Eventos */}
-          <Route path="/eventos" element={<PrivateRoute><EventsPage /></PrivateRoute>} />
-          <Route path="/eventos/dashboard" element={<PrivateRoute><EventsDashboard /></PrivateRoute>} />
           
           {/* Protegido: Admin */}
           {/* Usuários (admin/professor) */}

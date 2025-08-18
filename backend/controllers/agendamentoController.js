@@ -32,7 +32,7 @@ exports.criar = async function(req, res) {
             }
         }
         
-        // Criar o agendamento
+        // Criar o agendamento com status inicial "em_analise"
         const agendamento = await Agendamento.create({
             processo_id,
             titulo,
@@ -44,7 +44,8 @@ exports.criar = async function(req, res) {
             email_lembrete,
             convidados: convidados || [],
             observacoes,
-            criado_por: req.user.id
+            criado_por: req.user.id,
+            status: 'em_analise'
         });
         
         // Buscar o agendamento criado com relacionamentos
@@ -55,30 +56,16 @@ exports.criar = async function(req, res) {
             ]
         });
 
-        // Enviar convites para os convidados
-        if (convidados && Array.isArray(convidados) && convidados.length > 0) {
-            for (const convidado of convidados) {
-                if (convidado.email) {
-                    try {
-                        await emailService.enviarConviteAgendamento(
-                            agendamentoCriado, 
-                            convidado.email, 
-                            convidado.nome
-                        );
-                        
-                        // Adicionar convidado ao agendamento
-                        await agendamentoCriado.adicionarConvidado(convidado.email, convidado.nome);
-                        await agendamentoCriado.save();
-                    } catch (emailError) {
-                        console.error(`Erro ao enviar convite para ${convidado.email}:`, emailError);
-                    }
-                }
-            }
+        // Notificar responsáveis (Admin/Professor) para aprovação
+        try {
+            await emailService.enviarNotificacaoAprovacaoAgendamento(agendamentoCriado);
+        } catch (emailError) {
+            console.error('Erro ao enviar notificação de aprovação:', emailError);
         }
         
         res.status(201).json({ 
             success: true, 
-            message: 'Agendamento criado com sucesso', 
+            message: 'Agendamento criado com sucesso. Aguardando aprovação.', 
             data: agendamentoCriado 
         });
     } catch (error) {
@@ -519,5 +506,130 @@ exports.buscarParaLembrete = async function(req, res) {
     } catch (error) {
         console.error('Erro ao buscar agendamentos para lembrete:', error);
         res.status(500).json({ success: false, message: 'Erro ao buscar agendamentos para lembrete', error: error.message });
+    }
+};
+
+// Aprovar agendamento (apenas Admin/Professor)
+exports.aprovar = async function(req, res) {
+    try {
+        const { id } = req.params;
+        const { observacoes } = req.body;
+        
+        // Verificar se usuário tem permissão (Admin ou Professor)
+        if (!['Admin', 'Professor'].includes(req.user.role_name)) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Apenas Admin ou Professor podem aprovar agendamentos' 
+            });
+        }
+        
+        const agendamento = await Agendamento.findByPk(id, {
+            include: [
+                { model: Processo, as: 'processo' },
+                { model: Usuario, as: 'usuario' }
+            ]
+        });
+        
+        if (!agendamento) {
+            return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
+        }
+        
+        if (agendamento.status !== 'em_analise') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Agendamento não está em análise' 
+            });
+        }
+        
+        // Aprovar e marcar como enviando convites
+        agendamento.status = 'enviando_convites';
+        agendamento.aprovado_por = req.user.id;
+        agendamento.data_aprovacao = new Date();
+        if (observacoes) agendamento.observacoes = observacoes;
+        await agendamento.save();
+        
+        // Enviar convites para os convidados
+        if (agendamento.convidados && Array.isArray(agendamento.convidados) && agendamento.convidados.length > 0) {
+            for (const convidado of agendamento.convidados) {
+                if (convidado.email) {
+                    try {
+                        await emailService.enviarConviteAgendamento(agendamento, convidado.email, convidado.nome);
+                    } catch (emailError) {
+                        console.error(`Erro ao enviar convite para ${convidado.email}:`, emailError);
+                    }
+                }
+            }
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'Agendamento aprovado com sucesso. Convites sendo enviados.',
+            data: agendamento 
+        });
+    } catch (error) {
+        console.error('Erro ao aprovar agendamento:', error);
+        res.status(500).json({ success: false, message: 'Erro interno do servidor', error: error.message });
+    }
+};
+
+// Recusar agendamento (apenas Admin/Professor)
+exports.recusar = async function(req, res) {
+    try {
+        const { id } = req.params;
+        const { motivo_recusa } = req.body;
+        
+        // Verificar se usuário tem permissão (Admin ou Professor)
+        if (!['Admin', 'Professor'].includes(req.user.role_name)) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Apenas Admin ou Professor podem recusar agendamentos' 
+            });
+        }
+        
+        if (!motivo_recusa || motivo_recusa.trim().length === 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Motivo da recusa é obrigatório' 
+            });
+        }
+        
+        const agendamento = await Agendamento.findByPk(id, {
+            include: [
+                { model: Processo, as: 'processo' },
+                { model: Usuario, as: 'usuario' }
+            ]
+        });
+        
+        if (!agendamento) {
+            return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
+        }
+        
+        if (agendamento.status !== 'em_analise') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Agendamento não está em análise' 
+            });
+        }
+        
+        // Recusar agendamento
+        agendamento.status = 'cancelado';
+        agendamento.motivo_recusa = motivo_recusa;
+        await agendamento.save();
+        
+        // Notificar o criador sobre a recusa
+        try {
+            await emailService.enviarNotificacaoRecusaAgendamento(agendamento, motivo_recusa);
+        } catch (emailError) {
+            console.error('Erro ao enviar notificação de recusa:', emailError);
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'Agendamento recusado com sucesso.',
+            data: agendamento 
+        });
+    } catch (error) {
+        console.error('Erro ao recusar agendamento:', error);
+        res.status(500).json({ success: false, message: 'Erro interno do servidor', error: error.message });
     }
 };

@@ -14,9 +14,6 @@ const usuarioProcessoModel = require('./usuarioProcessoModel');
 const agendamentoModel = require('./agendamentoModel'); // Sistema unificado de agendamentos
 const notificacaoModel = require('./notificacaoModel');
 const configuracaoNotificacaoModel = require('./configuracaoNotificacaoModel');
-const eventModel = require('./eventModel');
-const eventParticipantModel = require('./eventParticipantModel');
-const eventNotificationModel = require('./eventNotificationModel');
 
 const models = {
   roleModel,
@@ -32,9 +29,6 @@ const models = {
   agendamentoModel, // Sistema unificado de agendamentos
   notificacaoModel,
   configuracaoNotificacaoModel,
-  eventModel,
-  eventParticipantModel,
-  eventNotificationModel,
   sequelize,
   Sequelize
 };

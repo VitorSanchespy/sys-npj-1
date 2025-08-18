@@ -7,6 +7,8 @@ import Button from '@/components/common/Button';
 import StatusBadge from '@/components/common/StatusBadge';
 import Loader from '@/components/common/Loader';
 import AgendamentoForm from './AgendamentoForm';
+import AgendamentoAprovacao from './AgendamentoAprovacao';
+import AgendamentoStatus from './AgendamentoStatus';
 import { formatDate, formatDateTime } from '@/utils/commonUtils';
 
 const AgendamentosLista = ({ agendamentos = [], showCreateButton = true, onEdit, onDelete, onStatusChange, onEnviarLembrete }) => {
@@ -80,11 +82,18 @@ const AgendamentosLista = ({ agendamentos = [], showCreateButton = true, onEdit,
   };
 
   const canEdit = (agendamento) => {
-    return agendamento.criado_por === user?.id;
+    // Admin/Professor podem editar qualquer agendamento, outros só os próprios
+    return user?.role === 'Admin' || user?.role === 'Professor' || agendamento.criado_por === user?.id;
   };
 
   const canDelete = (agendamento) => {
-    return agendamento.criado_por === user?.id;
+    // Admin/Professor podem deletar qualquer agendamento, outros só os próprios
+    return user?.role === 'Admin' || user?.role === 'Professor' || agendamento.criado_por === user?.id;
+  };
+
+  const canApprove = (agendamento) => {
+    // Apenas Admin/Professor podem aprovar e apenas se estiver em análise
+    return (user?.role === 'Admin' || user?.role === 'Professor') && agendamento.status === 'em_analise';
   };
 
   if (showForm) {
@@ -126,7 +135,7 @@ const AgendamentosLista = ({ agendamentos = [], showCreateButton = true, onEdit,
                   </button>
                   <div className="flex gap-2 mt-1">
                     <span className="bg-primary-50 text-primary-700 px-2 py-1 rounded-full text-xs font-semibold">{getTipoText(agendamento.tipo)}</span>
-                    <StatusBadge status={getStatusText(agendamento.status)} />
+                    <AgendamentoStatus status={agendamento.status} />
                   </div>
                 </div>
               </div>
@@ -184,6 +193,55 @@ const AgendamentosLista = ({ agendamentos = [], showCreateButton = true, onEdit,
                   Enviar Lembrete
                 </button>
               </div>
+
+              {/* Componente de aprovação para Admin/Professor */}
+              {canApprove(agendamento) && (
+                <AgendamentoAprovacao
+                  agendamento={agendamento}
+                  onAprovacao={(agendamentoAtualizado) => {
+                    // Notificar o componente pai sobre a mudança
+                    onStatusChange && onStatusChange(agendamentoAtualizado);
+                  }}
+                  onRecusa={(agendamentoAtualizado) => {
+                    // Notificar o componente pai sobre a mudança
+                    onStatusChange && onStatusChange(agendamentoAtualizado);
+                  }}
+                />
+              )}
+
+              {/* Mostrar informações adicionais sobre convidados */}
+              {agendamento.convidados && agendamento.convidados.length > 0 && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <h5 className="text-sm font-medium text-gray-700 mb-2">
+                    Convidados ({agendamento.convidados.length})
+                  </h5>
+                  <div className="flex flex-wrap gap-1">
+                    {agendamento.convidados.slice(0, 3).map((convidado, index) => (
+                      <span
+                        key={index}
+                        className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded"
+                      >
+                        {convidado.nome || convidado.email}
+                      </span>
+                    ))}
+                    {agendamento.convidados.length > 3 && (
+                      <span className="inline-block text-gray-500 text-xs px-2 py-1">
+                        +{agendamento.convidados.length - 3} mais
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Mostrar motivo da recusa se existir */}
+              {agendamento.status === 'cancelado' && agendamento.motivo_recusa && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <h5 className="text-sm font-medium text-red-800 mb-1">
+                    Motivo da recusa
+                  </h5>
+                  <p className="text-sm text-red-700">{agendamento.motivo_recusa}</p>
+                </div>
+              )}
             </div>
           ))}
         </div>

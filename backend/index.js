@@ -48,9 +48,6 @@ app.use('/api/processos', require('./routes/processoRoute'));
 // Nova rota de agendamentos - sistema unificado
 app.use('/api/agendamentos', require('./routes/agendamentos'));
 
-// Sistema de eventos
-app.use('/api/events', require('./routes/events'));
-
 // Rotas públicas para convites (sem autenticação)
 const agendamentoController = require('./controllers/agendamentoController');
 const { param, body } = require('express-validator');
@@ -111,8 +108,8 @@ app.use((err, req, res, next) => {
   // Importar e inicializar o job de lembretes
   const lembreteJob = require('./jobs/lembreteJob');
   
-  // Importar e inicializar os cron jobs de eventos
-  const eventCronJobs = require('./jobs/eventCronJobs');
+  // Importar e inicializar os cron jobs de agendamentos
+  const agendamentoCronJobs = require('./jobs/agendamentoCronJobs');
   
   sequelize.authenticate().then(() => {
     global.dbAvailable = true;
@@ -126,12 +123,12 @@ app.use((err, req, res, next) => {
       console.error('❌ Erro ao inicializar job de lembretes:', error.message);
     }
     
-    // Inicializar cron jobs de eventos
+    // Inicializar cron jobs de agendamentos
     try {
-      eventCronJobs.start();
-      console.log('⚡ Cron jobs de eventos iniciados');
+      agendamentoCronJobs.start();
+      console.log('⚡ Cron jobs de agendamentos iniciados');
     } catch (error) {
-      console.error('❌ Erro ao inicializar cron jobs de eventos:', error.message);
+      console.error('❌ Erro ao inicializar cron jobs de agendamentos:', error.message);
     }
     
     app.listen(PORT, () => {

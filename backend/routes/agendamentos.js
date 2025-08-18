@@ -125,7 +125,7 @@ router.get('/', [
   query('page').optional().isInt({ min: 1 }).withMessage('Página deve ser um número positivo'),
   query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limite deve ser entre 1 e 100'),
   query('processo_id').optional().isInt({ min: 1 }).withMessage('ID do processo deve ser um número positivo'),
-  query('status').optional().isIn(['pendente', 'confirmado', 'concluido', 'cancelado']).withMessage('Status inválido'),
+  query('status').optional().isIn(['em_analise', 'enviando_convites', 'marcado', 'cancelado', 'finalizado']).withMessage('Status inválido'),
   query('tipo').optional().isIn(['reuniao', 'audiencia', 'prazo', 'outro']).withMessage('Tipo inválido'),
   query('data_inicio').optional().isISO8601().withMessage('Data de início inválida'),
   query('data_fim').optional().isISO8601().withMessage('Data de fim inválida')
@@ -153,6 +153,19 @@ router.patch('/:id/status', [
 
 // POST /api/agendamentos/:id/lembrete - Enviar lembrete manual
 router.post('/:id/lembrete', validacaoId, agendamentoController.enviarLembrete);
+
+// POST /api/agendamentos/:id/aprovar - Aprovar agendamento (Admin/Professor)
+router.post('/:id/aprovar', [
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
+  body('observacoes').optional().isLength({ max: 1000 }).withMessage('Observações devem ter no máximo 1000 caracteres')
+], agendamentoController.aprovar);
+
+// POST /api/agendamentos/:id/recusar - Recusar agendamento (Admin/Professor)
+router.post('/:id/recusar', [
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
+  body('motivo_recusa').notEmpty().withMessage('Motivo da recusa é obrigatório')
+    .isLength({ min: 10, max: 1000 }).withMessage('Motivo deve ter entre 10 e 1000 caracteres')
+], agendamentoController.recusar);
 
 // Rotas públicas para convites (sem autenticação)
 router.post('/:id/aceitar-publico', [

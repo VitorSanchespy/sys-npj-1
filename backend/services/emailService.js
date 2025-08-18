@@ -1,13 +1,11 @@
 const nodemailer = require('nodemailer');
 const axios = require('axios');
-
-// Carregar variáveis de ambiente do arquivo centralizado
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../env/main.env') });
 
-// Configuração do transporter SMTP (fallback)
+
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-  port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587,
+  host: process.env.SMTP_HOST,
+  port: parseInt(process.env.SMTP_PORT),
   secure: false,
   auth: {
     user: process.env.SMTP_USER,
@@ -49,6 +47,79 @@ async function enviarViaBrevoAPI(emailData) {
   }
 }
 
+// Função para enviar notificação de aprovação de agendamento para responsáveis
+async function enviarNotificacaoAprovacaoAgendamento(agendamento) {
+  try {
+    const html = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2 style="color: #0066cc;">📅 Nova Solicitação de Agendamento</h2>
+        <p><strong>Título:</strong> ${agendamento.titulo}</p>
+        <p><strong>Descrição:</strong> ${agendamento.descricao || 'Não informado'}</p>
+        <p><strong>Data/Hora:</strong> ${new Date(agendamento.data_inicio).toLocaleString('pt-BR')} - ${new Date(agendamento.data_fim).toLocaleString('pt-BR')}</p>
+        <p><strong>Local:</strong> ${agendamento.local || 'Não informado'}</p>
+        <p><strong>Solicitante:</strong> ${agendamento.usuario?.nome} (${agendamento.usuario?.email})</p>
+        ${agendamento.processo ? `<p><strong>Processo:</strong> ${agendamento.processo.numero_processo} - ${agendamento.processo.titulo}</p>` : ''}
+        
+        <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #0066cc;">
+          <p><strong>Ação Necessária:</strong> Este agendamento precisa ser aprovado ou recusado por um responsável (Admin/Professor).</p>
+        </div>
+        
+        <p>Acesse o sistema para tomar uma decisão sobre esta solicitação.</p>
+      </div>
+    `;
+    
+    // Buscar Admin e Professores para notificar
+    const { usuarioModel: Usuario } = require('../models/indexModel');
+    const responsaveis = await Usuario.findAll({
+      where: {
+        role_name: ['Admin', 'Professor']
+      }
+    });
+    
+    for (const responsavel of responsaveis) {
+      await enviarEmail({
+        to: [{ email: responsavel.email, name: responsavel.nome }],
+        subject: `Nova Solicitação de Agendamento - ${agendamento.titulo}`,
+        html
+      });
+    }
+    
+    console.log('✅ Notificação de aprovação enviada para responsáveis');
+  } catch (error) {
+    console.error('❌ Erro ao enviar notificação de aprovação:', error);
+  }
+}
+
+// Função para enviar notificação de recusa de agendamento
+async function enviarNotificacaoRecusaAgendamento(agendamento, motivoRecusa) {
+  try {
+    const html = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2 style="color: #dc3545;">❌ Agendamento Recusado</h2>
+        <p><strong>Título:</strong> ${agendamento.titulo}</p>
+        <p><strong>Data/Hora:</strong> ${new Date(agendamento.data_inicio).toLocaleString('pt-BR')} - ${new Date(agendamento.data_fim).toLocaleString('pt-BR')}</p>
+        
+        <div style="margin: 20px 0; padding: 15px; background-color: #f8d7da; border-left: 4px solid #dc3545;">
+          <h3 style="color: #721c24; margin-top: 0;">Motivo da Recusa:</h3>
+          <p style="margin-bottom: 0;">${motivoRecusa}</p>
+        </div>
+        
+        <p>Você pode criar uma nova solicitação de agendamento considerando as observações acima.</p>
+      </div>
+    `;
+    
+    await enviarEmail({
+      to: [{ email: agendamento.usuario.email, name: agendamento.usuario.nome }],
+      subject: `Agendamento Recusado - ${agendamento.titulo}`,
+      html
+    });
+    
+    console.log('✅ Notificação de recusa enviada para solicitante');
+  } catch (error) {
+    console.error('❌ Erro ao enviar notificação de recusa:', error);
+  }
+}
+
 // Função para enviar email via SMTP (fallback)
 async function enviarViaSMTP(emailData) {
   try {
@@ -69,42 +140,14 @@ async function enviarViaSMTP(emailData) {
 // Função principal para enviar email (tenta API primeiro, fallback para SMTP)
 async function enviarEmail(emailData) {
   // Modo desenvolvimento: simular envio
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`📧 [MODO DEV] Simulando envio de email:`);
-    console.log(`   Para: ${emailData.to.map(r => r.email).join(', ')}`);
-    console.log(`   Assunto: ${emailData.subject}`);
-    console.log(`   ✅ Email "enviado" (simulado)`);
-    return { success: true, messageId: 'dev-' + Date.now(), provider: 'simulated' };
-  }
+    // Removido modo simulado: sempre tentar envio real
+  
 
-  if (brevoConfig.apiKey) {
-    try {
-      return await enviarViaBrevoAPI(emailData);
-    } catch (error) {
-      console.log('⚠️ Falha na API, tentando SMTP...');
-      try {
-        return await enviarViaSMTP(emailData);
-      } catch (smtpError) {
-        console.error('❌ Falha no SMTP também:', smtpError.message);
-        // Em desenvolvimento, simular sucesso para não quebrar o fluxo
-        if (process.env.NODE_ENV === 'development') {
-          console.log('📧 [MODO DEV] Simulando sucesso devido aos erros SMTP');
-          return { success: true, messageId: 'dev-fallback-' + Date.now(), provider: 'simulated' };
-        }
-        throw smtpError;
-      }
-    }
-  } else {
-    try {
-      return await enviarViaSMTP(emailData);
-    } catch (error) {
-      // Em desenvolvimento, simular sucesso para não quebrar o fluxo
-      if (process.env.NODE_ENV === 'development') {
-        console.log('📧 [MODO DEV] Simulando sucesso devido ao erro SMTP');
-        return { success: true, messageId: 'dev-fallback-' + Date.now(), provider: 'simulated' };
-      }
-      throw error;
-    }
+  // Sempre usar SMTP, ignorando API Brevo
+  try {
+    return await enviarViaSMTP(emailData);
+  } catch (error) {
+    throw error;
   }
 }
 
@@ -263,5 +306,7 @@ async function enviarLembreteAgendamento(agendamento, emailParticipante, nomePar
 
 module.exports = {
   enviarConviteAgendamento,
-  enviarLembreteAgendamento
+  enviarLembreteAgendamento,
+  enviarNotificacaoAprovacaoAgendamento,
+  enviarNotificacaoRecusaAgendamento
 };

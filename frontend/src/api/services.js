@@ -2,75 +2,6 @@
 import { apiRequest, uploadFile } from './apiRequest.js';
 import { API_BASE_URL } from '../utils/constants.js';
 
-// ===== EVENT SERVICES =====
-export const eventService = {
-  // POST /api/events - Criar nova solicitação de evento
-  createEvent: async (eventData, token) => {
-    return await apiRequest('/api/events', {
-      method: 'POST',
-      body: eventData,
-      token
-    });
-  },
-
-  // GET /api/events - Listar eventos do usuário
-  getEvents: async (filters = {}, token) => {
-    const params = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        params.append(key, value);
-      }
-    });
-    
-    const url = `/api/events${params.toString() ? '?' + params.toString() : ''}`;
-    return await apiRequest(url, {
-      method: 'GET',
-      token
-    });
-  },
-
-  // GET /api/events/:id - Buscar evento específico
-  getEventById: async (eventId, token) => {
-    return await apiRequest(`/api/events/${eventId}`, {
-      method: 'GET',
-      token
-    });
-  },
-
-  // POST /api/events/:id/approve - Aprovar evento
-  approveEvent: async (eventId, token) => {
-    return await apiRequest(`/api/events/${eventId}/approve`, {
-      method: 'POST',
-      token
-    });
-  },
-
-  // POST /api/events/:id/reject - Rejeitar evento
-  rejectEvent: async (eventId, rejectionReason, token) => {
-    return await apiRequest(`/api/events/${eventId}/reject`, {
-      method: 'POST',
-      body: { rejection_reason: rejectionReason },
-      token
-    });
-  },
-
-  // POST /api/events/:id/cancel - Cancelar evento
-  cancelEvent: async (eventId, token) => {
-    return await apiRequest(`/api/events/${eventId}/cancel`, {
-      method: 'POST',
-      token
-    });
-  },
-
-  // GET /api/events/stats - Obter estatísticas
-  getEventStats: async (token) => {
-    return await apiRequest('/api/events/stats', {
-      method: 'GET',
-      token
-    });
-  }
-};
-
 // ===== AUTH SERVICES =====
 export const authService = {
   // POST /auth/login
@@ -449,11 +380,44 @@ export const agendamentoService = {
     });
   },
 
-  // POST /api/agendamentos/sincronizar
-  sincronizar: async (token) => {
-    return await apiRequest('/api/agendamentos/sincronizar', {
+  // POST /api/agendamentos/:id/aprovar - Aprovar agendamento (Admin/Professor)
+  aprovar: async (token, id, observacoes = '') => {
+    return await apiRequest(`/api/agendamentos/${id}/aprovar`, {
       method: 'POST',
-      token
+      token,
+      body: { observacoes }
+    });
+  },
+
+  // POST /api/agendamentos/:id/recusar - Recusar agendamento (Admin/Professor)
+  recusar: async (token, id, motivo_recusa) => {
+    return await apiRequest(`/api/agendamentos/${id}/recusar`, {
+      method: 'POST',
+      token,
+      body: { motivo_recusa }
+    });
+  },
+
+  // POST /api/convite/:id/aceitar - Aceitar convite de agendamento
+  aceitarConvite: async (id, email) => {
+    return await apiRequest(`/api/convite/${id}/aceitar`, {
+      method: 'POST',
+      body: { email }
+    });
+  },
+
+  // POST /api/convite/:id/recusar - Recusar convite de agendamento
+  recusarConvite: async (id, email, motivo) => {
+    return await apiRequest(`/api/convite/${id}/recusar`, {
+      method: 'POST',
+      body: { email, motivo }
+    });
+  },
+
+  // GET /api/convite/:id - Visualizar convite
+  visualizarConvite: async (id) => {
+    return await apiRequest(`/api/convite/${id}`, {
+      method: 'GET'
     });
   }
 };

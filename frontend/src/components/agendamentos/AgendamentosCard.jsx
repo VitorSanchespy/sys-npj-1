@@ -41,23 +41,35 @@ const AgendamentosCard = ({ processoId }) => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'confirmado':
-        return 'bg-success-100 text-success-800';
+      case 'em_analise':
+        return 'bg-blue-100 text-blue-800';
+      case 'enviando_convites':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'marcado':
+        return 'bg-green-100 text-green-800';
       case 'cancelado':
-        return 'bg-danger-100 text-danger-800';
+        return 'bg-red-100 text-red-800';
+      case 'finalizado':
+        return 'bg-gray-100 text-gray-800';
       default:
-        return 'bg-warning-100 text-warning-800';
+        return 'bg-orange-100 text-orange-800';
     }
   };
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'confirmado':
-        return 'Confirmado';
+      case 'em_analise':
+        return 'Em Análise';
+      case 'enviando_convites':
+        return 'Enviando Convites';
+      case 'marcado':
+        return 'Marcado';
       case 'cancelado':
         return 'Cancelado';
+      case 'finalizado':
+        return 'Finalizado';
       default:
-        return 'Pendente';
+        return status;
     }
   };
 
