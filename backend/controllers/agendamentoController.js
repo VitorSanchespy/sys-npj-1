@@ -3,6 +3,7 @@ const Processo = require('../models/processoModel');
 const Usuario = require('../models/usuarioModel');
 const emailService = require('../services/emailService');
 const { validationResult } = require('express-validator');
+const { Sequelize } = require('sequelize');
 
 exports.criar = async function(req, res) {
     try {
@@ -80,10 +81,12 @@ exports.listar = async function(req, res) {
         const where = {};
         const offset = (page - 1) * limit;
         const { Op } = require('sequelize');
-        where[Op.or] = [
-            { criado_por: req.user.id },
-            { '$usuario.email$': req.user.email }
-        ];
+        
+        // Para Admin, mostrar todos os agendamentos. Para outros, apenas os criados por eles
+        if (req.user.role !== 'Admin' && req.user.role !== 'Professor') {
+            where.criado_por = req.user.id;
+        }
+        
         if (processo_id) where.processo_id = processo_id;
         if (status) where.status = status;
         if (tipo) where.tipo = tipo;
@@ -92,6 +95,7 @@ exports.listar = async function(req, res) {
                 [Op.between]: [data_inicio, data_fim]
             };
         }
+        
         const { count, rows } = await Agendamento.findAndCountAll({
             where,
             include: [
@@ -102,22 +106,19 @@ exports.listar = async function(req, res) {
             limit: parseInt(limit),
             offset: parseInt(offset)
         });
-        const agendamentosFiltrados = rows.filter(agendamento => {
-            if (agendamento.criado_por === req.user.id) return true;
-            const convidados = agendamento.convidados || [];
-            return convidados.some(c => c.email === req.user.email && c.status === 'aceito');
-        });
+        
         res.json({ 
             success: true, 
-            data: agendamentosFiltrados, 
+            data: rows, 
             pagination: { 
-                total: agendamentosFiltrados.length, 
+                total: count, 
                 page: parseInt(page), 
                 limit: parseInt(limit), 
-                totalPages: Math.ceil(agendamentosFiltrados.length / limit) 
+                totalPages: Math.ceil(count / limit) 
             } 
         });
     } catch (error) {
+        console.error('❌ Erro ao listar agendamentos:', error);
         res.status(500).json({ success: false, message: 'Erro interno do servidor', error: error.message });
     }
 };
@@ -136,8 +137,9 @@ exports.buscarPorId = async function(req, res) {
             return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
         }
 
-        // Verificar se o usuário tem acesso ao agendamento
-        const temAcesso = agendamento.criado_por === req.user.id || 
+        // Admin/Professor podem acessar qualquer agendamento
+        const isAdminOrProfessor = ['Admin', 'Professor'].includes(req.user.role);
+        const temAcesso = isAdminOrProfessor || agendamento.criado_por === req.user.id || 
                          (agendamento.convidados && agendamento.convidados.some(c => 
                             c.email === req.user.email && c.status === 'aceito'
                          ));
@@ -309,11 +311,16 @@ exports.enviarLembrete = async function(req, res) {
         }
 
         // Verificar se o usuário tem acesso ao agendamento
-        const temAcesso = agendamento.criado_por === req.user.id || 
-                         (agendamento.convidados && agendamento.convidados.some(c => 
-                            c.email === req.user.email && c.status === 'aceito'
-                         ));
-        if (!temAcesso) {
+        // Admin/Professor podem enviar lembrete de qualquer agendamento
+        // Criador pode enviar lembrete do próprio agendamento
+        // Convidados aceitos podem enviar lembrete
+        const isAdminOrProfessor = ['Admin', 'Professor'].includes(req.user.role);
+        const isCriador = agendamento.criado_por === req.user.id;
+        const isConvidadoAceito = agendamento.convidados && agendamento.convidados.some(c => 
+            c.email === req.user.email && c.status === 'aceito'
+        );
+        
+        if (!isAdminOrProfessor && !isCriador && !isConvidadoAceito) {
             return res.status(403).json({ success: false, message: 'Sem permissão para enviar lembrete deste agendamento' });
         }
         
@@ -323,10 +330,10 @@ exports.enviarLembrete = async function(req, res) {
             await emailService.enviarLembreteAgendamento(agendamento, usuario.email, usuario.nome);
         }
         
-        // Enviar para convidados aceitos
+        // Enviar para todos os convidados (independente do status)
         if (agendamento.convidados && Array.isArray(agendamento.convidados)) {
             for (const convidado of agendamento.convidados) {
-                if (convidado.status === 'aceito' && convidado.email) {
+                if (convidado.email) {
                     await emailService.enviarLembreteAgendamento(agendamento, convidado.email, convidado.nome);
                 }
             }
@@ -516,7 +523,7 @@ exports.aprovar = async function(req, res) {
         const { observacoes } = req.body;
         
         // Verificar se usuário tem permissão (Admin ou Professor)
-        if (!['Admin', 'Professor'].includes(req.user.role_name)) {
+        if (!['Admin', 'Professor'].includes(req.user.role)) {
             return res.status(403).json({ 
                 success: false, 
                 message: 'Apenas Admin ou Professor podem aprovar agendamentos' 
@@ -579,7 +586,7 @@ exports.recusar = async function(req, res) {
         const { motivo_recusa } = req.body;
         
         // Verificar se usuário tem permissão (Admin ou Professor)
-        if (!['Admin', 'Professor'].includes(req.user.role_name)) {
+        if (!['Admin', 'Professor'].includes(req.user.role)) {
             return res.status(403).json({ 
                 success: false, 
                 message: 'Apenas Admin ou Professor podem recusar agendamentos' 

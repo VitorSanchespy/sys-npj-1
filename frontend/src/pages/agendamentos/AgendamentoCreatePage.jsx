@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import AgendamentoForm from '../components/agendamentos/AgendamentoForm';
+import AgendamentoForm from '@/components/agendamentos/AgendamentoForm';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';

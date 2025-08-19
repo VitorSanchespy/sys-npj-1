@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useToast } from '@/components/common/Toast';
+import { useGlobalToast } from '@/contexts/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { apiRequest } from '@/api/apiRequest';
@@ -12,7 +12,7 @@ import AgendamentoStatus from './AgendamentoStatus';
 import { formatDate, formatDateTime } from '@/utils/commonUtils';
 
 const AgendamentosLista = ({ agendamentos = [], showCreateButton = true, onEdit, onDelete, onStatusChange, onEnviarLembrete }) => {
-  const { showSuccess, showError } = useToast();
+  const { showSuccess, showError } = useGlobalToast();
   const { token, user } = useAuthContext();
   const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
@@ -128,10 +128,11 @@ const AgendamentosLista = ({ agendamentos = [], showCreateButton = true, onEdit,
                 <div className="flex-1 min-w-0">
                   <button
                     type="button"
-                    className="text-lg font-bold bg-primary-600 text-white px-4 py-2 rounded-lg shadow hover:bg-primary-700 focus:outline-none truncate transition-colors"
+                    className="w-full sm:w-auto text-base sm:text-lg font-bold bg-primary-600 text-white px-3 sm:px-4 py-2 rounded-lg shadow hover:bg-primary-700 focus:outline-none truncate transition-colors focus:ring-2 focus:ring-primary-400 focus:ring-offset-2"
+                    style={{ minWidth: 0 }}
                     onClick={() => navigate(`/agendamentos/${agendamento.id}`)}
                   >
-                    {agendamento.titulo}
+                    <span className="block whitespace-normal text-ellipsis overflow-hidden" style={{ maxWidth: '100%' }}>{agendamento.titulo}</span>
                   </button>
                   <div className="flex gap-2 mt-1">
                     <span className="bg-primary-50 text-primary-700 px-2 py-1 rounded-full text-xs font-semibold">{getTipoText(agendamento.tipo)}</span>

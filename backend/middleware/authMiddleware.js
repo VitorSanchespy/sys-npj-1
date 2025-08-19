@@ -23,21 +23,37 @@ const authMiddleware = async (req, res, next) => {
     
     let usuario = null;
     
+    // Primeiro, usar dados do token como fallback
+    if (decoded.role) {
+      usuario = {
+        id: decoded.id,
+        nome: decoded.nome || 'Usuario',
+        email: decoded.email,
+        role: decoded.role,
+        ativo: true
+      };
+    }
+    
     if (isDbAvailable()) {
-      // Usar banco de dados
+      // Tentar usar banco de dados
       try {
         const { usuarioModel: Usuario, roleModel: Role } = require('../models/indexModel');
-        usuario = await Usuario.findByPk(decoded.id, {
+        const usuarioDb = await Usuario.findByPk(decoded.id, {
           include: [{ model: Role, as: 'role' }]
         });
         
-        if (usuario && usuario.role) {
-          usuario.role = usuario.role.nome;
+        if (usuarioDb && usuarioDb.role) {
+          usuario = {
+            id: usuarioDb.id,
+            nome: usuarioDb.nome,
+            email: usuarioDb.email,
+            role: usuarioDb.role.nome,
+            ativo: usuarioDb.ativo
+          };
         }
       } catch (dbError) {
-        console.log('⚠️ Erro no banco:', dbError.message);
-        global.dbAvailable = false;
-        return res.status(503).json({ erro: 'Banco de dados não disponível' });
+        console.log('⚠️ Erro no banco, usando token:', dbError.message);
+        // Manter dados do token se DB falhar
       }
     }
     

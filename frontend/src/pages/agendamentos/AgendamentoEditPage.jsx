@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import AgendamentoForm from '../components/agendamentos/AgendamentoForm';
+import AgendamentoForm from '@/components/agendamentos/AgendamentoForm';
 import { useParams, useNavigate } from 'react-router-dom';
-import { apiRequest } from '../api/apiRequest';
+import { apiRequest } from '@/api/apiRequest';
 import { ArrowLeft } from 'lucide-react';
 
 const AgendamentoEditPage = () => {

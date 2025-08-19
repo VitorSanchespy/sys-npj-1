@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { apiRequest } from '../api/apiRequest';
+import { apiRequest } from '@/api/apiRequest';
 import { ArrowLeft, Edit, Trash2, Calendar, Clock, MapPin, Mail, User, Users } from 'lucide-react';
 
 const AgendamentoDetailPage = () => {

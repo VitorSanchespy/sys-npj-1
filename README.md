@@ -12,6 +12,7 @@ Sistema completo de gestão para Núcleos de Prática Jurídica, desenvolvido co
 - **Upload:** Sistema de arquivos integrado
 
 ---
+Valide o E-mail From no env
 
 ## 🚀 **CONFIGURAÇÃO PARA DESENVOLVIMENTO LOCAL**
 

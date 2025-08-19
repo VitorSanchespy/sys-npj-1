@@ -16,8 +16,8 @@ class RequestInterceptor {
       options.timeout = NPJ_CONFIG.API.TIMEOUT;
     }
 
-    // Adicionar token de autorização se disponível
-    const token = localStorage.getItem('token');
+    // Priorizar token passado como parâmetro, senão usar localStorage
+    const token = options.token || localStorage.getItem('token');
     if (token) {
       options.headers = {
         'Content-Type': 'application/json',

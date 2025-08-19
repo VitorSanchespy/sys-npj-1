@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { agendamentoService } from '@/api/services';
-import { useToast } from '@/components/common/Toast';
+import { useGlobalToast } from '@/contexts/ToastContext';
 import Button from '@/components/common/Button';
 
 const AgendamentoAprovacao = ({ agendamento, onAprovacao, onRecusa }) => {
   const { token, user } = useAuthContext();
-  const { showSuccess, showError } = useToast();
+  const { showSuccess, showError } = useGlobalToast();
   const [loading, setLoading] = useState(false);
   const [showRecusaForm, setShowRecusaForm] = useState(false);
   const [motivoRecusa, setMotivoRecusa] = useState('');
@@ -26,10 +26,10 @@ const AgendamentoAprovacao = ({ agendamento, onAprovacao, onRecusa }) => {
       const response = await agendamentoService.aprovar(token, agendamento.id, observacaoAprovacao);
       
       if (response.success) {
-        showSuccess('Agendamento aprovado com sucesso!');
+        showSuccess(response.message || 'Agendamento aprovado com sucesso!');
         onAprovacao && onAprovacao(response.agendamento);
       } else {
-        showError(response.erro || 'Erro ao aprovar agendamento');
+        showError(response.message || response.erro || 'Erro ao aprovar agendamento');
       }
     } catch (error) {
       showError('Erro ao aprovar agendamento');
@@ -55,12 +55,12 @@ const AgendamentoAprovacao = ({ agendamento, onAprovacao, onRecusa }) => {
       const response = await agendamentoService.recusar(token, agendamento.id, motivoRecusa);
       
       if (response.success) {
-        showSuccess('Agendamento recusado');
+        showSuccess(response.message || 'Agendamento recusado');
         onRecusa && onRecusa(response.agendamento);
         setShowRecusaForm(false);
         setMotivoRecusa('');
       } else {
-        showError(response.erro || 'Erro ao recusar agendamento');
+        showError(response.message || response.erro || 'Erro ao recusar agendamento');
       }
     } catch (error) {
       showError('Erro ao recusar agendamento');
