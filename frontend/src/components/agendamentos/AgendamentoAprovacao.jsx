@@ -13,7 +13,8 @@ const AgendamentoAprovacao = ({ agendamento, onAprovacao, onRecusa }) => {
   const [observacaoAprovacao, setObservacaoAprovacao] = useState('');
 
   // Verificar se o usuário pode aprovar (Admin ou Professor)
-  const podeAprovar = user?.role === 'Admin' || user?.role === 'Professor';
+  const roleName = user?.role?.nome || user?.role;
+  const podeAprovar = roleName === 'Admin' || roleName === 'Professor';
 
   const handleAprovar = async () => {
     if (!podeAprovar) {

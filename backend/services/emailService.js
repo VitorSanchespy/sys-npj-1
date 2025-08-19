@@ -70,10 +70,13 @@ async function enviarNotificacaoAprovacaoAgendamento(agendamento) {
     
     // Buscar Admin e Professores para notificar
     const { usuarioModel: Usuario } = require('../models/indexModel');
+    const { roleModel: Role } = require('../models/indexModel');
     const responsaveis = await Usuario.findAll({
-      where: {
-        role_name: ['Admin', 'Professor']
-      }
+      include: [{
+        model: Role,
+        as: 'role',
+        where: { nome: ['Admin', 'Professor'] }
+      }]
     });
     
     for (const responsavel of responsaveis) {

@@ -92,8 +92,11 @@ const AgendamentosLista = ({ agendamentos = [], showCreateButton = true, onEdit,
   };
 
   const canApprove = (agendamento) => {
-    // Apenas Admin/Professor podem aprovar e apenas se estiver em análise
-    return (user?.role === 'Admin' || user?.role === 'Professor') && agendamento.status === 'em_analise';
+    // Admin/Professor podem aprovar qualquer agendamento em análise
+    const roleName = user?.role?.nome || user?.role;
+    const isAdminOrProfessor = roleName === 'Admin' || roleName === 'Professor';
+    const isEmAnalise = agendamento.status === 'em_analise';
+    return isAdminOrProfessor && isEmAnalise;
   };
 
   if (showForm) {
