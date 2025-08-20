@@ -302,8 +302,7 @@ export default function CreateProcessModal({ onCreated, onClose }) {
             type="materia"
             label="Matéria/Assunto"
             value={form.materia_assunto_id}
-            onChange={(value) => setForm(f => ({ ...f, materia_assunto_id: value }))}
-            placeholder="Selecione a matéria/assunto"
+            onChange={value => setForm(f => ({ ...f, materia_assunto_id: value }))}
             required
           />
 
@@ -312,8 +311,7 @@ export default function CreateProcessModal({ onCreated, onClose }) {
               type="fase"
               label="Fase"
               value={form.fase_id}
-              onChange={(value) => setForm(f => ({ ...f, fase_id: value }))}
-              placeholder="Selecione a fase"
+              onChange={value => setForm(f => ({ ...f, fase_id: value }))}
               required
             />
 
@@ -321,8 +319,7 @@ export default function CreateProcessModal({ onCreated, onClose }) {
               type="diligencia"
               label="Diligência"
               value={form.diligencia_id}
-              onChange={(value) => setForm(f => ({ ...f, diligencia_id: value }))}
-              placeholder="Selecione a diligência"
+              onChange={value => setForm(f => ({ ...f, diligencia_id: value }))}
               required
             />
           </div>
@@ -331,8 +328,7 @@ export default function CreateProcessModal({ onCreated, onClose }) {
             type="local_tramitacao"
             label="Local de Tramitação"
             value={form.local_tramitacao_id}
-            onChange={(value) => setForm(f => ({ ...f, local_tramitacao_id: value }))}
-            placeholder="Selecione o local de tramitação"
+            onChange={value => setForm(f => ({ ...f, local_tramitacao_id: value }))}
             required
           />
           

@@ -143,8 +143,7 @@ export default function ProcessEditPage() {
           type="materia"
           label="Matéria/Assunto"
           value={formData.materia_assunto_id}
-          onChange={(value) => setFormData(f => ({ ...f, materia_assunto_id: value }))}
-          placeholder="Selecione a matéria/assunto"
+          onChange={value => setFormData(f => ({ ...f, materia_assunto_id: value }))}
           required
         />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -152,16 +151,14 @@ export default function ProcessEditPage() {
             type="fase"
             label="Fase"
             value={formData.fase_id}
-            onChange={(value) => setFormData(f => ({ ...f, fase_id: value }))}
-            placeholder="Selecione a fase"
+            onChange={value => setFormData(f => ({ ...f, fase_id: value }))}
             required
           />
           <CampoAuxiliarComControle
             type="diligencia"
             label="Diligência"
             value={formData.diligencia_id}
-            onChange={(value) => setFormData(f => ({ ...f, diligencia_id: value }))}
-            placeholder="Selecione a diligência"
+            onChange={value => setFormData(f => ({ ...f, diligencia_id: value }))}
             required
           />
         </div>
@@ -169,8 +166,7 @@ export default function ProcessEditPage() {
           type="local_tramitacao"
           label="Local de Tramitação"
           value={formData.local_tramitacao_id}
-          onChange={(value) => setFormData(f => ({ ...f, local_tramitacao_id: value }))}
-          placeholder="Selecione o local"
+          onChange={value => setFormData(f => ({ ...f, local_tramitacao_id: value }))}
           required
         />
         <label>Data de Encerramento

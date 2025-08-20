@@ -13,7 +13,7 @@ const AgendamentoForm = ({
   isEditing = false,
   processos = [] // Recebendo a lista de processos como prop
 }) => {
-  const { token } = useAuthContext();
+  const { token, user } = useAuthContext();
   const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -26,7 +26,7 @@ const AgendamentoForm = ({
     data_fim: '',
     local: '',
     tipo: 'reuniao',
-    email_lembrete: '',
+    email_lembrete: user?.email || '', // Preencher automaticamente com email do usuário logado
     observacoes: '',
     convidados: []
   });
@@ -76,12 +76,18 @@ const AgendamentoForm = ({
         data_fim: formatDateTimeForInput(agendamento.data_fim) || '',
         local: agendamento.local || '',
         tipo: agendamento.tipo || 'reuniao',
-        email_lembrete: agendamento.email_lembrete || '',
+        email_lembrete: agendamento.email_lembrete || user?.email || '',
         observacoes: agendamento.observacoes || '',
         convidados: agendamento.convidados || []
       });
+    } else if (!isEditing && user?.email) {
+      // Para novos agendamentos, garantir que o email do usuário esteja preenchido
+      setFormData(prev => ({
+        ...prev,
+        email_lembrete: user.email
+      }));
     }
-  }, [agendamento, isEditing, processoId]);
+  }, [agendamento, isEditing, processoId, user?.email]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -611,7 +617,7 @@ const AgendamentoForm = ({
                   data_fim: '',
                   local: '',
                   tipo: 'reuniao',
-                  email_lembrete: '',
+                  email_lembrete: user?.email || '', // Manter email do usuário ao limpar formulário
                   observacoes: '',
                   convidados: []
                 });
