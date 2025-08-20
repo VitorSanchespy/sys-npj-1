@@ -77,34 +77,91 @@ exports.criar = async function(req, res) {
 
 exports.listar = async function(req, res) {
     try {
-        const { processo_id, data_inicio, data_fim, status, tipo, page = 1, limit = 20 } = req.query;
+        const { 
+            processo_id, 
+            data_inicio, 
+            data_fim, 
+            status = 'marcado', // Por padrão mostrar apenas marcados
+            tipo, 
+            local,
+            search,
+            incluir_cancelados = 'false',
+            page = 1, 
+            limit = 12 
+        } = req.query;
+        
         const where = {};
         const offset = (page - 1) * limit;
         const { Op } = require('sequelize');
         
-        // Para Admin, mostrar todos os agendamentos. Para outros, apenas os criados por eles
-        if (req.user.role !== 'Admin' && req.user.role !== 'Professor') {
+        // Para Admin/Professor, mostrar todos os agendamentos. Para outros, apenas os criados por eles
+        const userRole = req.user.role?.nome || req.user.role;
+        if (userRole !== 'Admin' && userRole !== 'Professor') {
             where.criado_por = req.user.id;
         }
         
+        // Filtros básicos
         if (processo_id) where.processo_id = processo_id;
-        if (status) where.status = status;
         if (tipo) where.tipo = tipo;
+        if (local) where.local = { [Op.like]: `%${local}%` };
+        
+        // Filtro de status com tratamento especial para cancelados
+        if (incluir_cancelados === 'true') {
+            // Se incluir cancelados estiver ativo, buscar apenas cancelados
+            where.status = 'cancelado';
+        } else if (status === 'todos') {
+            // Se status for 'todos', excluir apenas cancelados
+            where.status = { [Op.ne]: 'cancelado' };
+        } else if (status) {
+            // Status específico (exceto cancelado)
+            where.status = status;
+        }
+        
+        // Filtro de data
         if (data_inicio && data_fim) {
             where.data_inicio = {
                 [Op.between]: [data_inicio, data_fim]
             };
+        } else if (data_inicio) {
+            where.data_inicio = {
+                [Op.gte]: data_inicio
+            };
+        } else if (data_fim) {
+            where.data_inicio = {
+                [Op.lte]: data_fim
+            };
+        }
+        
+        // Busca textual
+        if (search && search.trim()) {
+            where[Op.or] = [
+                { titulo: { [Op.like]: `%${search.trim()}%` } },
+                { descricao: { [Op.like]: `%${search.trim()}%` } },
+                { local: { [Op.like]: `%${search.trim()}%` } },
+                { observacoes: { [Op.like]: `%${search.trim()}%` } }
+            ];
         }
         
         const { count, rows } = await Agendamento.findAndCountAll({
             where,
             include: [
-                { model: Processo, as: 'processo', attributes: ['id', 'numero_processo', 'titulo'] },
-                { model: Usuario, as: 'usuario', attributes: ['id', 'nome', 'email'] }
+                { 
+                    model: Processo, 
+                    as: 'processo', 
+                    attributes: ['id', 'numero_processo', 'titulo'],
+                    required: false
+                },
+                { 
+                    model: Usuario, 
+                    as: 'usuario', 
+                    attributes: ['id', 'nome', 'email'],
+                    required: false
+                }
             ],
-            order: [['data_inicio', 'ASC']],
+            order: [['data_inicio', 'DESC']], // Mais recentes primeiro
             limit: parseInt(limit),
-            offset: parseInt(offset)
+            offset: parseInt(offset),
+            distinct: true
         });
         
         res.json({ 
@@ -115,7 +172,16 @@ exports.listar = async function(req, res) {
                 page: parseInt(page), 
                 limit: parseInt(limit), 
                 totalPages: Math.ceil(count / limit) 
-            } 
+            },
+            filters: {
+                status,
+                tipo,
+                local,
+                search,
+                incluir_cancelados,
+                data_inicio,
+                data_fim
+            }
         });
     } catch (error) {
         console.error('❌ Erro ao listar agendamentos:', error);
@@ -250,15 +316,22 @@ exports.deletar = async function(req, res) {
             return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
         }
 
-        // Verificar se o usuário tem permissão para deletar (apenas criador)
-        if (agendamento.criado_por !== req.user.id) {
-            return res.status(403).json({ success: false, message: 'Apenas o criador pode deletar o agendamento' });
+        // Verificar permissão: Admin/Professor ou criador
+        const userRole = req.user.role?.nome || req.user.role;
+        const isAdminOrProfessor = ['Admin', 'Professor'].includes(userRole);
+        const isCriador = agendamento.criado_por === req.user.id;
+        
+        if (!isAdminOrProfessor && !isCriador) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Apenas o criador pode deletar o agendamento' 
+            });
         }
         
         await agendamento.destroy();
         res.json({ success: true, message: 'Agendamento deletado com sucesso' });
     } catch (error) {
-        console.error('Erro ao deletar agendamento:', error);
+        console.error('❌ Erro ao deletar agendamento:', error);
         res.status(500).json({ success: false, message: 'Erro interno do servidor', error: error.message });
     }
 };
@@ -270,6 +343,53 @@ exports.listarPorProcesso = async function(req, res) {
         res.json({ success: true, data: agendamentos });
     } catch (error) {
         console.error('Erro ao listar agendamentos do processo:', error);
+        res.status(500).json({ success: false, message: 'Erro interno do servidor', error: error.message });
+    }
+};
+
+// Novo endpoint para obter opções de filtros
+exports.obterFiltros = async function(req, res) {
+    try {
+        const { Op } = require('sequelize');
+        
+        // Buscar status disponíveis
+        const statusDisponiveis = await Agendamento.findAll({
+            attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('status')), 'status']],
+            where: {
+                status: { [Op.ne]: null }
+            },
+            raw: true
+        });
+        
+        // Buscar tipos disponíveis
+        const tiposDisponiveis = await Agendamento.findAll({
+            attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('tipo')), 'tipo']],
+            where: {
+                tipo: { [Op.ne]: null }
+            },
+            raw: true
+        });
+        
+        // Buscar locais únicos
+        const locaisDisponiveis = await Agendamento.findAll({
+            attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('local')), 'local']],
+            where: {
+                local: { [Op.ne]: null }
+            },
+            limit: 20, // Limitar para evitar muitos resultados
+            raw: true
+        });
+        
+        res.json({
+            success: true,
+            data: {
+                status: statusDisponiveis.map(s => s.status).filter(Boolean),
+                tipos: tiposDisponiveis.map(t => t.tipo).filter(Boolean),
+                locais: locaisDisponiveis.map(l => l.local).filter(Boolean)
+            }
+        });
+    } catch (error) {
+        console.error('❌ Erro ao obter filtros:', error);
         res.status(500).json({ success: false, message: 'Erro interno do servidor', error: error.message });
     }
 };

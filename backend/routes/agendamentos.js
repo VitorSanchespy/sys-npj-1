@@ -1,11 +1,36 @@
 const express = require('express');
 const router = express.Router();
 const agendamentoController = require('../controllers/agendamentoController');
+const agendamentoStatsController = require('../controllers/agendamentoStatsController');
 const authMiddleware = require('../middleware/authMiddleware');
 const { body, param, query } = require('express-validator');
 
-// Middleware de autenticação para todas as rotas
+// Rotas públicas para convites (ANTES do middleware de autenticação)
+router.post('/:id/aceitar-publico', [
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
+  body('email').isEmail().withMessage('Email deve ter formato válido')
+], agendamentoController.aceitarConvitePublico);
+
+router.post('/:id/recusar-publico', [
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
+  body('email').isEmail().withMessage('Email deve ter formato válido'),
+  body('motivo').optional().isLength({ min: 3 }).withMessage('Motivo deve ter pelo menos 3 caracteres')
+], agendamentoController.recusarConvitePublico);
+
+// Middleware de autenticação para todas as outras rotas
 router.use(authMiddleware);
+
+// GET /api/agendamentos/filtros - Obter opções de filtros
+router.get('/filtros', agendamentoController.obterFiltros);
+
+// GET /api/agendamentos/stats - Estatísticas de agendamentos (ANTES de /:id)
+router.get('/stats', agendamentoStatsController.getStats);
+
+// GET /api/agendamentos/stats/convites - Estatísticas de convites
+router.get('/stats/convites', agendamentoStatsController.getConviteStats);
+
+// GET /api/agendamentos/lembrete/pendentes - Buscar agendamentos pendentes de lembrete
+router.get('/lembrete/pendentes', agendamentoController.buscarParaLembrete);
 
 // Validações para criação
 const validacoesCriacao = [
@@ -167,16 +192,7 @@ router.post('/:id/recusar', [
     .isLength({ min: 10, max: 1000 }).withMessage('Motivo deve ter entre 10 e 1000 caracteres')
 ], agendamentoController.recusar);
 
-// Rotas públicas para convites (sem autenticação)
-router.post('/:id/aceitar-publico', [
-  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
-  body('email').isEmail().withMessage('Email deve ter formato válido')
-], agendamentoController.aceitarConvitePublico);
-
-router.post('/:id/recusar-publico', [
-  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
-  body('email').isEmail().withMessage('Email deve ter formato válido')
-], agendamentoController.recusarConvitePublico);
+// Rotas públicas para convites (sem autenticação) - REMOVIDAS (já estão no topo)
 
 // POST /api/agendamentos/:id/aceitar - Aceitar convite para agendamento
 router.post('/:id/aceitar', [
@@ -190,7 +206,10 @@ router.post('/:id/recusar', [
   body('email').optional().isEmail().withMessage('Email deve ter formato válido')
 ], agendamentoController.recusarConvite);
 
-// GET /api/agendamentos/lembrete/pendentes - Buscar agendamentos pendentes de lembrete
-router.get('/lembrete/pendentes', agendamentoController.buscarParaLembrete);
+// GET /api/agendamentos/stats - Estatísticas de agendamentos (DUPLICADA - REMOVENDO)
+
+// GET /api/agendamentos/stats/convites - Estatísticas de convites (DUPLICADA - REMOVENDO)
+
+// GET /api/agendamentos/lembrete/pendentes - Buscar agendamentos pendentes de lembrete (DUPLICADA - REMOVENDO)
 
 module.exports = router;

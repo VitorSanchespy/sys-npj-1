@@ -3,6 +3,7 @@ import { apiRequest } from "@/api/apiRequest";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { getUserRole } from "../../hooks/useApi";
 import { tabelaAuxiliarService } from "../../api/services";
+import CampoAuxiliarComControle from "@/components/common/CampoAuxiliarComControle";
 
 export default function CreateProcessModal({ onCreated, onClose }) {
   const { token, user } = useAuthContext();
@@ -297,87 +298,43 @@ export default function CreateProcessModal({ onCreated, onClose }) {
           </div>
 
           {/* Campos auxiliares */}
-          <div>
-            <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
-              Matéria/Assunto*:
-            </label>
-            <select
-              name="materia_assunto_id"
-              value={form.materia_assunto_id}
-              onChange={handleChange}
-              required
-              style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-            >
-              <option value="">Selecione a matéria/assunto</option>
-              {materias.map(materia => (
-                <option key={materia.id} value={materia.id}>
-                  {materia.nome}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CampoAuxiliarComControle
+            type="materia"
+            label="Matéria/Assunto"
+            value={form.materia_assunto_id}
+            onChange={(value) => setForm(f => ({ ...f, materia_assunto_id: value }))}
+            placeholder="Selecione a matéria/assunto"
+            required
+          />
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15 }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
-                Fase*:
-              </label>
-              <select
-                name="fase_id"
-                value={form.fase_id}
-                onChange={handleChange}
-                required
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              >
-                <option value="">Selecione a fase</option>
-                {fases.map(fase => (
-                  <option key={fase.id} value={fase.id}>
-                    {fase.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
-                Diligência*:
-              </label>
-              <select
-                name="diligencia_id"
-                value={form.diligencia_id}
-                onChange={handleChange}
-                required
-                style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-              >
-                <option value="">Selecione a diligência</option>
-                {diligencias.map(diligencia => (
-                  <option key={diligencia.id} value={diligencia.id}>
-                    {diligencia.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>
-              Local de Tramitação*:
-            </label>
-            <select
-              name="local_tramitacao_id"
-              value={form.local_tramitacao_id}
-              onChange={handleChange}
+            <CampoAuxiliarComControle
+              type="fase"
+              label="Fase"
+              value={form.fase_id}
+              onChange={(value) => setForm(f => ({ ...f, fase_id: value }))}
+              placeholder="Selecione a fase"
               required
-              style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
-            >
-              <option value="">Selecione o local de tramitação</option>
-              {localTramitacoes.map(local => (
-                <option key={local.id} value={local.id}>
-                  {local.nome}
-                </option>
-              ))}
-            </select>
+            />
+
+            <CampoAuxiliarComControle
+              type="diligencia"
+              label="Diligência"
+              value={form.diligencia_id}
+              onChange={(value) => setForm(f => ({ ...f, diligencia_id: value }))}
+              placeholder="Selecione a diligência"
+              required
+            />
           </div>
+
+          <CampoAuxiliarComControle
+            type="local_tramitacao"
+            label="Local de Tramitação"
+            value={form.local_tramitacao_id}
+            onChange={(value) => setForm(f => ({ ...f, local_tramitacao_id: value }))}
+            placeholder="Selecione o local de tramitação"
+            required
+          />
           
           <div>
             <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold' }}>

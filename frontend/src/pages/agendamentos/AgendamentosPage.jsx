@@ -5,6 +5,8 @@ import { useAuthContext } from '@/contexts/AuthContext';
 import { apiRequest } from '@/api/apiRequest';
 import { useGlobalToast } from '@/contexts/ToastContext';
 import AgendamentosLista from '@/components/agendamentos/AgendamentosLista';
+import AgendamentosFiltros from '@/components/agendamentos/AgendamentosFiltros';
+import AgendamentosPaginacao from '@/components/agendamentos/AgendamentosPaginacao';
 
 const AgendamentosPage = () => {
   const navigate = useNavigate();
@@ -14,19 +16,51 @@ const AgendamentosPage = () => {
   const [agendamentos, setAgendamentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 12,
+    totalPages: 0
+  });
+  const [filters, setFilters] = useState({
+    search: '',
+    status: 'marcado', // Por padrão mostrar apenas marcados
+    tipo: '',
+    local: '',
+    data_inicio: '',
+    data_fim: '',
+    incluir_cancelados: false
+  });
 
   // Função para buscar agendamentos
-  const fetchAgendamentos = async () => {
+  const fetchAgendamentos = async (newFilters = filters, page = pagination.page, limit = pagination.limit) => {
     setLoading(true);
     setError('');
     try {
-      const response = await apiRequest('/api/agendamentos', {
+      // Construir query parameters
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        ...Object.fromEntries(
+          Object.entries(newFilters).filter(([_, value]) => 
+            value !== '' && value !== false && value !== null && value !== undefined
+          )
+        )
+      });
+
+      const response = await apiRequest(`/api/agendamentos?${queryParams}`, {
         method: 'GET',
         token
       });
       
       if (response.success) {
         setAgendamentos(response.data || []);
+        setPagination(response.pagination || {
+          total: 0,
+          page: 1,
+          limit: 12,
+          totalPages: 0
+        });
       } else {
         throw new Error(response.message || 'Erro ao buscar agendamentos');
       }
@@ -34,6 +68,7 @@ const AgendamentosPage = () => {
       console.error('❌ Erro ao buscar agendamentos:', err);
       setError(err.message || 'Erro ao buscar agendamentos');
       setAgendamentos([]);
+      setPagination({ total: 0, page: 1, limit: 12, totalPages: 0 });
     } finally {
       setLoading(false);
     }
@@ -54,6 +89,16 @@ const AgendamentosPage = () => {
   }, [location.state]);
 
   // Manipuladores de eventos
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    fetchAgendamentos(newFilters, 1, pagination.limit); // Resetar para primeira página
+  };
+
+  const handlePageChange = (newPage, newLimit = pagination.limit) => {
+    const pageToFetch = newLimit !== pagination.limit ? 1 : newPage;
+    fetchAgendamentos(filters, pageToFetch, newLimit);
+  };
+
   const handleEdit = (agendamento) => {
     navigate(`/agendamentos/${agendamento.id}/editar`);
   };
@@ -77,7 +122,12 @@ const AgendamentosPage = () => {
         showError(response.message || 'Erro ao deletar agendamento');
       }
     } catch (err) {
-      showError('Erro ao deletar agendamento: ' + (err.message || 'Erro desconhecido'));
+      // Verificar se é erro de permissão
+      if (err.message && err.message.includes('Apenas o criador pode deletar')) {
+        showError('Apenas o criador pode deletar o agendamento');
+      } else {
+        showError('Erro ao deletar agendamento: ' + (err.message || 'Erro desconhecido'));
+      }
     }
   };
 
@@ -89,23 +139,6 @@ const AgendamentosPage = () => {
       ).filter(a => a && typeof a.id !== 'undefined') : []
     );
   };
-
-  if (loading) {
-    return (
-      <div style={{
-        padding: '20px',
-        minHeight: '100vh',
-        backgroundColor: '#f8f9fa',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-        <div style={{ fontSize: '18px', color: '#666' }}>
-          Carregando agendamentos...
-        </div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -130,7 +163,7 @@ const AgendamentosPage = () => {
             {error}
           </div>
           <button
-            onClick={fetchAgendamentos}
+            onClick={() => fetchAgendamentos()}
             style={{
               padding: '10px 20px',
               backgroundColor: '#007bff',
@@ -154,7 +187,7 @@ const AgendamentosPage = () => {
       backgroundColor: '#f8f9fa'
     }}>
       <div style={{
-        maxWidth: '1200px',
+        maxWidth: '1400px',
         margin: '0 auto'
       }}>
         {/* Cabeçalho da página */}
@@ -164,14 +197,26 @@ const AgendamentosPage = () => {
           alignItems: 'center',
           marginBottom: '24px'
         }}>
-          <h1 style={{
-            fontSize: '28px',
-            fontWeight: '700',
-            margin: 0,
-            color: '#1f2937'
-          }}>
-            Agendamentos
-          </h1>
+          <div>
+            <h1 style={{
+              fontSize: '28px',
+              fontWeight: '700',
+              margin: 0,
+              color: '#1f2937'
+            }}>
+              Agendamentos
+            </h1>
+            <p style={{
+              fontSize: '14px',
+              color: '#6b7280',
+              margin: '4px 0 0 0'
+            }}>
+              {pagination.total > 0 
+                ? `${pagination.total} agendamento${pagination.total !== 1 ? 's' : ''} encontrado${pagination.total !== 1 ? 's' : ''}`
+                : 'Nenhum agendamento encontrado'
+              }
+            </p>
+          </div>
           <button
             onClick={() => navigate('/agendamentos/novo')}
             style={{
@@ -196,14 +241,49 @@ const AgendamentosPage = () => {
           </button>
         </div>
 
-        {/* Lista de agendamentos */}
-        <AgendamentosLista
-          agendamentos={Array.isArray(agendamentos) ? agendamentos.filter(a => a && typeof a.id !== 'undefined') : []}
-          showCreateButton={false} // Já temos o botão no cabeçalho
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onStatusChange={handleStatusChange}
+        {/* Sistema de filtros */}
+        <AgendamentosFiltros
+          onFilterChange={handleFilterChange}
+          currentFilters={filters}
+          loading={loading}
         />
+
+        {/* Lista de agendamentos */}
+        {loading ? (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '60px 20px',
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{ fontSize: '18px', color: '#666' }}>
+              Carregando agendamentos...
+            </div>
+          </div>
+        ) : (
+          <>
+            <AgendamentosLista
+              agendamentos={Array.isArray(agendamentos) ? agendamentos.filter(a => a && typeof a.id !== 'undefined') : []}
+              showCreateButton={false} // Já temos o botão no cabeçalho
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onStatusChange={handleStatusChange}
+            />
+
+            {/* Paginação */}
+            <AgendamentosPaginacao
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              totalItems={pagination.total}
+              itemsPerPage={pagination.limit}
+              onPageChange={handlePageChange}
+              loading={loading}
+            />
+          </>
+        )}
       </div>
     </div>
   );

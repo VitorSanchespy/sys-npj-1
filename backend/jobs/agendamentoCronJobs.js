@@ -1,4 +1,5 @@
 const cron = require('node-cron');
+const { Op } = require('sequelize');
 const { agendamentoModel: Agendamento, usuarioModel: Usuario, processoModel: Processo } = require('../models/indexModel');
 const emailService = require('../services/emailService');
 
@@ -22,7 +23,7 @@ class AgendamentoCronJobs {
         where: {
           status: 'enviando_convites',
           data_aprovacao: {
-            $lte: oneDayAgo
+            [Op.lte]: oneDayAgo
           }
         },
         include: [
@@ -66,7 +67,7 @@ class AgendamentoCronJobs {
         where: {
           status: 'marcado',
           data_inicio: {
-            $between: [inicioHoje, fimHoje]
+            [Op.between]: [inicioHoje, fimHoje]
           }
         },
         include: [
@@ -88,6 +89,48 @@ class AgendamentoCronJobs {
       console.error('❌ Erro no job de lembretes do dia:', error);
     }
   }
+
+  /**
+   * Enviar lembretes 1 hora antes do agendamento
+   */
+  static async enviarLembretes1HoraAntes() {
+    try {
+      console.log('⏰ Executando job para lembretes 1 hora antes...');
+      
+      const agora = new Date();
+      const umaHoraDepois = new Date(agora.getTime() + (60 * 60 * 1000)); // 1 hora em ms
+      
+      // Buscar agendamentos marcados que começam em aproximadamente 1 hora
+      const agendamentos = await Agendamento.findAll({
+        where: {
+          status: 'marcado',
+          data_inicio: {
+            [Op.between]: [agora, umaHoraDepois]
+          },
+            lembrete_1h_enviado: { [Op.ne]: true } // Só enviar se ainda não foi enviado
+        },
+        include: [
+          { model: Processo, as: 'processo' },
+          { model: Usuario, as: 'usuario' }
+        ]
+      });
+      
+      for (const agendamento of agendamentos) {
+        try {
+          await this.enviarLembrete1HoraAntes(agendamento);
+          // Marcar como enviado para não enviar novamente
+          agendamento.lembrete_1h_enviado = true;
+          await agendamento.save();
+        } catch (emailError) {
+          console.error(`Erro ao enviar lembrete 1h antes para agendamento ${agendamento.id}:`, emailError);
+        }
+      }
+      
+      console.log(`✅ Lembretes 1h antes enviados para ${agendamentos.length} agendamentos`);
+    } catch (error) {
+      console.error('❌ Erro no job de lembretes 1h antes:', error);
+    }
+  }
   
   /**
    * Finalizar agendamentos após o término
@@ -103,7 +146,7 @@ class AgendamentoCronJobs {
         where: {
           status: 'marcado',
           data_fim: {
-            $lt: agora
+            [Op.lt]: agora
           }
         }
       });
@@ -160,6 +203,51 @@ class AgendamentoCronJobs {
   }
   
   /**
+   * Enviar lembrete 1 hora antes do agendamento
+   */
+  static async enviarLembrete1HoraAntes(agendamento) {
+    const html = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2 style="color: #dc3545;">⚠️ Lembrete Urgente: Agendamento em 1 Hora</h2>
+        <p><strong>Título:</strong> ${agendamento.titulo}</p>
+        <p><strong>Início:</strong> ${new Date(agendamento.data_inicio).toLocaleString('pt-BR')}</p>
+        <p><strong>Término:</strong> ${new Date(agendamento.data_fim).toLocaleString('pt-BR')}</p>
+        <p><strong>Local:</strong> ${agendamento.local || 'Não informado'}</p>
+        
+        <div style="margin: 20px 0; padding: 15px; background-color: #f8d7da; border-left: 4px solid #dc3545;">
+          <p><strong>⏰ ATENÇÃO!</strong> Seu agendamento começará em aproximadamente 1 hora. Prepare-se e dirija-se ao local!</p>
+        </div>
+        
+        ${agendamento.processo ? `<p><strong>Processo:</strong> ${agendamento.processo.numero_processo} - ${agendamento.processo.titulo}</p>` : ''}
+        
+        <p style="margin-top: 20px; font-size: 12px; color: #666;">
+          Este é um lembrete automático. Por favor, não responda a este e-mail.
+        </p>
+      </div>
+    `;
+    
+    // Enviar para o solicitante
+    await emailService.enviarEmail({
+      to: [{ email: agendamento.usuario.email, name: agendamento.usuario.nome }],
+      subject: `🚨 URGENTE: ${agendamento.titulo} em 1 hora`,
+      html
+    });
+    
+    // Enviar para convidados aceitos
+    if (agendamento.convidados && Array.isArray(agendamento.convidados)) {
+      for (const convidado of agendamento.convidados) {
+        if (convidado.email && convidado.status === 'aceito') {
+          await emailService.enviarEmail({
+            to: [{ email: convidado.email, name: convidado.nome }],
+            subject: `🚨 URGENTE: ${agendamento.titulo} em 1 hora`,
+            html
+          });
+        }
+      }
+    }
+  }
+
+  /**
    * Enviar lembrete no dia do agendamento
    */
   static async enviarLembreteDodia(agendamento) {
@@ -213,6 +301,11 @@ class AgendamentoCronJobs {
     // Job para lembretes do dia (executa às 8h da manhã)
     cron.schedule('0 8 * * *', () => {
       this.enviarLembretesDodia();
+    });
+    
+    // Job para lembretes 1 hora antes (executa a cada 15 minutos)
+    cron.schedule('*/15 * * * *', () => {
+      this.enviarLembretes1HoraAntes();
     });
     
     // Job para finalizar agendamentos (executa a cada hora)

@@ -6,6 +6,7 @@ import { apiRequest } from "@/api/apiRequest";
 import { tabelaAuxiliarService, processService } from "../../api/services";
 import { requestCache } from "@/utils/requestCache";
 import Button from "@/components/common/Button";
+import CampoAuxiliarComControle from "@/components/common/CampoAuxiliarComControle";
 
 export default function ProcessEditPage() {
   const { id } = useParams();
@@ -138,32 +139,40 @@ export default function ProcessEditPage() {
             </select>
           </label>
         </div>
-        <label>Matéria/Assunto*
-          <select name="materia_assunto_id" value={formData.materia_assunto_id} onChange={handleChange} required>
-            <option value="">Selecione a matéria/assunto</option>
-            {materias.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
-          </select>
-        </label>
+        <CampoAuxiliarComControle
+          type="materia"
+          label="Matéria/Assunto"
+          value={formData.materia_assunto_id}
+          onChange={(value) => setFormData(f => ({ ...f, materia_assunto_id: value }))}
+          placeholder="Selecione a matéria/assunto"
+          required
+        />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <label>Fase*
-            <select name="fase_id" value={formData.fase_id} onChange={handleChange} required>
-              <option value="">Selecione a fase</option>
-              {fases.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-            </select>
-          </label>
-          <label>Diligência*
-            <select name="diligencia_id" value={formData.diligencia_id} onChange={handleChange} required>
-              <option value="">Selecione a diligência</option>
-              {diligencias.map(d => <option key={d.id} value={d.id}>{d.nome}</option>)}
-            </select>
-          </label>
+          <CampoAuxiliarComControle
+            type="fase"
+            label="Fase"
+            value={formData.fase_id}
+            onChange={(value) => setFormData(f => ({ ...f, fase_id: value }))}
+            placeholder="Selecione a fase"
+            required
+          />
+          <CampoAuxiliarComControle
+            type="diligencia"
+            label="Diligência"
+            value={formData.diligencia_id}
+            onChange={(value) => setFormData(f => ({ ...f, diligencia_id: value }))}
+            placeholder="Selecione a diligência"
+            required
+          />
         </div>
-        <label>Local de Tramitação*
-          <select name="local_tramitacao_id" value={formData.local_tramitacao_id} onChange={handleChange} required>
-            <option value="">Selecione o local</option>
-            {localTramitacoes.map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
-          </select>
-        </label>
+        <CampoAuxiliarComControle
+          type="local_tramitacao"
+          label="Local de Tramitação"
+          value={formData.local_tramitacao_id}
+          onChange={(value) => setFormData(f => ({ ...f, local_tramitacao_id: value }))}
+          placeholder="Selecione o local"
+          required
+        />
         <label>Data de Encerramento
           <input type="datetime-local" name="data_encerramento" value={formData.data_encerramento} onChange={handleChange} />
         </label>

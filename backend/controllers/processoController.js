@@ -428,18 +428,26 @@ exports.deletarProcesso = async (req, res) => {
 exports.listarProcessosUsuario = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { page = 1, limit = 4, recent = 'false', concluidos = 'false' } = req.query;
+    const { page = 1, limit = 100, recent = 'false', concluidos = 'false' } = req.query;
     let processos = [];
+    
     if (isDbAvailable()) {
       const { processoModel: Processo, usuarioModel: Usuario, atualizacaoProcessoModel: AtualizacaoProcesso, usuarioProcessoModel: UsuarioProcesso } = require('../models/indexModel');
       const { Op } = require('sequelize');
+      
       // Definir filtro de status baseado no parâmetro concluidos
       let statusFilter = {};
       if (concluidos === 'true') {
         statusFilter = { status: 'Concluído' };
       } else if (concluidos === 'false') {
-        statusFilter = { status: { [Op.ne]: 'Concluído' } };
-      } // Se não passar o parâmetro, não filtra status (traz todos)
+        statusFilter = { 
+          status: { 
+            [Op.not]: 'Concluído',
+            [Op.not]: 'concluido',
+            [Op.notIn]: ['Concluído', 'concluido', 'CONCLUÍDO', 'CONCLUIDO']
+          } 
+        };
+      }
 
       // Buscar todos os processos onde o usuário é responsável OU está vinculado via usuarios_processo
       // 1. Buscar IDs de processos vinculados
@@ -454,6 +462,13 @@ exports.listarProcessosUsuario = async (req, res) => {
         ],
         ...statusFilter
       };
+
+      console.log('🔍 Filtro de processos para usuário:', {
+        userId,
+        whereClause,
+        processosVinculadosIds: processosVinculadosIds.length,
+        concluidos
+      });
 
       // Se recent=true, buscar apenas os 4 mais recentemente atualizados
       if (recent === 'true') {
@@ -472,6 +487,9 @@ exports.listarProcessosUsuario = async (req, res) => {
           order: [['updatedAt', 'DESC']],
           limit: 4
         });
+        
+        console.log(`✅ ${processos.length} processos recentes encontrados para usuário ${userId}`);
+        
         return res.json({
           processos,
           totalItems: processos.length,

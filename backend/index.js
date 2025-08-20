@@ -48,6 +48,9 @@ app.use('/api/processos', require('./routes/processoRoute'));
 // Nova rota de agendamentos - sistema unificado
 app.use('/api/agendamentos', require('./routes/agendamentos'));
 
+// Rotas para tabelas auxiliares - sistema unificado com controle de acesso
+app.use('/api/tabelas-auxiliares', require('./routes/tabelasAuxiliares'));
+
 // Rotas públicas para convites (sem autenticação)
 const agendamentoController = require('./controllers/agendamentoController');
 const { param, body } = require('express-validator');
@@ -62,9 +65,10 @@ app.post('/api/convite/:id/recusar', [
   body('email').isEmail().withMessage('Email deve ter formato válido')
 ], agendamentoController.recusarConvitePublico);
 
-//
+// Rotas do sistema
 app.use('/api/notificacoes', require('./routes/notificacaoRoute'));
 app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoute'));
+// Manter compatibilidade para roles apenas
 app.use('/api/tabelas', require('./routes/tabelaAuxiliarRoute'));
 app.use('/api/arquivos', require('./routes/arquivoRoute'));
 app.use('/api/dashboard', require('./routes/dashboardRoute'));

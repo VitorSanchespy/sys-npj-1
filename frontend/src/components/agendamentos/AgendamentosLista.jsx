@@ -36,7 +36,27 @@ const AgendamentosLista = ({ agendamentos = [], showCreateButton = true, onEdit,
       if (!window.confirm(`Tem certeza que deseja deletar o agendamento "${agendamento.titulo}"?`)) {
         return;
       }
-      // ...existing code...
+      
+      try {
+        const response = await apiRequest(`/api/agendamentos/${agendamento.id}`, {
+          method: 'DELETE',
+          token
+        });
+        
+        if (response.success) {
+          showSuccess('Agendamento deletado com sucesso!');
+          // Recarregar a lista seria responsabilidade do componente pai
+        } else {
+          showError(response.message || 'Erro ao deletar agendamento');
+        }
+      } catch (err) {
+        // Verificar se é erro de permissão específico
+        if (err.message && err.message.includes('Apenas o criador pode deletar')) {
+          showError('Apenas o criador pode deletar o agendamento');
+        } else {
+          showError('Erro ao deletar agendamento: ' + (err.message || 'Erro desconhecido'));
+        }
+      }
     }
   };
 

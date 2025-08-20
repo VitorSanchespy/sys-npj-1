@@ -179,6 +179,14 @@ class Agendamento extends Model {
       convidado.status = 'aceito';
       convidado.respondido_em = new Date();
       this.convidados = convidados;
+      
+      // Se o agendamento está em "enviando_convites" e pelo menos um convidado aceitou,
+      // marcar como "marcado"
+      if (this.status === 'enviando_convites') {
+        this.status = 'marcado';
+        console.log(`✅ Agendamento ${this.id} marcado automaticamente após aceite de convite`);
+      }
+      
       await this.save();
     }
     return this;
@@ -305,6 +313,12 @@ Agendamento.init({
     type: DataTypes.BOOLEAN,
     allowNull: false,
     defaultValue: false
+  },
+  lembrete_1h_enviado: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    comment: 'Lembrete 1 hora antes foi enviado'
   },
   criado_por: {
     type: DataTypes.INTEGER,
