@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { userService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { getUserRole } from "../../hooks/useApi";
+import { toastService } from "../../services/toastService";
 
 const ROLES = [
   { id: 2, label: "Aluno" },
@@ -18,8 +19,36 @@ export default function UserCreateForm({ onCreated }) {
     telefone: "",
     role_id: 2,
   });
-  const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Validação de campos
+  const validateForm = () => {
+    if (!form.nome.trim()) {
+      toastService.warning("Nome é obrigatório");
+      return false;
+    }
+    if (form.nome.trim().length < 2) {
+      toastService.warning("Nome deve ter pelo menos 2 caracteres");
+      return false;
+    }
+    if (!form.email.trim()) {
+      toastService.warning("E-mail é obrigatório");
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      toastService.warning("E-mail deve ter um formato válido");
+      return false;
+    }
+    if (!form.senha.trim()) {
+      toastService.warning("Senha é obrigatória");
+      return false;
+    }
+    if (form.senha.length < 6) {
+      toastService.warning("Senha deve ter pelo menos 6 caracteres");
+      return false;
+    }
+    return true;
+  };
 
   // Professores só podem criar Aluno
   const userRole = getUserRole(user);
@@ -43,15 +72,22 @@ export default function UserCreateForm({ onCreated }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setMsg("");
+    if (!validateForm()) return;
+    
     setLoading(true);
     try {
       await userService.createUser(token, form);
-      setMsg("Usuário cadastrado com sucesso!");
+      toastService.success(`Usuário ${form.nome} cadastrado com sucesso!`);
       setForm({ nome: "", email: "", senha: "", telefone: "", role_id: 2 });
       if (onCreated) onCreated();
     } catch (err) {
-      setMsg(err.message || "Erro ao cadastrar usuário.");
+      if (err.message?.includes('email') && err.message?.includes('existe')) {
+        toastService.error("Este e-mail já está cadastrado no sistema");
+      } else if (err.message?.includes('validation') || err.message?.includes('inválido')) {
+        toastService.error("Dados inválidos. Verifique os campos obrigatórios");
+      } else {
+        toastService.error(`Erro ao cadastrar usuário: ${err.message || 'Erro inesperado'}`);
+      }
     }
     setLoading(false);
   }
@@ -59,7 +95,6 @@ export default function UserCreateForm({ onCreated }) {
   return (
     <form onSubmit={handleSubmit} style={{ maxWidth: 400, margin: "auto" }}>
       <h2>Criar Usuário</h2>
-      {msg && <div>{msg}</div>}
       <div>
         <label>Nome:</label>
         <input name="nome" value={form.nome} onChange={handleChange} required />

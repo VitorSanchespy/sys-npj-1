@@ -62,7 +62,7 @@ const Processo = sequelize.define('Processo', {
     idusuario_responsavel: { type: Sequelize.INTEGER },
     data_encerramento: { type: Sequelize.DATE },
     observacoes: { type: Sequelize.TEXT },
-    sistema: { type: Sequelize.ENUM('FÃ­sico','PEA','PJE'), defaultValue: 'FÃ­sico' },
+    sistema: { type: Sequelize.ENUM('Físico','PEA','PJE'), defaultValue: 'Físico' },
     materia_assunto_id: { type: Sequelize.INTEGER },
     fase_id: { type: Sequelize.INTEGER },
     diligencia_id: { type: Sequelize.INTEGER },

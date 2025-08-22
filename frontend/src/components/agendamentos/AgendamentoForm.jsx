@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { apiRequest } from '@/api/apiRequest';
-import { useToast } from '@/components/common/Toast';
+import { toastService } from '@/services/toastService';
 import Button from '@/components/common/Button';
 import { formatDateTimeForInput, formatDate } from '@/utils/commonUtils';
 
@@ -14,7 +14,6 @@ const AgendamentoForm = ({
   processos = [] // Recebendo a lista de processos como prop
 }) => {
   const { token, user } = useAuthContext();
-  const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -131,14 +130,14 @@ const AgendamentoForm = ({
 
   const adicionarConvidado = () => {
     if (!newConvidado.email) {
-      showError('Email do convidado é obrigatório');
+      toastService.warning('Email do convidado é obrigatório');
       return;
     }
 
     // Verificar se email já existe
     const emailExiste = formData.convidados.some(c => c.email === newConvidado.email);
     if (emailExiste) {
-      showError('Este email já foi adicionado à lista de convidados');
+      toastService.warning('Este email já foi adicionado à lista de convidados');
       return;
     }
 
@@ -151,7 +150,7 @@ const AgendamentoForm = ({
     }));
 
     setNewConvidado({ email: '', nome: '' });
-    showSuccess('Convidado adicionado com sucesso!');
+    toastService.success('Convidado adicionado com sucesso!');
     setError('');
   };
 
@@ -160,7 +159,7 @@ const AgendamentoForm = ({
       ...prev,
       convidados: prev.convidados.filter(c => c.email !== email)
     }));
-    showSuccess('Convidado removido com sucesso!');
+    toastService.success('Convidado removido com sucesso!');
   };
 
   const handleSubmit = async (e) => {
@@ -222,7 +221,11 @@ const AgendamentoForm = ({
       });
 
       if (response.success) {
-        showSuccess(isEditing ? 'Agendamento atualizado com sucesso!' : 'Agendamento criado com sucesso!');
+        if (isEditing) {
+          toastService.scheduleUpdated(formData.titulo || 'Agendamento');
+        } else {
+          toastService.scheduleCreated(formData.titulo || 'Agendamento');
+        }
         onSuccess?.(response.data);
       } else {
         // Se há erros de validação, mostrar detalhes
@@ -235,7 +238,17 @@ const AgendamentoForm = ({
     } catch (error) {
       console.error('Erro ao salvar agendamento:', error);
       const errorMessage = error.message || 'Erro interno do servidor';
-      showError('Erro ao salvar agendamento: ' + errorMessage);
+      
+      if (errorMessage.includes('conflito') || errorMessage.includes('já existe')) {
+        toastService.error('Já existe um agendamento neste horário');
+      } else if (errorMessage.includes('data') || errorMessage.includes('horário')) {
+        toastService.error('Erro nas datas: verifique se estão corretas');
+      } else if (errorMessage.includes('validation') || errorMessage.includes('inválido')) {
+        toastService.error('Dados inválidos. Verifique os campos obrigatórios');
+      } else {
+        toastService.error(`Erro ao salvar agendamento: ${errorMessage}`);
+      }
+      
       setError(errorMessage);
     } finally {
       setLoading(false);

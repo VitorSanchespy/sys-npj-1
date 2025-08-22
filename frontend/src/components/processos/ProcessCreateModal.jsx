@@ -3,6 +3,7 @@ import { apiRequest } from "@/api/apiRequest";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { getUserRole } from "../../hooks/useApi";
 import { tabelaAuxiliarService } from "../../api/services";
+import { toastService } from "../../services/toastService";
 import CampoAuxiliarComControle from "@/components/common/CampoAuxiliarComControle";
 
 export default function CreateProcessModal({ onCreated, onClose }) {
@@ -31,7 +32,27 @@ export default function CreateProcessModal({ onCreated, onClose }) {
     local_tramitacao_id: ""
   });
   const [loading, setLoading] = useState(false);
-  const [erro, setErro] = useState("");
+
+  // Validação de campos obrigatórios
+  const validateForm = () => {
+    if (!form.numero_processo.trim()) {
+      toastService.warning("Número do processo é obrigatório");
+      return false;
+    }
+    if (!form.titulo.trim()) {
+      toastService.warning("Título do processo é obrigatório");
+      return false;
+    }
+    if (!form.descricao.trim()) {
+      toastService.warning("Descrição do processo é obrigatória");
+      return false;
+    }
+    if (!form.tipo_processo.trim()) {
+      toastService.warning("Tipo do processo é obrigatório");
+      return false;
+    }
+    return true;
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -78,8 +99,9 @@ export default function CreateProcessModal({ onCreated, onClose }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!validateForm()) return;
+    
     setLoading(true);
-    setErro("");
     try {
       // Envia para o backend
       await apiRequest("/api/processos", {
@@ -87,6 +109,9 @@ export default function CreateProcessModal({ onCreated, onClose }) {
         method: "POST",
         body: form
       });
+      
+      toastService.processCreated(form.titulo || form.numero_processo);
+      
       setForm({
         numero_processo: "",
         titulo: "",
@@ -108,7 +133,13 @@ export default function CreateProcessModal({ onCreated, onClose }) {
       if (onCreated) onCreated();
       handleClose();
     } catch (err) {
-      setErro(err?.message || "Erro ao criar processo");
+      if (err?.message?.includes('duplicat') || err?.message?.includes('existe')) {
+        toastService.error("Já existe um processo com este número");
+      } else if (err?.message?.includes('validation') || err?.message?.includes('inválido')) {
+        toastService.error("Dados inválidos. Verifique os campos obrigatórios");
+      } else {
+        toastService.error(`Erro ao criar processo: ${err?.message || 'Erro inesperado'}`);
+      }
     }
     setLoading(false);
   }

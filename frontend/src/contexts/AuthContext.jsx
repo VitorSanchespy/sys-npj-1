@@ -1,6 +1,7 @@
 // Context de Autenticação - Gerencia estado de login e usuário logado
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { authService } from "../api/services";
+import { toastService } from "../services/toastService";
 import Loader from "../components/common/Loader"; 
 
 const AuthContext = createContext();
@@ -75,11 +76,20 @@ export function AuthProvider({ children }) {
         return { success: true };
       } else {
         setLoading(false);
-        return { success: false, message: data.message || "Erro ao fazer login" };
+        // Retornar a mensagem específica do backend
+        return { 
+          success: false, 
+          message: data.erro || data.message || "Erro ao fazer login" 
+        };
       }
     } catch (err) {
       setLoading(false);
-      return { success: false, message: err.message || "Erro ao fazer login" };
+      // Retornar informações detalhadas do erro
+      return { 
+        success: false, 
+        message: err.message || err.erro || "Erro ao fazer login",
+        status: err.status || null
+      };
     }
   };
 
@@ -125,12 +135,14 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    const userName = user?.nome || user?.name || 'Usuário';
     setUser(null);
     setToken("");
     setRefreshToken("");
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
+    toastService.userLoggedOut();
   };
 
   if (loading) return <Loader text="Verificando autenticação..." />;

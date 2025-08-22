@@ -112,8 +112,15 @@ class RequestInterceptor {
 
   // Determinar se deve fazer retry
   shouldRetry(error) {
-    // Para erros 401, limpar tokens e redirecionar para login
+    // Para erros 401 na página de login, NÃO limpar tokens nem redirecionar
     if (error.status === ERROR_CODES.UNAUTHORIZED) {
+      // Se estamos na página de login, não fazer nada (permitir Toast)
+      if (window.location.pathname.includes('/login') || 
+          window.location.pathname === '/' || 
+          window.location.pathname.includes('/auth')) {
+        return false; // Não retry, não redirect - deixar form tratar
+      }
+      // Se não estamos na página de login, então limpar e redirecionar
       this.handleUnauthorized();
       return false;
     }
@@ -168,11 +175,11 @@ class RequestInterceptor {
     // Limpar tokens
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
-    
-    // Redirecionar para login se não estiver na página de login
+    // Se já está na página de login, não redireciona, só limpa
     if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/')) {
       window.location.href = '/login';
     }
+    // Se já está na página de login, não faz nada (permite Toast)
   }
 
   // Sleep utility

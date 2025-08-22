@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { arquivoService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
+import { toastService } from "../../services/toastService";
 import FileUploadForm from "../../components/arquivos/FileUploadForm";
 import { getFileUrl } from '../../utils/fileUrl';
 import Button from "@/components/common/Button";
@@ -106,10 +107,11 @@ export default function ArquivosPage() {
                           if (window.confirm('Tem certeza que deseja excluir este arquivo?')) {
                             try {
                               await arquivoService.deleteArquivo(token, arquivo.id);
+                              toastService.fileDeleted(nomeArquivo || 'Arquivo');
                               setArquivos(arquivos.filter(a => a.id !== arquivo.id));
                               handleAfterDelete(); // Trigger auto-refresh
                             } catch (err) {
-                              alert('Erro ao excluir arquivo: ' + (err.message || 'Erro desconhecido'));
+                              toastService.error(`Erro ao excluir arquivo: ${err.message || 'Erro inesperado'}`);
                             }
                           }
                         }}

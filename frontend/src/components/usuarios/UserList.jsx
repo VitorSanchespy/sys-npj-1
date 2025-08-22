@@ -4,6 +4,7 @@ import Button from "@/components/common/Button";
 import { userService } from "@/api/services";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { hasRole } from "@/utils/commonUtils";
+import { toastService } from "../../services/toastService";
 import UserCreateForm from "./UserCreateForm";
 import { useUsuarios } from "../../hooks/useApi.jsx";
 import { useUsuarioAutoRefresh } from "../../hooks/useAutoRefresh";
@@ -19,7 +20,6 @@ export default function UserList() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [actionMsg, setActionMsg] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [confirm, setConfirm] = useState({ open: false, user: null, action: null });
   const debounceTimeout = useRef();
@@ -87,13 +87,13 @@ export default function UserList() {
       if (nova_senha && nova_senha.trim()) {
         try {
           await userService.updatePassword(token, editingUser.id, nova_senha);
-          setActionMsg('Usuário e senha atualizados com sucesso!');
+          toastService.success(`Usuário ${editingUser.nome} e senha atualizados com sucesso!`);
         } catch (passwordError) {
           console.error('Erro ao atualizar senha:', passwordError);
-          setActionMsg('Usuário atualizado, mas houve erro ao alterar a senha.');
+          toastService.warning(`Usuário ${editingUser.nome} atualizado, mas houve erro ao alterar a senha.`);
         }
       } else {
-        setActionMsg('Usuário atualizado com sucesso!');
+        toastService.success(`Usuário ${editingUser.nome} atualizado com sucesso!`);
       }
       
       setSelectedUser({ ...userData });
@@ -101,11 +101,9 @@ export default function UserList() {
       // Auto-refresh com hook otimizado
       afterUpdateUsuario();
       
-      setTimeout(() => setActionMsg(''), 3000);
     } catch (error) {
       console.error('Erro ao atualizar usuário:', error);
-      setActionMsg('Erro ao atualizar usuário.');
-      setTimeout(() => setActionMsg(''), 3000);
+      toastService.error(`Erro ao atualizar usuário: ${error.message || 'Erro inesperado'}`);
     } finally {
       setLoading(false);
     }
@@ -115,18 +113,16 @@ export default function UserList() {
     try {
       setLoading(true);
       await userService.deleteUser(token, usuario.id);
-      setActionMsg(`Usuário ${usuario.nome} inativado com sucesso!`);
+      toastService.success(`Usuário ${usuario.nome} inativado com sucesso!`);
       setSelectedUser(prev => ({ ...prev, ativo: false }));
       setEditingUser(prev => ({ ...prev, ativo: false }));
       
       // Auto-refresh com hook otimizado
       afterDeleteUsuario();
       
-      setTimeout(() => setActionMsg(''), 3000);
     } catch (error) {
       console.error('Erro ao inativar usuário:', error);
-      setActionMsg('Erro ao inativar usuário.');
-      setTimeout(() => setActionMsg(''), 3000);
+      toastService.error(`Erro ao inativar usuário: ${error.message || 'Erro inesperado'}`);
     } finally {
       setLoading(false);
     }
@@ -136,18 +132,16 @@ export default function UserList() {
     try {
       setLoading(true);
       await userService.reactivateUser(token, usuario.id);
-      setActionMsg(`Usuário ${usuario.nome} reativado com sucesso!`);
+      toastService.success(`Usuário ${usuario.nome} reativado com sucesso!`);
       setSelectedUser(prev => ({ ...prev, ativo: true }));
       setEditingUser(prev => ({ ...prev, ativo: true }));
       
       // Auto-refresh com hook otimizado
       afterReativarUsuario();
       
-      setTimeout(() => setActionMsg(''), 3000);
     } catch (error) {
       console.error('Erro ao reativar usuário:', error);
-      setActionMsg('Erro ao reativar usuário.');
-      setTimeout(() => setActionMsg(''), 3000);
+      toastService.error(`Erro ao reativar usuário: ${error.message || 'Erro inesperado'}`);
     } finally {
       setLoading(false);
     }
@@ -661,24 +655,6 @@ export default function UserList() {
               ❌ Cancelar
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Mensagem de feedback */}
-      {actionMsg && (
-        <div style={{
-          marginTop: '25px',
-          padding: '15px 20px',
-          backgroundColor: actionMsg.includes('Erro') ? '#f8d7da' : '#d4edda',
-          color: actionMsg.includes('Erro') ? '#721c24' : '#155724',
-          border: `2px solid ${actionMsg.includes('Erro') ? '#f5c6cb' : '#c3e6cb'}`,
-          borderRadius: '12px',
-          fontWeight: 'bold',
-          fontSize: '1rem',
-          textAlign: 'center',
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-        }}>
-          {actionMsg.includes('Erro') ? '❌' : '✅'} {actionMsg}
         </div>
       )}
 

@@ -1,8 +1,7 @@
 // Hook para feedback automático de APIs - intercepta requisições e mostra toasts
-import { useToast } from '../components/common/Toast';
+import { toastService } from '../services/toastService';
 
 export const useApiFeedback = () => {
-  const { showSuccess, showError, showWarning } = useToast();
 
   // Função para extrair mensagem de erro mais detalhada
   const extractErrorMessage = (error) => {
@@ -63,7 +62,7 @@ export const useApiFeedback = () => {
     };
 
     const finalMessage = successMessages[action] || successMessages['default'];
-    showSuccess(finalMessage, 3000);
+    toastService.success(finalMessage);
   };
 
   // Função para mostrar feedback de erro
@@ -84,7 +83,7 @@ export const useApiFeedback = () => {
     };
 
     const finalMessage = contextMessages[context] || contextMessages['default'];
-    showError(finalMessage, 5000);
+    toastService.error(finalMessage);
   };
 
   // Função para mostrar avisos
@@ -99,7 +98,7 @@ export const useApiFeedback = () => {
     };
 
     const finalMessage = warningMessages[context] || warningMessages['default'];
-    showWarning(finalMessage, 4000);
+    toastService.warning(finalMessage);
   };
 
   // Wrapper para requisições com feedback automático

@@ -1,16 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
-import { getUserRole } from "../../hooks/useApi";
 import { toastService } from "../../services/toastService";
 
-export default function RegisterForm() {
-  const { user, register } = useAuthContext();
-  const userRole = getUserRole(user);
+export default function PublicRegisterForm() {
+  const { register } = useAuthContext();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [roleId, setRoleId] = useState(2); // 2 = Aluno, ajuste conforme backend
+  const [telefone, setTelefone] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -40,6 +38,14 @@ export default function RegisterForm() {
       toastService.warning("Senha deve ter pelo menos 6 caracteres");
       return false;
     }
+    if (!telefone.trim()) {
+      toastService.warning("Telefone é obrigatório");
+      return false;
+    }
+    if (!/^[\(\)\s\-\+\d]{10,}$/.test(telefone.replace(/\s/g, ''))) {
+      toastService.warning("Telefone deve ter um formato válido");
+      return false;
+    }
     return true;
   };
 
@@ -50,36 +56,46 @@ export default function RegisterForm() {
     setLoading(true);
     
     try {
-      let finalRoleId = 2; // Aluno
-      if (user && user.role_id === 1) finalRoleId = roleId;
-      else if (user && userRole === "Professor" && (roleId === 2 || roleId === 3)) finalRoleId = roleId;
-      // Professor não pode criar Admin
-      else if (user && userRole === "Professor" && roleId === 1) {
-        toastService.error("Professores não podem criar Administradores");
-        setLoading(false);
-        return;
-      }
-      
-      const res = await register(nome, email, senha, "", finalRoleId);
+      // Sempre registrar como Aluno (role_id = 3)
+      const res = await register(nome, email, senha, telefone, 3);
       if (res.success) {
-        toastService.success("Conta criada com sucesso! Redirecionando para login...");
+        toastService.success("🎉 Conta criada com sucesso! Redirecionando para login...");
+        // Limpar campos
+        setNome("");
+        setEmail("");
+        setSenha("");
+        setTelefone("");
         setTimeout(() => navigate("/login"), 2000);
       } else {
+        // Limpar campos em caso de erro
+        setNome("");
+        setEmail("");
+        setSenha("");
+        setTelefone("");
+        
         if (res.message?.includes('email') && res.message?.includes('existe')) {
-          toastService.error("Este e-mail já está cadastrado. Tente fazer login ou use outro e-mail.");
+          toastService.error("❌ Este e-mail já está cadastrado. Tente fazer login ou use outro e-mail.");
         } else if (res.message?.includes('senha')) {
-          toastService.error("Senha não atende aos critérios de segurança. Use pelo menos 6 caracteres.");
+          toastService.error("❌ Senha não atende aos critérios de segurança. Use pelo menos 6 caracteres.");
+        } else if (res.message?.includes('telefone')) {
+          toastService.error("❌ Telefone inválido. Use um formato válido com DDD.");
         } else {
-          toastService.error(`Falha ao criar conta: ${res.message || "Erro inesperado"}`);
+          toastService.error(`❌ Falha ao criar conta: ${res.message || "Erro inesperado"}`);
         }
       }
     } catch (err) {
+      // Limpar campos em caso de erro
+      setNome("");
+      setEmail("");
+      setSenha("");
+      setTelefone("");
+      
       if (err.message?.includes('email') && err.message?.includes('existe')) {
-        toastService.error("Este e-mail já está cadastrado. Tente fazer login ou use outro e-mail.");
+        toastService.error("❌ Este e-mail já está cadastrado. Tente fazer login ou use outro e-mail.");
       } else if (err.message?.includes('validation') || err.message?.includes('inválido')) {
-        toastService.error("Dados inválidos. Verifique os campos e tente novamente.");
+        toastService.error("❌ Dados inválidos. Verifique os campos e tente novamente.");
       } else {
-        toastService.error(`Erro no cadastro: ${err.message || "Erro inesperado. Tente novamente."}`);
+        toastService.error(`❌ Erro no cadastro: ${err.message || "Erro inesperado. Tente novamente."}`);
       }
     }
     
@@ -99,9 +115,11 @@ export default function RegisterForm() {
           👤 Nome Completo:
         </label>
         <input
+          type="text"
           value={nome}
           onChange={e => setNome(e.target.value)}
           required
+          autoFocus
           style={{
             width: '100%',
             padding: '12px 16px',
@@ -181,40 +199,36 @@ export default function RegisterForm() {
         />
       </div>
 
-      {(user && (user.role_id === 1 || user.role_id === 3)) && (
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{
-            display: 'block',
-            fontSize: '0.9rem',
-            fontWeight: 'bold',
-            color: '#333',
-            marginBottom: '8px'
-          }}>
-            🎓 Tipo de Usuário:
-          </label>
-          <select
-            value={roleId}
-            onChange={e => setRoleId(Number(e.target.value))}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              border: '2px solid #e9ecef',
-              borderRadius: '8px',
-              fontSize: '1rem',
-              transition: 'border-color 0.3s ease',
-              outline: 'none',
-              boxSizing: 'border-box',
-              backgroundColor: 'white'
-            }}
-            onFocus={(e) => e.target.style.borderColor = '#28a745'}
-            onBlur={(e) => e.target.style.borderColor = '#e9ecef'}
-          >
-            <option value={2}>👨‍🎓 Aluno</option>
-            <option value={3}>👨‍🏫 Professor</option>
-            {user.role_id === 1 && <option value={1}>👑 Admin</option>}
-          </select>
-        </div>
-      )}
+      <div style={{ marginBottom: '20px' }}>
+        <label style={{
+          display: 'block',
+          fontSize: '0.9rem',
+          fontWeight: 'bold',
+          color: '#333',
+          marginBottom: '8px'
+        }}>
+          📱 Telefone:
+        </label>
+        <input
+          type="tel"
+          value={telefone}
+          onChange={e => setTelefone(e.target.value)}
+          required
+          style={{
+            width: '100%',
+            padding: '12px 16px',
+            border: '2px solid #e9ecef',
+            borderRadius: '8px',
+            fontSize: '1rem',
+            transition: 'border-color 0.3s ease',
+            outline: 'none',
+            boxSizing: 'border-box'
+          }}
+          onFocus={(e) => e.target.style.borderColor = '#28a745'}
+          onBlur={(e) => e.target.style.borderColor = '#e9ecef'}
+          placeholder="(11) 99999-9999"
+        />
+      </div>
 
       <button
         type="submit"
@@ -245,7 +259,7 @@ export default function RegisterForm() {
           }
         }}
       >
-        {loading ? "🔄 Criando Conta..." : "🚀 Criar Conta"}
+        {loading ? "🔄 Criando Conta..." : "🚀 Criar Conta de Aluno"}
       </button>
 
       <div style={{ textAlign: 'center' }}>

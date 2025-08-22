@@ -1,21 +1,44 @@
 import React, { useRef, useState } from "react";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { arquivoService } from "../../api/services";
+import { toastService } from "../../services/toastService";
 
 export default function FileUploadForm({ processoId, onUpload }) {
   const { token, user } = useAuthContext();
-  const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const fileInput = useRef();
 
+  const validateFile = (file) => {
+    // Validar tamanho do arquivo (exemplo: máximo 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toastService.warning("Arquivo muito grande. Tamanho máximo: 10MB");
+      return false;
+    }
+    
+    // Validar tipo de arquivo (opcional)
+    const allowedTypes = ['image/', 'application/pdf', 'text/', 'application/msword', 'application/vnd.openxmlformats-officedocument'];
+    const isAllowedType = allowedTypes.some(type => file.type.startsWith(type));
+    if (!isAllowedType && file.type !== '') {
+      toastService.warning("Tipo de arquivo não permitido. Use imagens, PDFs, documentos de texto ou Word");
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleSubmit = async e => {
     e.preventDefault();
-    setMsg("");
     setLoading(true);
 
     const file = fileInput.current.files[0];
     if (!file) {
-      setMsg("Selecione um arquivo.");
+      toastService.warning("Selecione um arquivo para enviar");
+      setLoading(false);
+      return;
+    }
+
+    if (!validateFile(file)) {
       setLoading(false);
       return;
     }
@@ -28,11 +51,19 @@ export default function FileUploadForm({ processoId, onUpload }) {
 
     try {
       await arquivoService.uploadArquivo(token, formData);
-      setMsg("Arquivo enviado com sucesso!");
+      toastService.fileUploaded(file.name);
       fileInput.current.value = "";
       if (onUpload) onUpload();
     } catch (err) {
-      setMsg(err.message || "Erro ao enviar arquivo.");
+      if (err.message?.includes('size') || err.message?.includes('tamanho')) {
+        toastService.error("Arquivo muito grande. Reduza o tamanho e tente novamente");
+      } else if (err.message?.includes('type') || err.message?.includes('formato')) {
+        toastService.error("Formato de arquivo não suportado");
+      } else if (err.message?.includes('space') || err.message?.includes('espaço')) {
+        toastService.error("Espaço insuficiente. Entre em contato com o administrador");
+      } else {
+        toastService.error(`Erro ao enviar arquivo: ${err.message || 'Erro inesperado'}`);
+      }
     }
     setLoading(false);
   };
@@ -40,7 +71,6 @@ export default function FileUploadForm({ processoId, onUpload }) {
   return (
     <form onSubmit={handleSubmit} encType="multipart/form-data">
       <h5>Anexar novo arquivo</h5>
-      {msg && <div>{msg}</div>}
       <input type="file" ref={fileInput} required />
       <button type="submit" disabled={loading}>
         {loading ? "Enviando..." : "Enviar"}

@@ -34,9 +34,8 @@ exports.login = async (req, res) => {
     }
     
     if (!usuario) {
-      // Sistema de notificação removido - agora usa Toast no frontend
-      
-      return res.status(401).json({ erro: 'Credenciais inválidas' });
+      // Email não encontrado - erro específico
+      return res.status(404).json({ erro: 'Email não encontrado no sistema' });
     }
     
     // Verificar senha
@@ -48,9 +47,8 @@ exports.login = async (req, res) => {
     }
     
     if (!senhaValida) {
-      // Sistema de notificação removido - agora usa Toast no frontend
-      
-      return res.status(401).json({ erro: 'Credenciais inválidas' });
+      // Senha incorreta - erro específico
+      return res.status(401).json({ erro: 'Senha incorreta' });
     }
     
     // Gerar token principal e refresh token

@@ -29,7 +29,6 @@ INSERT INTO `roles` (`id`, `nome`) VALUES
 (1, 'Admin'),
 (2, 'Professor'),
 (3, 'Aluno'),
-(4, 'Coordenador');
 
 -- ========================================
 

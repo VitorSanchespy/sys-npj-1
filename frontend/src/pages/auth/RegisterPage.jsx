@@ -1,5 +1,5 @@
 import React from "react";
-import RegisterForm from "../../components/auth/RegisterForm";
+import PublicRegisterForm from "../../components/auth/PublicRegisterForm";
 import { useNavigate } from "react-router-dom";
 
 export default function RegisterPage() {
@@ -78,7 +78,7 @@ export default function RegisterPage() {
             fontSize: '4rem',
             marginBottom: '20px'
           }}>
-            👤
+            �‍🎓
           </div>
           <h2 style={{
             fontSize: '2rem',
@@ -87,19 +87,19 @@ export default function RegisterPage() {
             marginBottom: '10px',
             margin: 0
           }}>
-            Criar Nova Conta
+            Cadastro de Aluno
           </h2>
           <p style={{
             color: '#666',
             fontSize: '1rem',
             margin: 0
           }}>
-            Preencha seus dados para se cadastrar no sistema
+            Preencha seus dados para criar sua conta de estudante
           </p>
         </div>
 
-        {/* Formulário de registro */}
-        <RegisterForm />
+        {/* Formulário de registro público */}
+        <PublicRegisterForm />
 
         {/* Links úteis */}
         <div style={{
