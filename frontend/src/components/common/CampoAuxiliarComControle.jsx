@@ -78,7 +78,7 @@ const CampoAuxiliarComControle = ({
       const response = await apiRequest(`/api/tabelas-auxiliares/${endpoint}`, {
         method: 'POST',
         token,
-        data: newItem
+        body: newItem
       });
 
       if (response.success) {

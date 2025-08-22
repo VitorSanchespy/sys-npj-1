@@ -17,11 +17,9 @@ export default function ArquivosPage() {
   const fetchArquivos = async () => {
     setLoading(true);
     try {
-      // Busca apenas arquivos do usuário logado
+      // Backend agora filtra automaticamente por usuário para alunos
       const data = await arquivoService.listArquivos(token);
-      // Se precisar filtrar por usuário:
-      const arquivosUsuario = user?.id ? data.filter(a => a.usuario_id === user.id) : data;
-      setArquivos(arquivosUsuario);
+      setArquivos(data);
     } catch {
       setArquivos([]);
     }

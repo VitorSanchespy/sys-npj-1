@@ -265,14 +265,6 @@ exports.atualizarProcesso = async (req, res) => {
     }
     const usuarioId = req.user.id; // ID do usuário que está fazendo a atualização
     
-    console.log('🔍 Debug atualização processo:', {
-      processId: id,
-      usuarioId,
-      dadosRecebidos: JSON.stringify(dadosAtualizacao, null, 2),
-      userAgent: req.headers['user-agent'],
-      contentType: req.headers['content-type']
-    });
-    
     // Validar se os dados necessários existem
     if (!dadosAtualizacao || Object.keys(dadosAtualizacao).length === 0) {
       console.log('❌ Dados de atualização vazios');
@@ -462,13 +454,6 @@ exports.listarProcessosUsuario = async (req, res) => {
         ],
         ...statusFilter
       };
-
-      console.log('🔍 Filtro de processos para usuário:', {
-        userId,
-        whereClause,
-        processosVinculadosIds: processosVinculadosIds.length,
-        concluidos
-      });
 
       // Se recent=true, buscar apenas os 4 mais recentemente atualizados
       if (recent === 'true') {

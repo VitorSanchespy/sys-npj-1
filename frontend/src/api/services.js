@@ -13,7 +13,7 @@ export const authService = {
   },
 
   // POST /auth/registro (corrigido endpoint)
-  register: async (nome, email, senha, telefone, role_id = 2) => {
+  register: async (nome, email, senha, telefone, role_id = 3) => {
     return await apiRequest('/auth/registro', {
       method: 'POST',
       body: { nome, email, senha, telefone, role_id }
@@ -171,11 +171,6 @@ export const processService = {
 
   // PUT /api/processos/:id - Atualizar dados do processo
   updateProcess: async (token, id, processData) => {
-    // Log apenas em desenvolvimento
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 DEBUG Process Update:', { id, processData, hasToken: !!token });
-    }
-    
     return await apiRequest(`/api/processos/${id}`, {
       method: 'PUT',
       token,
@@ -492,73 +487,102 @@ export const notificacaoService = {
 
 // ===== AUXILIARY TABLES SERVICES (UPDATED) =====
 export const tabelaAuxiliarService = {
-  // GET /api/tabelas/roles (único endpoint funcional)
-  getRoles: async (token) => {
-    return await apiRequest('/api/tabelas/roles', {
-      method: 'GET',
-      token
-    });
-  },
-
-  // Métodos para tabelas auxiliares
+  // Métodos para tabelas auxiliares - usando novo endpoint /api/tabelas-auxiliares
   getMateriaAssunto: async (token) => {
-    return await apiRequest('/api/tabelas/materia-assunto', {
+    const response = await apiRequest('/api/tabelas-auxiliares/materias', {
       method: 'GET',
       token
     });
+    return response.success ? response.data : response;
   },
 
   getFase: async (token) => {
-    return await apiRequest('/api/tabelas/fases', {
+    const response = await apiRequest('/api/tabelas-auxiliares/fases', {
       method: 'GET',
       token
     });
+    return response.success ? response.data : response;
   },
 
   getDiligencia: async (token) => {
-    return await apiRequest('/api/tabelas/diligencias', {
+    const response = await apiRequest('/api/tabelas-auxiliares/diligencias', {
       method: 'GET',
       token
     });
+    return response.success ? response.data : response;
   },
 
   getLocalTramitacao: async (token) => {
-    return await apiRequest('/api/tabelas/locais-tramitacao', {
+    const response = await apiRequest('/api/tabelas-auxiliares/locais-tramitacao', {
       method: 'GET',
+      token
+    });
+    return response.success ? response.data : response;
+  },
+
+  // Métodos de criação (apenas Admin pode criar)
+  createMateriaAssunto: async (token, nome, descricao = '') => {
+    const response = await apiRequest('/api/tabelas-auxiliares/materias', {
+      method: 'POST',
+      token,
+      body: { nome, descricao }
+    });
+    return response.success ? response.data : response;
+  },
+
+  createFase: async (token, nome, descricao = '') => {
+    const response = await apiRequest('/api/tabelas-auxiliares/fases', {
+      method: 'POST',
+      token,
+      body: { nome, descricao }
+    });
+    return response.success ? response.data : response;
+  },
+
+  createDiligencia: async (token, nome, descricao = '') => {
+    const response = await apiRequest('/api/tabelas-auxiliares/diligencias', {
+      method: 'POST',
+      token,
+      body: { nome, descricao }
+    });
+    return response.success ? response.data : response;
+  },
+
+  createLocalTramitacao: async (token, nome, descricao = '') => {
+    const response = await apiRequest('/api/tabelas-auxiliares/locais-tramitacao', {
+      method: 'POST',
+      token,
+      body: { nome, descricao }
+    });
+    return response.success ? response.data : response;
+  },
+
+  // Métodos de exclusão (apenas Admin pode excluir)
+  deleteMateriaAssunto: async (token, id) => {
+    return await apiRequest(`/api/tabelas-auxiliares/materias/${id}`, {
+      method: 'DELETE',
       token
     });
   },
 
-  // Métodos de criação (implementação básica - podem precisar de endpoints no backend)
-  createMateriaAssunto: async (token, nome) => {
-    return await apiRequest('/api/tabelas/materia-assunto', {
-      method: 'POST',
-      token,
-      body: { nome }
+  deleteFase: async (token, id) => {
+    return await apiRequest(`/api/tabelas-auxiliares/fases/${id}`, {
+      method: 'DELETE',
+      token
     });
   },
 
-  createFase: async (token, nome) => {
-    return await apiRequest('/api/tabelas/fases', {
-      method: 'POST',
-      token,
-      body: { nome }
+  deleteDiligencia: async (token, id) => {
+    return await apiRequest(`/api/tabelas-auxiliares/diligencias/${id}`, {
+      method: 'DELETE',
+      token
     });
   },
 
-  createDiligencia: async (token, nome) => {
-    return await apiRequest('/api/tabelas/diligencias', {
-      method: 'POST',
-      token,
-      body: { nome }
-    });
-  },
-
-  createLocalTramitacao: async (token, nome) => {
-    return await apiRequest('/api/tabelas/locais-tramitacao', {
-      method: 'POST',
-      token,
-      body: { nome }
+  deleteLocalTramitacao: async (token, id) => {
+    return await apiRequest(`/api/tabelas-auxiliares/locais-tramitacao/${id}`, {
+      method: 'DELETE',
+      token
     });
   }
 };

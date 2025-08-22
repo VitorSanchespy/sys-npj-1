@@ -13,21 +13,8 @@ export default function ProcessDetailPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Log de desenvolvimento para debug de autenticação
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 ProcessDetailPage - Estado de autenticação:', {
-        isAuthenticated,
-        hasToken: !!token,
-        hasUser: !!user,
-        processId: id
-      });
-    }
-
     // Redirecionamento se não autenticado
     if (!isAuthenticated || !token) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('❌ Usuário não autenticado, redirecionando para login');
-      }
       navigate('/login');
       return;
     }
@@ -35,20 +22,12 @@ export default function ProcessDetailPage() {
     // Função para buscar dados do processo
     const fetchProcesso = async () => {
       try {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🔍 Buscando processo ID:', id);
-        }
-        
         const response = await fetch(`http://localhost:3001/api/processos/${id}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });
-
-        if (process.env.NODE_ENV === 'development') {
-          console.log('📡 Response status:', response.status);
-        }
 
         if (response.ok) {
           const data = await response.json();

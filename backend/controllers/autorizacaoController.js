@@ -25,7 +25,9 @@ exports.login = async (req, res) => {
         });
         
         if (usuario && usuario.role) {
-          usuario.role = usuario.role.nome;
+          // Manter role_id do usuário e adicionar role.nome
+          const roleNome = usuario.role.nome;
+          usuario.role = roleNome;
         }
       } catch (dbError) {
         global.dbAvailable = false;
@@ -77,7 +79,8 @@ exports.login = async (req, res) => {
       { 
         id: usuario.id,
         email: usuario.email,
-        role: usuario.role
+        role: usuario.role,
+        role_id: usuario.role_id
       },
       process.env.JWT_SECRET || 'seuSegredoSuperSecreto4321',
       { expiresIn: '24h' }
@@ -116,7 +119,8 @@ exports.login = async (req, res) => {
         id: usuario.id,
         nome: usuario.nome,
         email: usuario.email,
-        role: usuario.role
+        role: usuario.role,
+        role_id: usuario.role_id
       }
     });
     
@@ -312,7 +316,8 @@ exports.refresh = async (req, res) => {
       { 
         id: usuario.id,
         email: usuario.email,
-        role: usuario.role
+        role: usuario.role,
+        role_id: usuario.role_id
       },
       process.env.JWT_SECRET || 'seuSegredoSuperSecreto4321',
       { expiresIn: '24h' }

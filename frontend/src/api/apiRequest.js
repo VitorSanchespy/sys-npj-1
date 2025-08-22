@@ -23,11 +23,6 @@ const logRequest = (url, options, response = null, error = null) => {
 export async function apiRequest(url, options = {}) {
   const { token, method = 'GET', body, headers = {}, ...fetchOptions } = options;
 
-  // Log de debug apenas em desenvolvimento para PUT requests
-  if (method === 'PUT' && url.includes('/processos/') && process.env.NODE_ENV === 'development') {
-    console.log('🔍 DEBUG Process Update:', { url, method, body, hasToken: !!token });
-  }
-
   // Headers padrão otimizados
   const requestHeaders = {
     'Content-Type': 'application/json',

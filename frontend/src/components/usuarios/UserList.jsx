@@ -304,7 +304,7 @@ export default function UserList() {
                   gap: '8px'
                 }}>
                   <span>
-                    {usuario.role_id === 1 ? '👑 Admin' : usuario.role_id === 2 ? '🎓 Aluno' : '👨‍🏫 Professor'}
+                    {usuario.role_id === 1 ? '👑 Admin' : usuario.role_id === 2 ? '👨‍🏫 Professor' : '🎓 Aluno'}
                   </span>
                   {usuario.ativo === false && (
                     <span style={{ 

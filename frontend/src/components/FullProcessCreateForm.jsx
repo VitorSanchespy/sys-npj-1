@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { tabelaAuxiliarService, processService } from '../api/services';
 import { useAuthContext } from '../contexts/AuthContext';
-import SelectWithAdd from './common/SelectWithAdd'; // Importando o novo componente
+import CampoAuxiliarComControle from './common/CampoAuxiliarComControle';
 
 const FullProcessCreateForm = () => {
   const { token, user } = useAuthContext();
@@ -27,96 +27,13 @@ const FullProcessCreateForm = () => {
   const [fases, setFases] = useState([]);
   const [diligencias, setDiligencias] = useState([]);
   const [localTramitacoes, setLocalTramitacoes] = useState([]);
-  // Removido: contatoAssistido, agora faz parte do formData
 
-  const [newValues, setNewValues] = useState({
-    materiaAssunto: '',
-    localTramitacao: '',
-    fase: '',
-    diligencia: '',
-  });
-
-  const [showAddForms, setShowAddForms] = useState({
-    materiaAssunto: false,
-    localTramitacao: false,
-    fase: false,
-    diligencia: false,
-  });
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (!token) throw new Error('Token não encontrado.');
-        setLoading(true);
-        const [materiasRes, fasesRes, diligenciasRes, localTramitacoesRes] = await Promise.all([
-          tabelaAuxiliarService.getMateriaAssunto(token),
-          tabelaAuxiliarService.getFase(token),
-          tabelaAuxiliarService.getDiligencia(token),
-          tabelaAuxiliarService.getLocalTramitacao(token),
-        ]);
-        setMaterias(materiasRes);
-        setFases(fasesRes);
-        setDiligencias(diligenciasRes);
-        setLocalTramitacoes(localTramitacoesRes);
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        alert(`Erro ao carregar dados auxiliares: ${error.message}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [token]);
+  // Como não precisamos mais carregar dados aqui (CampoAuxiliarComControle faz isso),
+  // removemos o useEffect e funções relacionadas
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-  };
-
-  const handleNewValueChange = (field, value) => {
-    setNewValues(prev => ({ ...prev, [field]: value }));
-  };
-
-  const toggleAddForm = (field, show) => {
-    setShowAddForms(prev => ({ ...prev, [field]: show }));
-    if (!show) {
-      handleNewValueChange(field, ''); // Limpa o campo ao fechar
-    }
-  };
-
-  const handleAddNewValue = async (field) => {
-    const value = newValues[field];
-    if (!value.trim()) {
-      window.alert('Por favor, digite um valor válido.');
-      return;
-    }
-
-    const services = {
-      materiaAssunto: { create: tabelaAuxiliarService.createMateriaAssunto, setter: setMaterias, options: materias, fieldName: 'materia_assunto_id', label: 'Matéria/Assunto' },
-      localTramitacao: { create: tabelaAuxiliarService.createLocalTramitacao, setter: setLocalTramitacoes, options: localTramitacoes, fieldName: 'local_tramitacao_id', label: 'Local de Tramitação' },
-      fase: { create: tabelaAuxiliarService.createFase, setter: setFases, options: fases, fieldName: 'fase_id', label: 'Fase' },
-      diligencia: { create: tabelaAuxiliarService.createDiligencia, setter: setDiligencias, options: diligencias, fieldName: 'diligencia_id', label: 'Diligência' },
-    };
-
-    const service = services[field];
-    if (!service) return;
-
-    try {
-      setLoading(true);
-      const response = await service.create(token, value);
-      // Adiciona o novo valor diretamente à lista local com a estrutura correta
-      const newOption = { id: response.id, nome: response.nome || value };
-      service.setter([...service.options, newOption]);
-      // Seleciona o novo valor imediatamente
-      setFormData(prev => ({ ...prev, [service.fieldName]: response.id }));
-      toggleAddForm(field, false);
-      window.alert(`${service.label} "${value}" adicionado com sucesso e selecionado!`);
-    } catch (error) {
-      console.error(`Erro ao adicionar novo valor em ${field}:`, error);
-      window.alert(`Erro ao adicionar novo valor: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -234,65 +151,37 @@ const FullProcessCreateForm = () => {
                 Categorização
               </h3>
               {/* Remove SVG icons from SelectWithAdd buttons and improve user feedback */}
-              <SelectWithAdd
-                label="Matéria/Assunto *"
-                stateKey="materia_assunto_id"
+              <CampoAuxiliarComControle
+                type="materia"
+                label="Matéria/Assunto"
                 value={formData.materia_assunto_id}
-                onChange={handleChange}
-                options={materias}
-                showAddForm={showAddForms.materiaAssunto}
-                onToggleAddForm={(show) => toggleAddForm('materiaAssunto', show)}
-                newValue={newValues.materiaAssunto}
-                onNewValueChange={(e) => handleNewValueChange('materiaAssunto', e.target.value)}
-                onAddNew={() => handleAddNewValue('materiaAssunto')}
-                placeholder="matéria/assunto"
-                loading={loading}
-                noIcon
+                onChange={(value) => setFormData({...formData, materia_assunto_id: value})}
+                placeholder="Selecione a matéria/assunto"
+                required
               />
-              <SelectWithAdd
-                label="Fase *"
-                stateKey="fase_id"
+              <CampoAuxiliarComControle
+                type="fase"
+                label="Fase"
                 value={formData.fase_id}
-                onChange={handleChange}
-                options={fases}
-                showAddForm={showAddForms.fase}
-                onToggleAddForm={(show) => toggleAddForm('fase', show)}
-                newValue={newValues.fase}
-                onNewValueChange={(e) => handleNewValueChange('fase', e.target.value)}
-                onAddNew={() => handleAddNewValue('fase')}
-                placeholder="fase"
-                loading={loading}
-                noIcon
+                onChange={(value) => setFormData({...formData, fase_id: value})}
+                placeholder="Selecione a fase"
+                required
               />
-              <SelectWithAdd
-                label="Diligência *"
-                stateKey="diligencia_id"
+              <CampoAuxiliarComControle
+                type="diligencia"
+                label="Diligência"
                 value={formData.diligencia_id}
-                onChange={handleChange}
-                options={diligencias}
-                showAddForm={showAddForms.diligencia}
-                onToggleAddForm={(show) => toggleAddForm('diligencia', show)}
-                newValue={newValues.diligencia}
-                onNewValueChange={(e) => handleNewValueChange('diligencia', e.target.value)}
-                onAddNew={() => handleAddNewValue('diligencia')}
-                placeholder="diligência"
-                loading={loading}
-                noIcon
+                onChange={(value) => setFormData({...formData, diligencia_id: value})}
+                placeholder="Selecione a diligência"
+                required
               />
-              <SelectWithAdd
-                label="Local de Tramitação *"
-                stateKey="local_tramitacao_id"
+              <CampoAuxiliarComControle
+                type="local_tramitacao"
+                label="Local de Tramitação"
                 value={formData.local_tramitacao_id}
-                onChange={handleChange}
-                options={localTramitacoes}
-                showAddForm={showAddForms.localTramitacao}
-                onToggleAddForm={(show) => toggleAddForm('localTramitacao', show)}
-                newValue={newValues.localTramitacao}
-                onNewValueChange={(e) => handleNewValueChange('localTramitacao', e.target.value)}
-                onAddNew={() => handleAddNewValue('localTramitacao')}
-                placeholder="local de tramitação"
-                loading={loading}
-                noIcon
+                onChange={(value) => setFormData({...formData, local_tramitacao_id: value})}
+                placeholder="Selecione o local de tramitação"
+                required
               />
             </div>
           </div>

@@ -14,10 +14,6 @@ export default function ProcessEditPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [materias, setMaterias] = useState([]);
-  const [fases, setFases] = useState([]);
-  const [diligencias, setDiligencias] = useState([]);
-  const [localTramitacoes, setLocalTramitacoes] = useState([]);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -43,16 +39,6 @@ export default function ProcessEditPage() {
           data_encerramento: proc.data_encerramento ? new Date(proc.data_encerramento).toISOString().slice(0, 16) : '',
           idusuario_responsavel: proc.usuario_responsavel?.id || ''
         });
-        const [materiasRes, fasesRes, diligenciasRes, localTramitacoesRes] = await Promise.all([
-          tabelaAuxiliarService.getMateriaAssunto(token),
-          tabelaAuxiliarService.getFase(token),
-          tabelaAuxiliarService.getDiligencia(token),
-          tabelaAuxiliarService.getLocalTramitacao(token),
-        ]);
-        setMaterias(Array.isArray(materiasRes) ? materiasRes : []);
-        setFases(Array.isArray(fasesRes) ? fasesRes : []);
-        setDiligencias(Array.isArray(diligenciasRes) ? diligenciasRes : []);
-        setLocalTramitacoes(Array.isArray(localTramitacoesRes) ? localTramitacoesRes : []);
       } catch (e) {
         setFormData(null);
       }
@@ -70,13 +56,6 @@ export default function ProcessEditPage() {
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      // Logs de desenvolvimento para debug
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 DEBUG: Dados do formulário antes do envio:', formData);
-        console.log('🔍 DEBUG: Token sendo usado:', token);
-        console.log('🔍 DEBUG: ID do processo:', id);
-      }
-      
       await processService.updateProcess(token, id, formData);
       
       // Limpa o cache de forma mais agressiva

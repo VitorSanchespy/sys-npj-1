@@ -40,6 +40,7 @@ router.get('/', async (req, res) => {
       const processosDoAluno = await Processo.findAll({
         include: [{
           model: models.usuarioProcessoModel,
+          as: 'usuariosProcesso',
           where: { usuario_id: userId },
           required: true
         }],
@@ -61,7 +62,7 @@ router.get('/', async (req, res) => {
         try {
           arquivosDoAluno = await Arquivo.findAll({
             where: { usuario_id: userId },
-            attributes: ['id', 'nome_arquivo', 'tipo', 'tamanho', 'criado_em']
+            attributes: ['id', 'nome', 'tipo', 'tamanho', 'criado_em']
           });
           totalArquivos = arquivosDoAluno.length;
         } catch (arquivoError) {
@@ -93,8 +94,8 @@ router.get('/', async (req, res) => {
       if (Agendamento) {
         try {
           agendamentosDoAluno = await Agendamento.findAll({
-            where: { usuario_id: userId },
-            attributes: ['id', 'tipo', 'status', 'data_evento', 'titulo']
+            where: { criado_por: userId },
+            attributes: ['id', 'tipo', 'status', 'data_inicio', 'titulo']
           });
         } catch (agendError) {
           console.warn('Erro ao buscar agendamentos do aluno:', agendError.message);
@@ -475,6 +476,7 @@ router.get('/exportar', async (req, res) => {
       const processosDoAluno = await Processo.findAll({
         include: [{
           model: models.usuarioProcessoModel,
+          as: 'usuariosProcesso',
           where: { usuario_id: userId },
           required: true
         }],

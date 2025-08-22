@@ -225,7 +225,9 @@ const DashboardImproved = () => {
                   <p className="text-3xl font-bold text-purple-900">
                     {dashboardData?.totalArquivos || 0}
                   </p>
-                  <p className="text-xs text-purple-500 mt-1">Arquivos no sistema</p>
+                  <p className="text-xs text-purple-500 mt-1">
+                    {userRole === 'Aluno' ? 'Meus arquivos' : 'Arquivos no sistema'}
+                  </p>
                 </div>
               </div>
             </div>

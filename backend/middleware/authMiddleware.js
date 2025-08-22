@@ -30,6 +30,7 @@ const authMiddleware = async (req, res, next) => {
         nome: decoded.nome || 'Usuario',
         email: decoded.email,
         role: decoded.role,
+        role_id: decoded.role_id,
         ativo: true
       };
     }
@@ -48,6 +49,7 @@ const authMiddleware = async (req, res, next) => {
             nome: usuarioDb.nome,
             email: usuarioDb.email,
             role: usuarioDb.role.nome,
+            role_id: usuarioDb.role_id,
             ativo: usuarioDb.ativo
           };
         }
@@ -66,7 +68,8 @@ const authMiddleware = async (req, res, next) => {
       id: usuario.id,
       nome: usuario.nome,
       email: usuario.email,
-      role: usuario.role
+      role: usuario.role,
+      role_id: usuario.role_id
     };
     
     next();

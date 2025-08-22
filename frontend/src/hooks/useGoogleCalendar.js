@@ -44,11 +44,8 @@ export const useGoogleCalendar = () => {
     
     try {
       const token = localStorage.getItem('token');
-      console.log('🔍 Token encontrado:', token ? 'SIM' : 'NÃO');
-      console.log('🔍 Headers enviados:', getAuthHeaders());
       
       // Obter URL de autorização
-      console.log('🚀 Fazendo request para:', `${API_BASE}/google-calendar/auth-url`);
       const response = await axios.get(
         `${API_BASE}/google-calendar/auth-url`,
         getAuthHeaders()

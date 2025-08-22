@@ -48,13 +48,6 @@ class NotificacaoService {
       // Mapear tipos para o enum existente
       const tipoMapeado = this.mapearTipoNotificacao(tipo);
       
-      console.log(`🔍 DEBUG Notificação:`, {
-        tipoOriginal: tipo,
-        tipoMapeado: tipoMapeado,
-        usuarioId,
-        titulo
-      });
-      
       const notificacao = await Notificacao.create({
         usuario_id: usuarioId,
         processo_id: dadosAdicionais.processo_id || null,

@@ -68,11 +68,22 @@ exports.listarArquivos = async (req, res) => {
   try {
     const { processo_id, idprocesso, incluir_inativos } = req.query;
     const processoId = processo_id || idprocesso;
+    const userRole = req.user.role;
+    const userId = req.user.id;
+    
     const { arquivoModel: Arquivo, usuarioModel: Usuario } = require('../models/indexModel');
+    
     const where = processoId ? { processo_id: processoId } : {};
+    
+    // Alunos só podem ver seus próprios arquivos
+    if (userRole === 'Aluno') {
+      where.usuario_id = userId;
+    }
+    
     if (incluir_inativos !== 'true') {
       where.ativo = true;
     }
+    
     const arquivos = await Arquivo.findAll({
       where,
       include: [{ model: Usuario, as: 'usuario', attributes: ['nome', 'email'] }],

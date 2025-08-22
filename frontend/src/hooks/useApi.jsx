@@ -16,8 +16,8 @@ export const getUserRole = (user) => {
   }
   
   if (user.role_id === 1) return 'Admin';
-  if (user.role_id === 2) return 'Aluno';
-  if (user.role_id === 3) return 'Professor';
+  if (user.role_id === 2) return 'Professor';
+  if (user.role_id === 3) return 'Aluno';
   
   return null;
 };
@@ -98,7 +98,7 @@ export function useProcessos(search = "", showMyProcesses = false, page = 1, lim
       }
       
       // Se a resposta já tem estrutura de paginação
-      let data = response.processos || [];
+      let data = response.data || response.processos || [];
       
       // Filtrar por termo de busca se fornecido
       if (search.trim()) {
@@ -121,7 +121,14 @@ export function useProcessos(search = "", showMyProcesses = false, page = 1, lim
         };
       }
 
-      return response;
+      // Garantir estrutura consistente para outros casos
+      return {
+        processos: response.data || response.processos || [],
+        totalItems: response.totalItems || (response.data || response.processos || []).length,
+        currentPage: response.currentPage || page,
+        totalPages: response.totalPages || 1,
+        hasMore: response.hasMore || false
+      };
     },
     enabled: !!(token && user),
     staleTime: 1000 * 60 * 5, // 5 minutos
@@ -203,6 +210,9 @@ export function useDashboardData() {
           totalUsuarios: dashboardData.totalUsuarios || 0,
           usuariosAtivos: dashboardData.usuariosAtivos || 0,
           usuariosPorTipo: dashboardData.usuariosPorTipo || {},
+          
+          // Dados de arquivos/documentos
+          totalArquivos: dashboardData.totalArquivos || 0,
           
           // Dados de agendamentos
           agendamentosTotal: dashboardData.agendamentosTotal || 0,
