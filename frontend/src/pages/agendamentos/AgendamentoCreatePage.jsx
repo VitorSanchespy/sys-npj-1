@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import AgendamentoForm from '@/components/agendamentos/AgendamentoForm';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { apiRequest } from '@/api/apiRequest';
 
@@ -57,7 +56,7 @@ const AgendamentoCreatePage = () => {
             marginRight: '16px'
           }}
         >
-          <ArrowLeft size={16} />
+          ←
           Voltar
         </button>
         <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Novo Agendamento</h1>

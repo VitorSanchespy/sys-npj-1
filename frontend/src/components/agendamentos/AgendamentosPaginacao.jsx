@@ -1,5 +1,4 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 const AgendamentosPaginacao = ({ 
   currentPage, 
@@ -88,7 +87,7 @@ const AgendamentosPaginacao = ({
                 className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Primeira página"
               >
-                <ChevronsLeft className="h-5 w-5" />
+                ⏮
               </button>
 
               {/* Página anterior */}
@@ -98,7 +97,7 @@ const AgendamentosPaginacao = ({
                 className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Página anterior"
               >
-                <ChevronLeft className="h-5 w-5" />
+                ◀
               </button>
 
               {/* Números das páginas */}
@@ -138,7 +137,7 @@ const AgendamentosPaginacao = ({
                 className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Próxima página"
               >
-                <ChevronRight className="h-5 w-5" />
+                ▶
               </button>
 
               {/* Última página */}
@@ -148,7 +147,7 @@ const AgendamentosPaginacao = ({
                 className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Última página"
               >
-                <ChevronsRight className="h-5 w-5" />
+                ⏭
               </button>
             </nav>
           </div>

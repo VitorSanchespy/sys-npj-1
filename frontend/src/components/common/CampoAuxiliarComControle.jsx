@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, AlertCircle } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useGlobalToast } from '@/contexts/ToastContext';
 import { apiRequest } from '@/api/apiRequest';
 
 const CampoAuxiliarComControle = ({ 
   type, 
-  label, 
+  label,
   value, 
   onChange, 
   placeholder = "Selecione...",
@@ -160,13 +159,13 @@ const CampoAuxiliarComControle = ({
             className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
             title="Adicionar Novo"
           >
-            <Plus className="w-5 h-5" />
+            +
           </button>
         )}
       </div>
 
-  {/* Formulário para adicionar novo item */}
-  {showAddForm && isAdmin() && !isRestrito() && (
+      {/* Formulário para adicionar novo item */}
+      {showAddForm && isAdmin() && !isRestrito() && (
         <div className="mt-3 p-4 bg-gray-50 border border-gray-200 rounded-md">
           <h4 className="text-sm font-medium text-gray-700 mb-3">
             Adicionar Novo {label}
@@ -223,8 +222,8 @@ const CampoAuxiliarComControle = ({
         </div>
       )}
 
-  {/* Lista de itens para Admin gerenciar */}
-  {isAdmin() && !isRestrito() && options.length > 0 && (
+      {/* Lista de itens para Admin gerenciar */}
+      {isAdmin() && !isRestrito() && options.length > 0 && (
         <div className="mt-3">
           <details className="group">
             <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800 flex items-center gap-1">
@@ -255,7 +254,7 @@ const CampoAuxiliarComControle = ({
                     className="ml-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
                     title={`Excluir ${option.nome}`}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    ×
                   </button>
                 </div>
               ))}
@@ -264,10 +263,10 @@ const CampoAuxiliarComControle = ({
         </div>
       )}
 
-  {/* Aviso para não-Admin */}
-  {isRestrito() && (
+      {/* Aviso para não-Admin */}
+      {isRestrito() && (
         <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
-          <AlertCircle className="w-4 h-4" />
+          <span className="text-orange-500">⚠</span>
           <span>Apenas administradores podem adicionar/remover opções</span>
         </div>
       )}

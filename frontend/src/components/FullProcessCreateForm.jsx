@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { tabelaAuxiliarService, processService } from '../api/services';
 import { useAuthContext } from '../contexts/AuthContext';
+import { toastService } from '../services/toastService';
 import CampoAuxiliarComControle from './common/CampoAuxiliarComControle';
 
 const FullProcessCreateForm = () => {
@@ -42,15 +43,15 @@ const FullProcessCreateForm = () => {
     try {
       setLoading(true);
       const userId = user?.id || null;
-      await processService.createProcess(token, {
+      const response = await processService.createProcess(token, {
         ...formData,
         idusuario_responsavel: userId
       });
-      alert('Processo criado com sucesso!');
+      toastService.processCreated(formData.titulo || 'Processo');
       navigate('/processos');
     } catch (error) {
       console.error('Erro ao criar processo:', error, error.response?.data);
-      alert(`Erro ao criar processo: ${error.response?.data?.message || error.message}`);
+      toastService.error(`Erro ao criar processo: ${error.response?.data?.message || error.message}`);
     } finally {
       setLoading(false);
     }

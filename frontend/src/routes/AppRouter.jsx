@@ -28,8 +28,6 @@ import ConviteAgendamento from "@/components/agendamentos/ConviteAgendamento";
 import AceitarConvitePage from "@/pages/convite/AceitarConvitePage";
 import RecusarConvitePage from "@/pages/convite/RecusarConvitePage";
 import ConviteVisualizacao from "@/pages/convite/ConviteVisualizacao";
-import NotificationPage from "@/pages/dashboard/NotificationPage";
-import NotificationSettingsPage from "@/pages/dashboard/NotificationSettingsPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 // import GoogleCallbackPage from "../pages/GoogleCallbackPage";
 // import TesteAPI from "@/components/TesteAPI";
@@ -134,9 +132,7 @@ export default function AppRouter() {
             <Route path="/agendamentos/:id" element={<PrivateRoute><AgendamentoDetailPage /></PrivateRoute>} />
             <Route path="/agendamentos/:id/editar" element={<PrivateRoute><AgendamentoEditPage /></PrivateRoute>} />
           
-          {/* Notificações */}
-          <Route path="/notificacoes" element={<PrivateRoute><NotificationPage /></PrivateRoute>} />
-          <Route path="/notificacoes/configuracoes" element={<PrivateRoute><NotificationSettingsPage /></PrivateRoute>} />
+          {/* Sistema de notificações removido - substituído por Toast */}
           
           {/* Protegido: Admin */}
           {/* Usuários (admin/professor) */}

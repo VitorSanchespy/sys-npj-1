@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, X, ChevronDown } from 'lucide-react';
 
 const AgendamentosFiltros = ({ 
   onFilterChange, 
@@ -118,7 +117,7 @@ const AgendamentosFiltros = ({
       {/* Barra de busca principal */}
       <form onSubmit={handleSearch} className="flex gap-3 items-center mb-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">🔍</span>
           <input
             type="text"
             placeholder="Buscar por título, descrição, local..."
@@ -136,14 +135,14 @@ const AgendamentosFiltros = ({
               : 'bg-gray-50 border-gray-300 text-gray-700 hover:bg-gray-100'
           }`}
         >
-          <Filter className="w-4 h-4" />
+          <span className="text-gray-500">⚙️</span>
           Filtros
           {hasActiveFilters && (
             <span className="bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
               !
             </span>
           )}
-          <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+          <span className={`transition-transform ${showFilters ? 'rotate-180' : ''}`}>▼</span>
         </button>
         <button
           type="submit"
@@ -259,7 +258,7 @@ const AgendamentosFiltros = ({
               onClick={clearFilters}
               className="flex items-center gap-2 px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
             >
-              <X className="w-4 h-4" />
+              <span>×</span>
               Limpar Filtros
             </button>
             <div className="text-sm text-gray-500 py-2">

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import AgendamentoForm from '@/components/agendamentos/AgendamentoForm';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiRequest } from '@/api/apiRequest';
-import { ArrowLeft } from 'lucide-react';
 
 const AgendamentoEditPage = () => {
   const { id } = useParams();
@@ -96,7 +95,7 @@ const AgendamentoEditPage = () => {
             marginRight: '16px'
           }}
         >
-          <ArrowLeft size={16} />
+          ←
           Voltar
         </button>
         <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>

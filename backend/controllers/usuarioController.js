@@ -36,7 +36,6 @@ exports.listarAlunos = async (req, res) => {
 // Controller de Usuários - Gerencia operações de usuários do sistema
 const bcrypt = require('bcrypt');
 const { usuarioModel: Usuario, roleModel: Role } = require('../models/indexModel');
-const NotificacaoService = require('../services/notificacaoService');
 
 // Obter perfil do usuário autenticado - endpoint: GET /api/usuarios/me
 exports.me = async (req, res) => {
@@ -241,17 +240,7 @@ exports.criarUsuario = async (req, res) => {
       ativo: true
     });
 
-    // Notificar criação do usuário
-    try {
-      const notificacaoService = new NotificacaoService();
-      const criador = req.user ? await Usuario.findByPk(req.user.id) : null;
-      
-      if (criador) {
-        await notificacaoService.notificarUsuarioCriado(novoUsuario, criador, [criador]);
-      }
-    } catch (notificationError) {
-      console.error('⚠️ Erro ao enviar notificação de usuário criado:', notificationError.message);
-    }
+    // Sistema de notificação removido - agora usa Toast no frontend
     
     // Retornar sem a senha
     const { senha: _, ...usuarioSemSenha } = novoUsuario.toJSON();

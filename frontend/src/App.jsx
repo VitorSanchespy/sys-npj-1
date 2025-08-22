@@ -4,9 +4,8 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { queryClient } from './hooks/useQueryClient';
 import { ToastProvider } from './contexts/ToastContext';
 import { AuthProvider } from './contexts/AuthContext';
-import { NotificationProvider } from './contexts/NotificationContext';
 import AppRouter from './routes/AppRouter';
-import NotificationToast from './components/notifications/NotificationToast';
+import ToastConfig from './components/toast/ToastConfig';
 import AutoRefreshIndicator from './components/common/AutoRefreshIndicator';
 import { useAutoRefresh } from './hooks/useAutoRefresh';
 import LoginDebugComponent from './components/debug/LoginDebugComponent';
@@ -18,7 +17,7 @@ function AppContent() {
   return (
     <>
       <AppRouter />
-      <NotificationToast />
+      <ToastConfig />
       {/* Indicador de auto-refresh global */}
       <AutoRefreshIndicator 
         isActive={isActive}
@@ -43,9 +42,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <AuthProvider>
-          <NotificationProvider>
-            <AppContent />
-          </NotificationProvider>
+          <AppContent />
         </AuthProvider>
       </ToastProvider>
     </QueryClientProvider>

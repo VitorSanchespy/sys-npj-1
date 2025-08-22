@@ -12,8 +12,6 @@ const arquivoModel = require('./arquivoModel');
 const atualizacaoProcessoModel = require('./atualizacaoProcessoModel');
 const usuarioProcessoModel = require('./usuarioProcessoModel');
 const agendamentoModel = require('./agendamentoModel'); // Sistema unificado de agendamentos
-const notificacaoModel = require('./notificacaoModel');
-const configuracaoNotificacaoModel = require('./configuracaoNotificacaoModel');
 
 const models = {
   roleModel,
@@ -27,8 +25,6 @@ const models = {
   atualizacaoProcessoModel,
   usuarioProcessoModel,
   agendamentoModel, // Sistema unificado de agendamentos
-  notificacaoModel,
-  configuracaoNotificacaoModel,
   sequelize,
   Sequelize
 };

@@ -15,15 +15,12 @@ const Navigation = () => {
   };
 
   const menuItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: '🏠', roles: ['Admin', 'Professor', 'Aluno'] },
-    { path: '/processos', label: 'Processos', icon: '📋', roles: ['Admin', 'Professor', 'Aluno'] },
-    { path: '/agendamentos', label: 'Agendamentos', icon: '📅', roles: ['Admin', 'Professor', 'Aluno'] },
-    { path: '/arquivos', label: 'Arquivos', icon: '📁', roles: ['Admin', 'Professor', 'Aluno'] },
-    { path: '/notificacoes', label: 'Notificações', icon: '🔔', roles: ['Admin', 'Professor', 'Aluno'] },
-    { path: '/usuarios', label: 'Usuários', icon: '👥', roles: ['Admin', 'Professor'] },
-    { path: '/notificacoes/configuracoes', label: 'Config. Notificações', icon: '⚙️', roles: ['Admin', 'Professor', 'Aluno'] },
-    { path: '/profile', label: 'Perfil', icon: '👤', roles: ['Admin', 'Professor', 'Aluno'] },
-    
+    { path: '/dashboard', label: 'Dashboard', roles: ['Admin', 'Professor', 'Aluno'] },
+    { path: '/processos', label: 'Processos', roles: ['Admin', 'Professor', 'Aluno'] },
+    { path: '/agendamentos', label: 'Agendamentos', roles: ['Admin', 'Professor', 'Aluno'] },
+    { path: '/arquivos', label: 'Arquivos', roles: ['Admin', 'Professor', 'Aluno'] },
+    { path: '/usuarios', label: 'Usuários', roles: ['Admin', 'Professor'] },
+    { path: '/profile', label: 'Perfil', roles: ['Admin', 'Professor', 'Aluno'] },
   ];
 
   const filteredMenuItems = menuItems.filter(item => 
@@ -108,7 +105,6 @@ const Navigation = () => {
               }
             }}
           >
-            <span style={{ fontSize: '16px' }}>{item.icon}</span>
             <span>{item.label}</span>
           </Link>
         ))}

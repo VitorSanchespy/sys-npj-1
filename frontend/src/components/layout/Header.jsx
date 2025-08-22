@@ -1,6 +1,5 @@
 import React from "react";
 import { useAuthContext } from "../../contexts/AuthContext";
-import NotificationBell from "../notifications/NotificationBell";
 
 const Header = () => {
   const { user } = useAuthContext();
@@ -17,9 +16,6 @@ const Header = () => {
         alignItems: 'center',
         gap: '16px'
       }}>
-        {/* Sino de Notificações */}
-        <NotificationBell />
-        
         <span style={{
           fontSize: '14px',
           color: '#6c757d'

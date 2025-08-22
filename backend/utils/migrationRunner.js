@@ -155,7 +155,7 @@ class MigrationRunner {
       
       const requiredTables = [
         'usuarios', 'roles', 'processos', 'arquivos', 
-        'agendamentos', 'notificacoes', 'configuracoes_notificacao',
+        'agendamentos',
         'refresh_tokens', 'atualizacoes_processo', 'usuarios_processo',
         'materia_assunto', 'fase', 'diligencia', 'local_tramitacao'
       ];

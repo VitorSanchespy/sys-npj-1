@@ -4,6 +4,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from "@/api/apiRequest";
 import { tabelaAuxiliarService, processService } from "../../api/services";
+import { toastService } from "@/services/toastService";
 import { requestCache } from "@/utils/requestCache";
 import Button from "@/components/common/Button";
 import CampoAuxiliarComControle from "@/components/common/CampoAuxiliarComControle";
@@ -67,10 +68,10 @@ export default function ProcessEditPage() {
       queryClient.invalidateQueries(['processo', id]);
       queryClient.invalidateQueries(['processos']);
       
-      alert('Processo atualizado com sucesso!');
+      toastService.processUpdated(formData.titulo || 'Processo');
       navigate(`/processos/${id}`, { state: { updated: Date.now() } });
     } catch (err) {
-      alert('Erro ao atualizar processo: ' + (err?.response?.data?.erro || err.message));
+      toastService.error('Erro ao atualizar processo: ' + (err?.response?.data?.erro || err.message));
     }
   };
 

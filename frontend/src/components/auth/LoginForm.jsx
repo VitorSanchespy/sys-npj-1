@@ -2,11 +2,10 @@
 import React, { useState } from "react";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useGlobalToast } from "../../contexts/ToastContext";
+import { toastService } from "../../services/toastService";
 
 export default function LoginForm({ onSuccess }) {
   const { login, loading } = useAuthContext();
-  const { showSuccess, showError, showWarning } = useGlobalToast();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const navigate = useNavigate();
@@ -14,15 +13,15 @@ export default function LoginForm({ onSuccess }) {
   // Validação de campos
   const validateForm = () => {
     if (!email.trim()) {
-      showWarning("E-mail é obrigatório", "validation");
+      toastService.warning("E-mail é obrigatório");
       return false;
     }
     if (!senha.trim()) {
-      showWarning("Senha é obrigatória", "validation");
+      toastService.warning("Senha é obrigatória");
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      showWarning("E-mail deve ter um formato válido", "validation");
+      toastService.warning("E-mail deve ter um formato válido");
       return false;
     }
     return true;
@@ -39,18 +38,18 @@ export default function LoginForm({ onSuccess }) {
     const res = await login(email, senha);
     
     if (res.success) {
-      showSuccess("🎉 Login realizado com sucesso! Bem-vindo(a) de volta!");
+      toastService.success("🎉 Login realizado com sucesso! Bem-vindo(a) de volta!");
       if (onSuccess) onSuccess();
     } else {
       // Mostrar erro específico baseado na resposta
       if (res.message?.includes('Credenciais inválidas') || res.message?.includes('senha')) {
-        showError("❌ E-mail ou senha incorretos. Verifique seus dados e tente novamente.");
+        toastService.error("❌ E-mail ou senha incorretos. Verifique seus dados e tente novamente.");
       } else if (res.message?.includes('email') || res.message?.includes('encontrado')) {
-        showError("❌ E-mail não encontrado. Verifique se está digitado corretamente ou faça seu cadastro.");
+        toastService.error("❌ E-mail não encontrado. Verifique se está digitado corretamente ou faça seu cadastro.");
       } else if (res.message?.includes('inativo')) {
-        showError("❌ Sua conta está inativa. Entre em contato com o administrador.");
+        toastService.error("❌ Sua conta está inativa. Entre em contato com o administrador.");
       } else {
-        showError(`❌ Falha no login: ${res.message || "Erro inesperado. Tente novamente."}`);
+        toastService.error(`❌ Falha no login: ${res.message || "Erro inesperado. Tente novamente."}`);
       }
     }
   };

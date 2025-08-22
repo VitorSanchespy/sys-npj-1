@@ -66,7 +66,6 @@ app.post('/api/convite/:id/recusar', [
 ], agendamentoController.recusarConvitePublico);
 
 // Rotas do sistema
-app.use('/api/notificacoes', require('./routes/notificacaoRoute'));
 app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoute'));
 app.use('/api/arquivos', require('./routes/arquivoRoute'));
 app.use('/api/dashboard', require('./routes/dashboardRoute'));
@@ -77,7 +76,6 @@ app.use('/auth', require('./routes/autorizacaoRoute'));
 app.use('/usuarios', require('./routes/usuarioRoute'));
 app.use('/processos', require('./routes/processoRoute'));
 app.use('/agendamentos', require('./routes/agendamentos')); // Usar rota unificada
-app.use('/notificacoes', require('./routes/notificacaoRoute'));
 app.use('/arquivos', require('./routes/arquivoRoute'));
 app.use('/dashboard', require('./routes/dashboardRoute'));
 

@@ -1,11 +1,10 @@
 const express = require('express');
 const models = require('../models/indexModel');
-const { processoModel, usuarioModel, agendamentoModel, arquivoModel, notificacaoModel } = models;
+const { processoModel, usuarioModel, agendamentoModel, arquivoModel } = models;
 const Processo = processoModel;
 const Usuario = usuarioModel;
 const Agendamento = agendamentoModel;
 const Arquivo = arquivoModel;
-const Notificacao = notificacaoModel;
 const authMiddleware = require('../middleware/authMiddleware');
 const { Op } = require('sequelize');
 
@@ -70,24 +69,7 @@ router.get('/', async (req, res) => {
         }
       }
 
-      // Notificações do aluno
-      let notificacoesDoAluno = [];
-      let notificacoesNaoLidas = 0;
-      if (Notificacao) {
-        try {
-          notificacoesDoAluno = await Notificacao.findAll({
-            where: { usuario_id: userId },
-            attributes: ['id', 'titulo', 'status', 'tipo', 'criado_em'],
-            order: [['criado_em', 'DESC']],
-            limit: 10
-          });
-          notificacoesNaoLidas = await Notificacao.count({
-            where: { usuario_id: userId, status: { [Op.ne]: 'lido' } }
-          });
-        } catch (notifError) {
-          console.warn('Erro ao buscar notificações do aluno:', notifError.message);
-        }
-      }
+      // Sistema de notificações removido - substituído por Toast
 
       // Agendamentos do aluno (se modelo existir)
       let agendamentosDoAluno = [];
@@ -110,8 +92,6 @@ router.get('/', async (req, res) => {
         processosPorStatus,
         totalArquivos,
         arquivos: arquivosDoAluno,
-        notificacoesNaoLidas,
-        notificacoes: notificacoesDoAluno,
         agendamentosTotal: agendamentosDoAluno.length,
         agendamentos: agendamentosDoAluno,
         processos: processosDoAluno,
@@ -143,25 +123,7 @@ router.get('/', async (req, res) => {
         }
       }
 
-      // Notificações globais para Admin/Professor
-      let notificacoesNaoLidas = 0;
-      if (Notificacao) {
-        try {
-          // Para Admin, pegar todas as notificações não lidas do sistema
-          if (userRole === 'Admin') {
-            notificacoesNaoLidas = await Notificacao.count({
-              where: { status: { [Op.ne]: 'lido' } }
-            });
-          } else {
-            // Para Professor, apenas suas notificações
-            notificacoesNaoLidas = await Notificacao.count({
-              where: { usuario_id: userId, status: { [Op.ne]: 'lido' } }
-            });
-          }
-        } catch (notifError) {
-          console.warn('Erro ao buscar notificações:', notifError.message);
-        }
-      }
+      // Sistema de notificações removido - substituído por Toast
 
       // Processos por status (global)
       const processosPorStatusQuery = await Processo.findAll({
@@ -242,7 +204,6 @@ router.get('/', async (req, res) => {
         usuariosAtivos,
         usuariosPorTipo,
         totalArquivos,
-        notificacoesNaoLidas,
         agendamentosTotal: agendamentosData.total,
         agendamentosPorTipo: agendamentosData.porTipo,
         agendamentosPorStatus: agendamentosData.porStatus,

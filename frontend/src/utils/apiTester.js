@@ -6,7 +6,6 @@ import {
   userService, 
   processService, 
   agendamentoService,
-  notificacaoService,
   tabelaAuxiliarService,
   atualizacaoProcessoService,
   arquivoService
@@ -39,7 +38,7 @@ class ApiTester {
     await this.testUserEndpoints(token);
     await this.testProcessEndpoints(token);
     await this.testAgendamentoEndpoints(token);
-    await this.testNotificacaoEndpoints(token);
+    // Sistema de notificações removido
     await this.testTabelaEndpoints(token);
     await this.testAtualizacaoEndpoints(token);
     await this.testArquivoEndpoints(token);
@@ -124,24 +123,7 @@ class ApiTester {
     }
   }
 
-  // Testar endpoints de notificações
-  async testNotificacaoEndpoints(token) {
-    // GET /api/notificacoes
-    try {
-      const notificacoes = await notificacaoService.listNotificacoes(token);
-      this.addTest('GET /api/notificacoes', !!notificacoes, notificacoes ? `${notificacoes.length || 0} notificações encontradas` : 'Nenhuma notificação');
-    } catch (error) {
-      this.addTest('GET /api/notificacoes', false, `Erro: ${error.message}`);
-    }
-
-    // GET /api/notificacoes/nao-lidas/count
-    try {
-      const count = await notificacaoService.countNaoLidas(token);
-      this.addTest('GET /api/notificacoes/nao-lidas/count', count !== undefined, `${count || 0} notificações não lidas`);
-    } catch (error) {
-      this.addTest('GET /api/notificacoes/nao-lidas/count', false, `Erro: ${error.message}`);
-    }
-  }
+  // Sistema de notificações removido - substituído por Toast
 
   // Testar endpoints de tabelas auxiliares
   async testTabelaEndpoints(token) {

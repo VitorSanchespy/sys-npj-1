@@ -1,5 +1,4 @@
 // Controller de Processos - Gerencia operações de processos jurídicos
-const NotificacaoService = require('../services/notificacaoService');
 
 // Função utilitária para verificar disponibilidade do banco
 function isDbAvailable() {
@@ -224,18 +223,7 @@ exports.criarProcesso = async (req, res) => {
       descricao: `Processo "${titulo}" (${numero_processo}) criado no sistema`
     });
 
-    // Notificar criação do processo
-    try {
-      const notificacaoService = new NotificacaoService();
-      const { usuarioModel: Usuario } = require('../models/indexModel');
-      const criador = await Usuario.findByPk(req.user.id);
-      
-      if (criador) {
-        await notificacaoService.notificarProcessoCriado(novoProcesso, criador, [criador]);
-      }
-    } catch (notificationError) {
-      console.error('⚠️ Erro ao enviar notificação de processo criado:', notificationError.message);
-    }
+    // Sistema de notificação removido - agora usa Toast no frontend
     
     res.status(201).json({
       success: true,
@@ -367,18 +355,7 @@ exports.atualizarProcesso = async (req, res) => {
         });
       }
 
-      // Notificar atualização do processo
-      try {
-        const notificacaoService = new NotificacaoService();
-        const { usuarioModel: Usuario } = require('../models/indexModel');
-        const atualizador = await Usuario.findByPk(req.user.id);
-        
-        if (atualizador && alteracoes.length > 0) {
-          await notificacaoService.notificarProcessoAtualizado(processo, atualizador, [atualizador], alteracoes);
-        }
-      } catch (notificationError) {
-        console.error('⚠️ Erro ao enviar notificação de processo atualizado:', notificationError.message);
-      }
+      // Sistema de notificação removido - agora usa Toast no frontend
       
       res.json(processo);
       

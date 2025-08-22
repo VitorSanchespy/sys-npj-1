@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiRequest } from '@/api/apiRequest';
-import { ArrowLeft, Edit, Trash2, Calendar, Clock, MapPin, Mail, User, Users } from 'lucide-react';
 
 const AgendamentoDetailPage = () => {
   const { id } = useParams();
@@ -139,7 +138,7 @@ const AgendamentoDetailPage = () => {
               marginRight: '16px'
             }}
           >
-            <ArrowLeft size={16} />
+            ←
             Voltar
           </button>
           <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>
@@ -163,7 +162,7 @@ const AgendamentoDetailPage = () => {
               fontSize: '14px'
             }}
           >
-            <Edit size={16} />
+            ✏️
             Editar
           </button>
           <button
@@ -181,7 +180,7 @@ const AgendamentoDetailPage = () => {
               fontSize: '14px'
             }}
           >
-            <Trash2 size={16} />
+            🗑️
             Deletar
           </button>
         </div>
@@ -218,7 +217,7 @@ const AgendamentoDetailPage = () => {
           {/* Data e Hora */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <Calendar size={18} color="#666" />
+              <span style={{ color: '#666' }}>📅</span>
               <h3 style={{ margin: 0, fontSize: '16px', color: '#333' }}>Data e Hora</h3>
             </div>
             <p style={{ margin: 0, color: '#666' }}>
@@ -232,7 +231,7 @@ const AgendamentoDetailPage = () => {
           {/* Tipo */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <Clock size={18} color="#666" />
+              <span style={{ color: '#666' }}>🕐</span>
               <h3 style={{ margin: 0, fontSize: '16px', color: '#333' }}>Tipo</h3>
             </div>
             <p style={{ margin: 0, color: '#666', textTransform: 'capitalize' }}>
@@ -244,7 +243,7 @@ const AgendamentoDetailPage = () => {
           {agendamento.local && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <MapPin size={18} color="#666" />
+                <span style={{ color: '#666' }}>📍</span>
                 <h3 style={{ margin: 0, fontSize: '16px', color: '#333' }}>Local</h3>
               </div>
               <p style={{ margin: 0, color: '#666' }}>
@@ -257,7 +256,7 @@ const AgendamentoDetailPage = () => {
           {agendamento.email_lembrete && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <Mail size={18} color="#666" />
+                <span style={{ color: '#666' }}>📧</span>
                 <h3 style={{ margin: 0, fontSize: '16px', color: '#333' }}>Email para Lembrete</h3>
               </div>
               <p style={{ margin: 0, color: '#666' }}>
@@ -270,7 +269,7 @@ const AgendamentoDetailPage = () => {
           {agendamento.usuario && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <User size={18} color="#666" />
+                <span style={{ color: '#666' }}>👤</span>
                 <h3 style={{ margin: 0, fontSize: '16px', color: '#333' }}>Criado por</h3>
               </div>
               <p style={{ margin: 0, color: '#666' }}>
@@ -342,7 +341,7 @@ const AgendamentoDetailPage = () => {
           border: '1px solid #e9ecef'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <Users size={18} color="#666" />
+            <span style={{ color: '#666' }}>👥</span>
             <h3 style={{ margin: 0, fontSize: '18px', color: '#333' }}>
               Convidados ({agendamento.convidados.length})
             </h3>

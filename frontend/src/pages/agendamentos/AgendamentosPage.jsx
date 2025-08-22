@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Plus } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { apiRequest } from '@/api/apiRequest';
 import { useGlobalToast } from '@/contexts/ToastContext';
@@ -236,7 +235,7 @@ const AgendamentosPage = () => {
             onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
             onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
           >
-            <Plus size={20} />
+            +
             Novo Agendamento
           </button>
         </div>

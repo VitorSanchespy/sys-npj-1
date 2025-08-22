@@ -417,73 +417,7 @@ export const agendamentoService = {
   }
 };
 
-// ===== NOTIFICATION SERVICES =====
-export const notificacaoService = {
-  // GET /api/notificacoes
-  listNotificacoes: async (token) => {
-    return await apiRequest('/api/notificacoes', {
-      method: 'GET',
-      token
-    });
-  },
-
-  // POST /api/notificacoes
-  createNotificacao: async (token, notificacaoData) => {
-    return await apiRequest('/api/notificacoes', {
-      method: 'POST',
-      token,
-      body: notificacaoData
-    });
-  },
-
-  // GET /api/notificacoes/usuario
-  listNotificacoesUsuario: async (token) => {
-    return await apiRequest('/api/notificacoes/usuario', {
-      method: 'GET',
-      token
-    });
-  },
-
-  // GET /api/notificacoes/nao-lidas/count
-  countNaoLidas: async (token) => {
-    return await apiRequest('/api/notificacoes/nao-lidas/count', {
-      method: 'GET',
-      token
-    });
-  },
-
-  // PUT /api/notificacoes/marcar-todas-lidas
-  marcarTodasLidas: async (token) => {
-    return await apiRequest('/api/notificacoes/marcar-todas-lidas', {
-      method: 'PUT',
-      token
-    });
-  },
-
-  // GET /api/notificacoes/:id
-  getNotificacaoById: async (token, id) => {
-    return await apiRequest(`/api/notificacoes/${id}`, {
-      method: 'GET',
-      token
-    });
-  },
-
-  // PUT /api/notificacoes/:id/lida
-  marcarComoLida: async (token, id) => {
-    return await apiRequest(`/api/notificacoes/${id}/lida`, {
-      method: 'PUT',
-      token
-    });
-  },
-
-  // DELETE /api/notificacoes/:id
-  deleteNotificacao: async (token, id) => {
-    return await apiRequest(`/api/notificacoes/${id}`, {
-      method: 'DELETE',
-      token
-    });
-  }
-};
+// ===== SISTEMA DE NOTIFICAÇÃO REMOVIDO - SUBSTITUÍDO POR TOAST =====
 
 // ===== AUXILIARY TABLES SERVICES (UPDATED) =====
 export const tabelaAuxiliarService = {

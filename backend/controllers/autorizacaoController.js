@@ -1,6 +1,5 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const NotificacaoService = require('../services/notificacaoService');
 
 // Função utilitária para verificar disponibilidade do banco
 const isDbAvailable = () => global.dbAvailable || false;
@@ -35,17 +34,7 @@ exports.login = async (req, res) => {
     }
     
     if (!usuario) {
-      // Notificar tentativa de login com email incorreto
-      try {
-        const notificacaoService = new NotificacaoService();
-        const detalhesLogin = {
-          ip: req.ip || req.connection.remoteAddress || 'N/A',
-          userAgent: req.get('User-Agent') || 'N/A'
-        };
-        await notificacaoService.notificarEmailIncorreto(email, detalhesLogin);
-      } catch (notificationError) {
-        console.error('⚠️ Erro ao enviar notificação de email incorreto:', notificationError.message);
-      }
+      // Sistema de notificação removido - agora usa Toast no frontend
       
       return res.status(401).json({ erro: 'Credenciais inválidas' });
     }
@@ -59,17 +48,7 @@ exports.login = async (req, res) => {
     }
     
     if (!senhaValida) {
-      // Notificar tentativa de login com senha incorreta
-      try {
-        const notificacaoService = new NotificacaoService();
-        const detalhesLogin = {
-          ip: req.ip || req.connection.remoteAddress || 'N/A',
-          userAgent: req.get('User-Agent') || 'N/A'
-        };
-        await notificacaoService.notificarSenhaIncorreta(email, detalhesLogin);
-      } catch (notificationError) {
-        console.error('⚠️ Erro ao enviar notificação de senha incorreta:', notificationError.message);
-      }
+      // Sistema de notificação removido - agora usa Toast no frontend
       
       return res.status(401).json({ erro: 'Credenciais inválidas' });
     }
