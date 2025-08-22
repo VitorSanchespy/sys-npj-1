@@ -68,8 +68,6 @@ app.post('/api/convite/:id/recusar', [
 // Rotas do sistema
 app.use('/api/notificacoes', require('./routes/notificacaoRoute'));
 app.use('/api/atualizacoes', require('./routes/atualizacaoProcessoRoute'));
-// Manter compatibilidade para roles apenas
-app.use('/api/tabelas', require('./routes/tabelaAuxiliarRoute'));
 app.use('/api/arquivos', require('./routes/arquivoRoute'));
 app.use('/api/dashboard', require('./routes/dashboardRoute'));
 
@@ -80,7 +78,6 @@ app.use('/usuarios', require('./routes/usuarioRoute'));
 app.use('/processos', require('./routes/processoRoute'));
 app.use('/agendamentos', require('./routes/agendamentos')); // Usar rota unificada
 app.use('/notificacoes', require('./routes/notificacaoRoute'));
-app.use('/tabelas', require('./routes/tabelaAuxiliarRoute'));
 app.use('/arquivos', require('./routes/arquivoRoute'));
 app.use('/dashboard', require('./routes/dashboardRoute'));
 
