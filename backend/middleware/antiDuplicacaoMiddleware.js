@@ -83,59 +83,166 @@ const preveniDuplicacaoProcesso = async (req, res, next) => {
  */
 const preveniDuplicacaoAgendamento = async (req, res, next) => {
   try {
-    const { usuario_id, data_evento, titulo } = req.body;
+    console.log('🛡️ Middleware anti-duplicação executado para agendamento');
+    console.log('📝 Dados recebidos:', { 
+      data_inicio: req.body.data_inicio, 
+      titulo: req.body.titulo, 
+      usuario: req.user?.id,
+      processo_id: req.body.processo_id 
+    });
+    
+    const { data_inicio, data_fim, titulo, processo_id } = req.body;
     const { agendamentoModel: Agendamento } = require('../models/indexModel');
     
-    if (!data_evento || !usuario_id) {
+    if (!data_inicio || !processo_id) {
+      console.log('⚠️ Pulando verificação - dados insuficientes (data_inicio ou processo_id ausentes)');
       return next();
     }
     
-    const dataEvento = new Date(data_evento);
-    const inicioJanela = new Date(dataEvento.getTime() - (30 * 60000)); // 30 minutos antes
-    const fimJanela = new Date(dataEvento.getTime() + (30 * 60000)); // 30 minutos depois
+    const dataInicio = new Date(data_inicio);
+    const dataFim = data_fim ? new Date(data_fim) : new Date(dataInicio.getTime() + (60 * 60000)); // 1 hora padrão
+    
+    console.log('🔍 Verificando conflitos no PROCESSO:', processo_id);
+    console.log('⏰ Período:', { inicio: dataInicio, fim: dataFim });
     
     // Verificar se é uma atualização (tem ID no params)
     const isUpdate = req.params.id;
-    const whereClause = {
-      usuario_id,
-      data_evento: {
-        [Op.between]: [inicioJanela, fimJanela]
-      }
+    
+    // ALTERAÇÃO PRINCIPAL: Verificar conflito de horário POR PROCESSO (não por usuário)
+    const whereClauseHorario = {
+      processo_id, // Conflito apenas no mesmo processo
+      [Op.and]: [
+        {
+          data_inicio: {
+            [Op.lt]: dataFim
+          }
+        },
+        {
+          data_fim: {
+            [Op.gt]: dataInicio
+          }
+        }
+      ]
     };
     
     // Se for atualização, excluir o próprio agendamento da verificação
     if (isUpdate) {
-      whereClause.id = { [Op.ne]: req.params.id };
+      whereClauseHorario.id = { [Op.ne]: req.params.id };
     }
     
-    const agendamentoConflitante = await Agendamento.findOne({ where: whereClause });
+    const agendamentoConflitante = await Agendamento.findOne({ where: whereClauseHorario });
+    
+    console.log('🔍 Resultado da busca por conflitos:', agendamentoConflitante ? 'CONFLITO ENCONTRADO' : 'Nenhum conflito');
     
     if (agendamentoConflitante) {
+      console.log('❌ Bloqueando criação devido ao conflito no processo');
       return res.status(409).json({
-        erro: 'Conflito de horário detectado',
+        success: false,
+        tipo: 'conflito_processo',
+        titulo: 'Conflito no Processo',
+        mensagem: `Já existe um agendamento que conflita com este horário no processo`,
         detalhes: {
-          campo: 'data_evento',
-          valor: data_evento,
-          mensagem: `Já existe um agendamento para este usuário entre ${inicioJanela.toLocaleString()} e ${fimJanela.toLocaleString()}`,
+          campo: 'data_inicio',
+          valor: data_inicio,
+          processo_id: processo_id,
           agendamento_conflitante: {
             id: agendamentoConflitante.id,
             titulo: agendamentoConflitante.titulo,
-            data_evento: agendamentoConflitante.data_evento
+            data_inicio: agendamentoConflitante.data_inicio,
+            data_fim: agendamentoConflitante.data_fim
           }
+        },
+        toast: {
+          type: 'error',
+          title: 'Conflito no Processo',
+          message: `Já existe "${agendamentoConflitante.titulo}" marcado para este horário no processo`,
+          duration: 5000
         }
       });
     }
     
-    // Verificar duplicação de título para o mesmo usuário no mesmo dia
-    const inicioDia = new Date(dataEvento);
+    console.log('✅ Nenhum conflito de horário encontrado no processo');
+    
+    // NOVA VERIFICAÇÃO: Conflito de horário POR USUÁRIO (independente do processo)
+    console.log('👤 Verificando conflitos para o usuário:', req.user.id);
+    
+    const whereClauseUsuario = {
+      criado_por: req.user.id, // Verificar agendamentos do mesmo usuário
+      [Op.and]: [
+        {
+          data_inicio: {
+            [Op.lt]: dataFim
+          }
+        },
+        {
+          data_fim: {
+            [Op.gt]: dataInicio
+          }
+        }
+      ]
+    };
+    
+    // Se for atualização, excluir o próprio agendamento da verificação
+    if (isUpdate) {
+      whereClauseUsuario.id = { [Op.ne]: req.params.id };
+    }
+    
+    const agendamentoUsuarioConflitante = await Agendamento.findOne({ 
+      where: whereClauseUsuario,
+      include: [
+        { 
+          model: require('../models/indexModel').processoModel, 
+          as: 'processo', 
+          attributes: ['id', 'numero_processo', 'titulo'] 
+        }
+      ]
+    });
+    
+    if (agendamentoUsuarioConflitante) {
+      console.log('❌ Bloqueando criação devido ao conflito de usuário');
+      const processoConflito = agendamentoUsuarioConflitante.processo;
+      
+      return res.status(409).json({
+        success: false,
+        tipo: 'conflito_usuario',
+        titulo: 'Conflito de Agendamento',
+        mensagem: `Você já possui um agendamento no mesmo horário`,
+        detalhes: {
+          agendamento_existente: {
+            titulo: agendamentoUsuarioConflitante.titulo,
+            processo: {
+              numero: processoConflito?.numero_processo || `#${agendamentoUsuarioConflitante.processo_id}`,
+              titulo: processoConflito?.titulo || 'Processo sem título'
+            },
+            data_inicio: agendamentoUsuarioConflitante.data_inicio,
+            data_fim: agendamentoUsuarioConflitante.data_fim
+          },
+          horario_solicitado: {
+            inicio: data_inicio,
+            fim: data_fim
+          }
+        },
+        toast: {
+          type: 'error',
+          title: 'Conflito de Horário',
+          message: `Você já tem "${agendamentoUsuarioConflitante.titulo}" marcado para este horário no processo ${processoConflito?.numero_processo || agendamentoUsuarioConflitante.processo_id}`,
+          duration: 6000
+        }
+      });
+    }
+    
+    console.log('✅ Nenhum conflito de usuário encontrado');
+    
+    // Verificar duplicação de título no mesmo processo (mais restritivo - mesmo titulo e horário próximo)
+    const inicioDia = new Date(dataInicio);
     inicioDia.setHours(0, 0, 0, 0);
-    const fimDia = new Date(dataEvento);
+    const fimDia = new Date(dataInicio);
     fimDia.setHours(23, 59, 59, 999);
     
     const whereClauseTitulo = {
-      usuario_id,
+      processo_id, // Verificar título duplicado apenas no mesmo processo
       titulo,
-      data_evento: {
+      data_inicio: {
         [Op.between]: [inicioDia, fimDia]
       }
     };
@@ -147,19 +254,30 @@ const preveniDuplicacaoAgendamento = async (req, res, next) => {
     const agendamentoTituloDuplicado = await Agendamento.findOne({ where: whereClauseTitulo });
     
     if (agendamentoTituloDuplicado) {
+      console.log('❌ Bloqueando criação devido ao título duplicado no processo');
       return res.status(409).json({
-        erro: 'Duplicação detectada',
+        success: false,
+        tipo: 'titulo_duplicado',
+        titulo: 'Título Duplicado',
+        mensagem: `Já existe um agendamento com este título no processo`,
         detalhes: {
           campo: 'titulo',
           valor: titulo,
-          mensagem: 'Já existe um agendamento com este título para o mesmo usuário neste dia'
+          processo_id: processo_id
+        },
+        toast: {
+          type: 'warning',
+          title: 'Título Duplicado',
+          message: `Já existe um agendamento com o título "${titulo}" neste processo hoje`,
+          duration: 4000
         }
       });
     }
     
+    console.log('✅ Agendamento aprovado pelo middleware anti-duplicação');
     next();
   } catch (error) {
-    console.error('Erro no middleware anti-duplicação de agendamento:', error);
+    console.error('❌ Erro no middleware anti-duplicação de agendamento:', error);
     next();
   }
 };

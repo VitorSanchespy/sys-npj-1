@@ -3,6 +3,7 @@ const router = express.Router();
 const agendamentoController = require('../controllers/agendamentoController');
 const agendamentoStatsController = require('../controllers/agendamentoStatsController');
 const authMiddleware = require('../middleware/authMiddleware');
+const { preveniDuplicacaoAgendamento } = require('../middleware/antiDuplicacaoMiddleware');
 const { body, param, query } = require('express-validator');
 
 // Rotas públicas para convites (ANTES do middleware de autenticação)
@@ -143,7 +144,10 @@ const validacaoProcessoId = [
 // Rotas
 
 // POST /api/agendamentos - Criar agendamento
-router.post('/', validacoesCriacao, agendamentoController.criar);
+router.post('/', [
+    ...validacoesCriacao,
+    preveniDuplicacaoAgendamento
+], agendamentoController.criar);
 
 // GET /api/agendamentos - Listar agendamentos
 router.get('/', [

@@ -255,26 +255,6 @@ const DashboardImproved = () => {
               </div>
             )}
 
-            {/* Card Notificações */}
-            <div 
-              className="bg-red-50 border border-red-200 rounded-xl p-6 cursor-pointer hover:shadow-md transition-all hover:scale-105"
-              onClick={() => navigate('/notificacoes')}
-            >
-              <div className="flex items-center">
-                <div className="p-3 bg-red-100 rounded-lg">
-                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-red-600">🔔 Notificações</p>
-                  <p className="text-3xl font-bold text-red-900">
-                    {dashboardData?.notificacoesNaoLidas || 0}
-                  </p>
-                  <p className="text-xs text-red-500 mt-1">Não lidas</p>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Seção de detalhamentos */}
@@ -401,17 +381,6 @@ const DashboardImproved = () => {
                 </div>
               </button>
 
-              <button
-                onClick={() => navigate('/notificacoes')}
-                className="bg-white hover:bg-red-50 border border-red-200 rounded-lg p-4 text-left transition-all hover:shadow-md"
-              >
-                <div className="flex items-center">
-                  <svg className="w-6 h-6 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                  <span className="text-sm font-medium text-gray-900">Notificações</span>
-                </div>
-              </button>
             </div>
           </div>
 

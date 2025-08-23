@@ -5,8 +5,8 @@ import { getUserRole } from "../../hooks/useApi";
 import { toastService } from "../../services/toastService";
 
 const ROLES = [
-  { id: 2, label: "Aluno" },
-  { id: 3, label: "Professor" },
+  { id: 3, label: "Aluno" },
+  { id: 2, label: "Professor" },
   { id: 1, label: "Administrador" },
 ];
 
@@ -17,7 +17,7 @@ export default function UserCreateForm({ onCreated }) {
     email: "",
     senha: "",
     telefone: "",
-    role_id: 2,
+    role_id: 3,
   });
   const [loading, setLoading] = useState(false);
 
@@ -62,7 +62,7 @@ export default function UserCreateForm({ onCreated }) {
   } else if (isProfessor) {
     roleOptions = ROLES.filter(r => r.id !== 1); // Professor pode criar Aluno e Professor, mas não Admin
   } else {
-    roleOptions = ROLES.filter(r => r.id === 2); // Outros só podem criar Aluno
+    roleOptions = ROLES.filter(r => r.id === 3); // Outros só podem criar Aluno
   }
 
   function handleChange(e) {
@@ -78,7 +78,7 @@ export default function UserCreateForm({ onCreated }) {
     try {
       await userService.createUser(token, form);
       toastService.success(`Usuário ${form.nome} cadastrado com sucesso!`);
-      setForm({ nome: "", email: "", senha: "", telefone: "", role_id: 2 });
+      setForm({ nome: "", email: "", senha: "", telefone: "", role_id: 3 });
       if (onCreated) onCreated();
     } catch (err) {
       if (err.message?.includes('email') && err.message?.includes('existe')) {
@@ -124,7 +124,7 @@ export default function UserCreateForm({ onCreated }) {
         <div>
           <label>Papel:</label>
           <input type="text" value={roleOptions[0]?.label || "Aluno"} disabled />
-          <input type="hidden" name="role_id" value={roleOptions[0]?.id || 2} />
+          <input type="hidden" name="role_id" value={roleOptions[0]?.id || 3} />
         </div>
       )}
       <button type="submit" disabled={loading} style={{ marginTop: 16 }}>

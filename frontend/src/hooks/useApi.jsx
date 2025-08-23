@@ -281,11 +281,13 @@ export function useUsuarios(search = "") {
       const userRole = getUserRole(user);
       if (!token || !userRole) throw new Error('Token ou usuário não disponível');
       
-      // Admin pode ver todos, Professor pode ver alunos
-      let endpoint = "/api/usuarios";
-      if (userRole === "Professor") {
-        endpoint = "/api/usuarios/alunos";
+      // Alunos não podem acessar lista de usuários
+      if (userRole === "Aluno") {
+        throw new Error('Acesso negado. Alunos não podem listar usuários.');
       }
+      
+      // Admin e Professor usam o mesmo endpoint que já filtra no backend
+      let endpoint = "/api/usuarios";
       
       let data = await apiRequest(endpoint, { token });
       

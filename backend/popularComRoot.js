@@ -75,14 +75,24 @@ const Processo = sequelize.define('Processo', {
 const Agendamento = sequelize.define('Agendamento', {
     id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
     processo_id: { type: Sequelize.INTEGER },
-    criado_por: { type: Sequelize.INTEGER, allowNull: false },
-    usuario_id: { type: Sequelize.INTEGER, allowNull: false },
-    tipo_evento: { type: Sequelize.ENUM('audiencia', 'prazo', 'reuniao', 'diligencia', 'outro'), allowNull: false },
-    titulo: { type: Sequelize.STRING(200), allowNull: false },
+    titulo: { type: Sequelize.STRING(255), allowNull: false },
     descricao: { type: Sequelize.TEXT },
-    data_evento: { type: Sequelize.DATE, allowNull: false },
-    local: { type: Sequelize.STRING(300) },
-    status: { type: Sequelize.ENUM('agendado', 'concluido', 'cancelado'), defaultValue: 'agendado' }
+    data_inicio: { type: Sequelize.DATE, allowNull: false },
+    data_fim: { type: Sequelize.DATE, allowNull: false },
+    local: { type: Sequelize.STRING(500) },
+    tipo: { type: Sequelize.ENUM('reuniao','audiencia','prazo','outro'), allowNull: false, defaultValue: 'reuniao' },
+    status: { type: Sequelize.ENUM('em_analise','enviando_convites','marcado','cancelado','finalizado'), allowNull: false, defaultValue: 'em_analise' },
+    email_lembrete: { type: Sequelize.STRING(255) },
+    lembrete_enviado: { type: Sequelize.BOOLEAN, defaultValue: false },
+    criado_por: { type: Sequelize.INTEGER, allowNull: false },
+    observacoes: { type: Sequelize.TEXT },
+    convidados: { type: Sequelize.JSON },
+    motivo_recusa: { type: Sequelize.TEXT },
+    aprovado_por: { type: Sequelize.INTEGER },
+    data_aprovacao: { type: Sequelize.DATE },
+    lembrete_1h_enviado: { type: Sequelize.BOOLEAN, defaultValue: false },
+    createdAt: { type: Sequelize.DATE, defaultValue: Sequelize.NOW },
+    updatedAt: { type: Sequelize.DATE, defaultValue: Sequelize.NOW }
 }, { tableName: 'agendamentos', timestamps: false });
 
 const UsuarioProcesso = sequelize.define('UsuarioProcesso', {
@@ -329,54 +339,54 @@ async function popularBancoDeTeste() {
             {
                 processo_id: processosIds[0],
                 criado_por: usuariosIds[0], // Admin
-                usuario_id: usuariosIds[0], // Para o próprio admin
-                tipo_evento: 'audiencia',
                 titulo: 'Audiência de Conciliação',
                 descricao: 'Audiência para tentativa de acordo',
-                data_evento: new Date('2025-02-15 14:00:00'),
+                data_inicio: new Date('2025-02-15 14:00:00'),
+                data_fim: new Date('2025-02-15 15:00:00'),
                 local: 'Sala 1 - Fórum Central',
-                status: 'agendado'
+                tipo: 'audiencia',
+                status: 'marcado'
             },
             {
                 processo_id: processosIds[1],
                 criado_por: usuariosIds[0], // Admin
-                usuario_id: usuariosIds[2], // Para Maria (Aluna)
-                tipo_evento: 'reuniao',
                 titulo: 'Reunião de Orientação',
                 descricao: 'Orientação sobre o processo trabalhista',
-                data_evento: new Date('2025-02-10 10:00:00'),
+                data_inicio: new Date('2025-02-10 10:00:00'),
+                data_fim: new Date('2025-02-10 11:00:00'),
                 local: 'NPJ - Sala de Reuniões',
-                status: 'agendado'
+                tipo: 'reuniao',
+                status: 'marcado'
             },
             {
                 processo_id: processosIds[2],
                 criado_por: usuariosIds[1], // João (Professor)
-                usuario_id: usuariosIds[2], // Para Maria (Aluna)
-                tipo_evento: 'prazo',
                 titulo: 'Prazo para Contestação',
                 descricao: 'Vencimento do prazo para apresentar contestação',
-                data_evento: new Date('2025-02-20 23:59:00'),
+                data_inicio: new Date('2025-02-20 08:00:00'),
+                data_fim: new Date('2025-02-20 23:59:00'),
                 local: 'Online',
-                status: 'agendado'
+                tipo: 'prazo',
+                status: 'marcado'
             },
             {
                 processo_id: processosIds[0],
                 criado_por: usuariosIds[2], // Maria (Aluna)
-                usuario_id: usuariosIds[2], // Para ela mesma
-                tipo_evento: 'outro',
                 titulo: 'Estudo do Caso',
                 descricao: 'Tempo reservado para estudar jurisprudências',
-                data_evento: new Date('2025-02-12 16:00:00'),
+                data_inicio: new Date('2025-02-12 16:00:00'),
+                data_fim: new Date('2025-02-12 18:00:00'),
                 local: 'Biblioteca',
-                status: 'agendado'
+                tipo: 'outro',
+                status: 'marcado'
             }
         ];
 
         for (const agendamento of agendamentos) {
             const [item, created] = await Agendamento.findOrCreate({
-                where: { 
+                where: {
                     titulo: agendamento.titulo,
-                    data_evento: agendamento.data_evento 
+                    data_inicio: agendamento.data_inicio
                 },
                 defaults: agendamento
             });

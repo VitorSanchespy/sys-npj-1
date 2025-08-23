@@ -27,7 +27,7 @@ export default function UserList() {
   const queryClient = useQueryClient();
 
   // Controle de acesso - Aluno não tem acesso
-  if (user?.role_id === 2) {
+  if (user?.role_id === 3) {
     return (
       <div style={{ 
         padding: '40px',
@@ -196,11 +196,11 @@ export default function UserList() {
           fontSize: '1rem',
           color: '#333'
         }}>
-          🔍 Buscar {user?.role_id === 3 ? 'Aluno' : 'Usuário'}:
+          🔍 Buscar Usuário:
         </label>
         <input
           type="text"
-          placeholder={`Digite o nome do ${user?.role_id === 3 ? 'aluno' : 'usuário'} para buscar...`}
+          placeholder="Digite o nome do usuário para buscar..."
           value={search}
           onChange={handleSearch}
           onFocus={() => setShowSuggestions(!!search)}

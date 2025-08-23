@@ -308,6 +308,7 @@ async function enviarLembreteAgendamento(agendamento, emailParticipante, nomePar
 // ...código correto acima...
 
 module.exports = {
+  enviarEmail,
   enviarConviteAgendamento,
   enviarLembreteAgendamento,
   enviarNotificacaoAprovacaoAgendamento,

@@ -1,9 +1,34 @@
 const Agendamento = require('../models/agendamentoModel');
 const Processo = require('../models/processoModel');
 const Usuario = require('../models/usuarioModel');
+const UsuarioProcesso = require('../models/usuarioProcessoModel');
 const emailService = require('../services/emailService');
 const { validationResult } = require('express-validator');
 const { Sequelize } = require('sequelize');
+
+/**
+ * Verificar se um usuário está vinculado ao processo
+ */
+async function verificarUsuarioVinculadoAoProcesso(email, processoId) {
+    if (!processoId || !email) return false;
+    
+    try {
+        const usuario = await Usuario.findOne({ where: { email } });
+        if (!usuario) return false;
+        
+        const vinculo = await UsuarioProcesso.findOne({
+            where: {
+                usuario_id: usuario.id,
+                processo_id: processoId
+            }
+        });
+        
+        return !!vinculo;
+    } catch (error) {
+        console.error(`Erro ao verificar vínculo do usuário ${email} ao processo ${processoId}:`, error);
+        return false;
+    }
+}
 
 exports.criar = async function(req, res) {
     try {
@@ -275,19 +300,27 @@ exports.atualizar = async function(req, res) {
             lembrete_enviado: false
         });
 
-        // Enviar convites para novos convidados
+        // Enviar convites para novos convidados (apenas se vinculados ao processo)
         if (convidados && Array.isArray(convidados)) {
             for (const convidado of convidados) {
                 const jaConvidado = convidadosAntigos.find(c => c.email === convidado.email);
                 if (!jaConvidado && convidado.email) {
-                    try {
-                        await emailService.enviarConviteAgendamento(
-                            agendamento, 
-                            convidado.email, 
-                            convidado.nome
-                        );
-                    } catch (emailError) {
-                        console.error(`Erro ao enviar convite para ${convidado.email}:`, emailError);
+                    // Verificar se o convidado está vinculado ao processo
+                    const vinculado = await verificarUsuarioVinculadoAoProcesso(convidado.email, agendamento.processo_id);
+                    
+                    if (vinculado) {
+                        try {
+                            await emailService.enviarConviteAgendamento(
+                                agendamento, 
+                                convidado.email, 
+                                convidado.nome
+                            );
+                            console.log(`📧 Convite enviado para ${convidado.email} (vinculado ao processo)`);
+                        } catch (emailError) {
+                            console.error(`Erro ao enviar convite para ${convidado.email}:`, emailError);
+                        }
+                    } else {
+                        console.log(`⚠️ Convite NÃO enviado para ${convidado.email} - usuário não vinculado ao processo`);
                     }
                 }
             }
@@ -444,17 +477,29 @@ exports.enviarLembrete = async function(req, res) {
             return res.status(403).json({ success: false, message: 'Sem permissão para enviar lembrete deste agendamento' });
         }
         
-        // Enviar lembrete para o criador se tiver email
+        // Enviar lembrete para o criador se tiver email e estiver vinculado ao processo
         const usuario = await require('../models/usuarioModel').findByPk(agendamento.criado_por);
         if (usuario && usuario.email) {
-            await emailService.enviarLembreteAgendamento(agendamento, usuario.email, usuario.nome);
+            const vinculado = await verificarUsuarioVinculadoAoProcesso(usuario.email, agendamento.processo_id);
+            if (vinculado) {
+                await emailService.enviarLembreteAgendamento(agendamento, usuario.email, usuario.nome);
+                console.log(`📧 Lembrete enviado para criador ${usuario.email} (vinculado ao processo)`);
+            } else {
+                console.log(`⚠️ Lembrete NÃO enviado para criador ${usuario.email} - não vinculado ao processo`);
+            }
         }
         
-        // Enviar para todos os convidados (independente do status)
+        // Enviar para convidados vinculados ao processo
         if (agendamento.convidados && Array.isArray(agendamento.convidados)) {
             for (const convidado of agendamento.convidados) {
                 if (convidado.email) {
-                    await emailService.enviarLembreteAgendamento(agendamento, convidado.email, convidado.nome);
+                    const vinculado = await verificarUsuarioVinculadoAoProcesso(convidado.email, agendamento.processo_id);
+                    if (vinculado) {
+                        await emailService.enviarLembreteAgendamento(agendamento, convidado.email, convidado.nome);
+                        console.log(`📧 Lembrete enviado para ${convidado.email} (vinculado ao processo)`);
+                    } else {
+                        console.log(`⚠️ Lembrete NÃO enviado para ${convidado.email} - não vinculado ao processo`);
+                    }
                 }
             }
         }
@@ -675,14 +720,22 @@ exports.aprovar = async function(req, res) {
         if (observacoes) agendamento.observacoes = observacoes;
         await agendamento.save();
         
-        // Enviar convites para os convidados
+        // Enviar convites para os convidados (apenas se vinculados ao processo)
         if (agendamento.convidados && Array.isArray(agendamento.convidados) && agendamento.convidados.length > 0) {
             for (const convidado of agendamento.convidados) {
                 if (convidado.email) {
-                    try {
-                        await emailService.enviarConviteAgendamento(agendamento, convidado.email, convidado.nome);
-                    } catch (emailError) {
-                        console.error(`Erro ao enviar convite para ${convidado.email}:`, emailError);
+                    // Verificar se o convidado está vinculado ao processo
+                    const vinculado = await verificarUsuarioVinculadoAoProcesso(convidado.email, agendamento.processo_id);
+                    
+                    if (vinculado) {
+                        try {
+                            await emailService.enviarConviteAgendamento(agendamento, convidado.email, convidado.nome);
+                            console.log(`📧 Convite enviado para ${convidado.email} (vinculado ao processo)`);
+                        } catch (emailError) {
+                            console.error(`Erro ao enviar convite para ${convidado.email}:`, emailError);
+                        }
+                    } else {
+                        console.log(`⚠️ Convite NÃO enviado para ${convidado.email} - usuário não vinculado ao processo`);
                     }
                 }
             }
