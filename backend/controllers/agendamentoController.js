@@ -58,7 +58,15 @@ exports.criar = async function(req, res) {
             }
         }
         
-        // Criar o agendamento com status inicial "em_analise"
+        // Verificar se o usuário é Admin ou Professor (pode auto-aprovar)
+        const userRole = req.user.role?.nome || req.user.role;
+        const isAdminOrProfessor = ['Admin', 'Professor'].includes(userRole);
+        
+        // Status inicial: 'em_analise' para usuários normais, mas pode ser auto-aprovado para Admin/Professor
+        let statusInicial = 'em_analise';
+        let mensagemResposta = 'Agendamento criado com sucesso. Aguardando aprovação.';
+        
+        // Criar o agendamento
         const agendamento = await Agendamento.create({
             processo_id,
             titulo,
@@ -71,8 +79,61 @@ exports.criar = async function(req, res) {
             convidados: convidados || [],
             observacoes,
             criado_por: req.user.id,
-            status: 'em_analise'
+            status: statusInicial
         });
+        
+        // Se é Admin/Professor, auto-aprovar e aplicar lógica de convidados
+        if (isAdminOrProfessor) {
+            const temConvidados = convidados && 
+                                  Array.isArray(convidados) && 
+                                  convidados.length > 0 &&
+                                  convidados.some(c => c.email && c.email.trim() !== '');
+            
+            // Se não há convidados, marcar diretamente como 'marcado'
+            // Se há convidados, marcar como 'enviando_convites'
+            agendamento.status = temConvidados ? 'enviando_convites' : 'marcado';
+            agendamento.aprovado_por = req.user.id;
+            agendamento.data_aprovacao = new Date();
+            await agendamento.save();
+            
+            // Enviar convites apenas se há convidados
+            if (temConvidados) {
+                let convitesEnviados = 0;
+                for (const convidado of convidados) {
+                    if (convidado.email && convidado.email.trim() !== '') {
+                        // Verificar se o convidado está vinculado ao processo (se há processo)
+                        let podeEnviar = true;
+                        if (processo_id) {
+                            podeEnviar = await verificarUsuarioVinculadoAoProcesso(convidado.email, processo_id);
+                        }
+                        
+                        if (podeEnviar) {
+                            try {
+                                await emailService.enviarConviteAgendamento(agendamento, convidado.email, convidado.nome);
+                                console.log(`📧 Convite enviado para ${convidado.email}`);
+                                convitesEnviados++;
+                            } catch (emailError) {
+                                console.error(`Erro ao enviar convite para ${convidado.email}:`, emailError);
+                            }
+                        } else {
+                            console.log(`⚠️ Convite NÃO enviado para ${convidado.email} - usuário não vinculado ao processo`);
+                        }
+                    }
+                }
+                
+                if (convitesEnviados > 0) {
+                    mensagemResposta = `Agendamento criado e aprovado automaticamente. ${convitesEnviados} convite(s) enviado(s).`;
+                } else {
+                    // Se não foi possível enviar nenhum convite, marcar como 'marcado'
+                    agendamento.status = 'marcado';
+                    await agendamento.save();
+                    mensagemResposta = 'Agendamento criado e marcado automaticamente (nenhum convidado válido encontrado).';
+                }
+            } else {
+                mensagemResposta = 'Agendamento criado e marcado automaticamente (sem convidados).';
+                console.log(`✅ Agendamento ${agendamento.id} marcado automaticamente - sem convidados`);
+            }
+        }
         
         // Buscar o agendamento criado com relacionamentos
         const agendamentoCriado = await Agendamento.findByPk(agendamento.id, {
@@ -84,18 +145,20 @@ exports.criar = async function(req, res) {
 
                 res.status(201).json({ 
                         success: true, 
-                        message: 'Agendamento criado com sucesso. Aguardando aprovação.', 
+                        message: mensagemResposta, 
                         data: agendamentoCriado 
                 });
 
-                // Enviar e-mail somente após resposta de sucesso
-                setImmediate(async () => {
-                    try {
-                        await emailService.enviarNotificacaoAprovacaoAgendamento(agendamentoCriado);
-                    } catch (emailError) {
-                        console.error('Erro ao enviar notificação de aprovação:', emailError);
-                    }
-                });
+                // Enviar e-mail de notificação apenas se não foi auto-aprovado
+                if (!isAdminOrProfessor) {
+                    setImmediate(async () => {
+                        try {
+                            await emailService.enviarNotificacaoAprovacaoAgendamento(agendamentoCriado);
+                        } catch (emailError) {
+                            console.error('Erro ao enviar notificação de aprovação:', emailError);
+                        }
+                    });
+                }
     } catch (error) {
         console.error('Erro ao criar agendamento:', error);
         res.status(500).json({ success: false, message: 'Erro interno do servidor', error: error.message });
@@ -715,17 +778,27 @@ exports.aprovar = async function(req, res) {
             });
         }
         
-        // Aprovar e marcar como enviando convites
-        agendamento.status = 'enviando_convites';
+        // Verificar se há convidados antes de definir o status
+        const temConvidados = agendamento.convidados && 
+                              Array.isArray(agendamento.convidados) && 
+                              agendamento.convidados.length > 0 &&
+                              agendamento.convidados.some(c => c.email && c.email.trim() !== '');
+        
+        // Se não há convidados, marcar diretamente como 'marcado'
+        // Se há convidados, marcar como 'enviando_convites'
+        agendamento.status = temConvidados ? 'enviando_convites' : 'marcado';
         agendamento.aprovado_por = req.user.id;
         agendamento.data_aprovacao = new Date();
         if (observacoes) agendamento.observacoes = observacoes;
         await agendamento.save();
         
-        // Enviar convites para os convidados (apenas se vinculados ao processo)
-        if (agendamento.convidados && Array.isArray(agendamento.convidados) && agendamento.convidados.length > 0) {
+        let mensagemResposta = '';
+        
+        // Enviar convites apenas se há convidados
+        if (temConvidados) {
+            let convitesEnviados = 0;
             for (const convidado of agendamento.convidados) {
-                if (convidado.email) {
+                if (convidado.email && convidado.email.trim() !== '') {
                     // Verificar se o convidado está vinculado ao processo
                     const vinculado = await verificarUsuarioVinculadoAoProcesso(convidado.email, agendamento.processo_id);
                     
@@ -733,6 +806,7 @@ exports.aprovar = async function(req, res) {
                         try {
                             await emailService.enviarConviteAgendamento(agendamento, convidado.email, convidado.nome);
                             console.log(`📧 Convite enviado para ${convidado.email} (vinculado ao processo)`);
+                            convitesEnviados++;
                         } catch (emailError) {
                             console.error(`Erro ao enviar convite para ${convidado.email}:`, emailError);
                         }
@@ -741,11 +815,23 @@ exports.aprovar = async function(req, res) {
                     }
                 }
             }
+            
+            if (convitesEnviados > 0) {
+                mensagemResposta = `Agendamento aprovado com sucesso. ${convitesEnviados} convite(s) enviado(s).`;
+            } else {
+                // Se não foi possível enviar nenhum convite (nenhum convidado vinculado), marcar como 'marcado'
+                agendamento.status = 'marcado';
+                await agendamento.save();
+                mensagemResposta = 'Agendamento aprovado e marcado automaticamente (nenhum convidado válido encontrado).';
+            }
+        } else {
+            mensagemResposta = 'Agendamento aprovado e marcado automaticamente (sem convidados).';
+            console.log(`✅ Agendamento ${agendamento.id} marcado automaticamente - sem convidados`);
         }
         
         res.json({ 
             success: true, 
-            message: 'Agendamento aprovado com sucesso. Convites sendo enviados.',
+            message: mensagemResposta,
             data: agendamento 
         });
     } catch (error) {

@@ -22,6 +22,46 @@ class Agendamento extends Model {
     this.status = 'marcado';
     return this.save();
   }
+  
+  /**
+   * Verificar se deve marcar automaticamente como 'marcado'
+   * quando não há convidados ou todos responderam
+   */
+  async verificarAutoMarcacao() {
+    if (this.status !== 'enviando_convites') {
+      return false;
+    }
+    
+    const convidados = this.convidados || [];
+    
+    // Se não há convidados, marcar como 'marcado'
+    if (!Array.isArray(convidados) || convidados.length === 0) {
+      this.status = 'marcado';
+      await this.save();
+      console.log(`✅ Agendamento ${this.id} marcado automaticamente - sem convidados`);
+      return true;
+    }
+    
+    // Verificar se há convidados com emails válidos
+    const convidadosComEmail = convidados.filter(c => c.email && c.email.trim() !== '');
+    if (convidadosComEmail.length === 0) {
+      this.status = 'marcado';
+      await this.save();
+      console.log(`✅ Agendamento ${this.id} marcado automaticamente - nenhum email válido`);
+      return true;
+    }
+    
+    // Se pelo menos um convidado aceitou, marcar como 'marcado'
+    const algumAceitou = convidadosComEmail.some(c => c.status === 'aceito');
+    if (algumAceitou) {
+      this.status = 'marcado';
+      await this.save();
+      console.log(`✅ Agendamento ${this.id} marcado automaticamente - pelo menos um convidado aceitou`);
+      return true;
+    }
+    
+    return false;
+  }
   marcarComoFinalizado() {
     this.status = 'finalizado';
     return this.save();
@@ -179,15 +219,10 @@ class Agendamento extends Model {
       convidado.status = 'aceito';
       convidado.respondido_em = new Date();
       this.convidados = convidados;
-      
-      // Se o agendamento está em "enviando_convites" e pelo menos um convidado aceitou,
-      // marcar como "marcado"
-      if (this.status === 'enviando_convites') {
-        this.status = 'marcado';
-        console.log(`✅ Agendamento ${this.id} marcado automaticamente após aceite de convite`);
-      }
-      
       await this.save();
+      
+      // Verificar se deve marcar automaticamente como 'marcado'
+      await this.verificarAutoMarcacao();
     }
     return this;
   }
