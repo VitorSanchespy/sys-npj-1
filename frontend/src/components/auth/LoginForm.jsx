@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { toastService } from "../../services/toastService";
+import { toastAudit } from "../../services/toastSystemAudit";
 
 export default function LoginForm({ onSuccess }) {
   const { login, loading } = useAuthContext();
@@ -13,15 +13,15 @@ export default function LoginForm({ onSuccess }) {
   // Validação de campos
   const validateForm = () => {
     if (!email.trim()) {
-      toastService.warning("E-mail é obrigatório");
+      toastAudit.validation.requiredField("E-mail");
       return false;
     }
     if (!senha.trim()) {
-      toastService.warning("Senha é obrigatória");
+      toastAudit.validation.requiredField("Senha");
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toastService.warning("E-mail deve ter um formato válido");
+      toastAudit.validation.invalidEmail();
       return false;
     }
     return true;
@@ -38,7 +38,7 @@ export default function LoginForm({ onSuccess }) {
       console.log('🔄 Resposta do AuthContext:', res);
       
       if (res.success) {
-        toastService.success("Login realizado com sucesso! Bem-vindo(a) de volta.");
+        toastAudit.auth.loginSuccess(res.user?.nome || "Usuário");
         if (onSuccess) onSuccess();
       } else {
         console.log('❌ Login falhou - dados do erro:', {
@@ -51,25 +51,8 @@ export default function LoginForm({ onSuccess }) {
         setEmail("");
         setSenha("");
         
-        // Tratamento específico baseado na mensagem do backend
-        if (res.message === 'Email não encontrado no sistema' || 
-            res.message?.includes('Email não encontrado') ||
-            res.message?.includes('não encontrado')) {
-          toastService.error("❌ E-mail não encontrado. Verifique se está digitado corretamente ou faça seu cadastro.");
-        } else if (res.message === 'Senha incorreta' || 
-                   res.message?.includes('Senha incorreta') ||
-                   res.message?.includes('senha') ||
-                   res.message?.includes('incorret')) {
-          toastService.error("❌ Senha incorreta. Verifique sua senha e tente novamente.");
-        } else if (res.message === 'Credenciais inválidas' || 
-                   res.message?.includes('Credenciais inválidas')) {
-          toastService.error("❌ E-mail ou senha incorretos. Verifique seus dados e tente novamente.");
-        } else if (res.message?.includes('inativ') || 
-                   res.message?.includes('bloqueado')) {
-          toastService.error("❌ Sua conta está inativa. Entre em contato com o administrador.");
-        } else {
-          toastService.error(`❌ Falha no login: ${res.message || "Erro inesperado. Tente novamente."}`);
-        }
+        // Usar sistema auditado para tratamento de erro
+        toastAudit.auth.loginError(res.message);
       }
     } catch (err) {
       console.log('❌ Erro capturado no catch:', {
@@ -82,29 +65,8 @@ export default function LoginForm({ onSuccess }) {
       setEmail("");
       setSenha("");
       
-      // Tratamento baseado no status HTTP e mensagem específica
-      if (err.status === 404) {
-        // Email não encontrado
-        toastService.error("❌ E-mail não encontrado. Verifique se está digitado corretamente ou faça seu cadastro.");
-      } else if (err.status === 401) {
-        // Senha incorreta ou credenciais inválidas
-        if (err.message === 'Senha incorreta' || err.message?.includes('Senha incorreta')) {
-          toastService.error("❌ Senha incorreta. Verifique sua senha e tente novamente.");
-        } else {
-          toastService.error("❌ E-mail ou senha incorretos. Verifique seus dados e tente novamente.");
-        }
-      } else if (err.status >= 500) {
-        toastService.error("❌ Erro no servidor. Tente novamente em alguns instantes.");
-      } else {
-        // Fallback para outros erros
-        if (err.message?.includes('Email não encontrado') || err.message?.includes('não encontrado')) {
-          toastService.error("❌ E-mail não encontrado. Verifique se está digitado corretamente ou faça seu cadastro.");
-        } else if (err.message?.includes('Senha incorreta') || err.message?.includes('senha')) {
-          toastService.error("❌ Senha incorreta. Verifique sua senha e tente novamente.");
-        } else {
-          toastService.error(`❌ Falha no login: ${err.message || "Erro inesperado. Tente novamente."}`);
-        }
-      }
+      // Usar sistema auditado para tratamento de erro
+      toastAudit.auth.loginError(err.message || err);
     }
   };
 

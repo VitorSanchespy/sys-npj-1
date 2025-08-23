@@ -1,7 +1,7 @@
 // Context de Autenticação - Gerencia estado de login e usuário logado
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { authService } from "../api/services";
-import { toastService } from "../services/toastService";
+import { toastAudit } from "../services/toastSystemAudit";
 import Loader from "../components/common/Loader"; 
 
 const AuthContext = createContext();
@@ -142,7 +142,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
-    toastService.userLoggedOut();
+    toastAudit.auth.logoutSuccess();
   };
 
   if (loading) return <Loader text="Verificando autenticação..." />;

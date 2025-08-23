@@ -82,18 +82,20 @@ exports.criar = async function(req, res) {
             ]
         });
 
-        // Notificar responsáveis (Admin/Professor) para aprovação
-        try {
-            await emailService.enviarNotificacaoAprovacaoAgendamento(agendamentoCriado);
-        } catch (emailError) {
-            console.error('Erro ao enviar notificação de aprovação:', emailError);
-        }
-        
-        res.status(201).json({ 
-            success: true, 
-            message: 'Agendamento criado com sucesso. Aguardando aprovação.', 
-            data: agendamentoCriado 
-        });
+                res.status(201).json({ 
+                        success: true, 
+                        message: 'Agendamento criado com sucesso. Aguardando aprovação.', 
+                        data: agendamentoCriado 
+                });
+
+                // Enviar e-mail somente após resposta de sucesso
+                setImmediate(async () => {
+                    try {
+                        await emailService.enviarNotificacaoAprovacaoAgendamento(agendamentoCriado);
+                    } catch (emailError) {
+                        console.error('Erro ao enviar notificação de aprovação:', emailError);
+                    }
+                });
     } catch (error) {
         console.error('Erro ao criar agendamento:', error);
         res.status(500).json({ success: false, message: 'Erro interno do servidor', error: error.message });

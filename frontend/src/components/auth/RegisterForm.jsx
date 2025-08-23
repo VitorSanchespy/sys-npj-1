@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { getUserRole } from "../../hooks/useApi";
-import { toastService } from "../../services/toastService";
+import { toastAudit } from "../../services/toastSystemAudit";
 
 export default function RegisterForm() {
   const { user, register } = useAuthContext();
@@ -17,27 +17,27 @@ export default function RegisterForm() {
   // Validação de campos
   const validateForm = () => {
     if (!nome.trim()) {
-      toastService.warning("Nome completo é obrigatório");
+      toastAudit.validation.requiredField("Nome completo");
       return false;
     }
     if (nome.trim().length < 2) {
-      toastService.warning("Nome deve ter pelo menos 2 caracteres");
+      toastAudit.warning("Nome deve ter pelo menos 2 caracteres");
       return false;
     }
     if (!email.trim()) {
-      toastService.warning("E-mail é obrigatório");
+      toastAudit.validation.requiredField("E-mail");
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toastService.warning("E-mail deve ter um formato válido");
+      toastAudit.validation.invalidEmail();
       return false;
     }
     if (!senha.trim()) {
-      toastService.warning("Senha é obrigatória");
+      toastAudit.validation.requiredField("Senha");
       return false;
     }
     if (senha.length < 6) {
-      toastService.warning("Senha deve ter pelo menos 6 caracteres");
+      toastAudit.validation.passwordTooShort();
       return false;
     }
     return true;
@@ -55,32 +55,20 @@ export default function RegisterForm() {
       else if (user && userRole === "Professor" && (roleId === 2 || roleId === 3)) finalRoleId = roleId;
       // Professor não pode criar Admin
       else if (user && userRole === "Professor" && roleId === 1) {
-        toastService.error("Professores não podem criar Administradores");
+        toastAudit.error("Professores não podem criar Administradores");
         setLoading(false);
         return;
       }
       
       const res = await register(nome, email, senha, "", finalRoleId);
       if (res.success) {
-        toastService.success("Conta criada com sucesso! Redirecionando para login...");
+        toastAudit.auth.registerSuccess(nome);
         setTimeout(() => navigate("/login"), 2000);
       } else {
-        if (res.message?.includes('email') && res.message?.includes('existe')) {
-          toastService.error("Este e-mail já está cadastrado. Tente fazer login ou use outro e-mail.");
-        } else if (res.message?.includes('senha')) {
-          toastService.error("Senha não atende aos critérios de segurança. Use pelo menos 6 caracteres.");
-        } else {
-          toastService.error(`Falha ao criar conta: ${res.message || "Erro inesperado"}`);
-        }
+        toastAudit.auth.registerError(res.message);
       }
     } catch (err) {
-      if (err.message?.includes('email') && err.message?.includes('existe')) {
-        toastService.error("Este e-mail já está cadastrado. Tente fazer login ou use outro e-mail.");
-      } else if (err.message?.includes('validation') || err.message?.includes('inválido')) {
-        toastService.error("Dados inválidos. Verifique os campos e tente novamente.");
-      } else {
-        toastService.error(`Erro no cadastro: ${err.message || "Erro inesperado. Tente novamente."}`);
-      }
+      toastAudit.auth.registerError(err.message || err);
     }
     
     setLoading(false);

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { userService } from "../../api/services";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { getUserRole } from "../../hooks/useApi";
-import { toastService } from "../../services/toastService";
+import { toastAudit } from "../../services/toastSystemAudit";
 
 const ROLES = [
   { id: 3, label: "Aluno" },
@@ -24,27 +24,27 @@ export default function UserCreateForm({ onCreated }) {
   // Validação de campos
   const validateForm = () => {
     if (!form.nome.trim()) {
-      toastService.warning("Nome é obrigatório");
+      toastAudit.validation.requiredField("Nome");
       return false;
     }
     if (form.nome.trim().length < 2) {
-      toastService.warning("Nome deve ter pelo menos 2 caracteres");
+      toastAudit.warning("Nome deve ter pelo menos 2 caracteres");
       return false;
     }
     if (!form.email.trim()) {
-      toastService.warning("E-mail é obrigatório");
+      toastAudit.validation.requiredField("E-mail");
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      toastService.warning("E-mail deve ter um formato válido");
+      toastAudit.validation.invalidEmail();
       return false;
     }
     if (!form.senha.trim()) {
-      toastService.warning("Senha é obrigatória");
+      toastAudit.validation.requiredField("Senha");
       return false;
     }
     if (form.senha.length < 6) {
-      toastService.warning("Senha deve ter pelo menos 6 caracteres");
+      toastAudit.validation.passwordTooShort();
       return false;
     }
     return true;
@@ -77,17 +77,11 @@ export default function UserCreateForm({ onCreated }) {
     setLoading(true);
     try {
       await userService.createUser(token, form);
-      toastService.success(`Usuário ${form.nome} cadastrado com sucesso!`);
+      toastAudit.user.createSuccess(form.nome);
       setForm({ nome: "", email: "", senha: "", telefone: "", role_id: 3 });
       if (onCreated) onCreated();
     } catch (err) {
-      if (err.message?.includes('email') && err.message?.includes('existe')) {
-        toastService.error("Este e-mail já está cadastrado no sistema");
-      } else if (err.message?.includes('validation') || err.message?.includes('inválido')) {
-        toastService.error("Dados inválidos. Verifique os campos obrigatórios");
-      } else {
-        toastService.error(`Erro ao cadastrar usuário: ${err.message || 'Erro inesperado'}`);
-      }
+      toastAudit.user.createError(err.message || 'Erro inesperado');
     }
     setLoading(false);
   }

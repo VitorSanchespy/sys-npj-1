@@ -200,34 +200,11 @@ const preveniDuplicacaoAgendamento = async (req, res, next) => {
     
     if (agendamentoUsuarioConflitante) {
       console.log('❌ Bloqueando criação devido ao conflito de usuário');
-      const processoConflito = agendamentoUsuarioConflitante.processo;
       
       return res.status(409).json({
         success: false,
-        tipo: 'conflito_usuario',
-        titulo: 'Conflito de Agendamento',
-        mensagem: `Você já possui um agendamento no mesmo horário`,
-        detalhes: {
-          agendamento_existente: {
-            titulo: agendamentoUsuarioConflitante.titulo,
-            processo: {
-              numero: processoConflito?.numero_processo || `#${agendamentoUsuarioConflitante.processo_id}`,
-              titulo: processoConflito?.titulo || 'Processo sem título'
-            },
-            data_inicio: agendamentoUsuarioConflitante.data_inicio,
-            data_fim: agendamentoUsuarioConflitante.data_fim
-          },
-          horario_solicitado: {
-            inicio: data_inicio,
-            fim: data_fim
-          }
-        },
-        toast: {
-          type: 'error',
-          title: 'Conflito de Horário',
-          message: `Você já tem "${agendamentoUsuarioConflitante.titulo}" marcado para este horário no processo ${processoConflito?.numero_processo || agendamentoUsuarioConflitante.processo_id}`,
-          duration: 6000
-        }
+        message: 'Você já possui um agendamento no mesmo horário',
+        toast: 'Você já possui um agendamento no mesmo horário'
       });
     }
     

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { apiRequest } from '@/api/apiRequest';
-import { toastService } from '@/services/toastService';
+import { toastAudit } from '@/services/toastSystemAudit';
 import Button from '@/components/common/Button';
 import { formatDateTimeForInput, formatDate } from '@/utils/commonUtils';
 
@@ -222,9 +222,9 @@ const AgendamentoForm = ({
 
       if (response.success) {
         if (isEditing) {
-          toastService.scheduleUpdated(formData.titulo || 'Agendamento');
+          toastAudit.schedule.updateSuccess(formData.titulo || 'Agendamento');
         } else {
-          toastService.scheduleCreated(formData.titulo || 'Agendamento');
+          toastAudit.schedule.createSuccess(formData.titulo || 'Agendamento');
         }
         onSuccess?.(response.data);
       } else {
@@ -237,19 +237,28 @@ const AgendamentoForm = ({
       }
     } catch (error) {
       console.error('Erro ao salvar agendamento:', error);
-      const errorMessage = error.message || 'Erro interno do servidor';
-      
-      if (errorMessage.includes('conflito') || errorMessage.includes('já existe')) {
-        toastService.error('Já existe um agendamento neste horário');
-      } else if (errorMessage.includes('data') || errorMessage.includes('horário')) {
-        toastService.error('Erro nas datas: verifique se estão corretas');
-      } else if (errorMessage.includes('validation') || errorMessage.includes('inválido')) {
-        toastService.error('Dados inválidos. Verifique os campos obrigatórios');
+      // Tenta extrair o toast do backend, seja em error.response.data ou error.data
+      const backendToast =
+        error?.response?.data?.toast ||
+        error?.data?.toast ||
+        (typeof error === 'object' && error.toast);
+
+      if (backendToast) {
+        // Se backendToast é uma string, usa diretamente
+        const toastMessage = typeof backendToast === 'string' ? backendToast : backendToast.message;
+        toastAudit.schedule.conflictError();
+        setError(toastMessage || 'Conflito de agendamento. Verifique o toast acima.');
       } else {
-        toastService.error(`Erro ao salvar agendamento: ${errorMessage}`);
+        // Garante que errorMessage seja string
+        let errorMessage = error?.message;
+        if (typeof errorMessage !== 'string') {
+          errorMessage = JSON.stringify(errorMessage);
+        }
+
+        // Usar sistema auditado para tratar erros
+        toastAudit.schedule.createError(errorMessage);
+        setError(errorMessage);
       }
-      
-      setError(errorMessage);
     } finally {
       setLoading(false);
     }
