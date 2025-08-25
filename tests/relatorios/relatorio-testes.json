@@ -1,39 +1,39 @@
 {
-  "timestamp": "2025-08-25T17:22:59.739Z",
-  "tempoTotal": -1756142552008,
-  "tempoTotalFormatado": "-1756142552008ms",
+  "timestamp": "2025-08-25T17:52:46.912Z",
+  "tempoTotal": -1756144338074,
+  "tempoTotalFormatado": "-1756144338074ms",
   "estatisticas": {
     "totalSuites": 121,
     "totalTestes": 600,
-    "totalPassou": 547,
-    "totalFalhou": 53,
+    "totalPassou": 555,
+    "totalFalhou": 45,
     "categoriasComErro": 0,
-    "taxaSucesso": 91.16666666666666,
+    "taxaSucesso": 92.5,
     "categorias": 6
   },
   "resultados": {
     "backend": {
       "categoria": "backend",
-      "inicio": 1756142555940,
+      "inicio": 1756144341903,
       "arquivos": 8,
       "suites": 65,
       "testes": 361,
-      "passou": 328,
-      "falhou": 33,
-      "tempo": 13062,
+      "passou": 330,
+      "falhou": 31,
+      "tempo": 14716,
       "cobertura": {
-        "percentual": 88,
-        "linhas": 1351,
-        "cobertas": 805
+        "percentual": 99,
+        "linhas": 1009,
+        "cobertas": 885
       },
       "detalhes": [
         {
           "arquivo": "agendamentos.spec.js",
           "suites": 8,
           "testes": 51,
-          "passou": 40,
-          "falhou": 11,
-          "tempo": 2444
+          "passou": 48,
+          "falhou": 3,
+          "tempo": 2408
         },
         {
           "arquivo": "arquivos.spec.js",
@@ -41,23 +41,23 @@
           "testes": 56,
           "passou": 53,
           "falhou": 3,
-          "tempo": 2448
+          "tempo": 1971
         },
         {
           "arquivo": "atualizacoes.spec.js",
           "suites": 9,
           "testes": 61,
-          "passou": 57,
-          "falhou": 4,
-          "tempo": 605
+          "passou": 48,
+          "falhou": 13,
+          "tempo": 1062
         },
         {
           "arquivo": "auth.spec.js",
           "suites": 9,
           "testes": 24,
-          "passou": 19,
-          "falhou": 5,
-          "tempo": 1284
+          "passou": 22,
+          "falhou": 2,
+          "tempo": 2118
         },
         {
           "arquivo": "dashboard.spec.js",
@@ -65,7 +65,7 @@
           "testes": 51,
           "passou": 48,
           "falhou": 3,
-          "tempo": 2221
+          "tempo": 1980
         },
         {
           "arquivo": "processos.spec.js",
@@ -73,7 +73,7 @@
           "testes": 40,
           "passou": 38,
           "falhou": 2,
-          "tempo": 1697
+          "tempo": 1798
         },
         {
           "arquivo": "tabelas-auxiliares.spec.js",
@@ -81,7 +81,7 @@
           "testes": 49,
           "passou": 46,
           "falhou": 3,
-          "tempo": 1274
+          "tempo": 1768
         },
         {
           "arquivo": "usuarios.spec.js",
@@ -89,29 +89,29 @@
           "testes": 29,
           "passou": 27,
           "falhou": 2,
-          "tempo": 1072
+          "tempo": 1604
         }
       ],
-      "fim": 1756142569002
+      "fim": 1756144356619
     },
     "frontend": {
       "categoria": "frontend",
-      "inicio": 1756142569506,
+      "inicio": 1756144357133,
       "arquivos": 2,
       "suites": 20,
       "testes": 91,
-      "passou": 80,
-      "falhou": 11,
-      "tempo": 2917,
+      "passou": 86,
+      "falhou": 5,
+      "tempo": 4204,
       "cobertura": null,
       "detalhes": [
         {
           "arquivo": "components.spec.js",
           "suites": 9,
           "testes": 39,
-          "passou": 31,
-          "falhou": 8,
-          "tempo": 1066
+          "passou": 37,
+          "falhou": 2,
+          "tempo": 2039
         },
         {
           "arquivo": "routes.spec.js",
@@ -119,20 +119,20 @@
           "testes": 52,
           "passou": 49,
           "falhou": 3,
-          "tempo": 1848
+          "tempo": 2163
         }
       ],
-      "fim": 1756142572423
+      "fim": 1756144361337
     },
     "integration": {
       "categoria": "integration",
-      "inicio": 1756142572424,
+      "inicio": 1756144361337,
       "arquivos": 2,
       "suites": 13,
       "testes": 46,
       "passou": 43,
       "falhou": 3,
-      "tempo": 3429,
+      "tempo": 2579,
       "cobertura": null,
       "detalhes": [
         {
@@ -141,7 +141,7 @@
           "testes": 27,
           "passou": 25,
           "falhou": 2,
-          "tempo": 1372
+          "tempo": 1259
         },
         {
           "arquivo": "inter-system.spec.js",
@@ -149,20 +149,20 @@
           "testes": 19,
           "passou": 18,
           "falhou": 1,
-          "tempo": 2055
+          "tempo": 1318
         }
       ],
-      "fim": 1756142575853
+      "fim": 1756144363916
     },
     "performance": {
       "categoria": "performance",
-      "inicio": 1756142575853,
+      "inicio": 1756144363917,
       "arquivos": 1,
       "suites": 7,
       "testes": 19,
       "passou": 18,
       "falhou": 1,
-      "tempo": 1848,
+      "tempo": 1175,
       "cobertura": null,
       "detalhes": [
         {
@@ -171,20 +171,20 @@
           "testes": 19,
           "passou": 18,
           "falhou": 1,
-          "tempo": 1847
+          "tempo": 1173
         }
       ],
-      "fim": 1756142577701
+      "fim": 1756144365092
     },
     "security": {
       "categoria": "security",
-      "inicio": 1756142577703,
+      "inicio": 1756144365095,
       "arquivos": 1,
       "suites": 7,
       "testes": 23,
       "passou": 21,
       "falhou": 2,
-      "tempo": 1404,
+      "tempo": 584,
       "cobertura": null,
       "detalhes": [
         {
@@ -193,20 +193,20 @@
           "testes": 23,
           "passou": 21,
           "falhou": 2,
-          "tempo": 1402
+          "tempo": 569
         }
       ],
-      "fim": 1756142579107
+      "fim": 1756144365679
     },
     "e2e": {
       "categoria": "e2e",
-      "inicio": 1756142579113,
+      "inicio": 1756144365680,
       "arquivos": 1,
       "suites": 9,
       "testes": 60,
       "passou": 57,
       "falhou": 3,
-      "tempo": 607,
+      "tempo": 1215,
       "cobertura": null,
       "detalhes": [
         {
@@ -215,10 +215,10 @@
           "testes": 60,
           "passou": 57,
           "falhou": 3,
-          "tempo": 605
+          "tempo": 1213
         }
       ],
-      "fim": 1756142579720
+      "fim": 1756144366895
     }
   },
   "logExecucao": []

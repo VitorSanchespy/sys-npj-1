@@ -13,7 +13,7 @@
   ],
   "testTimeout": 30000,
   "setupFilesAfterEnv": [
-    "<rootDir>/tests/sistema-completo/setup.js"
+    "<rootDir>/setup.js"
   ],
   "verbose": true
 }

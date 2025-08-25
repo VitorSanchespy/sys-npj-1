@@ -10,39 +10,55 @@ process.env.DB_USER = 'test_user';
 process.env.DB_PASSWORD = 'test_password';
 process.env.DB_PORT = '5432';
 
-// Mock Google Calendar API - Enhanced
-jest.mock('../services/calendarService', () => ({
-  isAvailable: jest.fn(() => true),
-  createEvent: jest.fn(() => Promise.resolve({
-    success: true,
-    eventId: 'mock-google-event-id',
-    htmlLink: 'https://calendar.google.com/mock-event'
-  })),
-  updateEvent: jest.fn(() => Promise.resolve({
-    success: true,
-    eventId: 'mock-google-event-id',
-    htmlLink: 'https://calendar.google.com/mock-event'
-  })),
-  deleteEvent: jest.fn(() => Promise.resolve({
-    success: true
-  })),
-  listEvents: jest.fn(() => Promise.resolve({
-    success: true,
-    events: []
-  }))
-}));
+// Mock condicionais para serviços que podem não existir
+const fs = require('fs');
 
-// Mock Enhanced Notification Service
-jest.mock('../services/enhancedNotificationService', () => ({
-  isConfigured: jest.fn(() => true),
-  sendCustomNotification: jest.fn(() => Promise.resolve(true)),
-  sendReminderEmail: jest.fn(() => Promise.resolve(true)),
-  checkUpcomingEvents: jest.fn(() => Promise.resolve()),
-  generateEmailTemplate: jest.fn((agendamento) => ({
-    subject: `Lembrete: ${agendamento.summary}`,
-    html: `<p>Reunião: ${agendamento.summary}</p>`
-  }))
-}));
+// Função para verificar se módulo existe
+function moduleExists(modulePath) {
+  try {
+    const fullPath = path.resolve(__dirname, modulePath);
+    return fs.existsSync(fullPath + '.js');
+  } catch (error) {
+    return false;
+  }
+}
+
+// Mock services apenas se existirem
+if (moduleExists('../services/calendarService')) {
+  jest.mock('../services/calendarService', () => ({
+    isAvailable: jest.fn(() => true),
+    createEvent: jest.fn(() => Promise.resolve({
+      success: true,
+      eventId: 'mock-google-event-id',
+      htmlLink: 'https://calendar.google.com/mock-event'
+    })),
+    updateEvent: jest.fn(() => Promise.resolve({
+      success: true,
+      eventId: 'mock-google-event-id',
+      htmlLink: 'https://calendar.google.com/mock-event'
+    })),
+    deleteEvent: jest.fn(() => Promise.resolve({
+      success: true
+    })),
+    listEvents: jest.fn(() => Promise.resolve({
+      success: true,
+      events: []
+    }))
+  }));
+}
+
+if (moduleExists('../services/enhancedNotificationService')) {
+  jest.mock('../services/enhancedNotificationService', () => ({
+    isConfigured: jest.fn(() => true),
+    sendCustomNotification: jest.fn(() => Promise.resolve(true)),
+    sendReminderEmail: jest.fn(() => Promise.resolve(true)),
+    checkUpcomingEvents: jest.fn(() => Promise.resolve()),
+    generateEmailTemplate: jest.fn((agendamento) => ({
+      subject: `Lembrete: ${agendamento.summary}`,
+      html: `<p>Reunião: ${agendamento.summary}</p>`
+    }))
+  }));
+}
 
 // Increase test timeout for API tests
 jest.setTimeout(30000);
@@ -75,7 +91,7 @@ global.testUtils = {
     status: 'em_andamento'
   }),
 
-  // Helpers específicos para Google Calendar
+  // Helpers específicos para Calendar Local
   validAgendamentoData: (overrides = {}) => ({
     processo_id: 1,
     start: new Date(Date.now() + 24 * 60 * 60 * 1000),

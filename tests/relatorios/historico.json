@@ -212,5 +212,433 @@
         "fim": 1756142579720
       }
     }
+  },
+  {
+    "timestamp": "2025-08-25T17:36:30.264Z",
+    "tempoExecucao": 26003,
+    "resultados": {
+      "backend": {
+        "categoria": "backend",
+        "inicio": 1756143368113,
+        "arquivos": 8,
+        "suites": 65,
+        "testes": 361,
+        "passou": 339,
+        "falhou": 22,
+        "tempo": 11290,
+        "cobertura": {
+          "percentual": 83,
+          "linhas": 1029,
+          "cobertas": 863
+        },
+        "detalhes": [
+          {
+            "arquivo": "agendamentos.spec.js",
+            "suites": 8,
+            "testes": 51,
+            "passou": 48,
+            "falhou": 3,
+            "tempo": 1005
+          },
+          {
+            "arquivo": "arquivos.spec.js",
+            "suites": 8,
+            "testes": 56,
+            "passou": 53,
+            "falhou": 3,
+            "tempo": 917
+          },
+          {
+            "arquivo": "atualizacoes.spec.js",
+            "suites": 9,
+            "testes": 61,
+            "passou": 57,
+            "falhou": 4,
+            "tempo": 1783
+          },
+          {
+            "arquivo": "auth.spec.js",
+            "suites": 9,
+            "testes": 24,
+            "passou": 22,
+            "falhou": 2,
+            "tempo": 1564
+          },
+          {
+            "arquivo": "dashboard.spec.js",
+            "suites": 8,
+            "testes": 51,
+            "passou": 48,
+            "falhou": 3,
+            "tempo": 1008
+          },
+          {
+            "arquivo": "processos.spec.js",
+            "suites": 7,
+            "testes": 40,
+            "passou": 38,
+            "falhou": 2,
+            "tempo": 1675
+          },
+          {
+            "arquivo": "tabelas-auxiliares.spec.js",
+            "suites": 9,
+            "testes": 49,
+            "passou": 46,
+            "falhou": 3,
+            "tempo": 1011
+          },
+          {
+            "arquivo": "usuarios.spec.js",
+            "suites": 7,
+            "testes": 29,
+            "passou": 27,
+            "falhou": 2,
+            "tempo": 2322
+          }
+        ],
+        "fim": 1756143379403
+      },
+      "frontend": {
+        "categoria": "frontend",
+        "inicio": 1756143379919,
+        "arquivos": 2,
+        "suites": 20,
+        "testes": 91,
+        "passou": 86,
+        "falhou": 5,
+        "tempo": 3485,
+        "cobertura": null,
+        "detalhes": [
+          {
+            "arquivo": "components.spec.js",
+            "suites": 9,
+            "testes": 39,
+            "passou": 37,
+            "falhou": 2,
+            "tempo": 1874
+          },
+          {
+            "arquivo": "routes.spec.js",
+            "suites": 11,
+            "testes": 52,
+            "passou": 49,
+            "falhou": 3,
+            "tempo": 1609
+          }
+        ],
+        "fim": 1756143383404
+      },
+      "integration": {
+        "categoria": "integration",
+        "inicio": 1756143383407,
+        "arquivos": 2,
+        "suites": 13,
+        "testes": 46,
+        "passou": 43,
+        "falhou": 3,
+        "tempo": 2421,
+        "cobertura": null,
+        "detalhes": [
+          {
+            "arquivo": "external-services.spec.js",
+            "suites": 7,
+            "testes": 27,
+            "passou": 25,
+            "falhou": 2,
+            "tempo": 837
+          },
+          {
+            "arquivo": "inter-system.spec.js",
+            "suites": 6,
+            "testes": 19,
+            "passou": 18,
+            "falhou": 1,
+            "tempo": 1573
+          }
+        ],
+        "fim": 1756143385828
+      },
+      "performance": {
+        "categoria": "performance",
+        "inicio": 1756143385831,
+        "arquivos": 1,
+        "suites": 7,
+        "testes": 19,
+        "passou": 18,
+        "falhou": 1,
+        "tempo": 588,
+        "cobertura": null,
+        "detalhes": [
+          {
+            "arquivo": "load-tests.spec.js",
+            "suites": 7,
+            "testes": 19,
+            "passou": 18,
+            "falhou": 1,
+            "tempo": 586
+          }
+        ],
+        "fim": 1756143386419
+      },
+      "security": {
+        "categoria": "security",
+        "inicio": 1756143386421,
+        "arquivos": 1,
+        "suites": 7,
+        "testes": 23,
+        "passou": 21,
+        "falhou": 2,
+        "tempo": 1970,
+        "cobertura": null,
+        "detalhes": [
+          {
+            "arquivo": "vulnerability-tests.spec.js",
+            "suites": 7,
+            "testes": 23,
+            "passou": 21,
+            "falhou": 2,
+            "tempo": 1968
+          }
+        ],
+        "fim": 1756143388391
+      },
+      "e2e": {
+        "categoria": "e2e",
+        "inicio": 1756143388393,
+        "arquivos": 1,
+        "suites": 9,
+        "testes": 60,
+        "passou": 57,
+        "falhou": 3,
+        "tempo": 804,
+        "cobertura": null,
+        "detalhes": [
+          {
+            "arquivo": "user-flows.spec.js",
+            "suites": 9,
+            "testes": 60,
+            "passou": 57,
+            "falhou": 3,
+            "tempo": 800
+          }
+        ],
+        "fim": 1756143389197
+      }
+    }
+  },
+  {
+    "timestamp": "2025-08-25T17:52:47.938Z",
+    "tempoExecucao": 29864,
+    "resultados": {
+      "backend": {
+        "categoria": "backend",
+        "inicio": 1756144341903,
+        "arquivos": 8,
+        "suites": 65,
+        "testes": 361,
+        "passou": 330,
+        "falhou": 31,
+        "tempo": 14716,
+        "cobertura": {
+          "percentual": 99,
+          "linhas": 1009,
+          "cobertas": 885
+        },
+        "detalhes": [
+          {
+            "arquivo": "agendamentos.spec.js",
+            "suites": 8,
+            "testes": 51,
+            "passou": 48,
+            "falhou": 3,
+            "tempo": 2408
+          },
+          {
+            "arquivo": "arquivos.spec.js",
+            "suites": 8,
+            "testes": 56,
+            "passou": 53,
+            "falhou": 3,
+            "tempo": 1971
+          },
+          {
+            "arquivo": "atualizacoes.spec.js",
+            "suites": 9,
+            "testes": 61,
+            "passou": 48,
+            "falhou": 13,
+            "tempo": 1062
+          },
+          {
+            "arquivo": "auth.spec.js",
+            "suites": 9,
+            "testes": 24,
+            "passou": 22,
+            "falhou": 2,
+            "tempo": 2118
+          },
+          {
+            "arquivo": "dashboard.spec.js",
+            "suites": 8,
+            "testes": 51,
+            "passou": 48,
+            "falhou": 3,
+            "tempo": 1980
+          },
+          {
+            "arquivo": "processos.spec.js",
+            "suites": 7,
+            "testes": 40,
+            "passou": 38,
+            "falhou": 2,
+            "tempo": 1798
+          },
+          {
+            "arquivo": "tabelas-auxiliares.spec.js",
+            "suites": 9,
+            "testes": 49,
+            "passou": 46,
+            "falhou": 3,
+            "tempo": 1768
+          },
+          {
+            "arquivo": "usuarios.spec.js",
+            "suites": 7,
+            "testes": 29,
+            "passou": 27,
+            "falhou": 2,
+            "tempo": 1604
+          }
+        ],
+        "fim": 1756144356619
+      },
+      "frontend": {
+        "categoria": "frontend",
+        "inicio": 1756144357133,
+        "arquivos": 2,
+        "suites": 20,
+        "testes": 91,
+        "passou": 86,
+        "falhou": 5,
+        "tempo": 4204,
+        "cobertura": null,
+        "detalhes": [
+          {
+            "arquivo": "components.spec.js",
+            "suites": 9,
+            "testes": 39,
+            "passou": 37,
+            "falhou": 2,
+            "tempo": 2039
+          },
+          {
+            "arquivo": "routes.spec.js",
+            "suites": 11,
+            "testes": 52,
+            "passou": 49,
+            "falhou": 3,
+            "tempo": 2163
+          }
+        ],
+        "fim": 1756144361337
+      },
+      "integration": {
+        "categoria": "integration",
+        "inicio": 1756144361337,
+        "arquivos": 2,
+        "suites": 13,
+        "testes": 46,
+        "passou": 43,
+        "falhou": 3,
+        "tempo": 2579,
+        "cobertura": null,
+        "detalhes": [
+          {
+            "arquivo": "external-services.spec.js",
+            "suites": 7,
+            "testes": 27,
+            "passou": 25,
+            "falhou": 2,
+            "tempo": 1259
+          },
+          {
+            "arquivo": "inter-system.spec.js",
+            "suites": 6,
+            "testes": 19,
+            "passou": 18,
+            "falhou": 1,
+            "tempo": 1318
+          }
+        ],
+        "fim": 1756144363916
+      },
+      "performance": {
+        "categoria": "performance",
+        "inicio": 1756144363917,
+        "arquivos": 1,
+        "suites": 7,
+        "testes": 19,
+        "passou": 18,
+        "falhou": 1,
+        "tempo": 1175,
+        "cobertura": null,
+        "detalhes": [
+          {
+            "arquivo": "load-tests.spec.js",
+            "suites": 7,
+            "testes": 19,
+            "passou": 18,
+            "falhou": 1,
+            "tempo": 1173
+          }
+        ],
+        "fim": 1756144365092
+      },
+      "security": {
+        "categoria": "security",
+        "inicio": 1756144365095,
+        "arquivos": 1,
+        "suites": 7,
+        "testes": 23,
+        "passou": 21,
+        "falhou": 2,
+        "tempo": 584,
+        "cobertura": null,
+        "detalhes": [
+          {
+            "arquivo": "vulnerability-tests.spec.js",
+            "suites": 7,
+            "testes": 23,
+            "passou": 21,
+            "falhou": 2,
+            "tempo": 569
+          }
+        ],
+        "fim": 1756144365679
+      },
+      "e2e": {
+        "categoria": "e2e",
+        "inicio": 1756144365680,
+        "arquivos": 1,
+        "suites": 9,
+        "testes": 60,
+        "passou": 57,
+        "falhou": 3,
+        "tempo": 1215,
+        "cobertura": null,
+        "detalhes": [
+          {
+            "arquivo": "user-flows.spec.js",
+            "suites": 9,
+            "testes": 60,
+            "passou": 57,
+            "falhou": 3,
+            "tempo": 1213
+          }
+        ],
+        "fim": 1756144366895
+      }
+    }
   }
 ]

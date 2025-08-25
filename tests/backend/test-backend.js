@@ -56,7 +56,7 @@ async function runTests() {
         nome: 'Usuario Teste',
         email: 'teste@teste.com',
         senha: '123456',
-        role_id: 1  // Professor
+        role_id: 1  // Admin
     });
     
     if (registerResult.success) {
@@ -67,7 +67,7 @@ async function runTests() {
     
     // Tentar fazer login com o usuário existente primeiro
     let loginResult = await testEndpoint('POST', '/auth/login', {
-        email: 'admin@teste.com',
+        email: 'teste@teste.com',
         senha: '123456'
     });
     

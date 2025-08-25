@@ -16,8 +16,8 @@ router.get('/perfil', usuarioController.me); // Alias para compatibilidade com t
 router.put('/me', validate('updateMe'), handleValidation, usuarioController.updateMe);
 router.put('/me/senha', validate('updateSenha'), handleValidation, usuarioController.changePassword);
 router.delete('/me', usuarioController.deleteMe);
-router.get('/', roleMiddleware(['admin', 'professor']), usuarioController.listarUsuarios);
-router.post('/', roleMiddleware(['admin', 'professor']), validate('registrarUsuario'), handleValidation, preveniDuplicacaoUsuario, usuarioController.criarUsuario);
+router.get('/', roleMiddleware(['Admin', 'Professor']), usuarioController.listarUsuarios);
+router.post('/', roleMiddleware(['Admin', 'Professor']), validate('registrarUsuario'), handleValidation, preveniDuplicacaoUsuario, usuarioController.criarUsuario);
 router.get('/alunos', usuarioController.listarAlunos);
 router.get('/para-vinculacao', usuarioController.buscarUsuariosParaVinculacao);
 
@@ -25,8 +25,8 @@ router.get('/para-vinculacao', usuarioController.buscarUsuariosParaVinculacao);
 router.put('/:id/senha', usuarioController.atualizarSenha);
 
 router.get('/:id', validate('getUsuario'), handleValidation, usuarioController.obterUsuario);
-router.put('/:id', roleMiddleware(['admin', 'professor']), validate('updateUsuario'), handleValidation, preveniDuplicacaoUsuario, usuarioController.atualizarUsuario);
-router.put('/:id/reativar', roleMiddleware(['admin', 'professor']), validate('getUsuario'), handleValidation, usuarioController.reativarUsuario);
-router.delete('/:id', roleMiddleware(['admin', 'professor']), validate('getUsuario'), handleValidation, usuarioController.deletarUsuario);
+router.put('/:id', roleMiddleware(['Admin', 'Professor']), validate('updateUsuario'), handleValidation, preveniDuplicacaoUsuario, usuarioController.atualizarUsuario);
+router.put('/:id/reativar', roleMiddleware(['Admin', 'Professor']), validate('getUsuario'), handleValidation, usuarioController.reativarUsuario);
+router.delete('/:id', roleMiddleware(['Admin', 'Professor']), validate('getUsuario'), handleValidation, usuarioController.deletarUsuario);
 
 module.exports = router;

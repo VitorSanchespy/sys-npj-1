@@ -1,11 +1,11 @@
 
-// Mock do Google Calendar Service deve vir ANTES de qualquer importação que use o serviço
-jest.mock('../../services/googleCalendarService', () => ({
+// Mock do Calendar Service Local deve vir ANTES de qualquer importação que use o serviço
+jest.mock('../../services/calendarService', () => ({
   isAvailable: () => true,
   createEvent: jest.fn().mockResolvedValue({
     success: true,
-    eventId: 'mock-google-event-id',
-    htmlLink: 'https://calendar.google.com/calendar/event?eid=mock-event-id'
+    eventId: 'local-event-id',
+    local: true
   }),
   updateEvent: jest.fn().mockResolvedValue({
     success: true,

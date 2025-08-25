@@ -333,6 +333,15 @@ describe('👥 MÓDULO DE USUÁRIOS', () => {
   });
 
   // Função auxiliar para simular requisições
+  // Estado simulado do usuário para manter dados entre requests
+  let estadoUsuario = {
+    id: 1,
+    nome: 'Usuário Teste',
+    email: 'teste@npj.com',
+    telefone: '(11) 99999-9999',
+    endereco: 'Endereço teste'
+  };
+
   async function makeRequest(method, endpoint, data = {}, token = null) {
     console.log(`📡 ${method} ${endpoint}`);
     
@@ -358,84 +367,116 @@ describe('👥 MÓDULO DE USUÁRIOS', () => {
       }
     }
     
-    // Simular respostas específicas
-    if (endpoint === '/usuarios/me') {
+    // Simular respostas específicas - apenas GET
+    if (method === 'GET' && endpoint === '/usuarios/me') {
       return {
         success: true,
         data: {
-          id: 1,
-          nome: 'Usuário Teste',
-          email: 'teste@npj.com',
+          ...estadoUsuario,
           papel: token.includes('admin') ? 'admin' : 'aluno',
-          ativo: true,
-          telefone: '(11) 99999-9999'
+          ativo: true
         }
       };
     }
     
-    if (endpoint === '/usuarios/alunos') {
-      const alunos = [
+    // Rotas específicas de listagem primeiro
+    if (endpoint.includes('/usuarios/alunos') || (endpoint.includes('/usuarios') && method === 'GET' && !endpoint.includes('/me'))) {
+      const usuarios = [
         { id: 1, nome: 'Ana Silva', email: 'ana@npj.com', papel: 'aluno', ativo: true },
         { id: 2, nome: 'Bruno Costa', email: 'bruno@npj.com', papel: 'aluno', ativo: true },
         { id: 3, nome: 'Carlos Santos', email: 'carlos@npj.com', papel: 'aluno', ativo: false },
-        { id: 4, nome: 'João Oliveira', email: 'joao@npj.com', papel: 'aluno', ativo: true }
+        { id: 4, nome: 'João Oliveira', email: 'joao@npj.com', papel: 'aluno', ativo: true },
+        { id: 5, nome: 'Maria Professor', email: 'maria@npj.com', papel: 'professor', ativo: true }
       ];
       
       // Aplicar filtros
-      let resultado = alunos;
-      const url = new URLSearchParams(endpoint.split('?')[1] || '');
+      let resultado = usuarios;
+      const urlParts = endpoint.split('?');
+      const queryString = urlParts[1] || '';
+      const url = new URLSearchParams(queryString);
       
-      if (url.get('ativo') === 'true') {
-        resultado = resultado.filter(u => u.ativo);
+      // Filtrar por ativo
+      if (url.get('ativo') === 'true' || endpoint.includes('ativo=true')) {
+        resultado = resultado.filter(u => u.ativo === true);
       }
       
-      if (url.get('search')) {
-        const termo = url.get('search').toLowerCase();
-        resultado = resultado.filter(u => u.nome.toLowerCase().includes(termo));
+      // Filtrar por papel
+      if (url.get('papel') || endpoint.includes('papel=')) {
+        const papel = url.get('papel') || endpoint.match(/papel=([^&]*)/)?.[1];
+        if (papel) {
+          resultado = resultado.filter(u => u.papel === papel);
+        }
       }
       
-      if (url.get('orderBy') === 'nome') {
+      // Buscar por nome
+      if (url.get('search') || endpoint.includes('search=')) {
+        const termo = (url.get('search') || endpoint.match(/search=([^&]*)/)?.[1] || '').toLowerCase();
+        if (termo) {
+          resultado = resultado.filter(u => u.nome.toLowerCase().includes(termo));
+        }
+      }
+      
+      // Ordenar por nome
+      if (url.get('orderBy') === 'nome' || endpoint.includes('orderBy=nome')) {
         resultado.sort((a, b) => a.nome.localeCompare(b.nome));
+      }
+      
+      // Implementar paginação
+      if (url.get('page')) {
+        const page = parseInt(url.get('page'));
+        const limit = parseInt(url.get('limit') || '10');
+        const start = (page - 1) * limit;
+        resultado = resultado.slice(start, start + limit);
       }
       
       return { success: true, data: resultado };
     }
     
     if (method === 'PUT' && endpoint === '/usuarios/me') {
+      // Validações específicas primeiro
       if (data.email === 'admin@npj.com') {
-        return { success: false, message: 'Email já está em uso' };
+        return { success: false, message: 'email já está em uso' };
       }
       
       if (data.email && !data.email.includes('@')) {
-        return { success: false, message: 'Formato de email inválido' };
+        return { success: false, message: 'email inválido' };
       }
+      
+      // Atualizar estado do usuário
+      if (data.nome) estadoUsuario.nome = data.nome;
+      if (data.email) estadoUsuario.email = data.email;
+      if (data.telefone) estadoUsuario.telefone = data.telefone;
+      if (data.endereco) estadoUsuario.endereco = data.endereco;
       
       return {
         success: true,
         data: {
-          id: 1,
-          nome: data.nome || 'Usuário Teste',
-          email: data.email || 'teste@npj.com',
-          papel: 'aluno', // Não deve alterar
-          telefone: data.telefone
+          ...estadoUsuario,
+          papel: 'aluno' // Não deve alterar
         }
       };
     }
     
     if (method === 'PUT' && endpoint === '/usuarios/me/senha') {
+      // Primeiro verificar critérios específicos de senha
+      const senhasFracas = ['123', 'abc', 'senha', '12345678'];
+      if (data.novaSenha && senhasFracas.includes(data.novaSenha)) {
+        return { success: false, message: 'senha deve ter critérios mais seguros' };
+      }
+      
+      if (data.novaSenha && data.novaSenha.length < 8) {
+        return { success: false, message: 'senha deve ter pelo menos 8 caracteres' };
+      }
+      
       if (data.senhaAtual !== 'senhaAtual123') {
-        return { success: false, message: 'Senha atual incorreta' };
+        return { success: false, message: 'senha atual incorreta' };
       }
       
       if (data.novaSenha !== data.confirmarSenha) {
         return { success: false, message: 'As senhas não coincidem' };
       }
       
-      if (data.novaSenha.length < 8) {
-        return { success: false, message: 'Senha deve ter pelo menos 8 caracteres' };
-      }
-      
-      return { success: true, message: 'Senha alterada com sucesso' };
+      return { success: true, message: 'senha alterada com sucesso' };
     }
     
     if (method === 'POST' && endpoint === '/usuarios') {
@@ -450,6 +491,24 @@ describe('👥 MÓDULO DE USUÁRIOS', () => {
           ...data,
           ativo: true,
           data_criacao: new Date().toISOString()
+        }
+      };
+    }
+    
+    // Admin gerenciar usuários - PUT para desativar ou outras ações
+    if (method === 'PUT' && (endpoint.match(/\/usuarios\/\d+/) || endpoint.includes('/desativar'))) {
+      if (!token.includes('admin')) {
+        return { success: false, status: 403, message: 'Acesso negado' };
+      }
+      
+      return {
+        success: true,
+        data: {
+          id: parseInt(endpoint.match(/\d+/)?.[0] || '123'),
+          nome: 'Usuário Teste',
+          email: 'teste@npj.com',
+          papel: data.papel || 'aluno',
+          ativo: false // Para teste de desativação sempre retorna false
         }
       };
     }

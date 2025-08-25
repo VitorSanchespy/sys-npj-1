@@ -240,7 +240,7 @@ describe('Agendamentos E2E - Fluxo Completo', () => {
 
       const agendamento = createResponse.body.data.agendamento;
       
-      // Verificar campos do Google Calendar
+      // Verificar campos do Calendar Local
       if (agendamento.google_event_id) {
         expect(agendamento.html_link).toBeTruthy();
         expect(agendamento.status).toBe('sincronizado');

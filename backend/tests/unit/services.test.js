@@ -1,9 +1,9 @@
 const calendarService = require('../../services/calendarService');
 const notificationService = require('../../services/enhancedNotificationService');
-const AgendamentoProcesso = require('../../models/agendamentoProcessoModel');
+const Agendamento = require('../../models/agendamentoModel');
 
 // Mock do modelo
-jest.mock('../../models/agendamentoProcessoModel');
+jest.mock('../../models/agendamentoModel');
 
 describe('Calendar Service - Testes Unitários', () => {
   beforeEach(() => {
@@ -110,7 +110,7 @@ describe('Enhanced Notification Service - Testes Unitários', () => {
         }
       ];
 
-      AgendamentoProcesso.findAll.mockResolvedValue(mockEvents);
+      Agendamento.findAll.mockResolvedValue(mockEvents);
 
       if (typeof notificationService.checkUpcomingEvents === 'function') {
         const result = await notificationService.checkUpcomingEvents();
@@ -159,7 +159,7 @@ describe('Enhanced Notification Service - Testes Unitários', () => {
         start: new Date('2024-12-01T10:00:00Z'),
         location: 'Escritório NPJ',
         description: 'Descrição da reunião',
-        html_link: 'https://calendar.google.com/event/123'
+        html_link: 'local://calendar/event/123'
       };
 
       if (typeof notificationService.generateEmailTemplate === 'function') {

@@ -1,7 +1,7 @@
-const AgendamentoProcesso = require('../../models/agendamentoProcessoModel');
+const Agendamento = require('../../models/agendamentoModel');
 
 // Mock completo do modelo para testes unitários
-jest.mock('../../models/agendamentoProcessoModel', () => {
+jest.mock('../../models/agendamentoModel', () => {
   const mockModel = {
     create: jest.fn(),
     findAll: jest.fn(),
@@ -13,7 +13,7 @@ jest.mock('../../models/agendamentoProcessoModel', () => {
   return mockModel;
 });
 
-describe('AgendamentoProcesso Model - Testes Unitários', () => {
+describe('Agendamento Model - Testes Unitários', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -22,10 +22,10 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
     it('deve validar campos obrigatórios', async () => {
       const validationError = new Error('Validation error');
       validationError.name = 'SequelizeValidationError';
-      AgendamentoProcesso.create.mockRejectedValue(validationError);
+      Agendamento.create.mockRejectedValue(validationError);
 
       try {
-        await AgendamentoProcesso.create({});
+        await Agendamento.create({});
         fail('Deveria ter falhado na validação');
       } catch (error) {
         expect(error.name).toBe('SequelizeValidationError');
@@ -47,9 +47,9 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
         ...validData
       };
 
-      AgendamentoProcesso.create.mockResolvedValue(mockResult);
+      Agendamento.create.mockResolvedValue(mockResult);
 
-      const agendamento = await AgendamentoProcesso.create(validData);
+      const agendamento = await Agendamento.create(validData);
       expect(agendamento.id).toBeDefined();
       expect(agendamento.summary).toBe('Reunião Teste');
       expect(agendamento.status).toBe('ativo');
@@ -64,10 +64,10 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
       };
 
       const validationError = new Error('fim deve ser posterior ao início');
-      AgendamentoProcesso.create.mockRejectedValue(validationError);
+      Agendamento.create.mockRejectedValue(validationError);
 
       try {
-        await AgendamentoProcesso.create(invalidData);
+        await Agendamento.create(invalidData);
         fail('Deveria ter falhado na validação de datas');
       } catch (error) {
         expect(error.message).toContain('fim deve ser posterior ao início');
@@ -86,9 +86,9 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
         attendees: ['user1@email.com', 'user2@email.com']
       };
 
-      AgendamentoProcesso.create.mockResolvedValue(mockResult);
+      Agendamento.create.mockResolvedValue(mockResult);
 
-      const agendamento = await AgendamentoProcesso.create({
+      const agendamento = await Agendamento.create({
         processo_id: 1,
         start: new Date(Date.now() + 24 * 60 * 60 * 1000),
         end: new Date(Date.now() + 25 * 60 * 60 * 1000),
@@ -121,9 +121,9 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
         reminders_config: reminderConfig
       };
 
-      AgendamentoProcesso.create.mockResolvedValue(mockResult);
+      Agendamento.create.mockResolvedValue(mockResult);
 
-      const agendamento = await AgendamentoProcesso.create({
+      const agendamento = await Agendamento.create({
         processo_id: 1,
         start: new Date(Date.now() + 24 * 60 * 60 * 1000),
         end: new Date(Date.now() + 25 * 60 * 60 * 1000),
@@ -137,7 +137,7 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
     });
   });
 
-  describe('Campos Google Calendar', () => {
+  describe('Campos de Calendar Local', () => {
     it('deve definir status padrão como "ativo"', async () => {
       const mockResult = {
         id: 1,
@@ -148,9 +148,9 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
         status: 'ativo'
       };
 
-      AgendamentoProcesso.create.mockResolvedValue(mockResult);
+      Agendamento.create.mockResolvedValue(mockResult);
 
-      const agendamento = await AgendamentoProcesso.create({
+      const agendamento = await Agendamento.create({
         processo_id: 1,
         start: new Date(Date.now() + 24 * 60 * 60 * 1000),
         end: new Date(Date.now() + 25 * 60 * 60 * 1000),
@@ -173,9 +173,9 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
           status: status
         };
 
-        AgendamentoProcesso.create.mockResolvedValue(mockResult);
+        Agendamento.create.mockResolvedValue(mockResult);
 
-        const agendamento = await AgendamentoProcesso.create({
+        const agendamento = await Agendamento.create({
           processo_id: 1,
           start: new Date(Date.now() + 24 * 60 * 60 * 1000),
           end: new Date(Date.now() + 25 * 60 * 60 * 1000),
@@ -197,9 +197,9 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
         google_event_id: 'google-event-12345'
       };
 
-      AgendamentoProcesso.create.mockResolvedValue(mockResult);
+      Agendamento.create.mockResolvedValue(mockResult);
 
-      const agendamento = await AgendamentoProcesso.create({
+      const agendamento = await Agendamento.create({
         processo_id: 1,
         start: new Date(Date.now() + 24 * 60 * 60 * 1000),
         end: new Date(Date.now() + 25 * 60 * 60 * 1000),
@@ -210,8 +210,8 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
       expect(agendamento.google_event_id).toBe('google-event-12345');
     });
 
-    it('deve armazenar html_link do Google Calendar', async () => {
-      const htmlLink = 'https://calendar.google.com/event/12345';
+    it('deve armazenar html_link do Calendar Local', async () => {
+      const htmlLink = 'local://calendar/event/12345';
       
       const mockResult = {
         id: 1,
@@ -222,9 +222,9 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
         html_link: htmlLink
       };
 
-      AgendamentoProcesso.create.mockResolvedValue(mockResult);
+      Agendamento.create.mockResolvedValue(mockResult);
 
-      const agendamento = await AgendamentoProcesso.create({
+      const agendamento = await Agendamento.create({
         processo_id: 1,
         start: new Date(Date.now() + 24 * 60 * 60 * 1000),
         end: new Date(Date.now() + 25 * 60 * 60 * 1000),
@@ -245,9 +245,9 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
         email_sent: false
       };
 
-      AgendamentoProcesso.create.mockResolvedValue(mockResult);
+      Agendamento.create.mockResolvedValue(mockResult);
 
-      const agendamento = await AgendamentoProcesso.create({
+      const agendamento = await Agendamento.create({
         processo_id: 1,
         start: new Date(Date.now() + 24 * 60 * 60 * 1000),
         end: new Date(Date.now() + 25 * 60 * 60 * 1000),
@@ -265,9 +265,9 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
         { id: 2, status: 'ativo', summary: 'Evento 2' }
       ];
 
-      AgendamentoProcesso.findAll.mockResolvedValue(mockResults);
+      Agendamento.findAll.mockResolvedValue(mockResults);
 
-      const ativos = await AgendamentoProcesso.findAll({
+      const ativos = await Agendamento.findAll({
         where: { status: 'ativo' }
       });
 
@@ -291,9 +291,9 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
         }
       ];
 
-      AgendamentoProcesso.findAll.mockResolvedValue(mockResults);
+      Agendamento.findAll.mockResolvedValue(mockResults);
 
-      const futuros = await AgendamentoProcesso.findAll({
+      const futuros = await Agendamento.findAll({
         where: {
           start: {
             [require('sequelize').Op.gt]: new Date()
@@ -314,9 +314,9 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
         { id: 3, processo_id: 1, summary: 'Evento 3' }
       ];
 
-      AgendamentoProcesso.findAll.mockResolvedValue(mockResults);
+      Agendamento.findAll.mockResolvedValue(mockResults);
 
-      const processoAgendamentos = await AgendamentoProcesso.findAll({
+      const processoAgendamentos = await Agendamento.findAll({
         where: { processo_id: 1 }
       });
 
@@ -338,9 +338,9 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
         createdAt: new Date()
       };
 
-      AgendamentoProcesso.create.mockResolvedValue(mockResult);
+      Agendamento.create.mockResolvedValue(mockResult);
 
-      const agendamento = await AgendamentoProcesso.create({
+      const agendamento = await Agendamento.create({
         processo_id: 1,
         start: new Date(Date.now() + 24 * 60 * 60 * 1000),
         end: new Date(Date.now() + 25 * 60 * 60 * 1000),
@@ -365,9 +365,9 @@ describe('AgendamentoProcesso Model - Testes Unitários', () => {
         })
       };
 
-      AgendamentoProcesso.create.mockResolvedValue(mockAgendamento);
+      Agendamento.create.mockResolvedValue(mockAgendamento);
 
-      const agendamento = await AgendamentoProcesso.create({
+      const agendamento = await Agendamento.create({
         processo_id: 1,
         start: new Date(Date.now() + 24 * 60 * 60 * 1000),
         end: new Date(Date.now() + 25 * 60 * 60 * 1000),
