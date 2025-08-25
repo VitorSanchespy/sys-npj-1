@@ -1,0 +1,31 @@
+{
+  "testEnvironment": "node",
+  "testMatch": [
+    "**/tests/agendamento/**/*.spec.js"
+  ],
+  "collectCoverage": true,
+  "coverageDirectory": "tests/agendamento/reports/coverage",
+  "coverageReporters": [
+    "text",
+    "lcov",
+    "html",
+    "json"
+  ],
+  "collectCoverageFrom": [
+    "backend/controllers/agendamentoController.js",
+    "backend/services/**/*.js",
+    "backend/middleware/**/*.js",
+    "frontend/src/components/agendamentos/**/*.jsx",
+    "!**/node_modules/**",
+    "!**/tests/**",
+    "!**/coverage/**"
+  ],
+  "setupFilesAfterEnv": ["<rootDir>/tests/agendamento/setup.js"],
+  "testTimeout": 10000,
+  "verbose": true,
+  "clearMocks": true,
+  "restoreMocks": true,
+  "globals": {
+    "NODE_ENV": "test"
+  }
+}

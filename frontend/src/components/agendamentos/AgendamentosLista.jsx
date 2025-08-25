@@ -158,7 +158,7 @@ const AgendamentosLista = ({ agendamentos = [], showCreateButton = true, onEdit,
                     <span className="block whitespace-normal text-ellipsis overflow-hidden" style={{ maxWidth: '100%' }}>{agendamento.titulo}</span>
                   </button>
                   <div className="flex gap-2 mt-1">
-                    <span className="bg-primary-50 text-primary-700 px-2 py-1 rounded-full text-xs font-semibold">{getTipoText(agendamento.tipo)}</span>
+                    <span className="inline-flex items-center bg-primary-50 text-primary-700 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm md:text-base font-semibold whitespace-normal">{getTipoText(agendamento.tipo)}</span>
                     <AgendamentoStatus status={agendamento.status} />
                   </div>
                 </div>

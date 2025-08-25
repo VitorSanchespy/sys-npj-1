@@ -1,0 +1,25 @@
+{
+  "timestamp": "2025-08-25T13:40:18.001Z",
+  "duration": 1954,
+  "results": {
+    "backend": {
+      "passed": 8,
+      "failed": 0,
+      "total": 8
+    },
+    "frontend": {
+      "passed": 10,
+      "failed": 0,
+      "total": 10
+    },
+    "coverage": {
+      "lines": 86,
+      "functions": 86,
+      "branches": 99
+    }
+  },
+  "environment": {
+    "node": "v22.16.0",
+    "platform": "win32"
+  }
+}

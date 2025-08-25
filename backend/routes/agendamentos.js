@@ -196,6 +196,12 @@ router.post('/:id/recusar', [
     .isLength({ min: 10, max: 1000 }).withMessage('Motivo deve ter entre 10 e 1000 caracteres')
 ], agendamentoController.recusar);
 
+// POST /api/agendamentos/:id/cancelar - Cancelar agendamento (Admin/Professor/Criador)
+router.post('/:id/cancelar', [
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
+  body('motivo').optional().isLength({ max: 1000 }).withMessage('Motivo deve ter no máximo 1000 caracteres')
+], agendamentoController.cancelarAgendamento);
+
 // Rotas públicas para convites (sem autenticação) - REMOVIDAS (já estão no topo)
 
 // POST /api/agendamentos/:id/aceitar - Aceitar convite para agendamento

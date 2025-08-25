@@ -13,6 +13,8 @@ const ConviteResposta = ({ acao }) => {
   const [resultado, setResultado] = useState(null);
   const [erro, setErro] = useState('');
   const [agendamento, setAgendamento] = useState(null);
+  const [justificativa, setJustificativa] = useState('');
+  const [mostrarFormJustificativa, setMostrarFormJustificativa] = useState(false);
 
   const email = searchParams.get('email');
   const isAceitar = acao === 'aceitar';
@@ -35,7 +37,48 @@ const ConviteResposta = ({ acao }) => {
       });
 
       if (response.success) {
-        setAgendamento(response.data);
+        const agendamentoData = response.data;
+        
+        // Verificar se agendamento foi cancelado
+        if (agendamentoData.status === 'cancelado') {
+          setErro('Este agendamento foi cancelado e não é mais válido.');
+          setLoading(false);
+          return;
+        }
+
+        // Verificar se convite expirou (24h)
+        if (agendamentoData.data_convites_enviados) {
+          const agora = new Date();
+          const dataEnvio = new Date(agendamentoData.data_convites_enviados);
+          const horasPassadas = (agora - dataEnvio) / (1000 * 60 * 60);
+          
+          if (horasPassadas >= 24) {
+            setErro('⏰ Este convite expirou. Links de convite são válidos por apenas 24 horas e foram automaticamente aceitos.');
+            setLoading(false);
+            return;
+          }
+          
+          // Adicionar informação sobre tempo restante
+          agendamentoData.horasRestantes = Math.max(0, 24 - horasPassadas);
+        }
+
+        // Verificar se email está na lista e já respondeu
+        const convidados = agendamentoData.convidados || [];
+        const convidado = convidados.find(c => c.email.toLowerCase() === email.toLowerCase());
+        
+        if (!convidado) {
+          setErro('Email não encontrado na lista de convidados');
+          setLoading(false);
+          return;
+        }
+
+        if (convidado.status !== 'pendente') {
+          setErro(`Você já respondeu a este convite como: ${convidado.status === 'aceito' ? 'Aceito' : 'Recusado'}`);
+          setLoading(false);
+          return;
+        }
+
+        setAgendamento(agendamentoData);
       } else {
         setErro('Agendamento não encontrado');
       }
@@ -47,14 +90,27 @@ const ConviteResposta = ({ acao }) => {
   };
 
   const confirmarResposta = async () => {
+    // Se for recusar, verificar se justificativa foi preenchida
+    if (!isAceitar && (!justificativa || justificativa.trim() === '')) {
+      setErro('Justificativa é obrigatória para recusar um convite');
+      return;
+    }
+
     try {
       setProcessando(true);
       setErro('');
 
       const endpoint = `/api/convite/${id}/${acao}`;
+      const body = { email };
+      
+      // Se for recusar, incluir justificativa
+      if (!isAceitar) {
+        body.justificativa = justificativa.trim();
+      }
+
       const response = await apiRequest(endpoint, {
         method: 'POST',
-        body: { email }
+        body
       });
 
       if (response.success) {
@@ -70,6 +126,14 @@ const ConviteResposta = ({ acao }) => {
       setErro(error.message || `Erro ao ${acao} convite`);
     } finally {
       setProcessando(false);
+    }
+  };
+
+  const handleRecusarClick = () => {
+    if (isAceitar) {
+      confirmarResposta();
+    } else {
+      setMostrarFormJustificativa(true);
     }
   };
 
@@ -207,6 +271,63 @@ const ConviteResposta = ({ acao }) => {
           <p className="text-center font-medium text-gray-800 mt-2">{email}</p>
         </div>
 
+        {/* Aviso sobre expiração automática com contador */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <div className="flex items-start">
+            <span className="text-yellow-600 text-lg mr-3">⚠️</span>
+            <div className="text-sm text-yellow-800">
+              <p className="font-semibold mb-1">ATENÇÃO - PRAZO DE RESPOSTA</p>
+              <p className="mb-2">
+                Este convite tem <strong>validade de 24 horas</strong>. 
+                Se você não responder dentro deste prazo, <strong>consideraremos automaticamente como aceito</strong> 
+                e o agendamento será confirmado.
+              </p>
+              {agendamento.horasRestantes !== undefined && (
+                <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 mt-3">
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 text-yellow-700 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <p className="font-medium text-yellow-900">
+                        ⏱️ Tempo restante: <span className="text-lg font-bold">
+                          {Math.floor(agendamento.horasRestantes)}h {Math.floor((agendamento.horasRestantes % 1) * 60)}min
+                        </span>
+                      </p>
+                      <p className="text-xs text-yellow-700 mt-1">
+                        {agendamento.horasRestantes < 2 ? '🔥 URGENTE - Menos de 2 horas!' : 
+                         agendamento.horasRestantes < 6 ? '⚡ AVISO - Menos de 6 horas!' : 
+                         '✅ Você ainda tem tempo para decidir'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Formulário de justificativa (aparece ao clicar em recusar) */}
+        {!isAceitar && mostrarFormJustificativa && (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Justificativa para recusar o convite *
+            </label>
+            <textarea
+              value={justificativa}
+              onChange={(e) => setJustificativa(e.target.value)}
+              placeholder="Por favor, informe o motivo da recusa..."
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
+              rows={4}
+              maxLength={500}
+              required
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              {justificativa.length}/500 caracteres
+            </p>
+          </div>
+        )}
+
         {erro && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
             {erro}
@@ -221,17 +342,28 @@ const ConviteResposta = ({ acao }) => {
           >
             Cancelar
           </button>
-          <button
-            onClick={confirmarResposta}
-            disabled={processando}
-            className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 ${
-              isAceitar
-                ? 'bg-green-600 text-white hover:bg-green-700'
-                : 'bg-red-600 text-white hover:bg-red-700'
-            }`}
-          >
-            {processando ? 'Processando...' : (isAceitar ? 'Aceitar' : 'Recusar')}
-          </button>
+          
+          {!mostrarFormJustificativa ? (
+            <button
+              onClick={handleRecusarClick}
+              disabled={processando}
+              className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 ${
+                isAceitar
+                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  : 'bg-red-600 text-white hover:bg-red-700'
+              }`}
+            >
+              {processando ? 'Processando...' : (isAceitar ? 'Aceitar' : 'Recusar')}
+            </button>
+          ) : (
+            <button
+              onClick={confirmarResposta}
+              disabled={processando || !justificativa.trim()}
+              className="flex-1 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 bg-red-600 text-white hover:bg-red-700"
+            >
+              {processando ? 'Processando...' : 'Confirmar Recusa'}
+            </button>
+          )}
         </div>
       </div>
     </div>

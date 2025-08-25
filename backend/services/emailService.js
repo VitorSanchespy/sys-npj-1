@@ -1,5 +1,7 @@
 const nodemailer = require('nodemailer');
 const axios = require('axios');
+const emailConfig = require('../config/emailConfig');
+const LogService = require('./logService');
 require('dotenv').config({ path: require('path').resolve(__dirname, '../../env/main.env') });
 
 
@@ -142,9 +144,16 @@ async function enviarViaSMTP(emailData) {
 
 // Função principal para enviar email (tenta API primeiro, fallback para SMTP)
 async function enviarEmail(emailData) {
-  // Modo desenvolvimento: simular envio
-    // Removido modo simulado: sempre tentar envio real
-  
+  // Verificar se emails estão habilitados
+  if (!emailConfig.podeEnviarEmail()) {
+    emailConfig.logEmailDesabilitado(
+      'geral', 
+      emailData.to?.[0]?.email || 'destinatario_desconhecido',
+      emailData.subject
+    );
+    console.log('📧 [EMAIL SIMULADO] Enviado com sucesso (emails desabilitados)');
+    return { success: true, messageId: 'simulated', provider: 'disabled' };
+  }
 
   // Sempre usar SMTP, ignorando API Brevo
   try {
@@ -230,6 +239,18 @@ async function enviarConviteAgendamento(agendamento, emailConvidado, nomeConvida
               </div>
             </div>
 
+            <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 30px 0;">
+              <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <span style="font-size: 20px; margin-right: 10px;">⚠️</span>
+                <strong style="color: #856404;">ATENÇÃO - PRAZO DE RESPOSTA</strong>
+              </div>
+              <p style="margin: 0; color: #856404; font-size: 14px;">
+                Este convite tem <strong>validade de 24 horas</strong>. Após esse período, o link expirará.<br/>
+                <strong>Se você não responder em até 24 horas, consideraremos como aceito automaticamente</strong> 
+                e o agendamento será confirmado.
+              </p>
+            </div>
+
             <div style="background-color: #e9ecef; padding: 20px; border-radius: 8px; margin-top: 30px;">
               <p style="margin: 0; font-size: 14px; color: #666; text-align: center;">
                 <strong>Importante:</strong> Este convite é válido até a data do agendamento. 
@@ -305,12 +326,161 @@ async function enviarLembreteAgendamento(agendamento, emailParticipante, nomePar
   }
 }
 
-// ...código correto acima...
+// Função para notificar admin/professor sobre rejeições de convites
+async function enviarNotificacaoRejeicaoAdmin(agendamento, emailsAdmins, rejeicoes) {
+  try {
+    if (!emailsAdmins || emailsAdmins.length === 0) {
+      console.log('❌ Nenhum email de admin fornecido para notificação de rejeição');
+      return;
+    }
+
+    const dataFormatada = new Date(agendamento.data_inicio).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: 'long', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const listaRejeicoes = rejeicoes.map(r => `
+      <div style="background-color: #ffebee; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #f44336;">
+        <strong>📧 ${r.email}</strong><br/>
+        <strong>Justificativa:</strong> ${r.justificativa || 'Não informada'}<br/>
+        <small style="color: #666;">Respondido em: ${new Date(r.data_resposta).toLocaleString('pt-BR')}</small>
+      </div>
+    `).join('');
+
+    const emailData = {
+      to: emailsAdmins.map(email => ({ email, name: 'Admin/Professor' })),
+      subject: `🚨 Rejeições de Convite - ${agendamento.titulo}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px;">
+          <div style="background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+            <h1 style="margin: 0; font-size: 24px;">🚨 Rejeições de Convite</h1>
+          </div>
+          
+          <div style="padding: 30px;">
+            <p style="font-size: 16px; margin-bottom: 20px;">Caro Admin/Professor,</p>
+            
+            <p style="font-size: 16px; margin-bottom: 30px;">
+              O agendamento abaixo recebeu ${rejeicoes.length} rejeição(ões) de convite que requer(em) sua ação:
+            </p>
+            
+            <div style="background-color: #f8f9fa; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #007bff;">
+              <h3 style="margin: 0 0 15px 0; color: #007bff;">📅 Detalhes do Agendamento</h3>
+              <p><strong>Título:</strong> ${agendamento.titulo}</p>
+              <p><strong>Data:</strong> ${dataFormatada}</p>
+              <p><strong>Local:</strong> ${agendamento.local || 'Não informado'}</p>
+              ${agendamento.descricao ? `<p><strong>Descrição:</strong> ${agendamento.descricao}</p>` : ''}
+            </div>
+
+            <div style="margin: 30px 0;">
+              <h3 style="color: #f44336; margin-bottom: 15px;">❌ Convites Rejeitados:</h3>
+              ${listaRejeicoes}
+            </div>
+
+            <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 30px 0;">
+              <h4 style="margin: 0 0 15px 0; color: #856404;">🎯 Ações Disponíveis:</h4>
+              <ul style="color: #856404; margin: 0; padding-left: 20px;">
+                <li>Remover o(s) convidado(s) que rejeitaram e manter o agendamento</li>
+                <li>Cancelar o agendamento completamente</li>
+                <li>Reagendar para nova data/hora</li>
+                <li>Prosseguir com o agendamento mesmo com as rejeições</li>
+              </ul>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <p style="font-size: 14px; color: #666;">
+                Acesse o sistema para tomar as ações necessárias.
+              </p>
+            </div>
+
+            <p>Atenciosamente,<br><strong>Sistema NPJ</strong></p>
+          </div>
+        </div>
+      `
+    };
+
+    const result = await enviarEmail(emailData);
+    console.log(`✅ Notificação de rejeição enviada para admins via ${result.provider}`);
+    return result;
+  } catch (error) {
+    console.error('❌ Erro ao enviar notificação de rejeição:', error);
+    throw error;
+  }
+}
+
+// Função para notificar convidados sobre cancelamento
+async function enviarNotificacaoCancelamento(agendamento, emailsConvidados) {
+  try {
+    if (!emailsConvidados || emailsConvidados.length === 0) {
+      console.log('ℹ️ Nenhum convidado para notificar sobre cancelamento');
+      return;
+    }
+
+    const dataFormatada = new Date(agendamento.data_inicio).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric', 
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const emailData = {
+      to: emailsConvidados.map(email => ({ email, name: 'Convidado' })),
+      subject: `❌ Agendamento Cancelado - ${agendamento.titulo}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px;">
+          <div style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+            <h1 style="margin: 0; font-size: 24px;">❌ Agendamento Cancelado</h1>
+          </div>
+          
+          <div style="padding: 30px;">
+            <p style="font-size: 16px; margin-bottom: 20px;">Caro convidado,</p>
+            
+            <p style="font-size: 16px; margin-bottom: 30px;">
+              Informamos que o agendamento abaixo foi <strong>cancelado</strong>:
+            </p>
+            
+            <div style="background-color: #f8f9fa; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #6c757d;">
+              <p><strong>📅 Título:</strong> ${agendamento.titulo}</p>
+              <p><strong>⏰ Data:</strong> ${dataFormatada}</p>
+              <p><strong>📍 Local:</strong> ${agendamento.local || 'Não informado'}</p>
+              ${agendamento.descricao ? `<p><strong>📝 Descrição:</strong> ${agendamento.descricao}</p>` : ''}
+            </div>
+
+            <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 20px; margin: 30px 0;">
+              <p style="margin: 0; color: #721c24; text-align: center;">
+                <strong>Este agendamento não acontecerá mais.</strong><br/>
+                Não é necessária nenhuma ação da sua parte.
+              </p>
+            </div>
+
+            <p style="font-size: 14px; color: #666; text-align: center;">
+              Em caso de dúvidas, entre em contato conosco.
+            </p>
+
+            <p>Atenciosamente,<br><strong>Equipe NPJ</strong></p>
+          </div>
+        </div>
+      `
+    };
+
+    const result = await enviarEmail(emailData);
+    console.log(`✅ Notificação de cancelamento enviada para ${emailsConvidados.length} convidado(s) via ${result.provider}`);
+    return result;
+  } catch (error) {
+    console.error('❌ Erro ao enviar notificação de cancelamento:', error);
+    throw error;
+  }
+}
 
 module.exports = {
   enviarEmail,
   enviarConviteAgendamento,
   enviarLembreteAgendamento,
   enviarNotificacaoAprovacaoAgendamento,
-  enviarNotificacaoRecusaAgendamento
+  enviarNotificacaoRecusaAgendamento,
+  enviarNotificacaoRejeicaoAdmin,
+  enviarNotificacaoCancelamento
 };

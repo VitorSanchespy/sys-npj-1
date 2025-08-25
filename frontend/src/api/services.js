@@ -402,10 +402,10 @@ export const agendamentoService = {
   },
 
   // POST /api/convite/:id/recusar - Recusar convite de agendamento
-  recusarConvite: async (id, email, motivo) => {
+  recusarConvite: async (id, email, justificativa) => {
     return await apiRequest(`/api/convite/${id}/recusar`, {
       method: 'POST',
-      body: { email, motivo }
+      body: { email, justificativa }
     });
   },
 
@@ -413,6 +413,31 @@ export const agendamentoService = {
   visualizarConvite: async (id) => {
     return await apiRequest(`/api/convite/${id}`, {
       method: 'GET'
+    });
+  },
+
+  // POST /api/agendamentos/:id/cancelar - Cancelar agendamento
+  cancelarAgendamento: async (token, id, motivo_cancelamento, cancelado_por) => {
+    return await apiRequest(`/api/agendamentos/${id}/cancelar`, {
+      method: 'POST',
+      token,
+      body: { motivo_cancelamento, cancelado_por }
+    });
+  },
+
+  // GET /api/agendamentos/:id/logs - Obter logs do agendamento
+  getLogsAgendamento: async (token, id) => {
+    return await apiRequest(`/api/agendamentos/${id}/logs`, {
+      method: 'GET',
+      token
+    });
+  },
+
+  // POST /api/agendamentos/:id/reenviar-convites - Reenviar convites
+  reenviarConvites: async (token, id) => {
+    return await apiRequest(`/api/agendamentos/${id}/reenviar-convites`, {
+      method: 'POST',
+      token
     });
   }
 };

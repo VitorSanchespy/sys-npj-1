@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-08-25T13:51:27.651Z",
+  "filesRemoved": 3,
+  "dirsRemoved": 0,
+  "removedFiles": [
+    "agendamento.mock.json",
+    "convidados.mock.json",
+    "usuarios.mock.json"
+  ],
+  "removedDirs": []
+}

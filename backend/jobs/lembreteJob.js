@@ -8,25 +8,26 @@ class LembreteJob {
     this.job = null;
   }
 
-  // Iniciar o job automático para rodar a cada 30 minutos
+  // Iniciar o job automático para rodar a cada 1 hora
   iniciar() {
     console.log('🔄 Iniciando job automático de lembretes de agendamentos...');
     
-    // Executa a cada 30 minutos: '0 */30 * * * *'
+    // Executa a cada 1 hora: '0 0 */1 * * *'
     // Para testes, pode usar a cada minuto: '* * * * *'
-    this.job = cron.schedule('0 */30 * * * *', async () => {
+    this.job = cron.schedule('0 0 */1 * * *', async () => {
       if (this.isRunning) {
         console.log('⏳ Job de lembretes já está em execução, pulando...');
         return;
       }
 
       await this.executarLembretes();
+      await this.verificarConvitesExpirados();
     }, {
       scheduled: true,
       timezone: 'America/Cuiaba' // Fuso horário de Mato Grosso
     });
 
-    console.log('✅ Job de lembretes iniciado com sucesso');
+    console.log('✅ Job de lembretes iniciado com sucesso (executa a cada 1 hora)');
   }
 
   // Método para teste manual
@@ -181,6 +182,40 @@ class LembreteJob {
       executando: this.isRunning,
       proximaExecucao: this.job ? this.job.nextDate() : null
     };
+  }
+
+  // Verificar convites expirados e processar automaticamente
+  async verificarConvitesExpirados() {
+    try {
+      console.log('🔍 Verificando convites expirados...');
+      
+      const agendamentos = await Agendamento.findAll({
+        where: {
+          status: 'enviando_convites',
+          data_convites_enviados: {
+            [require('sequelize').Op.not]: null
+          }
+        }
+      });
+
+      let processados = 0;
+      
+      for (const agendamento of agendamentos) {
+        const horasPassadas = (new Date() - new Date(agendamento.data_convites_enviados)) / (1000 * 60 * 60);
+        
+        if (horasPassadas >= 24) {
+          // Processar convites expirados
+          await agendamento.verificarAutoMarcacao();
+          processados++;
+          console.log(`⏰ Convites expirados processados para agendamento ${agendamento.id}`);
+        }
+      }
+
+      console.log(`✅ Verificação de convites expirados concluída: ${processados} agendamentos processados`);
+      
+    } catch (error) {
+      console.error('❌ Erro ao verificar convites expirados:', error);
+    }
   }
 }
 

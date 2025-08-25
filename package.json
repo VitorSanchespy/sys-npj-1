@@ -29,7 +29,15 @@
     "db:reset": "cd backend && npm run db:reset",
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "test:frontend": "node test-frontend-e2e.js",
-    "test:setup": "node setup-test-environment.js"
+    "test:setup": "node setup-test-environment.js",
+    "test:agendamento": "node tests/agendamento/run-tests.js",
+    "test:agendamento:backend": "jest --config tests/agendamento/jest.config.json tests/agendamento/agendamento.spec.js",
+    "test:agendamento:frontend": "jest --config tests/agendamento/jest.config.json tests/agendamento/agendamento.front.spec.js",
+    "test:agendamento:coverage": "jest --config tests/agendamento/jest.config.json --coverage",
+    "clean:tests": "node tests/agendamento/clean-tests.js",
+    "clean:tests:mocks": "node tests/agendamento/clean-tests.js --mocks",
+    "clean:tests:temp": "node tests/agendamento/clean-tests.js --temp",
+    "clean:tests:force": "node tests/agendamento/clean-tests.js --force"
   },
   "keywords": [
     "npj",
