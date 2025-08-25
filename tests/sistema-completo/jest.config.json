@@ -1,0 +1,19 @@
+{
+  "testEnvironment": "node",
+  "testMatch": [
+    "**/tests/sistema-completo/**/*.spec.js"
+  ],
+  "collectCoverage": true,
+  "coverageDirectory": "tests/sistema-completo/reports/coverage",
+  "coverageReporters": [
+    "text",
+    "lcov",
+    "html",
+    "json"
+  ],
+  "testTimeout": 30000,
+  "setupFilesAfterEnv": [
+    "<rootDir>/tests/sistema-completo/setup.js"
+  ],
+  "verbose": true
+}

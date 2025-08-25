@@ -1,0 +1,56 @@
+{
+  "timestamp": "2025-08-25T17:19:42.881Z",
+  "error": {
+    "message": "Serviço obrigatório não disponível: Backend API",
+    "stack": "Error: Serviço obrigatório não disponível: Backend API\n    at NPJSystemTestOrchestrator.verifySystemHealth (C:\\Users\\VTR\\Documents\\GitHub\\sys-npj-1\\tests\\sistema-completo\\run-massive-tests.js:134:17)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async NPJSystemTestOrchestrator.runCompleteTestSuite (C:\\Users\\VTR\\Documents\\GitHub\\sys-npj-1\\tests\\sistema-completo\\run-massive-tests.js:59:7)"
+  },
+  "partialResults": {
+    "backend": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "modules": {}
+    },
+    "frontend": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "modules": {}
+    },
+    "e2e": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "scenarios": {}
+    },
+    "integration": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "flows": {}
+    },
+    "performance": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "metrics": {}
+    },
+    "security": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "vulnerabilities": {}
+    }
+  },
+  "config": {
+    "baseUrl": "http://localhost:3001",
+    "frontendUrl": "http://localhost:5173",
+    "testTimeout": 30000,
+    "retryAttempts": 3,
+    "concurrentUsers": 100,
+    "adminCredentials": {
+      "email": "admin@npj.com",
+      "password": "admin123"
+    }
+  }
+}

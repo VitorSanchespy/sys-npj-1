@@ -1,0 +1,9 @@
+{
+  "e2e": {
+    "baseUrl": "http://localhost:5173",
+    "supportFile": "tests/sistema-completo/e2e/support/commands.js",
+    "specPattern": "tests/sistema-completo/e2e/**/*.spec.js",
+    "video": true,
+    "screenshotOnRunFailure": true
+  }
+}
