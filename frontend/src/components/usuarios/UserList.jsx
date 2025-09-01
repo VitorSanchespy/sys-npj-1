@@ -266,7 +266,16 @@ export default function UserList() {
                 Nenhum usuário encontrado
               </div>
             )}
-            {!loading && suggestions.map(usuario => (
+            {!loading && suggestions
+              .filter(usuario => {
+                // Se o usuário logado é Admin, mostra todos (ativos e inativos)
+                if (user?.role_id === 1) {
+                  return true;
+                }
+                // Para Professor/Aluno, mostra apenas usuários ativos
+                return usuario.ativo !== false;
+              })
+              .map(usuario => (
               <div
                 key={usuario.id}
                 onClick={() => selectUser(usuario)}
@@ -300,15 +309,13 @@ export default function UserList() {
                   <span>
                     {usuario.role_id === 1 ? 'Admin' : usuario.role_id === 2 ? 'Professor' : 'Aluno'}
                   </span>
-                  {usuario.ativo === false && (
-                    <span style={{ 
-                      color: '#dc3545',
-                      fontWeight: 'bold',
-                      fontSize: '0.75rem'
-                    }}>
-                      ❌ Inativo
-                    </span>
-                  )}
+                  <span style={{ 
+                    color: usuario.ativo === false ? '#dc3545' : '#28a745',
+                    fontWeight: 'bold',
+                    fontSize: '0.75rem'
+                  }}>
+                    {usuario.ativo === false ? '❌ Inativo' : '✅ Ativo'}
+                  </span>
                 </div>
               </div>
             ))}
@@ -340,7 +347,7 @@ export default function UserList() {
               fontSize: '1.4rem',
               fontWeight: 'bold'
             }}>
-              ✏️ Editando: {selectedUser.nome}
+              ✏️ {selectedUser.nome}
             </h3>
             <button 
               onClick={resetForm}
@@ -604,30 +611,33 @@ export default function UserList() {
                 🚫 Inativar Usuário
               </button>
             ) : (
-              <button
-                onClick={() => setConfirm({ open: true, user: editingUser, action: 'reactivate' })}
-                style={{
-                  padding: '12px 24px',
-                  backgroundColor: '#17a2b8',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  fontWeight: 'bold',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = '#138496';
-                  e.target.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = '#17a2b8';
-                  e.target.style.transform = 'translateY(0)';
-                }}
-              >
-                ✅ Reativar Usuário
-              </button>
+              // Botão de reativar apenas para Admin
+              user?.role_id === 1 && (
+                <button
+                  onClick={() => setConfirm({ open: true, user: editingUser, action: 'reactivate' })}
+                  style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#17a2b8',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: 'bold',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = '#138496';
+                    e.target.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = '#17a2b8';
+                    e.target.style.transform = 'translateY(0)';
+                  }}
+                >
+                  ✅ Reativar Usuário
+                </button>
+              )
             )}
 
             <button

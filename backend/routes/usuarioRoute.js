@@ -26,7 +26,7 @@ router.put('/:id/senha', usuarioController.atualizarSenha);
 
 router.get('/:id', validate('getUsuario'), handleValidation, usuarioController.obterUsuario);
 router.put('/:id', roleMiddleware(['Admin', 'Professor']), validate('updateUsuario'), handleValidation, preveniDuplicacaoUsuario, usuarioController.atualizarUsuario);
-router.put('/:id/reativar', roleMiddleware(['Admin', 'Professor']), validate('getUsuario'), handleValidation, usuarioController.reativarUsuario);
+router.put('/:id/reativar', roleMiddleware(['Admin']), validate('getUsuario'), handleValidation, usuarioController.reativarUsuario);
 router.delete('/:id', roleMiddleware(['Admin', 'Professor']), validate('getUsuario'), handleValidation, usuarioController.deletarUsuario);
 
 module.exports = router;

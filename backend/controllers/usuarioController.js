@@ -157,22 +157,6 @@ exports.deleteMe = async (req, res) => {
   }
 };
 
-// Listar todos os usuários do sistema - endpoint: GET /api/usuarios
-exports.listarUsuarios = async (req, res) => {
-  try {
-    const usuarios = await Usuario.findAll({
-      include: [{ model: Role, as: 'role' }],
-      attributes: ['id', 'nome', 'email', 'role_id', 'ativo', 'criado_em', 'telefone']
-    });
-    
-    res.json(usuarios);
-    
-  } catch (error) {
-    console.error('Erro ao listar usuários:', error);
-    res.status(500).json({ erro: 'Erro interno do servidor' });
-  }
-};
-
 // Obter usuário específico por ID - endpoint: GET /api/usuarios/:id
 exports.obterUsuario = async (req, res) => {
   try {
@@ -373,13 +357,18 @@ exports.listarUsuarios = async (req, res) => {
       });
     }
     
-    let whereClause = { ativo: true };
+    let whereClause = {};
     
-    // Professor pode ver apenas Alunos e outros Professores
+    // Professor pode ver apenas Alunos e outros Professores ativos
     if (userRole === 'Professor') {
-      whereClause.role_id = [2, 3]; // Professor e Aluno
+      whereClause = {
+        role_id: [2, 3], // Professor e Aluno
+        ativo: true // Professor vê apenas ativos
+      };
+    } else if (userRole === 'Admin') {
+      // Admin vê todos os usuários (ativos e inativos)
+      whereClause = {}; // Sem filtros para Admin
     }
-    // Admin pode ver todos (sem restrição adicional)
     
     const usuarios = await Usuario.findAll({
       where: whereClause,
