@@ -298,7 +298,7 @@ export default function UserList() {
                   gap: '8px'
                 }}>
                   <span>
-                    {usuario.role_id === 1 ? '👑 Admin' : usuario.role_id === 2 ? '👨‍🏫 Professor' : '🎓 Aluno'}
+                    {usuario.role_id === 1 ? 'Admin' : usuario.role_id === 2 ? 'Professor' : 'Aluno'}
                   </span>
                   {usuario.ativo === false && (
                     <span style={{ 
@@ -454,9 +454,9 @@ export default function UserList() {
                   onFocus={(e) => e.target.style.borderColor = '#007bff'}
                   onBlur={(e) => e.target.style.borderColor = '#e9ecef'}
                 >
-                  <option value={1}>👑 Admin</option>
-                  <option value={2}>🎓 Aluno</option>
-                  <option value={3}>👨‍🏫 Professor</option>
+                  <option value={1}>Admin</option>
+                  <option value={2}>Professor</option>
+                  <option value={3}>Aluno</option>
                 </select>
               </div>
             )}
