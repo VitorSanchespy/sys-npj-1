@@ -270,16 +270,46 @@ class ToastSystemAudit {
   
   _getLoginErrorMessage(error) {
     if (typeof error === 'string') {
-      if (error.includes('Email não encontrado') || error.includes('não encontrado')) {
-        return '❌ E-mail não encontrado. Verifique se está correto ou faça seu cadastro.';
+      // Tratar mensagens específicas do backend
+      if (error.includes('Email não encontrado') || error.includes('não encontrado no sistema')) {
+        return '❌ E-mail não encontrado no sistema. Verifique se digitou corretamente ou faça seu cadastro.';
       }
-      if (error.includes('Senha incorreta') || error.includes('senha')) {
+      if (error.includes('Senha incorreta')) {
         return '❌ Senha incorreta. Verifique sua senha e tente novamente.';
+      }
+      if (error.includes('Email e senha são obrigatórios')) {
+        return '⚠️ E-mail e senha são obrigatórios para fazer login.';
       }
       if (error.includes('inativ') || error.includes('bloqueado')) {
         return '❌ Sua conta está inativa. Entre em contato com o administrador.';
       }
+      if (error.includes('Banco de dados não disponível')) {
+        return '🔧 Sistema temporariamente indisponível. Tente novamente em alguns instantes.';
+      }
+      if (error.includes('Erro interno do servidor')) {
+        return '🔧 Erro interno do servidor. Entre em contato com o suporte se persistir.';
+      }
     }
+    
+    // Se for um objeto de erro com propriedades específicas
+    if (error && typeof error === 'object') {
+      if (error.status === 404) {
+        return '❌ E-mail não encontrado no sistema. Verifique se digitou corretamente ou faça seu cadastro.';
+      }
+      if (error.status === 401) {
+        return '❌ Senha incorreta. Verifique sua senha e tente novamente.';
+      }
+      if (error.status === 400) {
+        return '⚠️ E-mail e senha são obrigatórios para fazer login.';
+      }
+      if (error.status === 503) {
+        return '🔧 Sistema temporariamente indisponível. Tente novamente em alguns instantes.';
+      }
+      if (error.status === 500) {
+        return '🔧 Erro interno do servidor. Entre em contato com o suporte se persistir.';
+      }
+    }
+    
     return `❌ Falha no login: ${error || 'Erro inesperado. Tente novamente.'}`;
   }
 

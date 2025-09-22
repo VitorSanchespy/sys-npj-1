@@ -8,23 +8,28 @@ export default function LoginForm({ onSuccess }) {
   const { login, loading } = useAuthContext();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({ email: false, senha: false });
   const navigate = useNavigate();
 
   // Validação de campos
   const validateForm = () => {
+    const errors = { email: false, senha: false };
+    
     if (!email.trim()) {
       toastAudit.validation.requiredField("E-mail");
-      return false;
+      errors.email = true;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toastAudit.validation.invalidEmail();
+      errors.email = true;
     }
+    
     if (!senha.trim()) {
       toastAudit.validation.requiredField("Senha");
-      return false;
+      errors.senha = true;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toastAudit.validation.invalidEmail();
-      return false;
-    }
-    return true;
+    
+    setFieldErrors(errors);
+    return !errors.email && !errors.senha;
   };
 
   const handleSubmit = async e => {
@@ -39,6 +44,9 @@ export default function LoginForm({ onSuccess }) {
       
       if (res.success) {
         toastAudit.auth.loginSuccess(res.user?.nome || "Usuário");
+        // Limpar erros visuais quando login for bem-sucedido
+        setFieldErrors({ email: false, senha: false });
+        // Não limpar campos quando login for bem-sucedido
         if (onSuccess) onSuccess();
       } else {
         console.log('❌ Login falhou - dados do erro:', {
@@ -47,12 +55,31 @@ export default function LoginForm({ onSuccess }) {
           fullResponse: res
         });
         
-        // Limpar campos em caso de erro
-        setEmail("");
-        setSenha("");
+        // Definir qual campo tem erro baseado na resposta
+        const errors = { email: false, senha: false };
+        if (res.status === 404 || (res.message && res.message.includes('Email não encontrado'))) {
+          errors.email = true;
+        } else if (res.status === 401 || (res.message && res.message.includes('Senha incorreta'))) {
+          errors.senha = true;
+          setSenha(""); // Limpar apenas a senha se estiver incorreta
+        }
+        setFieldErrors(errors);
         
-        // Usar sistema auditado para tratamento de erro
-        toastAudit.auth.loginError(res.message);
+        // Usar sistema auditado para tratamento de erro específico
+        toastAudit.auth.loginError(res.message || res.erro || "Erro ao fazer login");
+        
+        // Focar no campo apropriado baseado no tipo de erro
+        if (errors.email) {
+          setTimeout(() => {
+            const emailField = document.querySelector('input[type="email"]');
+            if (emailField) emailField.focus();
+          }, 100);
+        } else if (errors.senha) {
+          setTimeout(() => {
+            const senhaField = document.querySelector('input[type="password"]');
+            if (senhaField) senhaField.focus();
+          }, 100);
+        }
       }
     } catch (err) {
       console.log('❌ Erro capturado no catch:', {
@@ -61,12 +88,26 @@ export default function LoginForm({ onSuccess }) {
         fullError: err
       });
       
-      // Limpar campos em caso de erro
-      setEmail("");
-      setSenha("");
+      // Marcar ambos os campos como erro em caso de erro de rede/servidor
+      setFieldErrors({ email: true, senha: true });
+      setSenha(""); // Limpar apenas a senha em caso de erro
+      
+      // Tratar diferentes tipos de erro
+      let errorMessage = err.message || err.erro || "Erro ao fazer login";
+      
+      // Se for erro de rede, mostrar mensagem específica
+      if (err.code === 'NETWORK_ERROR' || err.message?.includes('fetch')) {
+        errorMessage = 'Erro de conexão com o servidor. Verifique sua internet.';
+      }
       
       // Usar sistema auditado para tratamento de erro
-      toastAudit.auth.loginError(err.message || err);
+      toastAudit.auth.loginError(errorMessage);
+      
+      // Focar no campo email para tentar novamente
+      setTimeout(() => {
+        const emailField = document.querySelector('input[type="email"]');
+        if (emailField) emailField.focus();
+      }, 100);
     }
   };
 
@@ -85,21 +126,28 @@ export default function LoginForm({ onSuccess }) {
         <input
           type="email"
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            // Limpar erro visual quando usuário começar a digitar
+            if (fieldErrors.email) {
+              setFieldErrors(prev => ({...prev, email: false}));
+            }
+          }}
           required
           autoFocus
           style={{
             width: '100%',
             padding: '12px 16px',
-            border: '2px solid #e9ecef',
+            border: `2px solid ${fieldErrors.email ? '#dc3545' : '#e9ecef'}`,
             borderRadius: '8px',
             fontSize: '1rem',
             transition: 'border-color 0.3s ease',
             outline: 'none',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            backgroundColor: fieldErrors.email ? '#ffeaea' : 'white'
           }}
-          onFocus={(e) => e.target.style.borderColor = '#007bff'}
-          onBlur={(e) => e.target.style.borderColor = '#e9ecef'}
+          onFocus={(e) => e.target.style.borderColor = fieldErrors.email ? '#dc3545' : '#007bff'}
+          onBlur={(e) => e.target.style.borderColor = fieldErrors.email ? '#dc3545' : '#e9ecef'}
           placeholder="seu.email@exemplo.com"
         />
       </div>
@@ -117,20 +165,27 @@ export default function LoginForm({ onSuccess }) {
         <input
           type="password"
           value={senha}
-          onChange={e => setSenha(e.target.value)}
+          onChange={(e) => {
+            setSenha(e.target.value);
+            // Limpar erro visual quando usuário começar a digitar
+            if (fieldErrors.senha) {
+              setFieldErrors(prev => ({...prev, senha: false}));
+            }
+          }}
           required
           style={{
             width: '100%',
             padding: '12px 16px',
-            border: '2px solid #e9ecef',
+            border: `2px solid ${fieldErrors.senha ? '#dc3545' : '#e9ecef'}`,
             borderRadius: '8px',
             fontSize: '1rem',
             transition: 'border-color 0.3s ease',
             outline: 'none',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            backgroundColor: fieldErrors.senha ? '#ffeaea' : 'white'
           }}
-          onFocus={(e) => e.target.style.borderColor = '#007bff'}
-          onBlur={(e) => e.target.style.borderColor = '#e9ecef'}
+          onFocus={(e) => e.target.style.borderColor = fieldErrors.senha ? '#dc3545' : '#007bff'}
+          onBlur={(e) => e.target.style.borderColor = fieldErrors.senha ? '#dc3545' : '#e9ecef'}
           placeholder="Digite sua senha"
         />
       </div>
