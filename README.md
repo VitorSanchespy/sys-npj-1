@@ -56,6 +56,13 @@ start-local.bat
 chmod +x start-local.sh
 ./start-local.sh
 ```
+** Ordenação dos níveis de acesso:**
+## Roles de Acesso:
+|id  | Role      | Descrição
+|  1 | Admin     | Acesso total ao sistema
+|  2 | Professor | Acesso a funcionalidades de ensino
+|  3 | Aluno     | Acesso a funcionalidades de aluno
+
 
 ### **🌐 Acessos:**
 - **Frontend:** http://localhost:5173
