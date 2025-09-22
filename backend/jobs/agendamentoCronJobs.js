@@ -117,7 +117,11 @@ class AgendamentoCronJobs {
         },
         include: [
           { model: Processo, as: 'processo' },
-          { model: Usuario, as: 'usuario' }
+          { 
+            model: Usuario, 
+            as: 'usuario',
+            attributes: ['id', 'nome', 'email', 'role_id', 'ativo']
+          }
         ]
       });
       
@@ -161,7 +165,11 @@ class AgendamentoCronJobs {
         },
         include: [
           { model: Processo, as: 'processo' },
-          { model: Usuario, as: 'usuario' }
+          { 
+            model: Usuario, 
+            as: 'usuario',
+            attributes: ['id', 'nome', 'email', 'role_id', 'ativo']
+          }
         ]
       });
       
@@ -200,7 +208,11 @@ class AgendamentoCronJobs {
         },
         include: [
           { model: Processo, as: 'processo' },
-          { model: Usuario, as: 'usuario' }
+          { 
+            model: Usuario, 
+            as: 'usuario',
+            attributes: ['id', 'nome', 'email', 'role_id', 'ativo']
+          }
         ]
       });
       

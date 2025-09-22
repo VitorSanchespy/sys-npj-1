@@ -5,7 +5,6 @@
  * REGRA: Todos os horários são sempre em "America/Sao_Paulo"
  * - Armazenar com offset explícito: 2025-08-13T10:00:00-03:00
  * - Exibir sempre no fuso Brasil: 10:00
- * - Google Calendar sempre recebe fuso Brasil
  */
 
 /**
@@ -110,22 +109,6 @@ function toDateTimeLocalBrasilia(dateInput) {
 }
 
 /**
- * Para Google Calendar - sempre retorna objeto com timezone Brasil
- * @param {string|Date} dateInput - Data em qualquer formato
- * @returns {Object} - Objeto com dateTime e timeZone para Google
- */
-function toGoogleCalendarFormat(dateInput) {
-  if (!dateInput) return null;
-  
-  const brasiliaISO = toBrasiliaISO(dateInput);
-  
-  return {
-    dateTime: brasiliaISO, // Mantém o offset para Google Calendar
-    timeZone: 'America/Sao_Paulo'
-  };
-}
-
-/**
  * Obtém a data/hora atual em horário de Brasília com offset explícito
  * @returns {string} - ISO string com fuso Brasil
  */
@@ -157,7 +140,6 @@ module.exports = {
   toBrasiliaDate,
   formatToBrasilia,
   toDateTimeLocalBrasilia,
-  toGoogleCalendarFormat,
   nowBrasiliaISO,
   nowBrasilia,
   nowTimestamp
