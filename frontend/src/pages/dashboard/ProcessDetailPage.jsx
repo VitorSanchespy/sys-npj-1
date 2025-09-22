@@ -492,12 +492,18 @@ export default function ProcessDetailPage() {
                   borderRadius: '6px',
                   border: '1px solid #dee2e6',
                   display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
+                  flexDirection: 'column',
+                  gap: '8px'
                 }}>
                   <div>
                     <p style={{ margin: 0, fontWeight: '500' }}>{aluno.nome}</p>
-                    <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#6c757d' }}>
+                    <p style={{ 
+                      margin: '2px 0 0 0', 
+                      fontSize: '12px', 
+                      color: '#6c757d',
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word'
+                    }}>
                       {aluno.email} - {aluno.role}
                     </p>
                     {aluno.telefone && (
@@ -507,12 +513,19 @@ export default function ProcessDetailPage() {
                     )}
                   </div>
                   {hasRole(user, ['Admin', 'Professor']) && processo.status !== 'Concluído' && (
-                    <Button
-                      variant="danger"
-                      onClick={() => handleUnassignUser(aluno.id)}
-                    >
-                      Remover
-                    </Button>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <Button
+                        variant="danger"
+                        onClick={() => handleUnassignUser(aluno.id)}
+                        style={{ 
+                          fontSize: '12px',
+                          padding: '6px 12px',
+                          minHeight: '32px'
+                        }}
+                      >
+                        Remover
+                      </Button>
+                    </div>
                   )}
                 </div>
               ))}
