@@ -1,5 +1,6 @@
 // Servidor principal do sistema NPJ - configurações e inicialização
 require('dotenv').config({ path: require('path').resolve(__dirname, '../env/main.env') });
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');

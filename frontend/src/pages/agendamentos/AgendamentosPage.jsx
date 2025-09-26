@@ -53,8 +53,8 @@ const AgendamentosPage = () => {
       });
       
       if (response.success) {
-        setAgendamentos(response.data || []);
-        setPagination(response.pagination || {
+        setAgendamentos(response.data?.agendamentos || []);
+        setPagination(response.data?.pagination || {
           total: 0,
           page: 1,
           limit: 12,
