@@ -17,8 +17,18 @@ const validate = (method) => {
     case 'loginUsuario':
       return [
         check('email').isEmail().withMessage('Email inválido')
-          .normalizeEmail(),
+          .normalizeEmail()
+          .isLength({ max: 254 }).withMessage('Email muito longo'), // RFC limite
         check('senha').notEmpty().withMessage('Senha é obrigatória')
+          .isLength({ min: 1, max: 128 }).withMessage('Senha com tamanho inválido')
+      ];
+      
+    // Validação para refresh token - NOVA
+    case 'refreshToken':
+      return [
+        check('refreshToken').notEmpty().withMessage('Refresh token é obrigatório')
+          .isString().withMessage('Refresh token deve ser string')
+          .isLength({ min: 32, max: 512 }).withMessage('Refresh token com formato inválido')
       ];
 
     // Validações para usuários
@@ -137,13 +147,29 @@ const validate = (method) => {
 const handleValidation = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    // Log para auditoria - MELHORADO
+    console.log('❌ Falha na validação:', {
+      ip: req.ip || req.connection.remoteAddress,
+      method: req.method,
+      path: req.path,
+      user: req.user?.id || 'não autenticado',
+      errors: errors.array().map(err => `${err.param}: ${err.msg}`)
+    });
+    
+    // Resposta detalhada mas segura
+    const errorDetails = errors.array().map(err => ({
+      campo: err.param,
+      mensagem: err.msg,
+      // Não incluir valor para campos sensíveis
+      valor: ['senha', 'password', 'token'].includes(err.param.toLowerCase()) 
+        ? '[OCULTO]' 
+        : err.value
+    }));
+    
     return res.status(400).json({ 
-      erro: 'Validação falhou',
-      detalhes: errors.array().map(err => ({
-        campo: err.param,
-        mensagem: err.msg,
-        valor: err.value
-      }))
+      erro: 'Dados inválidos fornecidos',
+      detalhes: errorDetails,
+      timestamp: new Date().toISOString()
     });
   }
   next();

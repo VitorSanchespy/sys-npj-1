@@ -35,63 +35,42 @@ class AgendamentoCronJobs {
   }
 
   /**
-   * Enviar e-mails para usuários vinculados (sem duplicatas)
+   * Enviar e-mails para todos os participantes (sem restrição de vínculo)
    */
-  static async enviarEmailParaUsuariosVinculados(agendamento, subject, html) {
+  static async enviarEmailParaTodosParticipantes(agendamento, subject, html) {
     const emailsEnviados = new Set(); // Previne duplicatas
     
-    // 1. Buscar usuários vinculados ao processo (se houver)
-    let usuariosVinculados = [];
-    if (agendamento.processo_id) {
-      usuariosVinculados = await this.buscarUsuariosVinculadosAoProcesso(agendamento.processo_id);
-    }
-    
-    // 2. Incluir o criador do agendamento (se não estiver na lista)
+    // 1. Incluir o criador do agendamento
     if (agendamento.usuario && agendamento.usuario.email) {
-      const criadorJaVinculado = usuariosVinculados.some(u => u.id === agendamento.usuario.id);
-      if (!criadorJaVinculado) {
-        usuariosVinculados.push(agendamento.usuario);
+      try {
+        await emailService.enviarEmail({
+          to: [{ email: agendamento.usuario.email, name: agendamento.usuario.nome }],
+          subject,
+          html
+        });
+        emailsEnviados.add(agendamento.usuario.email);
+        console.log(`📧 E-mail enviado para criador ${agendamento.usuario.nome} (${agendamento.usuario.email})`);
+      } catch (error) {
+        console.error(`Erro ao enviar e-mail para criador ${agendamento.usuario.email}:`, error);
       }
     }
     
-    // 3. Enviar para usuários vinculados
-    for (const usuario of usuariosVinculados) {
-      if (usuario.email && !emailsEnviados.has(usuario.email)) {
-        try {
-          await emailService.enviarEmail({
-            to: [{ email: usuario.email, name: usuario.nome }],
-            subject,
-            html
-          });
-          emailsEnviados.add(usuario.email);
-          console.log(`📧 E-mail enviado para ${usuario.nome} (${usuario.email})`);
-        } catch (error) {
-          console.error(`Erro ao enviar e-mail para ${usuario.email}:`, error);
-        }
-      }
-    }
-    
-    // 4. Processar convidados APENAS se eles estão vinculados ao processo
+    // 2. Enviar para TODOS os convidados que aceitaram (sem restrição de vínculo)
     if (agendamento.convidados && Array.isArray(agendamento.convidados)) {
       for (const convidado of agendamento.convidados) {
-        if (convidado.email && !emailsEnviados.has(convidado.email)) {
-          // Verificar se o convidado está vinculado ao processo
-          const convidadoVinculado = usuariosVinculados.some(u => u.email === convidado.email);
-          
-          if (convidadoVinculado) {
-            try {
-              await emailService.enviarEmail({
-                to: [{ email: convidado.email, name: convidado.nome }],
-                subject,
-                html
-              });
-              emailsEnviados.add(convidado.email);
-              console.log(`📧 E-mail enviado para convidado ${convidado.nome} (${convidado.email})`);
-            } catch (error) {
-              console.error(`Erro ao enviar e-mail para convidado ${convidado.email}:`, error);
-            }
-          } else {
-            console.log(`⚠️ Convidado ${convidado.email} não está vinculado ao processo - e-mail não enviado`);
+        if (convidado.email && 
+            convidado.status === 'aceito' && 
+            !emailsEnviados.has(convidado.email)) {
+          try {
+            await emailService.enviarEmail({
+              to: [{ email: convidado.email, name: convidado.nome }],
+              subject,
+              html
+            });
+            emailsEnviados.add(convidado.email);
+            console.log(`📧 E-mail enviado para convidado ${convidado.nome || convidado.email}`);
+          } catch (error) {
+            console.error(`Erro ao enviar e-mail para convidado ${convidado.email}:`, error);
           }
         }
       }
@@ -283,7 +262,7 @@ class AgendamentoCronJobs {
     `;
     
     const subject = `Agendamento Confirmado - ${agendamento.titulo}`;
-    return await this.enviarEmailParaUsuariosVinculados(agendamento, subject, html);
+    return await this.enviarEmailParaTodosParticipantes(agendamento, subject, html);
   }
   
   /**
@@ -311,7 +290,7 @@ class AgendamentoCronJobs {
     `;
     
     const subject = `🚨 URGENTE: ${agendamento.titulo} em 1 hora`;
-    return await this.enviarEmailParaUsuariosVinculados(agendamento, subject, html);
+    return await this.enviarEmailParaTodosParticipantes(agendamento, subject, html);
   }
 
   /**
@@ -334,7 +313,7 @@ class AgendamentoCronJobs {
     `;
     
     const subject = `Lembrete: ${agendamento.titulo} - Hoje`;
-    return await this.enviarEmailParaUsuariosVinculados(agendamento, subject, html);
+    return await this.enviarEmailParaTodosParticipantes(agendamento, subject, html);
   }
   
   /**

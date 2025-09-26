@@ -475,6 +475,220 @@ async function enviarNotificacaoCancelamento(agendamento, emailsConvidados) {
   }
 }
 
+// Função para enviar notificação quando agendamento é confirmado automaticamente
+async function enviarNotificacaoAgendamentoConfirmado(agendamento) {
+  try {
+    const dataFormatada = new Date(agendamento.data_inicio).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    // Coletar todos os emails (criador + convidados que aceitaram)
+    const emailsNotificar = [];
+    
+    // Adicionar criador
+    if (agendamento.usuario && agendamento.usuario.email) {
+      emailsNotificar.push({
+        email: agendamento.usuario.email,
+        nome: agendamento.usuario.nome
+      });
+    }
+    
+    // Adicionar convidados que aceitaram
+    if (agendamento.convidados && Array.isArray(agendamento.convidados)) {
+      agendamento.convidados
+        .filter(c => c.status === 'aceito')
+        .forEach(c => emailsNotificar.push({
+          email: c.email,
+          nome: c.nome
+        }));
+    }
+
+    const emailData = {
+      to: emailsNotificar.map(e => ({ email: e.email, name: e.nome || 'Participante' })),
+      subject: `✅ Agendamento Confirmado - ${agendamento.titulo}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px;">
+          <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+            <h1 style="margin: 0; font-size: 24px;">✅ Agendamento Confirmado!</h1>
+          </div>
+          
+          <div style="padding: 30px;">
+            <p style="font-size: 16px; margin-bottom: 20px;">Ótima notícia!</p>
+            <p style="font-size: 16px; margin-bottom: 30px;">Todos os convidados responderam e seu agendamento foi <strong>confirmado automaticamente</strong>:</p>
+            
+            <div style="background-color: #d4edda; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #28a745;">
+              <div style="display: grid; gap: 15px;">
+                <div><strong>📅 Título:</strong> ${agendamento.titulo}</div>
+                <div><strong>⏰ Data e Hora:</strong> ${dataFormatada}</div>
+                <div><strong>📍 Local:</strong> ${agendamento.local || 'Não informado'}</div>
+                ${agendamento.descricao ? `<div><strong>📝 Descrição:</strong> ${agendamento.descricao}</div>` : ''}
+              </div>
+            </div>
+
+            <div style="background-color: #cce5ff; padding: 20px; border-radius: 8px; margin: 25px 0;">
+              <h3 style="margin: 0 0 10px 0; color: #0066cc;">🔔 Lembretes Automáticos</h3>
+              <p style="margin: 0; font-size: 14px;">Você receberá:</p>
+              <ul style="margin: 10px 0; padding-left: 20px; font-size: 14px;">
+                <li><strong>Lembrete do dia</strong> na manhã do agendamento</li>
+                <li><strong>Lembrete urgente</strong> 1 hora antes do início</li>
+              </ul>
+            </div>
+            
+            <p style="margin-top: 30px; font-size: 14px; color: #666;">
+              Não esqueça! Chegue no horário e local indicados.
+            </p>
+          </div>
+        </div>
+      `
+    };
+
+    return await enviarViaSMTP(emailData);
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Função para enviar notificação quando agendamento é cancelado automaticamente
+async function enviarNotificacaoCancelamentoAutomatico(agendamento) {
+  try {
+    const dataFormatada = new Date(agendamento.data_inicio).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    // Notificar apenas o criador
+    const emailData = {
+      to: [{ email: agendamento.usuario.email, name: agendamento.usuario.nome }],
+      subject: `❌ Agendamento Cancelado Automaticamente - ${agendamento.titulo}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px;">
+          <div style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+            <h1 style="margin: 0; font-size: 24px;">❌ Agendamento Cancelado</h1>
+          </div>
+          
+          <div style="padding: 30px;">
+            <p style="font-size: 16px; margin-bottom: 20px;">Olá <strong>${agendamento.usuario.nome}</strong>,</p>
+            <p style="font-size: 16px; margin-bottom: 30px;">Infelizmente, seu agendamento foi <strong>cancelado automaticamente</strong> porque todos os convidados recusaram o convite:</p>
+            
+            <div style="background-color: #f8d7da; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #dc3545;">
+              <div style="display: grid; gap: 15px;">
+                <div><strong>📅 Título:</strong> ${agendamento.titulo}</div>
+                <div><strong>⏰ Data e Hora:</strong> ${dataFormatada}</div>
+                <div><strong>📍 Local:</strong> ${agendamento.local || 'Não informado'}</div>
+              </div>
+            </div>
+
+            <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 25px 0;">
+              <h3 style="margin: 0 0 10px 0; color: #856404;">💡 O que você pode fazer:</h3>
+              <ul style="margin: 10px 0; padding-left: 20px; font-size: 14px;">
+                <li>Criar um novo agendamento com outros horários</li>
+                <li>Entrar em contato diretamente com os participantes</li>
+                <li>Reagendar para uma data mais conveniente</li>
+              </ul>
+            </div>
+            
+            <p style="margin-top: 30px; font-size: 14px; color: #666;">
+              Se precisar de ajuda, entre em contato com a administração.
+            </p>
+          </div>
+        </div>
+      `
+    };
+
+    return await enviarViaSMTP(emailData);
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Função para enviar notificação quando há situação mista (aceites e recusas)
+async function enviarNotificacaoSituacaoMista(agendamento) {
+  try {
+    const dataFormatada = new Date(agendamento.data_inicio).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const convidados = agendamento.convidados || [];
+    const aceites = convidados.filter(c => c.status === 'aceito');
+    const recusas = convidados.filter(c => c.status === 'recusado');
+
+    // Buscar emails de admins
+    const Usuario = require('../models/usuarioModel');
+    const admins = await Usuario.findAll({
+      where: { role: ['Admin', 'Professor'] },
+      attributes: ['email', 'nome']
+    });
+
+    if (admins.length === 0) return;
+
+    const emailData = {
+      to: admins.map(admin => ({ email: admin.email, name: admin.nome })),
+      subject: `⚠️ Ação Necessária: Agendamento com Respostas Mistas - ${agendamento.titulo}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px;">
+          <div style="background: linear-gradient(135deg, #ffc107 0%, #ffca2c 100%); color: #212529; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+            <h1 style="margin: 0; font-size: 24px;">⚠️ Situação Mista em Agendamento</h1>
+          </div>
+          
+          <div style="padding: 30px;">
+            <p style="font-size: 16px; margin-bottom: 20px;">Há uma situação que precisa de sua atenção:</p>
+            <p style="font-size: 16px; margin-bottom: 30px;">O agendamento a seguir tem <strong>aceites e recusas simultaneamente</strong>:</p>
+            
+            <div style="background-color: #fff3cd; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #ffc107;">
+              <div style="display: grid; gap: 15px;">
+                <div><strong>📅 Título:</strong> ${agendamento.titulo}</div>
+                <div><strong>👤 Criador:</strong> ${agendamento.usuario.nome} (${agendamento.usuario.email})</div>
+                <div><strong>⏰ Data e Hora:</strong> ${dataFormatada}</div>
+                <div><strong>📍 Local:</strong> ${agendamento.local || 'Não informado'}</div>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0;">
+              <div style="background-color: #d4edda; padding: 15px; border-radius: 8px;">
+                <h4 style="margin: 0 0 10px 0; color: #155724;">✅ Aceitaram (${aceites.length})</h4>
+                ${aceites.map(c => `<div style="font-size: 12px;">• ${c.nome || c.email}</div>`).join('')}
+              </div>
+              
+              <div style="background-color: #f8d7da; padding: 15px; border-radius: 8px;">
+                <h4 style="margin: 0 0 10px 0; color: #721c24;">❌ Recusaram (${recusas.length})</h4>
+                ${recusas.map(c => `<div style="font-size: 12px;">• ${c.nome || c.email}</div>`).join('')}
+              </div>
+            </div>
+
+            <div style="background-color: #cce5ff; padding: 20px; border-radius: 8px; margin: 25px 0;">
+              <h3 style="margin: 0 0 10px 0; color: #0066cc;">🎯 Ações Sugeridas:</h3>
+              <ul style="margin: 10px 0; padding-left: 20px; font-size: 14px;">
+                <li>Confirmar o agendamento apenas com quem aceitou</li>
+                <li>Reagendar para incluir quem recusou</li>
+                <li>Entrar em contato com o criador para decidir</li>
+              </ul>
+            </div>
+            
+            <p style="margin-top: 30px; font-size: 14px; color: #666;">
+              Este agendamento permanecerá como "pendente" até sua decisão.
+            </p>
+          </div>
+        </div>
+      `
+    };
+
+    return await enviarViaSMTP(emailData);
+  } catch (error) {
+    throw error;
+  }
+}
+
 module.exports = {
   enviarEmail,
   enviarConviteAgendamento,
@@ -482,5 +696,8 @@ module.exports = {
   enviarNotificacaoAprovacaoAgendamento,
   enviarNotificacaoRecusaAgendamento,
   enviarNotificacaoRejeicaoAdmin,
-  enviarNotificacaoCancelamento
+  enviarNotificacaoCancelamento,
+  enviarNotificacaoAgendamentoConfirmado,
+  enviarNotificacaoCancelamentoAutomatico,
+  enviarNotificacaoSituacaoMista
 };

@@ -170,16 +170,30 @@ class RequestInterceptor {
     };
   }
 
-  // Lidar com erro 401
+  // Lidar com erro 401 - MELHORADO
   handleUnauthorized() {
-    // Limpar tokens
+    console.log('🚨 Erro 401 detectado pelo interceptador');
+    
+    // Emitir evento personalizado para o AuthContext capturar
+    window.dispatchEvent(new CustomEvent('auth:unauthorized', {
+      detail: { 
+        message: 'Token inválido ou expirado',
+        timestamp: new Date().toISOString()
+      }
+    }));
+    
+    // Limpar tokens do localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
-    // Se já está na página de login, não redireciona, só limpa
-    if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/')) {
+    localStorage.removeItem('user');
+    
+    // Se não está na página de login, redirecionar
+    if (!window.location.pathname.includes('/login') && 
+        !window.location.pathname.includes('/') &&
+        !window.location.pathname.includes('/auth')) {
+      console.log('🔄 Redirecionando para login...');
       window.location.href = '/login';
     }
-    // Se já está na página de login, não faz nada (permite Toast)
   }
 
   // Sleep utility

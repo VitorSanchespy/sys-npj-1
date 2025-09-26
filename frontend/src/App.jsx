@@ -9,6 +9,7 @@ import ToastConfig from './components/toast/ToastConfig';
 import AutoRefreshIndicator from './components/common/AutoRefreshIndicator';
 import { useAutoRefresh } from './hooks/useAutoRefresh';
 import LoginDebugComponent from './components/debug/LoginDebugComponent';
+import SessionValidator from './components/auth/SessionValidator';
 
 // Componente interno para usar hooks
 function AppContent() {
@@ -18,6 +19,7 @@ function AppContent() {
     <>
       <AppRouter />
       <ToastConfig />
+      <SessionValidator />
       {/* Indicador de auto-refresh global */}
       <AutoRefreshIndicator 
         isActive={isActive}

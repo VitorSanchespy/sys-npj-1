@@ -62,15 +62,33 @@ exports.criar = async function(req, res) {
         const userRole = req.user.role?.nome || req.user.role;
         const isAdminOrProfessor = ['Admin', 'Professor'].includes(userRole);
         
-        // Validar e limpar lista de convidados (evitar duplicatas)
+        // Validar e limpar lista de convidados (evitar duplicatas e respeitar limite)
         let convidadosLimpos = [];
         if (convidados && Array.isArray(convidados)) {
+            // Verificar limite máximo de convidados
+            if (convidados.length > 10) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Limite máximo de 10 convidados excedido. Você tentou adicionar ${convidados.length} convidados.` 
+                });
+            }
+            
             const emailsVistos = new Set();
+            const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
             
             for (const convidado of convidados) {
                 if (convidado.email && convidado.email.trim() !== '') {
                     const emailLimpo = convidado.email.toLowerCase().trim();
                     
+                    // Validar formato do email
+                    if (!emailRegex.test(emailLimpo)) {
+                        return res.status(400).json({ 
+                            success: false, 
+                            message: `Email inválido: ${emailLimpo}` 
+                        });
+                    }
+                    
+                    // Verificar duplicatas
                     if (emailsVistos.has(emailLimpo)) {
                         return res.status(400).json({ 
                             success: false, 
@@ -78,10 +96,27 @@ exports.criar = async function(req, res) {
                         });
                     }
                     
+                    // Verificar se não é o próprio email do usuário
+                    if (req.user.email && emailLimpo === req.user.email.toLowerCase()) {
+                        return res.status(400).json({ 
+                            success: false, 
+                            message: `Você não pode adicionar seu próprio email como convidado: ${emailLimpo}` 
+                        });
+                    }
+                    
+                    // Validar nome se fornecido
+                    const nomeConvidado = convidado.nome ? convidado.nome.trim() : null;
+                    if (nomeConvidado && nomeConvidado.length > 100) {
+                        return res.status(400).json({ 
+                            success: false, 
+                            message: `Nome do convidado muito longo (máximo 100 caracteres): ${nomeConvidado}` 
+                        });
+                    }
+                    
                     emailsVistos.add(emailLimpo);
                     convidadosLimpos.push({
                         email: emailLimpo,
-                        nome: convidado.nome || null,
+                        nome: nomeConvidado,
                         status: 'pendente',
                         data_convite: new Date(),
                         justificativa: null,
@@ -125,35 +160,29 @@ exports.criar = async function(req, res) {
             // Enviar convites apenas se há convidados
             if (temConvidados) {
                 let convitesEnviados = 0;
+                let convitesComErro = 0;
+                
                 for (const convidado of convidados) {
                     if (convidado.email && convidado.email.trim() !== '') {
-                        // Verificar se o convidado está vinculado ao processo (se há processo)
-                        let podeEnviar = true;
-                        if (processo_id) {
-                            podeEnviar = await verificarUsuarioVinculadoAoProcesso(convidado.email, processo_id);
-                        }
-                        
-                        if (podeEnviar) {
-                            try {
-                                await emailService.enviarConviteAgendamento(agendamento, convidado.email, convidado.nome);
-                                console.log(`📧 Convite enviado para ${convidado.email}`);
-                                convitesEnviados++;
-                            } catch (emailError) {
-                                console.error(`Erro ao enviar convite para ${convidado.email}:`, emailError);
-                            }
-                        } else {
-                            console.log(`⚠️ Convite NÃO enviado para ${convidado.email} - usuário não vinculado ao processo`);
+                        try {
+                            await emailService.enviarConviteAgendamento(agendamento, convidado.email, convidado.nome);
+                            console.log(`📧 Convite enviado para ${convidado.email}`);
+                            convitesEnviados++;
+                        } catch (emailError) {
+                            console.error(`❌ Erro ao enviar convite para ${convidado.email}:`, emailError);
+                            convitesComErro++;
                         }
                     }
                 }
                 
                 if (convitesEnviados > 0) {
-                    mensagemResposta = `Agendamento criado e aprovado automaticamente. ${convitesEnviados} convite(s) enviado(s).`;
+                    const mensagemErros = convitesComErro > 0 ? ` (${convitesComErro} com erro)` : '';
+                    mensagemResposta = `Agendamento criado e aprovado automaticamente. ${convitesEnviados} convite(s) enviado(s)${mensagemErros}.`;
                 } else {
                     // Se não foi possível enviar nenhum convite, marcar como 'marcado'
                     agendamento.status = 'marcado';
                     await agendamento.save();
-                    mensagemResposta = 'Agendamento criado e marcado automaticamente (nenhum convidado válido encontrado).';
+                    mensagemResposta = 'Agendamento criado e marcado automaticamente (não foi possível enviar convites).';
                 }
             } else {
                 mensagemResposta = 'Agendamento criado e marcado automaticamente (sem convidados).';
@@ -391,29 +420,32 @@ exports.atualizar = async function(req, res) {
             lembrete_enviado: false
         });
 
-        // Enviar convites para novos convidados (apenas se vinculados ao processo)
+        // Enviar convites para novos convidados
         if (convidados && Array.isArray(convidados)) {
+            let novosConvitesEnviados = 0;
+            let novosConvitesComErro = 0;
+            
             for (const convidado of convidados) {
                 const jaConvidado = convidadosAntigos.find(c => c.email === convidado.email);
                 if (!jaConvidado && convidado.email) {
-                    // Verificar se o convidado está vinculado ao processo
-                    const vinculado = await verificarUsuarioVinculadoAoProcesso(convidado.email, agendamento.processo_id);
-                    
-                    if (vinculado) {
-                        try {
-                            await emailService.enviarConviteAgendamento(
-                                agendamento, 
-                                convidado.email, 
-                                convidado.nome
-                            );
-                            console.log(`📧 Convite enviado para ${convidado.email} (vinculado ao processo)`);
-                        } catch (emailError) {
-                            console.error(`Erro ao enviar convite para ${convidado.email}:`, emailError);
-                        }
-                    } else {
-                        console.log(`⚠️ Convite NÃO enviado para ${convidado.email} - usuário não vinculado ao processo`);
+                    try {
+                        await emailService.enviarConviteAgendamento(
+                            agendamento, 
+                            convidado.email, 
+                            convidado.nome
+                        );
+                        console.log(`📧 Convite enviado para ${convidado.email}`);
+                        novosConvitesEnviados++;
+                    } catch (emailError) {
+                        console.error(`❌ Erro ao enviar convite para ${convidado.email}:`, emailError);
+                        novosConvitesComErro++;
                     }
                 }
+            }
+            
+            if (novosConvitesEnviados > 0) {
+                const mensagemErros = novosConvitesComErro > 0 ? ` (${novosConvitesComErro} com erro)` : '';
+                console.log(`✅ ${novosConvitesEnviados} novo(s) convite(s) enviado(s)${mensagemErros}`);
             }
         }
 
@@ -676,7 +708,8 @@ exports.aceitarConvitePublico = async function(req, res) {
                     titulo: agendamento.titulo,
                     data_inicio: agendamento.data_inicio,
                     local: agendamento.local,
-                    descricao: agendamento.descricao
+                    descricao: agendamento.descricao,
+                    status: agendamento.status
                 },
                 status: 'aceito'
             }
@@ -856,21 +889,17 @@ exports.aprovar = async function(req, res) {
                 await agendamento.marcarConvitesEnviados();
                 
                 let convitesEnviados = 0;
+                let convitesComErro = 0;
+                
                 for (const convidado of agendamento.convidados) {
                     if (convidado.email && convidado.email.trim() !== '') {
-                        // Verificar se o convidado está vinculado ao processo
-                        const vinculado = await verificarUsuarioVinculadoAoProcesso(convidado.email, agendamento.processo_id);
-                        
-                        if (vinculado) {
-                            try {
-                                await emailService.enviarConviteAgendamento(agendamento, convidado.email, convidado.nome);
-                                console.log(`📧 Convite enviado para ${convidado.email} (vinculado ao processo)`);
-                                convitesEnviados++;
-                            } catch (emailError) {
-                                console.error(`Erro ao enviar convite para ${convidado.email}:`, emailError);
-                            }
-                        } else {
-                            console.log(`⚠️ Convite NÃO enviado para ${convidado.email} - usuário não vinculado ao processo`);
+                        try {
+                            await emailService.enviarConviteAgendamento(agendamento, convidado.email, convidado.nome);
+                            console.log(`📧 Convite enviado para ${convidado.email}`);
+                            convitesEnviados++;
+                        } catch (emailError) {
+                            console.error(`❌ Erro ao enviar convite para ${convidado.email}:`, emailError);
+                            convitesComErro++;
                         }
                     }
                 }
@@ -879,12 +908,13 @@ exports.aprovar = async function(req, res) {
                     // Após enviar, status muda automaticamente para marcado
                     agendamento.status = 'marcado';
                     await agendamento.save();
-                    mensagemResposta = `Agendamento aprovado com sucesso. ${convitesEnviados} convite(s) enviado(s). Links válidos por 24 horas.`;
+                    const mensagemErros = convitesComErro > 0 ? ` (${convitesComErro} com erro)` : '';
+                    mensagemResposta = `Agendamento aprovado com sucesso. ${convitesEnviados} convite(s) enviado(s)${mensagemErros}. Links válidos por 24 horas.`;
                 } else {
-                    // Se não foi possível enviar nenhum convite (nenhum convidado vinculado), marcar como 'marcado'
+                    // Se não foi possível enviar nenhum convite, marcar como 'marcado'
                     agendamento.status = 'marcado';
                     await agendamento.save();
-                    mensagemResposta = 'Agendamento aprovado e marcado automaticamente (nenhum convidado válido encontrado).';
+                    mensagemResposta = 'Agendamento aprovado e marcado automaticamente (não foi possível enviar convites).';
                 }
             } catch (error) {
                 console.error('Erro ao enviar convites:', error);
@@ -1062,6 +1092,138 @@ exports.cancelarAgendamento = async function(req, res) {
         });
     } catch (error) {
         console.error('Erro ao cancelar agendamento:', error);
+        res.status(500).json({ success: false, message: 'Erro interno do servidor', error: error.message });
+    }
+};
+
+// Função para verificar e atualizar status dos agendamentos (administrativa)
+exports.verificarStatusAgendamentos = async function(req, res) {
+    try {
+        // Verificar se usuário tem permissão (Admin ou Professor)
+        if (!['Admin', 'Professor'].includes(req.user.role)) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Apenas Admin ou Professor podem verificar status dos agendamentos' 
+            });
+        }
+        
+        const agendamentos = await Agendamento.findAll({
+            where: {
+                status: ['pendente', 'enviando_convites']
+            },
+            include: [
+                { model: Usuario, as: 'usuario', attributes: ['id', 'nome', 'email'] }
+            ]
+        });
+        
+        let processados = 0;
+        let marcados = 0;
+        let cancelados = 0;
+        let situacoesMistas = 0;
+        
+        for (const agendamento of agendamentos) {
+            const statusAnterior = agendamento.status;
+            const mudou = await agendamento.verificarAutoMarcacao();
+            
+            if (mudou) {
+                processados++;
+                if (agendamento.status === 'marcado') marcados++;
+                else if (agendamento.status === 'cancelado') cancelados++;
+                else if (agendamento.situacao_mista) situacoesMistas++;
+                
+                console.log(`✅ Agendamento ${agendamento.id}: ${statusAnterior} → ${agendamento.status}`);
+            }
+        }
+        
+        res.json({ 
+            success: true, 
+            message: `Verificação concluída. ${processados} agendamentos processados.`,
+            data: {
+                total_verificados: agendamentos.length,
+                processados,
+                marcados,
+                cancelados,
+                situacoes_mistas: situacoesMistas
+            }
+        });
+    } catch (error) {
+        console.error('Erro ao verificar status dos agendamentos:', error);
+        res.status(500).json({ success: false, message: 'Erro interno do servidor', error: error.message });
+    }
+};
+
+// Função para confirmar agendamento com situação mista (apenas Admin)
+exports.confirmarAgendamentoMisto = async function(req, res) {
+    try {
+        const { id } = req.params;
+        const { decisao, observacoes } = req.body; // decisao: 'confirmar' ou 'cancelar'
+        
+        // Verificar se usuário tem permissão (Admin ou Professor)
+        if (!['Admin', 'Professor'].includes(req.user.role)) {
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Apenas Admin ou Professor podem tomar decisões sobre agendamentos mistos' 
+            });
+        }
+        
+        if (!['confirmar', 'cancelar'].includes(decisao)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Decisão deve ser "confirmar" ou "cancelar"' 
+            });
+        }
+        
+        const agendamento = await Agendamento.findByPk(id, {
+            include: [
+                { model: Usuario, as: 'usuario', attributes: ['id', 'nome', 'email'] }
+            ]
+        });
+        
+        if (!agendamento) {
+            return res.status(404).json({ success: false, message: 'Agendamento não encontrado' });
+        }
+        
+        if (!agendamento.situacao_mista) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Este agendamento não tem situação mista' 
+            });
+        }
+        
+        if (decisao === 'confirmar') {
+            agendamento.status = 'marcado';
+            agendamento.situacao_mista = false;
+            agendamento.observacoes_admin = observacoes || 'Confirmado pelo admin apesar das recusas';
+            await agendamento.save();
+            
+            // Notificar apenas quem aceitou
+            try {
+                const emailService = require('../services/emailService');
+                await emailService.enviarNotificacaoAgendamentoConfirmado(agendamento);
+            } catch (emailError) {
+                console.error('Erro ao enviar notificação de confirmação:', emailError);
+            }
+            
+            res.json({ 
+                success: true, 
+                message: 'Agendamento confirmado com sucesso. Participantes que aceitaram foram notificados.',
+                data: agendamento 
+            });
+        } else {
+            agendamento.status = 'cancelado';
+            agendamento.situacao_mista = false;
+            agendamento.cancelado_por = req.user.id;
+            agendamento.motivo_cancelamento = observacoes || 'Cancelado pelo admin devido às recusas';
+            await agendamento.save();
+            
+            res.json({ 
+                success: true, 
+                message: 'Agendamento cancelado com sucesso.',
+                data: agendamento 
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao confirmar agendamento misto:', error);
         res.status(500).json({ success: false, message: 'Erro interno do servidor', error: error.message });
     }
 };

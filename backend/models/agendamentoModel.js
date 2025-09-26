@@ -28,11 +28,26 @@ class Agendamento extends Model {
    * quando não há convidados ou todos responderam
    */
   async verificarAutoMarcacao() {
+    console.log(`🔍 [DEBUG] Verificando auto marcação para agendamento ${this.id} (status atual: ${this.status})`);
+    
     if (this.status === 'cancelado' || this.status === 'finalizado') {
+      console.log(`⏹️  [DEBUG] Agendamento ${this.id} já está finalizado/cancelado - ignorando`);
       return false;
     }
     
-    const convidados = this.convidados || [];
+    let convidados = this.convidados || [];
+    
+    // Garantir que convidados é um array
+    if (!Array.isArray(convidados)) {
+      try {
+        convidados = JSON.parse(convidados);
+      } catch (e) {
+        console.log(`⚠️  [DEBUG] Erro ao fazer parse dos convidados do agendamento ${this.id}:`, e.message);
+        convidados = [];
+      }
+    }
+    
+    console.log(`👥 [DEBUG] Agendamento ${this.id} tem ${convidados.length} convidados`);
     
     // Se não há convidados, marcar como 'marcado'
     if (!Array.isArray(convidados) || convidados.length === 0) {
@@ -46,6 +61,8 @@ class Agendamento extends Model {
     
     // Verificar se há convidados com emails válidos
     const convidadosComEmail = convidados.filter(c => c.email && c.email.trim() !== '');
+    console.log(`📧 [DEBUG] Agendamento ${this.id} tem ${convidadosComEmail.length} convidados com email válido`);
+    
     if (convidadosComEmail.length === 0 && this.status === 'pendente') {
       this.status = 'marcado';
       await this.save();
@@ -53,9 +70,15 @@ class Agendamento extends Model {
       return true;
     }
     
+    // Log dos status atuais dos convidados
+    convidadosComEmail.forEach((c, i) => {
+      console.log(`👤 [DEBUG] Convidado ${i + 1}: ${c.email} - Status: ${c.status}`);
+    });
+    
     // Verificar expiração de convites (24h) e considerar como aceito
     if (this.data_convites_enviados) {
       const horasPassadas = (new Date() - new Date(this.data_convites_enviados)) / (1000 * 60 * 60);
+      console.log(`⏰ [DEBUG] Convites enviados há ${horasPassadas.toFixed(2)} horas`);
       
       if (horasPassadas >= 24) {
         let mudancas = false;
@@ -71,26 +94,74 @@ class Agendamento extends Model {
         if (mudancas) {
           this.convidados = convidadosComEmail;
           await this.save();
-          console.log(`✅ Agendamento ${this.id} - convites expirados considerados como aceito`);
+          console.log(`✅ Agendamento ${this.id} - convites expirados considerados como aceitos`);
         }
       }
     }
     
     // Verificar se todos aceitaram ou foram considerados aceitos
+    const statusConvidados = convidadosComEmail.map(c => c.status);
     const todosAceitaram = convidadosComEmail.every(c => c.status === 'aceito');
+    const todosRecusaram = convidadosComEmail.every(c => c.status === 'recusado');
+    const temPendentes = convidadosComEmail.some(c => c.status === 'pendente');
+    
+    console.log(`🔍 [DEBUG] Análise dos status - Todos aceitaram: ${todosAceitaram}, Todos recusaram: ${todosRecusaram}, Tem pendentes: ${temPendentes}`);
+    console.log(`📊 [DEBUG] Status dos convidados: [${statusConvidados.join(', ')}]`);
+    
     if (todosAceitaram && convidadosComEmail.length > 0 && this.status !== 'marcado') {
       this.status = 'marcado';
       await this.save();
-      console.log(`✅ Agendamento ${this.id} marcado automaticamente - todos aceitaram`);
+      console.log(`✅ Agendamento ${this.id} marcado automaticamente - todos os convidados aceitaram`);
+      
+      // Enviar notificação de confirmação para todos
+      try {
+        const emailService = require('../services/emailService');
+        await emailService.enviarNotificacaoAgendamentoConfirmado(this);
+        console.log(`📧 Notificação de confirmação enviada para agendamento ${this.id}`);
+      } catch (error) {
+        console.error(`❌ Erro ao enviar notificação de confirmação:`, error);
+      }
+      
       return true;
     }
     
     // Verificar se todos recusaram
-    const todosRecusaram = convidadosComEmail.every(c => c.status === 'recusado');
     if (todosRecusaram && convidadosComEmail.length > 0 && this.status !== 'cancelado') {
       this.status = 'cancelado';
+      this.cancelado_automaticamente = true;
+      this.motivo_cancelamento = 'Todos os convidados recusaram o convite';
       await this.save();
       console.log(`❌ Agendamento ${this.id} cancelado automaticamente - todos recusaram`);
+      
+      // Notificar o criador sobre o cancelamento
+      try {
+        const emailService = require('../services/emailService');
+        await emailService.enviarNotificacaoCancelamentoAutomatico(this);
+      } catch (error) {
+        console.error(`Erro ao enviar notificação de cancelamento:`, error);
+      }
+      
+      return true;
+    }
+    
+    // Verificar se há uma mistura de aceites e recusas (precisa de ação do admin)
+    const temAceites = convidadosComEmail.some(c => c.status === 'aceito');
+    const temRecusas = convidadosComEmail.some(c => c.status === 'recusado');
+    const todosResponderam = convidadosComEmail.every(c => c.status !== 'pendente');
+    
+    if (temAceites && temRecusas && todosResponderam && this.status === 'pendente') {
+      // Manter como pendente mas notificar admin sobre a situação mista
+      this.situacao_mista = true;
+      await this.save();
+      console.log(`⚠️ Agendamento ${this.id} tem aceites e recusas - notificando admin`);
+      
+      try {
+        const emailService = require('../services/emailService');
+        await emailService.enviarNotificacaoSituacaoMista(this);
+      } catch (error) {
+        console.error(`Erro ao enviar notificação de situação mista:`, error);
+      }
+      
       return true;
     }
     
@@ -300,6 +371,8 @@ class Agendamento extends Model {
   }
 
   async aceitarConvite(email) {
+    console.log(`🎯 [DEBUG] Tentativa de aceitar convite - Agendamento: ${this.id}, Email: ${email}`);
+    
     // Verificar se convites expiraram
     if (this.convitesExpiraram()) {
       throw new Error('Este convite expirou. Links de convite são válidos por apenas 24 horas.');
@@ -319,28 +392,45 @@ class Agendamento extends Model {
       }
     }
     
+    console.log(`👥 [DEBUG] Processando ${convidados.length} convidados`);
+    
     const convidado = convidados.find(c => c.email.toLowerCase() === email.toLowerCase());
     if (!convidado) {
+      console.log(`❌ [DEBUG] Email ${email} não encontrado nos convidados`);
       throw new Error('Email não encontrado na lista de convidados');
     }
+
+    console.log(`👤 [DEBUG] Convidado encontrado: ${convidado.email} - Status atual: ${convidado.status}`);
 
     // Verificar se já respondeu
     if (convidado.status !== 'pendente') {
       throw new Error(`Você já respondeu a este convite como: ${convidado.status}`);
     }
 
+    // Atualizar status do convidado
     convidado.status = 'aceito';
     convidado.data_resposta = new Date();
+    
+    // Salvar mudanças
     this.convidados = convidados;
+    this.changed('convidados', true); // Forçar o Sequelize a detectar mudança no campo JSON
     await this.save();
+    console.log(`✅ [DEBUG] Convite aceito com sucesso para ${email} no agendamento ${this.id}`);
+    
+    // Recarregar dados do banco para garantir consistência
+    await this.reload();
+    console.log(`🔄 [DEBUG] Dados recarregados - Status atual: ${this.status}`);
     
     // Verificar se deve marcar automaticamente como 'marcado'
+    console.log(`🔄 [DEBUG] Iniciando verificação automática de marcação...`);
     await this.verificarAutoMarcacao();
     
     return this;
   }
 
   async recusarConvite(email, justificativa = null) {
+    console.log(`❌ [DEBUG] Tentativa de recusar convite - Agendamento: ${this.id}, Email: ${email}`);
+    
     // Verificar se convites expiraram
     if (this.convitesExpiraram()) {
       throw new Error('Este convite expirou. Links de convite são válidos por apenas 24 horas.');
@@ -364,23 +454,38 @@ class Agendamento extends Model {
       }
     }
     
+    console.log(`👥 [DEBUG] Processando ${convidados.length} convidados`);
+    
     const convidado = convidados.find(c => c.email.toLowerCase() === email.toLowerCase());
     if (!convidado) {
+      console.log(`❌ [DEBUG] Email ${email} não encontrado nos convidados`);
       throw new Error('Email não encontrado na lista de convidados');
     }
+
+    console.log(`👤 [DEBUG] Convidado encontrado: ${convidado.email} - Status atual: ${convidado.status}`);
 
     // Verificar se já respondeu
     if (convidado.status !== 'pendente') {
       throw new Error(`Você já respondeu a este convite como: ${convidado.status}`);
     }
 
+    // Atualizar status do convidado
     convidado.status = 'recusado';
     convidado.justificativa = justificativa;
     convidado.data_resposta = new Date();
+    
+    // Salvar mudanças
     this.convidados = convidados;
+    this.changed('convidados', true); // Forçar o Sequelize a detectar mudança no campo JSON
     await this.save();
+    console.log(`❌ [DEBUG] Convite recusado com sucesso para ${email} no agendamento ${this.id}`);
+    
+    // Recarregar dados do banco para garantir consistência
+    await this.reload();
+    console.log(`🔄 [DEBUG] Dados recarregados - Status atual: ${this.status}`);
     
     // Verificar se deve cancelar automaticamente ou notificar admin
+    console.log(`🔄 [DEBUG] Iniciando verificação automática de marcação...`);
     await this.verificarAutoMarcacao();
     
     return this;
@@ -504,6 +609,23 @@ Agendamento.init({
     type: DataTypes.INTEGER,
     allowNull: true,
     comment: 'ID do usuário que cancelou o agendamento'
+  },
+  cancelado_automaticamente: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    comment: 'Se foi cancelado automaticamente quando todos recusaram'
+  },
+  motivo_cancelamento: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Motivo do cancelamento (manual ou automático)'
+  },
+  situacao_mista: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    comment: 'Se há aceites e recusas simultaneamente (precisa ação admin)'
   },
   lembrete_1h_enviado: {
     type: DataTypes.BOOLEAN,

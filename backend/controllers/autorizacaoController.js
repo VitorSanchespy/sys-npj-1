@@ -174,7 +174,7 @@ exports.registro = async (req, res) => {
   }
 };
 
-// Perfil
+// Perfil - MELHORADO para validação de sessão
 exports.perfil = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -196,17 +196,29 @@ exports.perfil = async (req, res) => {
     if (!usuario) {
       return res.status(404).json({ erro: 'Usuário não encontrado' });
     }
+
+    // Verificar se usuário está ativo
+    if (!usuario.ativo) {
+      return res.status(401).json({ erro: 'Usuário inativado. Entre em contato com o administrador.' });
+    }
     
     res.json({
+      success: true,
       id: usuario.id,
       nome: usuario.nome,
       email: usuario.email,
       telefone: usuario.telefone,
       role: usuario.role,
-      ativo: usuario.ativo
+      role_id: usuario.role_id,
+      ativo: usuario.ativo,
+      session: {
+        validated_at: new Date().toISOString(),
+        token_valid: true
+      }
     });
     
   } catch (error) {
+    console.error('Erro ao buscar perfil:', error);
     res.status(500).json({ erro: 'Erro interno do servidor' });
   }
 };

@@ -129,15 +129,21 @@ const AgendamentoForm = ({
   };
 
   const adicionarConvidado = () => {
-    if (!newConvidado.email) {
-      setError('Email do convidado é obrigatório');
+    // Verificar limite máximo de convidados
+    if (formData.convidados.length >= 10) {
+      setError('❌ Limite máximo de 10 convidados atingido');
       return;
     }
 
-    // Validação de formato de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!newConvidado.email) {
+      setError('📧 Email do convidado é obrigatório');
+      return;
+    }
+
+    // Validação de formato de email mais rigorosa
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
     if (!emailRegex.test(newConvidado.email)) {
-      setError('Por favor, insira um email válido');
+      setError('📧 Por favor, insira um email válido (exemplo: usuario@dominio.com)');
       return;
     }
 
@@ -156,17 +162,34 @@ const AgendamentoForm = ({
       return;
     }
 
+    // Validar nome se fornecido
+    if (newConvidado.nome && newConvidado.nome.trim().length > 100) {
+      setError('👤 Nome do convidado deve ter no máximo 100 caracteres');
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       convidados: [...prev.convidados, {
         ...newConvidado,
-        email: newConvidado.email.toLowerCase(), // Normalizar email
-        status: 'pendente'
+        email: newConvidado.email.toLowerCase().trim(), // Normalizar email
+        nome: newConvidado.nome.trim() || null,
+        status: 'pendente',
+        data_convite: new Date(),
+        data_resposta: null,
+        justificativa: null
       }]
     }));
 
     setNewConvidado({ email: '', nome: '' });
     setError(''); // Limpar erro após sucesso
+    
+    // Feedback positivo
+    if (formData.convidados.length + 1 === 10) {
+      setTimeout(() => {
+        setError('⚠️ Limite máximo de convidados atingido (10/10)');
+      }, 100);
+    }
   };
 
   const removerConvidado = (email) => {
@@ -174,7 +197,10 @@ const AgendamentoForm = ({
       ...prev,
       convidados: prev.convidados.filter(c => c.email !== email)
     }));
-    toastService.success('Convidado removido com sucesso!');
+    // Feedback positivo para remoção
+    const convidadoRemovido = formData.convidados.find(c => c.email === email);
+    setError(''); // Limpar erros ao remover
+    console.log(`✅ Convidado removido: ${convidadoRemovido?.nome || email}`);
   };
 
   const handleSubmit = async (e) => {
@@ -487,12 +513,27 @@ const AgendamentoForm = ({
 
         {/* Seção de Convidados */}
         <div className="bg-green-50 p-6 rounded-xl">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
-            </svg>
-            Convidados
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
+              </svg>
+              Convidados
+            </h3>
+            
+            {/* Contador visual de convidados */}
+            <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
+              formData.convidados.length === 0 
+                ? 'bg-gray-100 text-gray-600' 
+                : formData.convidados.length >= 8 
+                ? 'bg-red-100 text-red-700' 
+                : formData.convidados.length >= 5 
+                ? 'bg-yellow-100 text-yellow-700' 
+                : 'bg-green-100 text-green-700'
+            }`}>
+              {formData.convidados.length}/10 convidados
+            </div>
+          </div>
 
           {/* Aviso sobre sistema inteligente */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -505,14 +546,34 @@ const AgendamentoForm = ({
                   🤖 Sistema Inteligente de Convites
                 </h4>
                 <div className="text-sm text-blue-800 space-y-2">
+                  <p>• <strong>Limite:</strong> Máximo de 10 convidados por agendamento</p>
                   <p>• <strong>Sem convidados:</strong> Agendamento vai direto para "Agendado" após aprovação</p>
-                  <p>• <strong>Com convidados:</strong> Convites enviados com validade de 24 horas</p>
-                  <p>• <strong>Expiração automática:</strong> Convites não respondidos são aceitos automaticamente</p>
-                  <p>• <strong>Segurança:</strong> Emails duplicados são bloqueados automaticamente</p>
+                  <p>• <strong>Com convidados:</strong> Convites enviados automaticamente para todos os convidados válidos</p>
+                  <p>• <strong>Expiração automática:</strong> Convites não respondidos são aceitos automaticamente em 24h</p>
+                  <p>• <strong>Validação:</strong> Emails duplicados e inválidos são bloqueados automaticamente</p>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Alerta de limite próximo */}
+          {formData.convidados.length >= 8 && (
+            <div className={`border rounded-lg p-4 mb-6 flex items-center ${
+              formData.convidados.length === 10 
+                ? 'bg-red-50 border-red-200 text-red-700' 
+                : 'bg-yellow-50 border-yellow-200 text-yellow-700'
+            }`}>
+              <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <span>
+                {formData.convidados.length === 10 
+                  ? '🚫 Limite máximo de convidados atingido (10/10)'
+                  : `⚠️ Próximo do limite máximo (${formData.convidados.length}/10 convidados)`
+                }
+              </span>
+            </div>
+          )}
           
           {/* Adicionar Convidado */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 mb-6">
@@ -525,8 +586,13 @@ const AgendamentoForm = ({
                 name="email"
                 value={newConvidado.email}
                 onChange={handleConvidadoChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-                placeholder="convidado@email.com"
+                disabled={formData.convidados.length >= 10}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors ${
+                  formData.convidados.length >= 10 
+                    ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed' 
+                    : 'border-gray-300'
+                }`}
+                placeholder={formData.convidados.length >= 10 ? "Limite atingido" : "convidado@email.com"}
               />
             </div>
             <div className="lg:col-span-5">
@@ -538,20 +604,32 @@ const AgendamentoForm = ({
                 name="nome"
                 value={newConvidado.nome}
                 onChange={handleConvidadoChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-                placeholder="Nome do convidado"
+                disabled={formData.convidados.length >= 10}
+                maxLength={100}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors ${
+                  formData.convidados.length >= 10 
+                    ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed' 
+                    : 'border-gray-300'
+                }`}
+                placeholder={formData.convidados.length >= 10 ? "Limite atingido" : "Nome do convidado (máx. 100 chars)"}
               />
             </div>
             <div className="lg:col-span-2 flex items-end">
               <button
                 type="button"
                 onClick={adicionarConvidado}
-                className="w-full px-4 py-3 bg-primary-500 text-white font-semibold rounded-lg hover:bg-primary-600 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors flex items-center justify-center"
+                disabled={formData.convidados.length >= 10 || !newConvidado.email.trim()}
+                className={`w-full px-4 py-3 font-semibold rounded-lg focus:ring-2 focus:ring-offset-2 transition-colors flex items-center justify-center ${
+                  formData.convidados.length >= 10 || !newConvidado.email.trim()
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                    : 'bg-primary-500 text-white hover:bg-primary-600 focus:ring-primary-500'
+                }`}
+                title={formData.convidados.length >= 10 ? "Limite de 10 convidados atingido" : "Adicionar convidado"}
               >
                 <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd"/>
                 </svg>
-                Adicionar
+                {formData.convidados.length >= 10 ? 'Limite atingido' : 'Adicionar'}
               </button>
             </div>
           </div>
@@ -559,58 +637,109 @@ const AgendamentoForm = ({
           {/* Lista de Convidados */}
           {formData.convidados.length > 0 && (
             <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
-                </svg>
-                Convidados ({formData.convidados.length})
-              </h4>
-              <div className="space-y-2">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-gray-700 flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                  </svg>
+                  Lista de Convidados ({formData.convidados.length}/10)
+                </h4>
+                {formData.convidados.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(`Tem certeza que deseja remover todos os ${formData.convidados.length} convidados?`)) {
+                        setFormData(prev => ({ ...prev, convidados: [] }));
+                        setError('');
+                      }
+                    }}
+                    className="text-xs text-red-600 hover:text-red-800 font-medium"
+                  >
+                    Limpar todos
+                  </button>
+                )}
+              </div>
+              
+              <div className="space-y-3">
                 {formData.convidados.map((convidado, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"/>
-                        </svg>
+                      <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-semibold text-primary-600">
+                          {(convidado.nome || convidado.email).charAt(0).toUpperCase()}
+                        </span>
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <div className="font-semibold text-gray-800">
-                          {convidado.nome || convidado.email}
+                          {convidado.nome || 'Nome não informado'}
                         </div>
-                        {convidado.nome && (
-                          <div className="text-sm text-gray-600">
-                            {convidado.email}
-                          </div>
-                        )}
-                        <div className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-1 ${
+                        <div className="text-sm text-gray-600 flex items-center">
+                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                          </svg>
+                          {convidado.email}
+                        </div>
+                        <div className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-2 ${
                           convidado.status === 'aceito' 
-                            ? 'bg-success-100 text-success-800' 
+                            ? 'bg-green-100 text-green-800' 
                             : convidado.status === 'recusado' 
-                            ? 'bg-danger-100 text-danger-800' 
-                            : 'bg-warning-100 text-warning-800'
+                            ? 'bg-red-100 text-red-800' 
+                            : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {getStatusText(convidado.status)}
+                          {getStatusText(convidado.status)} {!isEditing && '• Convite será enviado após aprovação'}
                         </div>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removerConvidado(convidado.email)}
-                      className="px-3 py-1 bg-danger-500 text-white font-medium rounded-lg hover:bg-danger-600 focus:ring-2 focus:ring-danger-500 focus:ring-offset-2 transition-colors flex items-center"
-                    >
-                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd"/>
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
-                      </svg>
-                      Remover
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
+                        #{index + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removerConvidado(convidado.email)}
+                        className="px-3 py-2 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors flex items-center"
+                        title={`Remover ${convidado.nome || convidado.email}`}
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
+              
+              {/* Resumo dos convidados */}
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center text-sm text-blue-800">
+                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <strong>Resumo:</strong>&nbsp;
+                  {formData.convidados.length} convidado(s) • 
+                  {10 - formData.convidados.length} espaço(s) restante(s) •
+                  {!isEditing ? ' Convites serão enviados após aprovação do agendamento' : ' Novos convites são enviados automaticamente'}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Mensagem quando não há convidados */}
+          {formData.convidados.length === 0 && (
+            <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <svg className="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <h4 className="text-sm font-semibold text-gray-700 mb-2">Nenhum convidado adicionado ainda</h4>
+              <p className="text-xs text-gray-500">
+                Adicione até 10 convidados usando os campos acima. 
+                <br />
+                Sem convidados, o agendamento será marcado diretamente após aprovação.
+              </p>
             </div>
           )}
         </div>

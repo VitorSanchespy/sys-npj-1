@@ -218,8 +218,12 @@ router.post('/:id/recusar', [
 
 // GET /api/agendamentos/stats - Estatísticas de agendamentos (DUPLICADA - REMOVENDO)
 
-// GET /api/agendamentos/stats/convites - Estatísticas de convites (DUPLICADA - REMOVENDO)
-
-// GET /api/agendamentos/lembrete/pendentes - Buscar agendamentos pendentes de lembrete (DUPLICADA - REMOVENDO)
+// Rotas administrativas para gerenciamento de status
+router.post('/verificar-status', agendamentoController.verificarStatusAgendamentos);
+router.post('/:id/confirmar-misto', [
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
+  body('decisao').isIn(['confirmar', 'cancelar']).withMessage('Decisão deve ser "confirmar" ou "cancelar"'),
+  body('observacoes').optional().isLength({ min: 3 }).withMessage('Observações devem ter pelo menos 3 caracteres')
+], agendamentoController.confirmarAgendamentoMisto);
 
 module.exports = router;

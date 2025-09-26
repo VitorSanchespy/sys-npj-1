@@ -5,6 +5,13 @@ import { getUserRole } from "../../hooks/useApi";
 import { tabelaAuxiliarService } from "../../api/services";
 import { toastAudit } from "../../services/toastSystemAudit";
 import CampoAuxiliarComControle from "@/components/common/CampoAuxiliarComControle";
+import { 
+  validateProcessForm, 
+  showValidationErrors, 
+  validateField, 
+  applyFieldMask,
+  getInitialProcessFormData 
+} from "../../utils/processValidation";
 
 export default function CreateProcessModal({ onCreated, onClose }) {
   const { token, user } = useAuthContext();
@@ -13,45 +20,17 @@ export default function CreateProcessModal({ onCreated, onClose }) {
   const [fases, setFases] = useState([]);
   const [diligencias, setDiligencias] = useState([]);
   const [localTramitacoes, setLocalTramitacoes] = useState([]);
-  const [form, setForm] = useState({
-    numero_processo: "",
-    titulo: "",
-    descricao: "",
-    status: "Em andamento",
-    tipo_processo: "",
-    idusuario_responsavel: "",
-    data_encerramento: "",
-    observacoes: "",
-    sistema: "Físico",
-    materia_assunto_id: "",
-    fase_id: "",
-    diligencia_id: "",
-    num_processo_sei: "",
-    assistido: "",
-    contato_assistido: "",
-    local_tramitacao_id: ""
-  });
+  const [form, setForm] = useState(getInitialProcessFormData());
   const [loading, setLoading] = useState(false);
-
-  // Validação de campos obrigatórios
-  const validateForm = () => {
-    if (!form.numero_processo.trim()) {
-      toastAudit.validation.requiredField("Número do processo");
-      return false;
-    }
-    if (!form.titulo.trim()) {
-      toastAudit.validation.requiredField("Título do processo");
-      return false;
-    }
-    if (!form.descricao.trim()) {
-      toastAudit.validation.requiredField("Descrição do processo");
-      return false;
-    }
-    if (!form.tipo_processo.trim()) {
-      toastAudit.validation.requiredField("Tipo do processo");
-      return false;
-    }
-    return true;
+  const [fieldErrors, setFieldErrors] = useState({});
+  
+  // Validação em tempo real de campo individual
+  const handleFieldBlur = (fieldName, value) => {
+    const error = validateField(fieldName, value, form);
+    setFieldErrors(prev => ({
+      ...prev,
+      [fieldName]: error
+    }));
   };
 
   useEffect(() => {
@@ -94,12 +73,28 @@ export default function CreateProcessModal({ onCreated, onClose }) {
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    
+    // Aplicar máscara se necessário
+    const maskedValue = applyFieldMask(name, value);
+    
+    setForm(prev => ({ ...prev, [name]: maskedValue }));
+    
+    // Limpar erro do campo quando usuário começar a digitar
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => ({ ...prev, [name]: null }));
+    }
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!validateForm()) return;
+    
+    // Validação completa do formulário
+    const validation = validateProcessForm(form, false);
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors);
+      showValidationErrors(validation.errors);
+      return;
+    }
     
     setLoading(true);
     try {
@@ -112,24 +107,10 @@ export default function CreateProcessModal({ onCreated, onClose }) {
       
       toastAudit.process.createSuccess(form.titulo || form.numero_processo);
       
-      setForm({
-        numero_processo: "",
-        titulo: "",
-        descricao: "",
-        status: "Em andamento",
-        tipo_processo: "",
-        idusuario_responsavel: "",
-        data_encerramento: "",
-        observacoes: "",
-        sistema: "Físico",
-        materia_assunto_id: "",
-        fase_id: "",
-        diligencia_id: "",
-        num_processo_sei: "",
-        assistido: "",
-        contato_assistido: "",
-        local_tramitacao_id: ""
-      });
+      // Resetar formulário
+      setForm(getInitialProcessFormData());
+      setFieldErrors({});
+      
       if (onCreated) onCreated();
       handleClose();
     } catch (err) {
@@ -191,10 +172,22 @@ export default function CreateProcessModal({ onCreated, onClose }) {
               name="numero_processo"
               value={form.numero_processo}
               onChange={handleChange}
+              onBlur={(e) => handleFieldBlur('numero_processo', e.target.value)}
               required
               placeholder="Ex: 0001234-56.2024.8.07.0001"
-              style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              style={{ 
+                width: '100%', 
+                padding: 8, 
+                border: `1px solid ${fieldErrors.numero_processo ? '#dc3545' : '#ddd'}`, 
+                borderRadius: 4,
+                backgroundColor: fieldErrors.numero_processo ? '#fff5f5' : '#fff'
+              }}
             />
+            {fieldErrors.numero_processo && (
+              <div style={{ color: '#dc3545', fontSize: '0.875rem', marginTop: 4 }}>
+                {fieldErrors.numero_processo}
+              </div>
+            )}
           </div>
 
           <div>
@@ -206,10 +199,22 @@ export default function CreateProcessModal({ onCreated, onClose }) {
               name="titulo"
               value={form.titulo}
               onChange={handleChange}
+              onBlur={(e) => handleFieldBlur('titulo', e.target.value)}
               required
               placeholder="Título do processo"
-              style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              style={{ 
+                width: '100%', 
+                padding: 8, 
+                border: `1px solid ${fieldErrors.titulo ? '#dc3545' : '#ddd'}`, 
+                borderRadius: 4,
+                backgroundColor: fieldErrors.titulo ? '#fff5f5' : '#fff'
+              }}
             />
+            {fieldErrors.titulo && (
+              <div style={{ color: '#dc3545', fontSize: '0.875rem', marginTop: 4 }}>
+                {fieldErrors.titulo}
+              </div>
+            )}
           </div>
 
           <div>
@@ -221,9 +226,21 @@ export default function CreateProcessModal({ onCreated, onClose }) {
               name="num_processo_sei"
               value={form.num_processo_sei}
               onChange={handleChange}
-              placeholder="Número do processo no SEI"
-              style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              onBlur={(e) => handleFieldBlur('num_processo_sei', e.target.value)}
+              placeholder="Ex: SEI-23085.012345/2025-67"
+              style={{ 
+                width: '100%', 
+                padding: 8, 
+                border: `1px solid ${fieldErrors.num_processo_sei ? '#dc3545' : '#ddd'}`, 
+                borderRadius: 4,
+                backgroundColor: fieldErrors.num_processo_sei ? '#fff5f5' : '#fff'
+              }}
             />
+            {fieldErrors.num_processo_sei && (
+              <div style={{ color: '#dc3545', fontSize: '0.875rem', marginTop: 4 }}>
+                {fieldErrors.num_processo_sei}
+              </div>
+            )}
           </div>
           
           <div>
@@ -234,11 +251,24 @@ export default function CreateProcessModal({ onCreated, onClose }) {
               name="descricao"
               value={form.descricao}
               onChange={handleChange}
+              onBlur={(e) => handleFieldBlur('descricao', e.target.value)}
               required
               rows={3}
               placeholder="Descrição detalhada do processo"
-              style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4, resize: 'vertical' }}
+              style={{ 
+                width: '100%', 
+                padding: 8, 
+                border: `1px solid ${fieldErrors.descricao ? '#dc3545' : '#ddd'}`, 
+                borderRadius: 4, 
+                resize: 'vertical',
+                backgroundColor: fieldErrors.descricao ? '#fff5f5' : '#fff'
+              }}
             />
+            {fieldErrors.descricao && (
+              <div style={{ color: '#dc3545', fontSize: '0.875rem', marginTop: 4 }}>
+                {fieldErrors.descricao}
+              </div>
+            )}
           </div>
 
           {/* Informações do Assistido */}
@@ -265,9 +295,21 @@ export default function CreateProcessModal({ onCreated, onClose }) {
               name="contato_assistido"
               value={form.contato_assistido}
               onChange={handleChange}
-              placeholder="Telefone ou email do assistido"
-              style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              onBlur={(e) => handleFieldBlur('contato_assistido', e.target.value)}
+              placeholder="(11) 99999-9999 ou email@exemplo.com"
+              style={{ 
+                width: '100%', 
+                padding: 8, 
+                border: `1px solid ${fieldErrors.contato_assistido ? '#dc3545' : '#ddd'}`, 
+                borderRadius: 4,
+                backgroundColor: fieldErrors.contato_assistido ? '#fff5f5' : '#fff'
+              }}
             />
+            {fieldErrors.contato_assistido && (
+              <div style={{ color: '#dc3545', fontSize: '0.875rem', marginTop: 4 }}>
+                {fieldErrors.contato_assistido}
+              </div>
+            )}
           </div>
           
           {/* Campos de status e classificação */}
@@ -317,9 +359,21 @@ export default function CreateProcessModal({ onCreated, onClose }) {
               name="tipo_processo"
               value={form.tipo_processo}
               onChange={handleChange}
+              onBlur={(e) => handleFieldBlur('tipo_processo', e.target.value)}
               placeholder="Ex: Cível, Criminal, Trabalhista"
-              style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              style={{ 
+                width: '100%', 
+                padding: 8, 
+                border: `1px solid ${fieldErrors.tipo_processo ? '#dc3545' : '#ddd'}`, 
+                borderRadius: 4,
+                backgroundColor: fieldErrors.tipo_processo ? '#fff5f5' : '#fff'
+              }}
             />
+            {fieldErrors.tipo_processo && (
+              <div style={{ color: '#dc3545', fontSize: '0.875rem', marginTop: 4 }}>
+                {fieldErrors.tipo_processo}
+              </div>
+            )}
           </div>
 
           {/* Campos auxiliares */}
@@ -385,8 +439,25 @@ export default function CreateProcessModal({ onCreated, onClose }) {
               name="data_encerramento"
               value={form.data_encerramento}
               onChange={handleChange}
-              style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 4 }}
+              onBlur={(e) => handleFieldBlur('data_encerramento', e.target.value)}
+              style={{ 
+                width: '100%', 
+                padding: 8, 
+                border: `1px solid ${fieldErrors.data_encerramento ? '#dc3545' : '#ddd'}`, 
+                borderRadius: 4,
+                backgroundColor: fieldErrors.data_encerramento ? '#fff5f5' : '#fff'
+              }}
             />
+            {fieldErrors.data_encerramento && (
+              <div style={{ color: '#dc3545', fontSize: '0.875rem', marginTop: 4 }}>
+                {fieldErrors.data_encerramento}
+              </div>
+            )}
+            {form.status === 'Concluído' && !form.data_encerramento && (
+              <div style={{ color: '#ffc107', fontSize: '0.875rem', marginTop: 4 }}>
+                ⚠️ Data de encerramento é obrigatória para processos concluídos
+              </div>
+            )}
           </div>
           
           <div>
@@ -403,11 +474,7 @@ export default function CreateProcessModal({ onCreated, onClose }) {
             />
           </div>
           
-          {erro && (
-            <div style={{ color: 'red', marginBottom: 10, padding: 10, backgroundColor: '#f8d7da', border: '1px solid #f5c6cb', borderRadius: 4 }}>
-              {erro}
-            </div>
-          )}
+
           
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
             <button 
