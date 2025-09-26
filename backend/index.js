@@ -45,7 +45,7 @@ app.use('/api/auth', require('./routes/autorizacaoRoute'));
 app.use('/api/usuarios', require('./routes/usuarioRoute'));
 app.use('/api/processos', require('./routes/processoRoute'));
 
-// Nova rota de agendamentos - sistema unificado
+// Sistema de Agendamentos Híbrido - Permite alternar entre monolítico e modular
 app.use('/api/agendamentos', require('./routes/agendamentos'));
 
 // Rotas para tabelas auxiliares - sistema unificado com controle de acesso
@@ -75,7 +75,7 @@ app.use('/api/dashboard', require('./routes/dashboardRoute'));
 app.use('/auth', require('./routes/autorizacaoRoute'));
 app.use('/usuarios', require('./routes/usuarioRoute'));
 app.use('/processos', require('./routes/processoRoute'));
-app.use('/agendamentos', require('./routes/agendamentos')); // Usar rota unificada
+app.use('/agendamentos', require('./routes/agendamentos')); // Usar rota híbrida
 app.use('/arquivos', require('./routes/arquivoRoute'));
 app.use('/dashboard', require('./routes/dashboardRoute'));
 

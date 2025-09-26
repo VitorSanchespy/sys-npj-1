@@ -1,3 +1,18 @@
+/**
+ * CONTROLLER MONOLÍTICO LEGACY - SISTEMA DE BACKUP
+ * 
+ * ⚠️  AVISO: Este controller está em modo de compatibilidade
+ * 
+ * STATUS: DEPRECATED (mantido apenas como fallback)
+ * USO RECOMENDADO: Sistema modular (AgendamentoManagementController, AgendamentoConviteController, AgendamentoStatusController)
+ * 
+ * Para usar o sistema modular, configure: USE_MODULAR_CONTROLLERS=true
+ * Para usar este sistema legacy, configure: USE_MODULAR_CONTROLLERS=false
+ * 
+ * Data de depreciação: 26/09/2025
+ * Remoção planejada: Após estabilização completa do sistema modular
+ */
+
 const Agendamento = require('../models/agendamentoModel');
 const Processo = require('../models/processoModel');
 const Usuario = require('../models/usuarioModel');

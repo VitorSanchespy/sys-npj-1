@@ -1,40 +1,59 @@
+/**
+ * Rotas Híbridas para Sistema de Agendamentos
+ * Permite alternar entre controllers monolítico e modular via configuração
+ */
+
 const express = require('express');
 const router = express.Router();
-const agendamentoController = require('../controllers/agendamentoController');
-const agendamentoStatsController = require('../controllers/agendamentoStatsController');
+
+// Middleware de integração
+const { createMappedHandler, createRouteHandler, getUseModularControllers } = require('../middleware/integrationMiddleware');
+
+// Middleware padrão
 const authMiddleware = require('../middleware/authMiddleware');
 const { preveniDuplicacaoAgendamento } = require('../middleware/antiDuplicacaoMiddleware');
 const { body, param, query } = require('express-validator');
 
-// Rotas públicas para convites (ANTES do middleware de autenticação)
+// Controllers (para referência direta quando necessário)
+const agendamentoStatsController = require('../controllers/agendamentoStatsController');
+
+console.log(`🔄 Sistema de Agendamentos iniciando em modo: ${getUseModularControllers() ? 'MODULAR' : 'MONOLÍTICO'}`);
+
+// ========== ROTAS PÚBLICAS (SEM AUTENTICAÇÃO) ==========
+
+// Resposta a convites públicos
 router.post('/:id/aceitar-publico', [
   param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
   body('email').isEmail().withMessage('Email deve ter formato válido')
-], agendamentoController.aceitarConvitePublico);
+], ...createMappedHandler('aceitarConvitePublico'));
 
 router.post('/:id/recusar-publico', [
   param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
   body('email').isEmail().withMessage('Email deve ter formato válido'),
   body('motivo').optional().isLength({ min: 3 }).withMessage('Motivo deve ter pelo menos 3 caracteres')
-], agendamentoController.recusarConvitePublico);
+], ...createMappedHandler('recusarConvitePublico'));
 
-// Middleware de autenticação para todas as outras rotas
+// ========== MIDDLEWARE DE AUTENTICAÇÃO ==========
 router.use(authMiddleware);
 
-// GET /api/agendamentos/filtros - Obter opções de filtros
-router.get('/filtros', agendamentoController.obterFiltros);
+// ========== ROTAS DE ESTATÍSTICAS (SEMPRE DIRETAS) ==========
 
-// GET /api/agendamentos/stats - Estatísticas de agendamentos (ANTES de /:id)
+// GET /api/agendamentos/filtros - Obter opções de filtros
+router.get('/filtros', ...createMappedHandler('obterFiltros'));
+
+// GET /api/agendamentos/stats - Estatísticas gerais
 router.get('/stats', agendamentoStatsController.getStats);
 
 // GET /api/agendamentos/stats/convites - Estatísticas de convites
 router.get('/stats/convites', agendamentoStatsController.getConviteStats);
 
 // GET /api/agendamentos/lembrete/pendentes - Buscar agendamentos pendentes de lembrete
-router.get('/lembrete/pendentes', agendamentoController.buscarParaLembrete);
+router.get('/lembrete/pendentes', ...createMappedHandler('buscarParaLembrete'));
 
-// Validações para criação
-const validacoesCriacao = [
+// ========== ROTAS DE GESTÃO BÁSICA (CRUD) ==========
+
+// POST /api/agendamentos - Criar agendamento
+router.post('/', [
   body('titulo')
     .trim()
     .isLength({ min: 3, max: 255 })
@@ -71,14 +90,31 @@ const validacoesCriacao = [
   body('local')
     .optional()
     .isLength({ max: 500 })
-    .withMessage('Local deve ter no máximo 500 caracteres')
-];
+    .withMessage('Local deve ter no máximo 500 caracteres'),
+    
+  preveniDuplicacaoAgendamento
+], ...createMappedHandler('criar'));
 
-// Validações para atualização
-const validacoesAtualizacao = [
-  param('id')
-    .isInt({ min: 1 })
-    .withMessage('ID deve ser um número positivo'),
+// GET /api/agendamentos - Listar agendamentos
+router.get('/', [
+  query('page').optional().isInt({ min: 1 }).withMessage('Página deve ser um número positivo'),
+  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limite deve ser entre 1 e 100'),
+  query('processo_id').optional().isInt({ min: 1 }).withMessage('ID do processo deve ser um número positivo'),
+  query('status').optional().isIn(['em_analise', 'enviando_convites', 'marcado', 'cancelado', 'finalizado']).withMessage('Status inválido'),
+  query('tipo').optional().isIn(['reuniao', 'audiencia', 'prazo', 'outro']).withMessage('Tipo inválido'),
+  query('data_inicio').optional().isISO8601().withMessage('Data de início inválida'),
+  query('data_fim').optional().isISO8601().withMessage('Data de fim inválida'),
+  query('meus_agendamentos').optional().isBoolean().withMessage('Meus agendamentos deve ser true/false')
+], ...createMappedHandler('listar'));
+
+// GET /api/agendamentos/:id - Buscar agendamento por ID
+router.get('/:id', [
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo')
+], ...createMappedHandler('buscarPorId'));
+
+// PUT /api/agendamentos/:id - Atualizar agendamento
+router.put('/:id', [
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
   
   body('titulo')
     .optional()
@@ -125,105 +161,118 @@ const validacoesAtualizacao = [
     .optional()
     .isLength({ max: 500 })
     .withMessage('Local deve ter no máximo 500 caracteres')
-];
+], ...createMappedHandler('atualizar'));
 
-// Validação para ID
-const validacaoId = [
-  param('id')
-    .isInt({ min: 1 })
-    .withMessage('ID deve ser um número positivo')
-];
+// DELETE /api/agendamentos/:id - Excluir agendamento
+router.delete('/:id', [
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo')
+], ...createMappedHandler('deletar'));
 
-// Validação para processo ID
-const validacaoProcessoId = [
-  param('processoId')
-    .isInt({ min: 1 })
-    .withMessage('ID do processo deve ser um número positivo')
-];
+// ========== ROTAS DE GERENCIAMENTO DE STATUS ==========
 
-// Rotas
-
-// POST /api/agendamentos - Criar agendamento
-router.post('/', [
-    ...validacoesCriacao,
-    preveniDuplicacaoAgendamento
-], agendamentoController.criar);
-
-// GET /api/agendamentos - Listar agendamentos
-router.get('/', [
-  query('page').optional().isInt({ min: 1 }).withMessage('Página deve ser um número positivo'),
-  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limite deve ser entre 1 e 100'),
-  query('processo_id').optional().isInt({ min: 1 }).withMessage('ID do processo deve ser um número positivo'),
-  query('status').optional().isIn(['em_analise', 'enviando_convites', 'marcado', 'cancelado', 'finalizado']).withMessage('Status inválido'),
-  query('tipo').optional().isIn(['reuniao', 'audiencia', 'prazo', 'outro']).withMessage('Tipo inválido'),
-  query('data_inicio').optional().isISO8601().withMessage('Data de início inválida'),
-  query('data_fim').optional().isISO8601().withMessage('Data de fim inválida')
-], agendamentoController.listar);
-
-// GET /api/agendamentos/:id - Buscar agendamento por ID
-router.get('/:id', validacaoId, agendamentoController.buscarPorId);
-
-// PUT /api/agendamentos/:id - Atualizar agendamento
-router.put('/:id', validacoesAtualizacao, agendamentoController.atualizar);
-
-// DELETE /api/agendamentos/:id - Deletar agendamento
-router.delete('/:id', validacaoId, agendamentoController.deletar);
-
-// GET /api/agendamentos/processo/:processoId - Listar agendamentos por processo
-router.get('/processo/:processoId', validacaoProcessoId, agendamentoController.listarPorProcesso);
-
-// PATCH /api/agendamentos/:id/status - Marcar status do agendamento
+// PATCH /api/agendamentos/:id/status - Alterar status do agendamento
 router.patch('/:id/status', [
-  ...validacaoId,
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
   body('status')
     .isIn(['pendente', 'confirmado', 'concluido', 'cancelado'])
     .withMessage('Status deve ser: pendente, confirmado, concluido ou cancelado')
-], agendamentoController.marcarStatus);
+], ...createMappedHandler('marcarStatus'));
+
+// ========== ROTAS DE GERENCIAMENTO DE CONVITES ==========
+
+// POST /api/agendamentos/:id/aceitar - Aceitar convite (autenticado)
+router.post('/:id/aceitar', [
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
+  body('email').optional().isEmail().withMessage('Email deve ter formato válido')
+], ...createMappedHandler('aceitarConvite'));
+
+// POST /api/agendamentos/:id/recusar - Recusar convite (autenticado)
+router.post('/:id/recusar', [
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
+  body('email').optional().isEmail().withMessage('Email deve ter formato válido')
+], ...createMappedHandler('recusarConvite'));
+
+// ========== ROTAS ESPECÍFICAS (SEMPRE MONOLÍTICAS POR ORA) ==========
+
+// GET /api/agendamentos/processo/:processoId - Listar agendamentos por processo
+router.get('/processo/:processoId', [
+  param('processoId').isInt({ min: 1 }).withMessage('ID do processo deve ser um número positivo')
+], ...createMappedHandler('listarPorProcesso'));
 
 // POST /api/agendamentos/:id/lembrete - Enviar lembrete manual
-router.post('/:id/lembrete', validacaoId, agendamentoController.enviarLembrete);
+router.post('/:id/lembrete', [
+  param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo')
+], ...createMappedHandler('enviarLembrete'));
 
-// POST /api/agendamentos/:id/aprovar - Aprovar agendamento (Admin/Professor)
+// ========== ROTAS ADMINISTRATIVAS ==========
+
+// POST /api/agendamentos/:id/aprovar - Aprovar agendamento
 router.post('/:id/aprovar', [
   param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
   body('observacoes').optional().isLength({ max: 1000 }).withMessage('Observações devem ter no máximo 1000 caracteres')
-], agendamentoController.aprovar);
+], ...createMappedHandler('aprovar'));
 
-// POST /api/agendamentos/:id/recusar - Recusar agendamento (Admin/Professor)
+// POST /api/agendamentos/:id/recusar - Recusar agendamento (Admin)
 router.post('/:id/recusar', [
   param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
   body('motivo_recusa').notEmpty().withMessage('Motivo da recusa é obrigatório')
     .isLength({ min: 10, max: 1000 }).withMessage('Motivo deve ter entre 10 e 1000 caracteres')
-], agendamentoController.recusar);
+], ...createMappedHandler('recusar'));
 
-// POST /api/agendamentos/:id/cancelar - Cancelar agendamento (Admin/Professor/Criador)
+// POST /api/agendamentos/:id/cancelar - Cancelar agendamento
 router.post('/:id/cancelar', [
   param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
   body('motivo').optional().isLength({ max: 1000 }).withMessage('Motivo deve ter no máximo 1000 caracteres')
-], agendamentoController.cancelarAgendamento);
+], ...createMappedHandler('cancelarAgendamento'));
 
-// Rotas públicas para convites (sem autenticação) - REMOVIDAS (já estão no topo)
+// POST /api/agendamentos/verificar-status - Verificar status automaticamente
+router.post('/verificar-status', ...createMappedHandler('verificarStatusAgendamentos'));
 
-// POST /api/agendamentos/:id/aceitar - Aceitar convite para agendamento
-router.post('/:id/aceitar', [
-  ...validacaoId,
-  body('email').optional().isEmail().withMessage('Email deve ter formato válido')
-], agendamentoController.aceitarConvite);
-
-// POST /api/agendamentos/:id/recusar - Recusar convite para agendamento
-router.post('/:id/recusar', [
-  ...validacaoId,
-  body('email').optional().isEmail().withMessage('Email deve ter formato válido')
-], agendamentoController.recusarConvite);
-
-// GET /api/agendamentos/stats - Estatísticas de agendamentos (DUPLICADA - REMOVENDO)
-
-// Rotas administrativas para gerenciamento de status
-router.post('/verificar-status', agendamentoController.verificarStatusAgendamentos);
+// POST /api/agendamentos/:id/confirmar-misto - Confirmar agendamento com situação mista
 router.post('/:id/confirmar-misto', [
   param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
   body('decisao').isIn(['confirmar', 'cancelar']).withMessage('Decisão deve ser "confirmar" ou "cancelar"'),
   body('observacoes').optional().isLength({ min: 3 }).withMessage('Observações devem ter pelo menos 3 caracteres')
-], agendamentoController.confirmarAgendamentoMisto);
+], ...createMappedHandler('confirmarAgendamentoMisto'));
+
+// ========== ROTAS MODULARIZADAS ESPECÍFICAS (QUANDO EM MODO MODULAR) ==========
+
+if (getUseModularControllers()) {
+  console.log('📦 Registrando rotas modularizadas específicas...');
+  
+  // GET /api/agendamentos/:id/historico - Consultar histórico de status
+  router.get('/:id/historico', [
+    param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo')
+  ], ...createRouteHandler('status', 'consultarHistorico'));
+
+  // GET /api/agendamentos/:id/transicoes - Consultar transições disponíveis
+  router.get('/:id/transicoes', [
+    param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo')
+  ], ...createRouteHandler('status', 'consultarTransicoesDisponiveis'));
+
+  // POST /api/agendamentos/status/automatico - Atualizar status automaticamente
+  router.post('/status/automatico', ...createRouteHandler('status', 'atualizarStatusAutomatico'));
+
+  // POST /api/agendamentos/:id/convites/enviar - Enviar convites
+  router.post('/:id/convites/enviar', [
+    param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
+    body('emails').optional().isArray().withMessage('Emails deve ser um array'),
+    body('emails.*').optional().isEmail().withMessage('Email deve ter formato válido')
+  ], ...createRouteHandler('convites', 'enviarConvites'));
+
+  // POST /api/agendamentos/:id/convites/reenviar - Reenviar convites
+  router.post('/:id/convites/reenviar', [
+    param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo'),
+    body('emails').optional().isArray().withMessage('Emails deve ser um array'),
+    body('emails.*').optional().isEmail().withMessage('Email deve ter formato válido')
+  ], ...createRouteHandler('convites', 'reenviarConvites'));
+
+  // GET /api/agendamentos/:id/convites/status - Status dos convites
+  router.get('/:id/convites/status', [
+    param('id').isInt({ min: 1 }).withMessage('ID deve ser um número positivo')
+  ], ...createRouteHandler('convites', 'getStatusConvites'));
+  
+  console.log('✅ Rotas modularizadas específicas registradas');
+}
 
 module.exports = router;
